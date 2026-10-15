@@ -1,0 +1,7 @@
+# Only the plugin is published here. Everything else in this folder
+# (development and release tooling, internal docs) stays local.
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/arvaseo-connector/

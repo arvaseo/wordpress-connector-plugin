@@ -1,0 +1,39 @@
+/* Arva SEO Connector admin: native WordPress look, plus text status labels. */
+.arvaseo-title { display: flex; align-items: center; gap: 10px; }
+.arvaseo-title-page { color: #50575e; font-weight: 400; }
+.arvaseo-logo { border-radius: 6px; }
+.arvaseo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; margin-top: 16px; }
+.arvaseo-card { max-width: none; margin: 0; padding: 16px 20px; }
+.arvaseo-card h2 { margin-top: 0; }
+.arvaseo-facts th { width: 220px; padding: 8px 10px 8px 0; }
+.arvaseo-facts td { padding: 8px 10px; }
+.arvaseo-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.arvaseo-inline-form { display: inline; margin: 0; }
+.arvaseo-list { list-style: disc; margin-left: 20px; }
+.arvaseo-list li { margin-bottom: 4px; }
+.arvaseo-disclosure { margin: 8px 0 12px; padding: 8px 12px; background: #f6f7f7; border: 1px solid #dcdcde; }
+.arvaseo-disclosure summary { cursor: pointer; font-weight: 600; }
+.arvaseo-disclosure h3 { font-size: 13px; margin: 12px 0 4px; }
+.arvaseo-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; border: 1px solid; font-size: 12px; line-height: 1.6; font-weight: 600; }
+.arvaseo-badge--good { background: #edfaef; border-color: #00a32a; color: #00450c; }
+.arvaseo-badge--warn { background: #fcf9e8; border-color: #dba617; color: #4d3800; }
+.arvaseo-badge--bad { background: #fcf0f1; border-color: #d63638; color: #6b0e10; }
+.arvaseo-badge--neutral { background: #f6f7f7; border-color: #8c8f94; color: #2c3338; }
+.arvaseo-counts { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 12px 0 4px; padding: 0; }
+.arvaseo-count { padding: 8px 12px; border: 1px solid #dcdcde; border-left-width: 4px; background: #fff; }
+.arvaseo-count--bad { border-left-color: #d63638; }
+.arvaseo-count--warn { border-left-color: #dba617; }
+.arvaseo-count--good { border-left-color: #00a32a; }
+.arvaseo-count--neutral { border-left-color: #8c8f94; }
+.arvaseo-count-n { font-size: 18px; font-weight: 600; margin-right: 4px; }
+.arvaseo-finding { background: #fff; border: 1px solid #dcdcde; border-left: 4px solid #8c8f94; padding: 12px 16px; margin: 0 0 12px; max-width: 960px; }
+.arvaseo-finding--critical, .arvaseo-finding--high { border-left-color: #d63638; }
+.arvaseo-finding--medium { border-left-color: #dba617; }
+.arvaseo-finding h4 { margin: 0 0 6px; font-size: 14px; }
+.arvaseo-finding details { margin-top: 8px; }
+.arvaseo-finding summary { cursor: pointer; color: #2271b1; }
+.arvaseo-finding summary:focus-visible, .arvaseo-disclosure summary:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+.arvaseo-badges { margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.arvaseo-value { white-space: pre-wrap; word-break: break-word; font-size: 12px; }
+.arvaseo-filter { margin: 8px 0 12px; }
+@media (max-width: 782px) { .arvaseo-facts th { width: auto; } }

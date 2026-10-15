@@ -1,0 +1,1493 @@
+# Copyright (C) 2026 Arva SEO
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Arva SEO Connector 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-13T03:26:44+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: arvaseo-connector\n"
+
+#. Plugin Name of the plugin
+#: arvaseo-connector.php
+#: includes/Admin/AdminController.php:124
+msgid "Arva SEO Connector"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: arvaseo-connector.php
+msgid "https://arvaseo.com/"
+msgstr ""
+
+#. Description of the plugin
+#: arvaseo-connector.php
+msgid "Connects this WordPress site to Arva SEO: shares a privacy-minimised plugin inventory and Website Health checks with your consent, shows evidence-backed fix guidance, and receives content you send from Arva SEO within the publishing limits you set here."
+msgstr ""
+
+#. Author of the plugin
+#: arvaseo-connector.php
+#: includes/Admin/AdminController.php:68
+#: includes/Admin/AdminController.php:69
+msgid "Arva SEO"
+msgstr ""
+
+#: arvaseo-connector.php:30
+msgid "Arva SEO Connector needs PHP 8.1 or newer. Ask your host to update PHP; the plugin is not running."
+msgstr ""
+
+#: includes/Admin/AdminController.php:88
+#: includes/Admin/AdminController.php:344
+msgid "Connection"
+msgstr ""
+
+#: includes/Admin/AdminController.php:89
+msgid "Content Sync"
+msgstr ""
+
+#: includes/Admin/AdminController.php:90
+msgid "Plugin Inventory"
+msgstr ""
+
+#: includes/Admin/AdminController.php:91
+#: includes/Admin/views/connection.php:97
+#: includes/Admin/views/diagnostics.php:42
+msgid "Website Health"
+msgstr ""
+
+#: includes/Admin/AdminController.php:92
+msgid "Activity Log"
+msgstr ""
+
+#: includes/Admin/AdminController.php:93
+msgid "Settings"
+msgstr ""
+
+#: includes/Admin/AdminController.php:94
+msgid "Diagnostics & Privacy"
+msgstr ""
+
+#: includes/Admin/AdminController.php:105
+msgid "You don’t have permission to view this page."
+msgstr ""
+
+#: includes/Admin/AdminController.php:127
+msgid "Arva SEO Connector sections"
+msgstr ""
+
+#: includes/Admin/AdminController.php:149
+msgid "Connected to Arva SEO. The first plugin inventory and health check are queued and will run in the background."
+msgstr ""
+
+#: includes/Admin/AdminController.php:150
+msgid "Connected to Arva SEO, but the site’s details couldn’t be sent yet. They will be retried automatically."
+msgstr ""
+
+#: includes/Admin/AdminController.php:151
+msgid "Connecting was cancelled. Nothing was changed."
+msgstr ""
+
+#: includes/Admin/AdminController.php:152
+msgid "That connection reply didn’t match a connection started from this site by you, or it expired after 10 minutes. Start again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:153
+msgid "Arva SEO returned an invalid connection code. Start again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:154
+msgid "Arva SEO didn’t accept the connection (the code may have expired or been used). Start again; check the Activity Log if it keeps happening."
+msgstr ""
+
+#: includes/Admin/AdminController.php:155
+msgid "Disconnected. The credentials were removed from this site and revoked at Arva SEO, and synchronisation stopped."
+msgstr ""
+
+#: includes/Admin/AdminController.php:156
+msgid "The connection works."
+msgstr ""
+
+#: includes/Admin/AdminController.php:157
+msgid "The connection test failed. See Connection health below and the Activity Log."
+msgstr ""
+
+#: includes/Admin/AdminController.php:158
+msgid "Plugin inventory sync finished. See the result below."
+msgstr ""
+
+#: includes/Admin/AdminController.php:159
+msgid "Website recheck queued. Checks run in the background and can take a minute; refresh this page to see the results."
+msgstr ""
+
+#: includes/Admin/AdminController.php:160
+#: includes/Cron/PollingService.php:97
+msgid "Checked Arva SEO for content."
+msgstr ""
+
+#: includes/Admin/AdminController.php:161
+msgid "Your data-sharing choice was saved."
+msgstr ""
+
+#: includes/Admin/AdminController.php:162
+msgid "Tick the box to agree to share this data, or connect without it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:168
+msgid "The saved Arva SEO credentials can’t be read (the site’s security keys or ARVASEO_CONNECTOR_ENCRYPTION_KEY changed). Disconnect and connect again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:194
+msgid "You don’t have permission to connect this site."
+msgstr ""
+
+#: includes/Admin/AdminController.php:227
+msgid "Connection tested."
+msgstr ""
+
+#: includes/Admin/AdminController.php:251
+msgid "Website recheck requested."
+msgstr ""
+
+#: includes/Admin/AdminController.php:272
+msgid "Consent to share plugin inventory and Website Health given."
+msgstr ""
+
+#: includes/Admin/AdminController.php:275
+msgid "Consent withdrawn: no inventory or health data will be sent."
+msgstr ""
+
+#: includes/Admin/AdminController.php:286
+msgid "Diagnostics downloaded."
+msgstr ""
+
+#: includes/Admin/AdminController.php:328
+msgid "Copied."
+msgstr ""
+
+#: includes/Admin/AdminController.php:329
+msgid "Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:330
+msgid "Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:331
+msgid "With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:384
+msgid "Never"
+msgstr ""
+
+#: includes/Admin/AdminController.php:388
+#: includes/Admin/views/inventory.php:33
+msgid "Unknown"
+msgstr ""
+
+#. translators: 1: date and time, 2: relative time such as "5 mins".
+#: includes/Admin/AdminController.php:391
+#, php-format
+msgid "%1$s (%2$s ago)"
+msgstr ""
+
+#: includes/Admin/AdminController.php:402
+msgid "You don’t have permission to do that."
+msgstr ""
+
+#: includes/Admin/views/activity.php:29
+msgid "What the connector did, without tokens, codes, content or personal data. Kept for the number of days set in Settings."
+msgstr ""
+
+#: includes/Admin/views/activity.php:32
+msgid "Show"
+msgstr ""
+
+#: includes/Admin/views/activity.php:34
+msgid "Everything"
+msgstr ""
+
+#: includes/Admin/views/activity.php:35
+msgid "Warnings"
+msgstr ""
+
+#: includes/Admin/views/activity.php:36
+msgid "Errors"
+msgstr ""
+
+#: includes/Admin/views/activity.php:38
+msgid "Filter"
+msgstr ""
+
+#: includes/Admin/views/activity.php:41
+msgid "Connector activity"
+msgstr ""
+
+#: includes/Admin/views/activity.php:43
+msgid "Time"
+msgstr ""
+
+#: includes/Admin/views/activity.php:44
+msgid "Level"
+msgstr ""
+
+#: includes/Admin/views/activity.php:45
+msgid "What happened"
+msgstr ""
+
+#: includes/Admin/views/activity.php:46
+msgid "Details"
+msgstr ""
+
+#: includes/Admin/views/activity.php:47
+msgid "By"
+msgstr ""
+
+#: includes/Admin/views/activity.php:51
+msgid "No activity yet."
+msgstr ""
+
+#: includes/Admin/views/activity.php:60
+msgid "Automatic"
+msgstr ""
+
+#: includes/Admin/views/connection.php:21
+msgid "Identify this site and keep the connection working"
+msgstr ""
+
+#: includes/Admin/views/connection.php:22
+msgid "Send the plugin and theme inventory"
+msgstr ""
+
+#: includes/Admin/views/connection.php:23
+msgid "Send Website Health checks"
+msgstr ""
+
+#: includes/Admin/views/connection.php:24
+msgid "Show Arva SEO’s findings here"
+msgstr ""
+
+#: includes/Admin/views/connection.php:25
+msgid "Receive content sent from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:26
+msgid "Report what WordPress did with that content"
+msgstr ""
+
+#: includes/Admin/views/connection.php:29
+#: includes/Admin/views/connection.php:56
+msgid "Connected"
+msgstr ""
+
+#: includes/Admin/views/connection.php:30
+msgid "Reconnect required"
+msgstr ""
+
+#: includes/Admin/views/connection.php:31
+msgid "Not connected"
+msgstr ""
+
+#: includes/Admin/views/connection.php:40
+msgid "Connection status"
+msgstr ""
+
+#: includes/Admin/views/connection.php:45
+msgid "Workspace"
+msgstr ""
+
+#: includes/Admin/views/connection.php:46
+msgid "Website in Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:48
+msgid "Client"
+msgstr ""
+
+#: includes/Admin/views/connection.php:50
+msgid "Site registration ID"
+msgstr ""
+
+#: includes/Admin/views/connection.php:51
+msgid "Permissions granted"
+msgstr ""
+
+#: includes/Admin/views/connection.php:57
+msgid "Last successful communication"
+msgstr ""
+
+#: includes/Admin/views/connection.php:58
+msgid "Access renews"
+msgstr ""
+
+#: includes/Admin/views/connection.php:58
+msgid "Unavailable"
+msgstr ""
+
+#: includes/Admin/views/connection.php:59
+msgid "Access is renewed automatically; tokens are never shown."
+msgstr ""
+
+#: includes/Admin/views/connection.php:60
+msgid "Instant requests from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:63
+msgid "Working"
+msgstr ""
+
+#: includes/Admin/views/connection.php:63
+msgid "Not available (checked every 5 minutes instead)"
+msgstr ""
+
+#: includes/Admin/views/connection.php:67
+msgid "Last error"
+msgstr ""
+
+#: includes/Admin/views/connection.php:73
+msgid "Test connection"
+msgstr ""
+
+#: includes/Admin/views/connection.php:74
+msgid "Disconnect"
+msgstr ""
+
+#: includes/Admin/views/connection.php:76
+#: includes/Admin/views/health.php:101
+msgid "View in Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:76
+#: includes/Admin/views/health.php:101
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: includes/Admin/views/connection.php:86
+#: includes/Admin/views/connection.php:116
+msgid "Reconnect to Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:86
+#: includes/Admin/views/connection.php:116
+msgid "Connect to Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:87
+msgid "You’ll sign in on app.arvaseo.com and choose the website this WordPress site belongs to. You never enter an Arva SEO password here."
+msgstr ""
+
+#: includes/Admin/views/connection.php:92
+msgid "What to allow"
+msgstr ""
+
+#: includes/Admin/views/connection.php:93
+msgid "Share the plugin inventory and Website Health checks with Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:95
+msgid "Exactly what is shared"
+msgstr ""
+
+#: includes/Admin/views/connection.php:97
+#: includes/Admin/views/diagnostics.php:42
+msgid "Plugin and theme inventory"
+msgstr ""
+
+#: includes/Admin/views/connection.php:104
+#: includes/Admin/views/diagnostics.php:49
+msgid "Never sent"
+msgstr ""
+
+#: includes/Admin/views/connection.php:110
+msgid "Recipient: Arva SEO (api.arvaseo.com). Purpose: explain this site’s health, updates and risks with fix guidance. No other telemetry is collected."
+msgstr ""
+
+#: includes/Admin/views/connection.php:112
+msgid "I agree to share the data listed above with Arva SEO for these purposes."
+msgstr ""
+
+#: includes/Admin/views/connection.php:113
+msgid "Allow Arva SEO to send content to this site"
+msgstr ""
+
+#: includes/Admin/views/connection.php:114
+msgid "(only as drafts until you choose another publishing mode in Settings)"
+msgstr ""
+
+#. translators: %s: Arva SEO app host.
+#: includes/Admin/views/connection.php:120
+#, php-format
+msgid "You’ll be sent to %s and brought back here."
+msgstr ""
+
+#: includes/Admin/views/content.php:22
+#: includes/Admin/views/settings.php:15
+msgid "Draft only"
+msgstr ""
+
+#: includes/Admin/views/content.php:23
+msgid "Editorial review (draft, pending review)"
+msgstr ""
+
+#: includes/Admin/views/content.php:24
+#: includes/Admin/views/settings.php:17
+msgid "Editorial review and scheduling"
+msgstr ""
+
+#: includes/Admin/views/content.php:25
+#: includes/Admin/views/settings.php:18
+msgid "Full publishing"
+msgstr ""
+
+#: includes/Admin/views/content.php:32
+msgid "What Arva SEO may do here"
+msgstr ""
+
+#: includes/Admin/views/content.php:34
+#: includes/Admin/views/settings.php:26
+#: includes/Admin/views/settings.php:27
+msgid "Publishing mode"
+msgstr ""
+
+#. translators: %s: comma-separated WordPress statuses.
+#: includes/Admin/views/content.php:38
+#, php-format
+msgid "Allowed statuses: %s. Anything else is refused."
+msgstr ""
+
+#: includes/Admin/views/content.php:40
+msgid "Requests above this mode are saved as drafts instead (and reported as downgraded)."
+msgstr ""
+
+#: includes/Admin/views/content.php:44
+#: includes/Admin/views/settings.php:40
+msgid "Default author"
+msgstr ""
+
+#: includes/Admin/views/content.php:44
+msgid "Not set: content can’t be saved until you choose one in Settings"
+msgstr ""
+
+#: includes/Admin/views/content.php:45
+msgid "Allowed content types"
+msgstr ""
+
+#: includes/Admin/views/content.php:46
+#: includes/Admin/views/settings.php:66
+msgid "Edits made in WordPress"
+msgstr ""
+
+#: includes/Admin/views/content.php:46
+msgid "Overwritten by newer content from Arva SEO (a revision is kept)"
+msgstr ""
+
+#: includes/Admin/views/content.php:46
+msgid "Kept: a newer version from Arva SEO is refused as a conflict"
+msgstr ""
+
+#: includes/Admin/views/content.php:47
+msgid "Last check for content"
+msgstr ""
+
+#: includes/Admin/views/content.php:52
+msgid "Check for content now"
+msgstr ""
+
+#: includes/Admin/views/content.php:55
+msgid "Change settings"
+msgstr ""
+
+#: includes/Admin/views/content.php:59
+msgid "Scheduled posts rely on WP-Cron, which runs when the site gets visits. On quiet sites, set up a real server cron job so posts publish on time (see the administrator guide)."
+msgstr ""
+
+#: includes/Admin/views/content.php:63
+msgid "Recent deliveries"
+msgstr ""
+
+#: includes/Admin/views/content.php:65
+msgid "Nothing has been sent from Arva SEO yet."
+msgstr ""
+
+#: includes/Admin/views/content.php:68
+msgid "Content received from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/content.php:70
+msgid "Received"
+msgstr ""
+
+#: includes/Admin/views/content.php:71
+msgid "Post"
+msgstr ""
+
+#: includes/Admin/views/content.php:72
+msgid "Requested"
+msgstr ""
+
+#: includes/Admin/views/content.php:73
+msgid "Applied"
+msgstr ""
+
+#: includes/Admin/views/content.php:74
+#: includes/Admin/views/health.php:219
+msgid "Result"
+msgstr ""
+
+#: includes/Admin/views/content.php:75
+msgid "Reported to Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/content.php:93
+msgid "(no title)"
+msgstr ""
+
+#: includes/Admin/views/content.php:95
+msgid "Preview"
+msgstr ""
+
+#: includes/Admin/views/content.php:104
+msgid "processing"
+msgstr ""
+
+#: includes/Admin/views/content.php:108
+#: includes/Admin/views/health.php:176
+msgid "Yes"
+msgstr ""
+
+#: includes/Admin/views/content.php:108
+msgid "Pending, will retry"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:18
+#: includes/Admin/views/diagnostics.php:20
+msgid "Diagnostics"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:19
+msgid "Share this with Arva SEO support if something isn’t working. It contains versions, connection state, sync results and settings only: no tokens, secrets, file paths, usernames, emails or content."
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:23
+msgid "Copy"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:24
+msgid "Download"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:30
+msgid "Data sharing"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:34
+msgid "Not shared: no plugin inventory or health data is sent"
+msgstr ""
+
+#. translators: %s: date and time.
+#: includes/Admin/views/diagnostics.php:37
+#, php-format
+msgid "Shared since %s"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:55
+msgid "Stored on this site"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:57
+msgid "Encrypted connection credentials (removed on disconnect)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:58
+msgid "Connection details, settings and your consent record"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:59
+msgid "Which posts came from Arva SEO, with delivery results (kept 180 days)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:60
+msgid "Received event IDs, to refuse replays (kept 7 days)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:61
+msgid "The activity log (kept for the period chosen in Settings)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:63
+msgid "To stop sharing, withdraw consent below or disconnect. To have Arva SEO delete what it holds, disconnect and contact Arva SEO support; see arvaseo.com/privacy/."
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:67
+msgid "Share the plugin inventory and Website Health checks listed above with Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:68
+msgid "Save data-sharing choice"
+msgstr ""
+
+#: includes/Admin/views/health.php:22
+msgid "Critical"
+msgstr ""
+
+#: includes/Admin/views/health.php:23
+msgid "Recommended"
+msgstr ""
+
+#: includes/Admin/views/health.php:24
+msgid "Passed"
+msgstr ""
+
+#: includes/Admin/views/health.php:25
+msgid "Couldn’t check"
+msgstr ""
+
+#: includes/Admin/views/health.php:28
+msgid "Current"
+msgstr ""
+
+#: includes/Admin/views/health.php:29
+msgid "Stale: may no longer describe the site"
+msgstr ""
+
+#: includes/Admin/views/health.php:30
+msgid "Expired"
+msgstr ""
+
+#: includes/Admin/views/health.php:31
+msgid "Superseded by a newer check (assessment pending)"
+msgstr ""
+
+#: includes/Admin/views/health.php:32
+msgid "No assessment yet"
+msgstr ""
+
+#: includes/Admin/views/health.php:35
+msgid "Open"
+msgstr ""
+
+#: includes/Admin/views/health.php:36
+msgid "Needs verification"
+msgstr ""
+
+#: includes/Admin/views/health.php:37
+msgid "In progress"
+msgstr ""
+
+#: includes/Admin/views/health.php:38
+msgid "Snoozed"
+msgstr ""
+
+#: includes/Admin/views/health.php:39
+msgid "Dismissed"
+msgstr ""
+
+#: includes/Admin/views/health.php:40
+msgid "Accepted risk"
+msgstr ""
+
+#: includes/Admin/views/health.php:41
+msgid "Resolved"
+msgstr ""
+
+#: includes/Admin/views/health.php:44
+msgid "Site administrator"
+msgstr ""
+
+#: includes/Admin/views/health.php:45
+msgid "Developer"
+msgstr ""
+
+#: includes/Admin/views/health.php:46
+msgid "Hosting provider"
+msgstr ""
+
+#: includes/Admin/views/health.php:47
+msgid "Your SEO specialist"
+msgstr ""
+
+#: includes/Admin/views/health.php:50
+msgid "Measured by WordPress"
+msgstr ""
+
+#: includes/Admin/views/health.php:51
+msgid "Assessed by an Arva SEO rule"
+msgstr ""
+
+#: includes/Admin/views/health.php:52
+msgid "Detected by an Arva SEO audit"
+msgstr ""
+
+#: includes/Admin/views/health.php:53
+msgid "From an advisory provider"
+msgstr ""
+
+#: includes/Admin/views/health.php:56
+msgid "WordPress core"
+msgstr ""
+
+#: includes/Admin/views/health.php:57
+msgid "Plugins and themes"
+msgstr ""
+
+#: includes/Admin/views/health.php:58
+msgid "Runtime and hosting"
+msgstr ""
+
+#: includes/Admin/views/health.php:59
+msgid "Security and configuration"
+msgstr ""
+
+#: includes/Admin/views/health.php:60
+msgid "Reliability"
+msgstr ""
+
+#: includes/Admin/views/health.php:61
+msgid "Performance"
+msgstr ""
+
+#: includes/Admin/views/health.php:62
+msgid "SEO and indexability"
+msgstr ""
+
+#: includes/Admin/views/health.php:68
+msgid "Overview"
+msgstr ""
+
+#: includes/Admin/views/health.php:70
+msgid "Last checked"
+msgstr ""
+
+#: includes/Admin/views/health.php:71
+msgid "Assessed by Arva SEO"
+msgstr ""
+
+#. translators: %s: rules version.
+#: includes/Admin/views/health.php:78
+#, php-format
+msgid "Rules version %s"
+msgstr ""
+
+#: includes/Admin/views/health.php:84
+msgid "Last upload"
+msgstr ""
+
+#: includes/Admin/views/health.php:84
+#: includes/Admin/views/inventory.php:49
+msgid "Failed"
+msgstr ""
+
+#: includes/Admin/views/health.php:88
+msgid "Check results"
+msgstr ""
+
+#: includes/Admin/views/health.php:93
+msgid "“Couldn’t check” is never counted as passed. There is no overall score."
+msgstr ""
+
+#: includes/Admin/views/health.php:98
+msgid "Recheck website"
+msgstr ""
+
+#: includes/Admin/views/health.php:105
+msgid "This view is read-only. Snoozing, dismissing, accepting a risk or assigning a finding happens in Arva SEO. Nothing here changes your site."
+msgstr ""
+
+#: includes/Admin/views/health.php:110
+msgid "Changed since the previous check"
+msgstr ""
+
+#: includes/Admin/views/health.php:114
+#: includes/Admin/views/health.php:115
+msgid "not checked"
+msgstr ""
+
+#: includes/Admin/views/health.php:122
+msgid "Findings and fix guidance"
+msgstr ""
+
+#: includes/Admin/views/health.php:124
+msgid "Connect to Arva SEO to get findings with evidence and step-by-step fix guidance. The checks below run locally either way."
+msgstr ""
+
+#: includes/Admin/views/health.php:126
+msgid "Arva SEO is assessing the latest check. Refresh in a few minutes."
+msgstr ""
+
+#: includes/Admin/views/health.php:126
+msgid "No open findings."
+msgstr ""
+
+#: includes/Admin/views/health.php:129
+msgid "These findings are not current. They describe the site as it was at the last assessment."
+msgstr ""
+
+#. translators: %s: severity.
+#: includes/Admin/views/health.php:146
+#, php-format
+msgid "Severity: %s"
+msgstr ""
+
+#. translators: %s: confidence.
+#: includes/Admin/views/health.php:148
+#, php-format
+msgid "Confidence: %s"
+msgstr ""
+
+#: includes/Admin/views/health.php:154
+msgid "Wording edited in Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/health.php:158
+msgid "What’s wrong:"
+msgstr ""
+
+#: includes/Admin/views/health.php:159
+msgid "What to fix:"
+msgstr ""
+
+#: includes/Admin/views/health.php:161
+msgid "View evidence"
+msgstr ""
+
+#: includes/Admin/views/health.php:172
+msgid "View fix guidance"
+msgstr ""
+
+#: includes/Admin/views/health.php:173
+msgid "Why it matters:"
+msgstr ""
+
+#: includes/Admin/views/health.php:174
+msgid "Who should do it:"
+msgstr ""
+
+#: includes/Admin/views/health.php:175
+msgid "Risk:"
+msgstr ""
+
+#: includes/Admin/views/health.php:176
+msgid "Backup first:"
+msgstr ""
+
+#: includes/Admin/views/health.php:176
+msgid "No"
+msgstr ""
+
+#: includes/Admin/views/health.php:178
+msgid "Before you start:"
+msgstr ""
+
+#: includes/Admin/views/health.php:185
+msgid "Steps:"
+msgstr ""
+
+#: includes/Admin/views/health.php:191
+msgid "How to verify:"
+msgstr ""
+
+#: includes/Admin/views/health.php:197
+msgid "How to undo:"
+msgstr ""
+
+#: includes/Admin/views/health.php:204
+msgid "Note from your SEO team:"
+msgstr ""
+
+#: includes/Admin/views/health.php:213
+msgid "All checks"
+msgstr ""
+
+#: includes/Admin/views/health.php:215
+msgid "Website Health checks and results"
+msgstr ""
+
+#: includes/Admin/views/health.php:217
+msgid "Check"
+msgstr ""
+
+#: includes/Admin/views/health.php:218
+msgid "Category"
+msgstr ""
+
+#: includes/Admin/views/health.php:220
+msgid "Measured value"
+msgstr ""
+
+#: includes/Admin/views/health.php:221
+msgid "Source"
+msgstr ""
+
+#. translators: %s: version number.
+#: includes/Admin/views/inventory.php:22
+#, php-format
+msgid "Update available: %s"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:25
+msgid "Up to date"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:28
+msgid "Unknown (update data is out of date)"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:29
+msgid "Unknown (no update data)"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:30
+msgid "Unknown (update data unreadable)"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:31
+msgid "Unknown (not listed by WordPress.org)"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:36
+#: includes/Admin/views/inventory.php:75
+msgid "Plugin"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:37
+msgid "Must-use"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:38
+msgid "Drop-in"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:43
+msgid "Inventory sync"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:45
+msgid "Last sent to Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:46
+msgid "Last attempt"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:52
+msgid "Sharing"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:52
+msgid "Allowed by an administrator"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:52
+msgid "Not allowed: nothing is sent"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:56
+msgid "Sync inventory now"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:60
+msgid "Exactly which fields are shared"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:66
+msgid "Plugin settings, license keys and file paths are never sent. The inventory never forces an update check: it uses the update data WordPress already has."
+msgstr ""
+
+#: includes/Admin/views/inventory.php:71
+msgid "Plugins"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:73
+msgid "Installed plugins"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:76
+msgid "Type"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:77
+#: includes/Admin/views/inventory.php:111
+msgid "Version"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:78
+#: includes/Admin/views/inventory.php:112
+msgid "State"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:79
+#: includes/Admin/views/inventory.php:113
+msgid "Updates"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:80
+msgid "Automatic updates"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:91
+msgid "Network active"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:93
+#: includes/Admin/views/inventory.php:127
+msgid "Active"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:95
+#: includes/Admin/views/inventory.php:127
+msgid "Inactive"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:100
+msgid "Not applicable"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:100
+msgid "On"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:100
+msgid "Off"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:106
+msgid "Themes"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:108
+msgid "Installed themes"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:110
+msgid "Theme"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:123
+msgid "child theme"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:124
+msgid "parent of the active theme"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:127
+msgid "In use as parent"
+msgstr ""
+
+#: includes/Admin/views/settings.php:15
+msgid "Content arrives as drafts. Nothing is published, scheduled or sent for review. (Default)"
+msgstr ""
+
+#: includes/Admin/views/settings.php:16
+msgid "Editorial review"
+msgstr ""
+
+#: includes/Admin/views/settings.php:16
+msgid "Drafts, or Pending Review so an editor approves before publishing."
+msgstr ""
+
+#: includes/Admin/views/settings.php:17
+msgid "Also lets Arva SEO schedule posts for a future time."
+msgstr ""
+
+#: includes/Admin/views/settings.php:18
+msgid "Also lets Arva SEO publish immediately."
+msgstr ""
+
+#: includes/Admin/views/settings.php:23
+msgid "Publishing"
+msgstr ""
+
+#: includes/Admin/views/settings.php:31
+msgid "Arva SEO can never go beyond this. Requests above it are refused (arvaseo_status_not_allowed)."
+msgstr ""
+
+#: includes/Admin/views/settings.php:35
+msgid "Requests above the mode"
+msgstr ""
+
+#: includes/Admin/views/settings.php:36
+msgid "Downgrade disallowed requests to Draft instead of refusing them"
+msgstr ""
+
+#: includes/Admin/views/settings.php:37
+msgid "Off by default. When on, Arva SEO is told what was requested and that a draft was created instead."
+msgstr ""
+
+#: includes/Admin/views/settings.php:49
+msgid "— Choose an author —"
+msgstr ""
+
+#: includes/Admin/views/settings.php:54
+msgid "Posts from Arva SEO are created as this user. They must be able to publish for Scheduling or Full publishing. Arva SEO never chooses a user ID."
+msgstr ""
+
+#: includes/Admin/views/settings.php:58
+#: includes/Admin/views/settings.php:59
+msgid "Content types"
+msgstr ""
+
+#: includes/Admin/views/settings.php:67
+msgid "Let newer content from Arva SEO replace posts edited here"
+msgstr ""
+
+#: includes/Admin/views/settings.php:68
+msgid "Off by default: an edited post is kept and Arva SEO is told there’s a conflict. When on, a revision is saved first. Only posts that came from Arva SEO are ever updated; nothing is deleted."
+msgstr ""
+
+#: includes/Admin/views/settings.php:71
+msgid "Categories and tags"
+msgstr ""
+
+#: includes/Admin/views/settings.php:72
+msgid "Create categories and tags that don’t exist yet"
+msgstr ""
+
+#: includes/Admin/views/settings.php:73
+msgid "Off: only existing ones are used; others are skipped and reported."
+msgstr ""
+
+#: includes/Admin/views/settings.php:76
+#: includes/Admin/views/settings.php:77
+msgid "SEO title and description"
+msgstr ""
+
+#: includes/Admin/views/settings.php:78
+msgid "Don’t write them"
+msgstr ""
+
+#: includes/Admin/views/settings.php:79
+msgid "Yoast SEO fields (when active)"
+msgstr ""
+
+#: includes/Admin/views/settings.php:80
+msgid "Rank Math fields (when active)"
+msgstr ""
+
+#: includes/Admin/views/settings.php:85
+msgid "Featured images"
+msgstr ""
+
+#: includes/Admin/views/settings.php:88
+msgid "Import"
+msgstr ""
+
+#: includes/Admin/views/settings.php:89
+msgid "Download featured images sent with content"
+msgstr ""
+
+#: includes/Admin/views/settings.php:92
+msgid "Approved image hosts"
+msgstr ""
+
+#: includes/Admin/views/settings.php:94
+msgid "One exact host per line (for example images.example.com). Images from any other host are skipped. HTTPS only; JPEG, PNG, GIF and WebP only, up to 8 MB."
+msgstr ""
+
+#: includes/Admin/views/settings.php:98
+msgid "Checks and records"
+msgstr ""
+
+#: includes/Admin/views/settings.php:101
+#: includes/Admin/views/settings.php:102
+msgid "Website Health checks"
+msgstr ""
+
+#: includes/Admin/views/settings.php:103
+msgid "Once a day"
+msgstr ""
+
+#: includes/Admin/views/settings.php:104
+msgid "Twice a day"
+msgstr ""
+
+#: includes/Admin/views/settings.php:108
+#: includes/Admin/views/settings.php:109
+msgid "Keep the activity log for"
+msgstr ""
+
+#. translators: %d: number of days.
+#: includes/Admin/views/settings.php:114
+#, php-format
+msgid "%d days"
+msgstr ""
+
+#: includes/Admin/views/settings.php:121
+msgid "When the plugin is deleted"
+msgstr ""
+
+#: includes/Admin/views/settings.php:122
+msgid "Also delete settings, logs and delivery records"
+msgstr ""
+
+#: includes/Admin/views/settings.php:123
+msgid "Credentials are always removed and revoked on delete. Posts created from Arva SEO are never deleted."
+msgstr ""
+
+#: includes/Api/ApiClient.php:64
+msgid "This site isn’t connected to Arva SEO."
+msgstr ""
+
+#: includes/Api/ApiClient.php:70
+msgid "Reconnect this site to Arva SEO."
+msgstr ""
+
+#: includes/Api/ApiClient.php:145
+msgid "Couldn’t renew the connection’s access; will retry."
+msgstr ""
+
+#: includes/Api/ApiClient.php:232
+msgid "Arva SEO no longer accepts this connection. Reconnect to resume."
+msgstr ""
+
+#: includes/Api/ApiClient.php:292
+msgid "Couldn’t reach Arva SEO."
+msgstr ""
+
+#: includes/Api/ApiClient.php:298
+msgid "Couldn’t reach Arva SEO. Check the server’s internet connection and try again."
+msgstr ""
+
+#: includes/Api/ApiClient.php:308
+msgid "Arva SEO couldn’t complete the request."
+msgstr ""
+
+#: includes/Auth/AuthService.php:65
+msgid "Started connecting to Arva SEO."
+msgstr ""
+
+#: includes/Auth/AuthService.php:98
+msgid "A connection reply didn’t match a connection started here; it was ignored."
+msgstr ""
+
+#: includes/Auth/AuthService.php:105
+msgid "Connecting was cancelled in Arva SEO."
+msgstr ""
+
+#: includes/Auth/AuthService.php:133
+msgid "Arva SEO didn’t accept the connection code."
+msgstr ""
+
+#: includes/Auth/AuthService.php:168
+msgid "Connected to Arva SEO."
+msgstr ""
+
+#: includes/Auth/AuthService.php:209
+msgid "Disconnected from Arva SEO. Nothing more is sent or received."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:65
+msgid "Ignored a delivery without valid identifiers."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:81
+msgid "This delivery key was already used for different content."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:89
+msgid "This event ID was already used."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:111
+msgid "The content is larger than this site accepts."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:122
+msgid "A newer version of this content was already applied."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:130
+msgid "Refused content: the requested status is above this site’s publishing setting."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:136
+msgid "This site’s Arva SEO Connector settings don’t allow that publishing status."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:140
+msgid "This site doesn’t accept that content type from Arva SEO."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:144
+msgid "Choose a default author who can do this in Arva SEO → Settings."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:152
+msgid "The publication time has already passed. Choose a new time in Arva SEO."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:181
+msgid "The post this content was sent to before is missing or in the trash. Restore it, or review it in WordPress."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:184
+msgid "This content was already sent to this site. Send it as an update."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:187
+msgid "Kept the WordPress version: the post was edited here since Arva SEO last sent it."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:188
+msgid "The post was edited in WordPress since Arva SEO last sent it, so it wasn’t overwritten."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:191
+msgid "This post is already live or scheduled; an update must keep it published (Full publishing) rather than turn it back into a draft."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:202
+msgid "WordPress couldn’t save delivered content."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:203
+msgid "WordPress couldn’t save the post."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:260
+msgid "Content from Arva SEO saved as a draft (downgraded by local settings)."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:260
+msgid "Content from Arva SEO saved."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:296
+msgid "Couldn’t report a delivery result to Arva SEO; will retry."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:359
+msgid "The delivery has undocumented or missing fields."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:362
+msgid "This delivery’s schema version isn’t supported. Update the Arva SEO Connector plugin."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:366
+msgid "This delivery is for another site, website or workspace."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:371
+msgid "The post has undocumented or missing fields."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:390
+msgid "A field in the delivery isn’t valid."
+msgstr ""
+
+#: includes/Content/ContentDeliveryService.php:394
+msgid "The content checksum doesn’t match."
+msgstr ""
+
+#: includes/Cron/CronManager.php:83
+msgid "Every 5 minutes (Arva SEO Connector)"
+msgstr ""
+
+#: includes/Health/AssessmentService.php:50
+msgid "Ignored an assessment that didn’t match this site or schema."
+msgstr ""
+
+#: includes/Health/HealthSnapshotService.php:64
+msgid "Website Health checks ran."
+msgstr ""
+
+#: includes/Health/HealthSnapshotService.php:90
+msgid "Website Health snapshot sent to Arva SEO for assessment."
+msgstr ""
+
+#: includes/Health/HealthSnapshotService.php:101
+msgid "Couldn’t send the Website Health snapshot."
+msgstr ""
+
+#: includes/Inventory/PluginInventoryService.php:75
+msgid "Plugin inventory sent to Arva SEO."
+msgstr ""
+
+#: includes/Inventory/PluginInventoryService.php:89
+msgid "Couldn’t send the plugin inventory."
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:74
+msgid "Passwords, salts, access or refresh tokens, signing secrets, license keys or API keys"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:75
+msgid "Database credentials, file paths, configuration files, server or debug logs"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:76
+msgid "Usernames, email addresses, visitor data or form submissions"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:77
+msgid "Plugin or theme settings, uploaded files, and your existing posts and pages"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:174
+msgid "This site uses the Arva SEO Connector to work with Arva SEO, an SEO service used by the site owner or their agency."
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:175
+msgid "With an administrator’s consent, the connector sends Arva SEO technical information about this website: the installed plugins and themes with their versions and update state, and the results of WordPress health checks (software versions and configuration facts such as whether HTTPS is used). It does not send visitor information, comments, form submissions, user accounts or email addresses."
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:176
+msgid "Content written in Arva SEO may be sent to this site as posts or pages. The connector keeps a log of its own activity, which may record which administrator performed an action (by user ID), for the retention period set in the plugin."
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:188
+#: includes/Privacy/PrivacyService.php:202
+msgid "Arva SEO Connector activity log"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:230
+msgid "Arva SEO Connector activity"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:234
+msgid "Time (UTC)"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:238
+msgid "Action"
+msgstr ""
+
+#: includes/Rest/SignatureVerifier.php:36
+msgid "Unauthorized."
+msgstr ""
+
+#: includes/Rest/SignatureVerifier.php:39
+msgid "Payload too large."
+msgstr ""
+
+#: includes/Rest/WebhookController.php:85
+msgid "Too many requests."
+msgstr ""
+
+#: includes/Rest/WebhookController.php:105
+#: includes/Rest/WebhookController.php:115
+msgid "Invalid event."
+msgstr ""
+
+#: includes/Rest/WebhookController.php:108
+msgid "This event was already received."
+msgstr ""
+
+#: includes/Rest/WebhookController.php:195
+msgid "Received a request from Arva SEO."
+msgstr ""
+
+#: includes/Settings.php:111
+msgid "Publishing settings changed."
+msgstr ""
+
+#: includes/Site/SiteRegistrationService.php:37
+msgid "Couldn’t update this site’s details in Arva SEO."
+msgstr ""
