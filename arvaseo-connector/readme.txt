@@ -4,7 +4,7 @@ Tags: seo, site health, publishing, plugins, maintenance
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,6 +19,7 @@ The Arva SEO Connector links this site to a website in your Arva SEO workspace.
 * **Website Health.** Around 40 checks across core, plugins and themes, runtime, security, reliability, performance and SEO, using WordPress's Site Health tests and APIs. Arva SEO turns them into findings that say what is wrong, why it matters, how to fix it, who should do it, and how to verify and undo the change. Nothing is ever changed on your site automatically.
 * **Content from Arva SEO.** Drafts written in Arva SEO arrive as drafts, pending review, scheduled or published posts, but never beyond the publishing mode you choose here (Draft only by default).
 * **SEO titles and descriptions.** If an administrator allows it (off by default), the SEO titles and meta descriptions your team approves in Arva SEO are written to Yoast SEO or Rank Math for published posts, pages and products and the homepage, in bulk. Only those two fields change, the page caches are cleared, and every change can be undone from Arva SEO.
+* **IndexNow.** The site serves the IndexNow key Arva SEO gives it (as /your-key.txt), so Arva SEO can tell Bing, Yandex, Seznam, Naver and Yep when you publish a post or change a page's SEO title or description, and they recrawl it sooner. No file to upload.
 * **Privacy.** Nothing about the site is shared until an administrator agrees to the exact list of fields. No visitor data, user accounts, emails, passwords or settings are ever sent. Existing content isn't sent either, except the previous SEO title and meta description of a page whose SEO title or description Arva SEO changes (when allowed), so that change can be undone.
 
 == Installation ==
@@ -73,6 +74,9 @@ No visitor data, user accounts, emails, passwords, settings or existing content 
 See Arva SEO → Diagnostics & Privacy for the full list of shared fields and their purpose, and the suggested text added to Settings → Privacy.
 
 == Changelog ==
+
+= 1.2.0 =
+* New: IndexNow. The site serves its IndexNow key file by itself, so Arva SEO can ask Bing, Yandex, Seznam, Naver and Yep to recrawl pages after a post is published or an SEO title or description changes. The key is received when the plugin checks in with Arva SEO and stops being served when the site disconnects.
 
 = 1.1.0 =
 * New: bulk SEO title and meta description updates from Arva SEO into Yoast SEO or Rank Math, for published posts, pages, products and the homepage. Off until an administrator allows it in Settings; every change can be undone from Arva SEO.

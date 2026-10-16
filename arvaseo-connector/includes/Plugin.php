@@ -13,6 +13,7 @@ use ArvaSEO\Connector\Install\Lifecycle;
 use ArvaSEO\Connector\Install\Schema;
 use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Rest\WebhookController;
+use ArvaSEO\Connector\Site\IndexNowKey;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,6 +38,8 @@ final class Plugin {
 		$booted = true;
 
 		add_action( 'init', array( self::class, 'init' ) );
+		// Before WordPress resolves the request, so /{key}.txt never becomes a 404 page.
+		add_action( 'init', array( IndexNowKey::class, 'maybe_serve' ), 0 );
 		add_action( 'rest_api_init', array( WebhookController::class, 'register' ) );
 		add_action( 'wp_initialize_site', array( Lifecycle::class, 'initialize_site' ), 20 );
 		add_action( 'admin_init', array( PrivacyService::class, 'add_policy_content' ) );

@@ -14,6 +14,7 @@ use ArvaSEO\Connector\Content\ContentDeliveryService;
 use ArvaSEO\Connector\Content\SeoUpdateService;
 use ArvaSEO\Connector\Logging\AuditLogger;
 use ArvaSEO\Connector\Settings;
+use ArvaSEO\Connector\Site\IndexNowKey;
 use ArvaSEO\Connector\Site\SiteRegistrationService;
 use ArvaSEO\Connector\Support\Lock;
 use ArvaSEO\Connector\Sync\SyncState;
@@ -67,6 +68,7 @@ final class PollingService {
 				'push_status'  => in_array( $data['push_status'] ?? '', array( 'unverified', 'verified', 'unreachable' ), true ) ? $data['push_status'] : 'unverified',
 				'entitlements' => array_map( 'boolval', array_intersect_key( (array) ( $data['entitlements'] ?? array() ), array_flip( array( 'connector', 'health_analysis', 'vulnerability_intelligence', 'publishing' ) ) ) ),
 				'app_url'      => ApiClient::app_link( $data['app_url'] ?? null ),
+				'indexnow_key' => IndexNowKey::sanitize( $data['indexnow_key'] ?? null ),
 			)
 		);
 		if ( ! empty( $data['refresh_requested'] ) && ( (int) ( SyncState::get( 'health' )['at'] ?? 0 ) ) < time() - 10 * MINUTE_IN_SECONDS ) {

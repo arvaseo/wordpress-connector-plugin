@@ -10,6 +10,7 @@ namespace ArvaSEO\Connector\Api;
 use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Config;
 use ArvaSEO\Connector\Logging\AuditLogger;
+use ArvaSEO\Connector\Site\IndexNowKey;
 use ArvaSEO\Connector\Support\Lock;
 
 defined( 'ABSPATH' ) || exit;
@@ -170,6 +171,7 @@ final class ApiClient {
 				'client'       => isset( $site['client'] ) && is_string( $site['client'] ) ? sanitize_text_field( $site['client'] ) : null,
 				'app_url'      => self::app_link( $site['app_url'] ?? null ),
 				'entitlements' => array_map( 'boolval', array_intersect_key( (array) ( $body['entitlements'] ?? array() ), array_flip( array( 'connector', 'health_analysis', 'vulnerability_intelligence', 'publishing' ) ) ) ),
+				'indexnow_key' => IndexNowKey::sanitize( $site['indexnow_key'] ?? null ),
 			)
 		);
 	}
