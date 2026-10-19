@@ -4,7 +4,7 @@ Tags: pagespeed, performance, core web vitals, seo, site health
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,7 @@ Arva SEO → PageSpeed fixes lists each fix with the PageSpeed (Lighthouse) prob
 
 * **Show the main image first**: the featured image on posts and pages, and on the homepage the image your latest PageSpeed test in Arva SEO named (Largest Contentful Paint image was lazily loaded; LCP request discovery)
 * **Lazy-load images, videos and maps** below the first few images (Defer offscreen images)
+* **Load styles faster** (critical CSS) and **Remove unused CSS**, worked out on Arva SEO's servers once for each type of page: the first screen's styles go straight into the page and stylesheets stop holding it up, or each page gets only the styles it uses with the full files loading on the first interaction. They need the connection and use the page optimizations of your Arva SEO plan (Eliminate render-blocking resources; Reduce unused CSS)
 * **Defer scripts** in the page's head, leaving jQuery, consent tools and any scripts you choose alone (Eliminate render-blocking resources). Because this one can affect how a site works, it can only be turned on after you've tried it and ticked off your important pages.
 * **Add missing image sizes** to media-library images (Image elements do not have explicit width and height)
 * **Add the mobile viewport tag**, when PageSpeed says it's missing
@@ -76,7 +77,7 @@ Yes, in Arva SEO → PageSpeed fixes → Leave things alone:
 
 = Can it make critical CSS or remove unused CSS? =
 
-No. Both need every page drawn in a real browser to see which styles it uses, which is a job for a caching plugin with its own service (WP Rocket's Remove unused CSS, LiteSpeed Cache's critical and unused CSS options). The PageSpeed fixes page and Arva SEO name the setting to use in the plugin you have. Remove unused WordPress extras does take block styles off pages without blocks.
+Yes, from 1.6.0, when the site is connected: Load styles faster and Remove unused CSS. Arva SEO loads one page of each type (homepage, page, post, product, category and so on) on its servers, as a phone and as a computer, and sends back each stylesheet's critical and used CSS. Each page type uses one page optimization of your plan (Free 50 a month, more on paid plans, and an add-on of 15,000). A stylesheet whose contents change makes a new page type; clearing your cache costs nothing. When the month's page optimizations run out, page types whose styles haven't changed keep their optimized CSS and the others load their normal stylesheets, never out-of-date CSS.
 
 = Is Browser caching and compression safe? =
 
@@ -115,6 +116,8 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 * **Content:** every 5 minutes the plugin asks api.arvaseo.com for content you sent from Arva SEO, and reports back the post ID, status and link it created.
 * **Signed requests from Arva SEO:** api.arvaseo.com may call this site's /wp-json/arvaseo/v1/events endpoint to ask it to check for content or run a recheck sooner.
 * **Featured images (off by default):** only from image hosts you approve.
+* **Load styles faster and Remove unused CSS (PageSpeed fixes, off by default, only when connected):** the plugin sends api.arvaseo.com the address of one public page of each type, and Arva SEO's renderer loads it like a visitor, as a phone and as a computer, to work out its styles; the critical and used CSS come back to this site. Only page addresses are sent. While Arva SEO loads a page, the address carries a short-lived signed parameter so the page is served with its original styles.
+* **Faster Google Fonts, "Serve them from your site" (off by default):** the plugin downloads the Google Fonts stylesheets and font files your pages already use from fonts.googleapis.com and fonts.gstatic.com, once, into your uploads folder, so visitors' browsers no longer connect to Google for them. Google's privacy policy: https://policies.google.com/privacy
 * **Click-to-play videos (a PageSpeed fix, off by default):** visitors' browsers load each video's preview picture from YouTube (i.ytimg.com), and the player from youtube-nocookie.com only when they press play. YouTube's terms: https://www.youtube.com/t/terms · Google's privacy policy: https://policies.google.com/privacy
 
 No visitor data, user accounts, emails, passwords, settings or existing content is ever sent. Arva SEO terms: https://arvaseo.com/terms/ · Privacy policy: https://arvaseo.com/privacy/
@@ -133,6 +136,9 @@ See Arva SEO → Diagnostics & Privacy for the full list of shared fields and th
 
 == Upgrade Notice ==
 
+= 1.6.0 =
+Load styles faster and Remove unused CSS: critical and used CSS worked out on Arva SEO's servers, off until you turn them on.
+
 = 1.5.0 =
 Four more PageSpeed fixes, each off until you turn it on: browser caching and compression, delay chat widgets and trackers, Google Fonts from your own site, and converting existing images to WebP.
 
@@ -146,6 +152,12 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 1.6.0 =
+* New: Load styles faster. The styles each page type needs for its first screen go straight into the page, and stylesheets load without holding it up.
+* New: Remove unused CSS. Each page type gets only the styles it uses; the full stylesheets load on the first scroll, tap, click or key press.
+* Both are worked out by Arva SEO for each type of page (homepage, page, post, product, category…) and grouped by the stylesheets' contents, so a theme or plugin update that changes styles gets new CSS and a cache clear costs nothing. Optimize now, Check for results and Regenerate on their cards; stylesheets you choose are left alone; Leave things alone and shop pages apply.
+* The readme's External services list now includes the page addresses sent for these fixes and the Google Fonts downloads of "Serve them from your site".
 
 = 1.5.0 =
 * New: Browser caching and compression (Apache and LiteSpeed). Rules in .htaccess for year-long browser caching and compression, checked from your server straight away and taken out again if your site doesn't answer normally or can't be checked. Removed when turned off, when the plugin is deactivated or deleted, and with the wp-config.php switch. On nginx, the card shows the rules to give your host.
