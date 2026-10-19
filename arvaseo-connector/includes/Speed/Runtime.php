@@ -376,7 +376,8 @@ final class Runtime {
 		if ( ! is_string( $src ) || ! str_contains( $src, 'fonts.googleapis.com/css' ) || str_contains( $src, 'display=' ) ) {
 			return $src;
 		}
-		return add_query_arg( 'display', 'swap', $src );
+		// Added as is: add_query_arg() would keep only the last of several family= parameters.
+		return $src . ( str_contains( $src, '?' ) ? '&' : '?' ) . 'display=swap';
 	}
 
 	/**

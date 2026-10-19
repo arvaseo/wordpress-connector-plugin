@@ -141,6 +141,7 @@ New PageSpeed fixes, each off until you turn it on. Nothing changes on your site
 * Choose how many images at the top of each page always load straight away.
 * The toolbar's Arva SEO item shows while any fix is on, not only while trying one.
 * Filters for developers: arvaseo_connector_speed_fix_applies, arvaseo_connector_defer_script, arvaseo_connector_optimize_element.
+* Fix: Faster Google Fonts kept only the last font when one Google Fonts link asked for several, so the others didn't load. Every font now stays.
 
 = 1.3.1 =
 * The plugin is now called Arva SEO – Speed Booster & SEO Connector. Its address on WordPress.org, its settings and everything it does stay the same.
