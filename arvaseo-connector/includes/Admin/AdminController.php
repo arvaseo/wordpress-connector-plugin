@@ -127,7 +127,7 @@ final class AdminController {
 		printf(
 			'<h1 class="arvaseo-title"><img src="%1$s" alt="" width="28" height="28" class="arvaseo-logo" /> %2$s <span class="arvaseo-title-page">%3$s</span></h1>',
 			esc_url( plugins_url( 'assets/arvaseo-icon.svg', ARVASEO_CONNECTOR_FILE ) ),
-			esc_html__( 'Arva SEO – Speed Fixes & SEO Connector', 'arvaseo-connector' ),
+			esc_html__( 'Arva SEO – Speed Booster & SEO Connector', 'arvaseo-connector' ),
 			esc_html( self::title( $current ) )
 		);
 		echo '<nav class="nav-tab-wrapper" aria-label="' . esc_attr__( 'Arva SEO Connector sections', 'arvaseo-connector' ) . '">';

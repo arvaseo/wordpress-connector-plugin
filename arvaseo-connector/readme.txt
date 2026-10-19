@@ -1,10 +1,10 @@
-=== Arva SEO – Speed Fixes & SEO Connector ===
+=== Arva SEO – Speed Booster & SEO Connector ===
 Contributors: arvaseo, avdajay
 Tags: pagespeed, performance, core web vitals, seo, site health
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -100,19 +100,32 @@ No visitor data, user accounts, emails, passwords, settings or existing content 
 
 See Arva SEO → Diagnostics & Privacy for the full list of shared fields and their purpose, and the suggested text added to Settings → Privacy.
 
+== Screenshots ==
+
+1. PageSpeed fixes: which fixes your latest PageSpeed test calls for, and whether each one is off, being tried or on.
+2. Defer scripts: try it while only you see it, check your important pages, then turn it on for everyone.
+3. Connection: sign in on Arva SEO to connect, and see exactly what is shared before you do.
+4. Settings: choose how far Arva SEO can go when it sends posts, from drafts only to full publishing.
+
 == Upgrade Notice ==
+
+= 1.3.1 =
+The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer scripts lists the right page while you try it.
 
 = 1.3.0 =
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
 
+= 1.3.1 =
+* The plugin is now called Arva SEO – Speed Booster & SEO Connector. Its address on WordPress.org, its settings and everything it does stay the same.
+* Fix: while you try Defer scripts, the list of scripts it deferred now shows the page you opened, not the browser's background request for the site icon.
+
 = 1.3.0 =
 * New: PageSpeed fixes (Arva SEO → PageSpeed fixes). Nine fixes for the problems Google's PageSpeed test finds, each off until you turn it on, with a Try it mode only you see: show the main image first, lazy-load images, videos and maps, defer scripts, add missing image sizes, the mobile viewport tag, click-to-play YouTube videos, faster Google Fonts, removing unused WordPress extras, and WebP for new uploads.
 * Defer scripts can only be turned on after you've tried it and ticked off your important pages, shows a reminder for a week after, and lets you leave chosen scripts alone.
 * A fix another speed plugin already does (WP Rocket, LiteSpeed Cache, Perfmatters, FlyingPress and others) stays off, so pages aren't processed twice.
 * When connected: which fixes your homepage's latest PageSpeed test asks for, and Arva SEO learns which fixes are on.
-* The plugin is now called Arva SEO – Speed Fixes & SEO Connector.
 
 = 1.2.0 =
 * New: IndexNow. The site serves its IndexNow key file by itself, so Arva SEO can ask Bing, Yandex, Seznam, Naver and Yep to recrawl pages after a post is published or an SEO title or description changes. The key is received when the plugin checks in with Arva SEO and stops being served when the site disconnects.

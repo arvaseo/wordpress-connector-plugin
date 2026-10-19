@@ -420,10 +420,11 @@ final class Runtime {
 
 	/**
 	 * For an administrator trying Defer scripts: the scripts it deferred on this page, so they can
-	 * leave one alone if something stopped working.
+	 * leave one alone if something stopped working. Not-found pages are skipped: the browser asks
+	 * for /favicon.ico after every page, and that 404 would replace the page they opened.
 	 */
 	public static function remember_deferred(): void {
-		if ( 'trying' !== Fixes::state( 'defer_scripts' ) || ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) ) {
+		if ( 'trying' !== Fixes::state( 'defer_scripts' ) || ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) || is_404() ) {
 			return;
 		}
 		$scripts = wp_scripts();
