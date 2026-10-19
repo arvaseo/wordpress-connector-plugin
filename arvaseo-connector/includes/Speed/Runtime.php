@@ -1,0 +1,510 @@
+<?php
+/**
+ * Applies the PageSpeed fixes that are on (or being tried) to the pages visitors see.
+ *
+ * @package ArvaSEO\Connector
+ */
+
+namespace ArvaSEO\Connector\Speed;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * WordPress filters only: image and script attributes, resource hints, embeds and the image
+ * editor's output format. Nothing rewrites whole pages, the database or theme files, so turning
+ * a fix off restores the original output at once. Pages only: never wp-admin, REST, feeds,
+ * embeds, AMP or the Customizer.
+ */
+final class Runtime {
+
+	/** Images at the top of a page that always load straight away (one is usually the main image). */
+	private const EAGER_IMAGES = 3;
+
+	/** Images on a page whose size we looked up, at most (each can be a database query). */
+	private const MAX_LOOKUPS = 20;
+
+	/**
+	 * Images on this page so far, in the order they're output.
+	 *
+	 * @var int
+	 */
+	private static int $images_seen = 0;
+
+	/**
+	 * Media-library lookups on this page so far.
+	 *
+	 * @var int
+	 */
+	private static int $lookups = 0;
+
+	/**
+	 * Whether the featured image has been given priority on this page.
+	 *
+	 * @var bool
+	 */
+	private static bool $main_image_done = false;
+
+	/**
+	 * Scripts deferred on this page, shown to administrators trying the fix.
+	 *
+	 * @var string[]
+	 */
+	private static array $deferred = array();
+
+	/**
+	 * Hooks.
+	 */
+	public static function init(): void {
+		// Uploads happen in the dashboard, so this one isn't limited to pages.
+		add_filter( 'image_editor_output_format', array( self::class, 'webp_output' ) );
+		add_action( 'template_redirect', array( self::class, 'on_page' ), 0 );
+		add_action( 'admin_bar_menu', array( self::class, 'admin_bar' ), 90 );
+	}
+
+	/**
+	 * While an administrator tries fixes: a reminder in the toolbar that visitors don't see them.
+	 *
+	 * @param \WP_Admin_Bar $bar The toolbar.
+	 */
+	public static function admin_bar( $bar ): void {
+		if ( ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) ) {
+			return;
+		}
+		$trying = count( array_filter( array_keys( Fixes::all() ), static fn ( string $id ) => 'trying' === Fixes::state( $id ) ) );
+		if ( 0 === $trying ) {
+			return;
+		}
+		$bar->add_node(
+			array(
+				'id'    => 'arvaseo-speed-trying',
+				'title' => esc_html(
+					/* translators: %d: number of fixes being tried. */
+					sprintf( _n( 'Arva SEO: trying %d PageSpeed fix', 'Arva SEO: trying %d PageSpeed fixes', $trying, 'arvaseo-connector' ), $trying )
+				),
+				'href'  => admin_url( 'admin.php?page=arvaseo-speed' ),
+				'meta'  => array( 'title' => __( 'Only you see these while signed in. Visitors see your site as before.', 'arvaseo-connector' ) ),
+			)
+		);
+	}
+
+	/**
+	 * A page a visitor sees: hook the fixes that apply.
+	 */
+	public static function on_page(): void {
+		if ( ! self::is_page_request() ) {
+			return;
+		}
+		self::$images_seen     = 0;
+		self::$lookups         = 0;
+		self::$main_image_done = false;
+		self::$deferred        = array();
+
+		if ( Fixes::applies( 'lcp_image' ) ) {
+			add_filter( 'wp_get_attachment_image_attributes', array( self::class, 'main_image' ), 20, 2 );
+		}
+		if ( Fixes::applies( 'image_dimensions' ) || Fixes::applies( 'lazy_media' ) ) {
+			add_filter( 'render_block', array( self::class, 'filter_html' ), 20 );
+			add_filter( 'the_content', array( self::class, 'filter_html' ), 20 );
+			add_filter( 'widget_text_content', array( self::class, 'filter_html' ), 20 );
+			add_filter( 'widget_block_content', array( self::class, 'filter_html' ), 20 );
+			add_filter( 'get_custom_logo', array( self::class, 'filter_html' ), 20 );
+		}
+		if ( Fixes::applies( 'video_facades' ) ) {
+			add_filter( 'embed_oembed_html', array( self::class, 'youtube_facade' ), 20, 2 );
+			add_filter( 'render_block_core/embed', array( self::class, 'youtube_block' ), 20, 2 );
+		}
+		if ( Fixes::applies( 'google_fonts' ) ) {
+			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
+			add_filter( 'wp_resource_hints', array( self::class, 'font_preconnect' ), 20, 2 );
+		}
+		if ( Fixes::applies( 'defer_scripts' ) ) {
+			add_action( 'wp_enqueue_scripts', array( self::class, 'defer_scripts' ), PHP_INT_MAX );
+			add_action( 'wp_footer', array( self::class, 'remember_deferred' ), PHP_INT_MAX );
+		}
+		if ( Fixes::applies( 'wp_extras' ) ) {
+			self::remove_extras();
+		}
+		if ( Fixes::applies( 'viewport' ) ) {
+			add_action( 'wp_head', array( self::class, 'viewport' ), 0 );
+		}
+	}
+
+	/**
+	 * A page request, as opposed to the dashboard, the REST API, feeds, embeds, AMP or the
+	 * Customizer preview.
+	 */
+	public static function is_page_request(): bool {
+		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || wp_is_json_request() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return false;
+		}
+		if ( is_feed() || is_embed() || is_robots() || is_trackback() || is_customize_preview() ) {
+			return false;
+		}
+		return ! ( function_exists( 'amp_is_request' ) && amp_is_request() );
+	}
+
+	// ----- Show the main image first ---------------------------------------------------------
+
+	/**
+	 * The featured image of the post or page being viewed: load it now, with a high priority.
+	 *
+	 * @param array<string, string> $attr       Image attributes.
+	 * @param \WP_Post              $attachment The image.
+	 * @return array<string, string>
+	 */
+	public static function main_image( array $attr, $attachment ): array {
+		if ( self::$main_image_done || ! is_singular() ) {
+			return $attr;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || (int) get_post_thumbnail_id( $post_id ) !== (int) $attachment->ID ) {
+			return $attr;
+		}
+		self::$main_image_done = true;
+		unset( $attr['loading'] );
+		$attr['fetchpriority'] = 'high';
+		$attr['decoding']      = 'async';
+		return $attr;
+	}
+
+	// ----- Image sizes and lazy loading --------------------------------------------------------
+
+	/**
+	 * Add missing width and height to media-library images, and lazy loading to images below the
+	 * first few and to embedded frames.
+	 *
+	 * @param mixed $html Block, content or widget output.
+	 * @return mixed
+	 */
+	public static function filter_html( $html ) {
+		if ( ! is_string( $html ) || ( false === stripos( $html, '<img' ) && false === stripos( $html, '<iframe' ) ) ) {
+			return $html;
+		}
+		$sizes = Fixes::applies( 'image_dimensions' );
+		$lazy  = Fixes::applies( 'lazy_media' );
+		$tags  = new \WP_HTML_Tag_Processor( $html );
+		while ( $tags->next_tag() ) {
+			$name = $tags->get_tag();
+			if ( 'IMG' === $name ) {
+				// Nested blocks reach this filter again inside their parents: each image counts once.
+				if ( null !== $tags->get_attribute( 'data-arvaseo-seen' ) ) {
+					continue;
+				}
+				$tags->set_attribute( 'data-arvaseo-seen', '1' );
+				++self::$images_seen;
+				if ( $sizes ) {
+					self::add_size( $tags );
+				}
+				if ( $lazy && self::$images_seen > self::EAGER_IMAGES && null === $tags->get_attribute( 'loading' ) && 'high' !== $tags->get_attribute( 'fetchpriority' ) ) {
+					$tags->set_attribute( 'loading', 'lazy' );
+				}
+			} elseif ( 'IFRAME' === $name && $lazy && null === $tags->get_attribute( 'loading' ) ) {
+				$tags->set_attribute( 'loading', 'lazy' );
+			}
+		}
+		return $tags->get_updated_html();
+	}
+
+	/**
+	 * Width and height from the media library, for an image that has neither.
+	 *
+	 * @param \WP_HTML_Tag_Processor $tags At an IMG.
+	 */
+	private static function add_size( \WP_HTML_Tag_Processor $tags ): void {
+		if ( null !== $tags->get_attribute( 'width' ) || null !== $tags->get_attribute( 'height' ) ) {
+			return;
+		}
+		$src = $tags->get_attribute( 'src' );
+		if ( ! is_string( $src ) || '' === $src || str_ends_with( strtolower( (string) wp_parse_url( $src, PHP_URL_PATH ) ), '.svg' ) ) {
+			return;
+		}
+		$id    = 0;
+		$class = $tags->get_attribute( 'class' );
+		if ( is_string( $class ) && preg_match( '/\bwp-image-(\d+)\b/', $class, $m ) ) {
+			$id = (int) $m[1];
+		} elseif ( self::$lookups < self::MAX_LOOKUPS && str_contains( $src, self::uploads_url() ) ) {
+			++self::$lookups;
+			$id = attachment_url_to_postid( (string) preg_replace( '/-\d+x\d+(?=\.[a-z0-9]+$)/i', '', explode( '?', $src )[0] ) );
+		}
+		if ( $id <= 0 ) {
+			return;
+		}
+		$meta = wp_get_attachment_metadata( $id );
+		$dims = is_array( $meta ) ? wp_image_src_get_dimensions( $src, $meta, $id ) : false;
+		if ( is_array( $dims ) && $dims[0] > 0 && $dims[1] > 0 ) {
+			$tags->set_attribute( 'width', (string) $dims[0] );
+			$tags->set_attribute( 'height', (string) $dims[1] );
+		}
+	}
+
+	/**
+	 * The uploads folder's address, once per page.
+	 */
+	private static function uploads_url(): string {
+		static $url = null;
+		$url      ??= (string) wp_get_upload_dir()['baseurl'];
+		return $url;
+	}
+
+	// ----- Click-to-play videos ----------------------------------------------------------------
+
+	/**
+	 * The YouTube video ID and start time in an address, if it is one.
+	 *
+	 * @param string $url Address.
+	 * @return array{id: string, start: int}|null
+	 */
+	public static function youtube( string $url ): ?array {
+		if ( ! preg_match( '~^https?://(?:www\.|m\.)?(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/)|youtu\.be/|youtube-nocookie\.com/embed/)([A-Za-z0-9_-]{11})~', $url, $m ) ) {
+			return null;
+		}
+		$query = array();
+		wp_parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
+		$start = $query['start'] ?? $query['t'] ?? 0;
+		return array(
+			'id'    => $m[1],
+			'start' => is_numeric( $start ) ? (int) $start : 0,
+		);
+	}
+
+	/**
+	 * Embedded YouTube videos as a preview picture with a play button.
+	 *
+	 * @param mixed  $html Embed markup.
+	 * @param string $url  The embedded address.
+	 * @return mixed
+	 */
+	public static function youtube_facade( $html, $url ) {
+		$video = is_string( $html ) && is_string( $url ) ? self::youtube( $url ) : null;
+		if ( null === $video || ! str_contains( $html, '<iframe' ) ) {
+			return $html;
+		}
+		$title = __( 'YouTube video', 'arvaseo-connector' );
+		if ( preg_match( '/\btitle="([^"]{1,200})"/', $html, $m ) ) {
+			$title = html_entity_decode( $m[1], ENT_QUOTES );
+		}
+		self::enqueue_facade();
+		$embed = 'https://www.youtube-nocookie.com/embed/' . rawurlencode( $video['id'] ) . '?autoplay=1&rel=0' . ( $video['start'] > 0 ? '&start=' . $video['start'] : '' );
+		return sprintf(
+			'<div class="arvaseo-yt" data-arvaseo-embed="%1$s" data-arvaseo-title="%2$s"><img src="%3$s" alt="" width="480" height="360" loading="lazy" decoding="async" data-arvaseo-seen="1" /><button type="button" class="arvaseo-yt__play" aria-label="%4$s"><svg viewBox="0 0 68 48" width="68" height="48" aria-hidden="true" focusable="false"><path d="M66.5 7.7a8.5 8.5 0 0 0-6-6C55.2.3 34 .3 34 .3s-21.2 0-26.5 1.4a8.5 8.5 0 0 0-6 6C.1 13 .1 24 .1 24s0 11 1.4 16.3a8.5 8.5 0 0 0 6 6c5.3 1.4 26.5 1.4 26.5 1.4s21.2 0 26.5-1.4a8.5 8.5 0 0 0 6-6C67.9 35 67.9 24 67.9 24s0-11-1.4-16.3z" fill="#f00"/><path d="M45 24 27 14v20" fill="#fff"/></svg></button></div>',
+			esc_url( $embed ),
+			esc_attr( $title ),
+			esc_url( 'https://i.ytimg.com/vi/' . rawurlencode( $video['id'] ) . '/hqdefault.jpg' ),
+			/* translators: %s: the video's title. */
+			esc_attr( sprintf( __( 'Play video: %s', 'arvaseo-connector' ), $title ) )
+		);
+	}
+
+	/**
+	 * The YouTube embed block.
+	 *
+	 * @param mixed                $html  Block output.
+	 * @param array<string, mixed> $block The block.
+	 * @return mixed
+	 */
+	public static function youtube_block( $html, $block ) {
+		$url = is_array( $block ) ? ( $block['attrs']['url'] ?? '' ) : '';
+		if ( ! is_string( $html ) || ! is_string( $url ) || null === self::youtube( $url ) || str_contains( $html, 'arvaseo-yt' ) ) {
+			return $html;
+		}
+		return preg_replace_callback(
+			'~<iframe\b[^>]*></iframe>~is',
+			static fn ( array $m ) => (string) self::youtube_facade( $m[0], $url ),
+			$html,
+			1
+		);
+	}
+
+	/**
+	 * The facade's small script and styles, once per page.
+	 */
+	private static function enqueue_facade(): void {
+		if ( wp_script_is( 'arvaseo-speed-facade', 'enqueued' ) ) {
+			return;
+		}
+		wp_enqueue_style( 'arvaseo-speed-facade', plugins_url( 'assets/speed-facade.css', ARVASEO_CONNECTOR_FILE ), array(), ARVASEO_CONNECTOR_VERSION );
+		wp_enqueue_script(
+			'arvaseo-speed-facade',
+			plugins_url( 'assets/speed-facade.js', ARVASEO_CONNECTOR_FILE ),
+			array(),
+			ARVASEO_CONNECTOR_VERSION,
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
+	}
+
+	// ----- Faster Google Fonts -----------------------------------------------------------------
+
+	/**
+	 * Show text in a similar font while a Google font loads.
+	 *
+	 * @param mixed $src Stylesheet address.
+	 * @return mixed
+	 */
+	public static function font_display( $src ) {
+		if ( ! is_string( $src ) || ! str_contains( $src, 'fonts.googleapis.com/css' ) || str_contains( $src, 'display=' ) ) {
+			return $src;
+		}
+		return add_query_arg( 'display', 'swap', $src );
+	}
+
+	/**
+	 * Connect to Google's font servers early, when the page uses Google Fonts.
+	 *
+	 * @param array<int, mixed> $urls Resource hints.
+	 * @param string            $type Relation type.
+	 * @return array<int, mixed>
+	 */
+	public static function font_preconnect( $urls, $type ) {
+		if ( 'preconnect' !== $type || ! is_array( $urls ) || ! self::uses_google_fonts() ) {
+			return $urls;
+		}
+		$urls[] = array(
+			'href'        => 'https://fonts.gstatic.com',
+			'crossorigin' => 'anonymous',
+		);
+		$urls[] = 'https://fonts.googleapis.com';
+		return $urls;
+	}
+
+	/**
+	 * Whether an enqueued stylesheet comes from Google Fonts.
+	 */
+	private static function uses_google_fonts(): bool {
+		$styles = wp_styles();
+		foreach ( $styles->queue as $handle ) {
+			$style = $styles->registered[ $handle ] ?? null;
+			if ( null !== $style && is_string( $style->src ) && str_contains( $style->src, 'fonts.googleapis.com' ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// ----- Defer scripts -----------------------------------------------------------------------
+
+	/**
+	 * Scripts in the head load with defer. WordPress itself keeps any script blocking that inline
+	 * code or a blocking script depends on (script loading strategies, WordPress 6.3+).
+	 */
+	public static function defer_scripts(): void {
+		$scripts = wp_scripts();
+		$exclude = array_merge( Fixes::DEFER_ALWAYS_EXCLUDED, Fixes::stored()['defer_exclude'] );
+		$handles = array();
+		$walk    = static function ( string $handle ) use ( &$walk, &$handles, $scripts ): void {
+			if ( isset( $handles[ $handle ] ) || ! isset( $scripts->registered[ $handle ] ) ) {
+				return;
+			}
+			$handles[ $handle ] = true;
+			foreach ( $scripts->registered[ $handle ]->deps as $dep ) {
+				$walk( (string) $dep );
+			}
+		};
+		foreach ( $scripts->queue as $handle ) {
+			$walk( (string) $handle );
+		}
+		foreach ( array_keys( $handles ) as $handle ) {
+			$script = $scripts->registered[ $handle ];
+			if ( in_array( $handle, $exclude, true ) || preg_match( Fixes::DEFER_EXCLUDED_PATTERN, $handle ) || ! $script->src ) {
+				continue;
+			}
+			if ( 1 === (int) $scripts->get_data( $handle, 'group' ) || $scripts->get_data( $handle, 'strategy' ) ) {
+				continue; // Already in the footer, or already deferred or async.
+			}
+			$scripts->add_data( $handle, 'strategy', 'defer' );
+			self::$deferred[] = $handle;
+		}
+	}
+
+	/**
+	 * For an administrator trying Defer scripts: the scripts it deferred on this page, so they can
+	 * leave one alone if something stopped working.
+	 */
+	public static function remember_deferred(): void {
+		if ( 'trying' !== Fixes::state( 'defer_scripts' ) || ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) ) {
+			return;
+		}
+		$scripts = wp_scripts();
+		$seen    = array();
+		foreach ( array_slice( self::$deferred, 0, 50 ) as $handle ) {
+			$script          = $scripts->registered[ $handle ] ?? null;
+			$host            = null !== $script && is_string( $script->src ) ? wp_parse_url( $script->src, PHP_URL_HOST ) : null;
+			$seen[ $handle ] = is_string( $host ) && '' !== $host ? $host : (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		}
+		set_transient( 'arvaseo_connector_deferred', $seen, WEEK_IN_SECONDS );
+	}
+
+	// ----- Remove unused WordPress extras ------------------------------------------------------
+
+	/**
+	 * Switch off the extras the administrator chose.
+	 */
+	private static function remove_extras(): void {
+		$extras = Fixes::stored()['extras'];
+		if ( $extras['emoji'] ) {
+			remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+			remove_action( 'wp_print_styles', 'print_emoji_styles' );
+			remove_action( 'wp_enqueue_scripts', 'wp_enqueue_emoji_styles' );
+			add_filter( 'emoji_svg_url', '__return_false' );
+		}
+		if ( $extras['oembed'] ) {
+			remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
+			remove_action( 'wp_head', 'wp_oembed_add_host_js' );
+		}
+		add_action(
+			'wp_enqueue_scripts',
+			static function () use ( $extras ): void {
+				if ( $extras['oembed'] ) {
+					wp_dequeue_script( 'wp-embed' );
+				}
+				if ( $extras['dashicons'] && ! is_user_logged_in() ) {
+					wp_dequeue_style( 'dashicons' );
+				}
+				if ( $extras['jquery_migrate'] ) {
+					$jquery = wp_scripts()->registered['jquery'] ?? null;
+					if ( $jquery ) {
+						$jquery->deps = array_values( array_diff( $jquery->deps, array( 'jquery-migrate' ) ) );
+					}
+				}
+				if ( $extras['block_css'] && ! wp_is_block_theme() && is_singular() && ! has_blocks( get_queried_object_id() ) ) {
+					foreach ( array( 'wp-block-library', 'wp-block-library-theme', 'classic-theme-styles', 'global-styles' ) as $handle ) {
+						wp_dequeue_style( $handle );
+					}
+				}
+			},
+			PHP_INT_MAX - 1
+		);
+	}
+
+	// ----- New uploads as WebP -----------------------------------------------------------------
+
+	/**
+	 * New JPEG and PNG uploads also get WebP sizes, which WordPress then shows.
+	 *
+	 * @param mixed $formats Output formats by source type.
+	 * @return mixed
+	 */
+	public static function webp_output( $formats ) {
+		if ( ! is_array( $formats ) || 'on' !== Fixes::state( 'webp_uploads' ) || ( defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH ) ) ) {
+			return $formats;
+		}
+		return array_merge(
+			$formats,
+			array(
+				'image/jpeg' => 'image/webp',
+				'image/png'  => 'image/webp',
+			)
+		);
+	}
+
+	// ----- The mobile viewport tag -------------------------------------------------------------
+
+	/**
+	 * The viewport tag phones need.
+	 */
+	public static function viewport(): void {
+		echo '<meta name="viewport" content="width=device-width, initial-scale=1" />' . "\n";
+	}
+}

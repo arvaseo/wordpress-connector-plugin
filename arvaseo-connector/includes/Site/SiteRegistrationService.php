@@ -78,6 +78,8 @@ final class SiteRegistrationService {
 				'allowed_post_types' => array_values( $settings['allowed_post_types'] ),
 			),
 			'seo'              => self::seo(),
+			// The Connector's own PageSpeed fixes and their state (1.3.0+).
+			'speed_fixes'      => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
 			'consent'          => PrivacyService::for_registration(),
 		);
 	}

@@ -49,7 +49,7 @@ final class IndexNowKey {
 			return;
 		}
 		$key = self::key();
-		if ( null === $key || '/' . $key . '.txt' !== wp_parse_url( $uri, PHP_URL_PATH ) ) {
+		if ( null === $key || wp_parse_url( $uri, PHP_URL_PATH ) !== '/' . $key . '.txt' ) {
 			return;
 		}
 

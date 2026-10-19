@@ -18,6 +18,7 @@ use ArvaSEO\Connector\Inventory\PluginInventoryService;
 use ArvaSEO\Connector\Logging\AuditLogger;
 use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Settings;
+use ArvaSEO\Connector\Speed\Fixes;
 use ArvaSEO\Connector\Site\SiteRegistrationService;
 
 defined( 'ABSPATH' ) || exit;
@@ -34,6 +35,7 @@ final class AdminController {
 		'arvaseo-content'     => array( 'Content Sync', Capabilities::PUBLISH_CONTENT, 'content' ),
 		'arvaseo-inventory'   => array( 'Plugin Inventory', Capabilities::SYNC_INVENTORY, 'inventory' ),
 		'arvaseo-health'      => array( 'Website Health', Capabilities::VIEW_HEALTH, 'health' ),
+		'arvaseo-speed'       => array( 'PageSpeed fixes', Capabilities::MANAGE, 'speed' ),
 		'arvaseo-activity'    => array( 'Activity Log', Capabilities::MANAGE, 'activity' ),
 		'arvaseo-settings'    => array( 'Settings', Capabilities::MANAGE, 'settings' ),
 		'arvaseo-diagnostics' => array( 'Diagnostics & Privacy', Capabilities::MANAGE, 'diagnostics' ),
@@ -58,6 +60,9 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_poll_now', array( self::class, 'poll_now' ) );
 		add_action( 'admin_post_arvaseo_connector_consent', array( self::class, 'consent' ) );
 		add_action( 'admin_post_arvaseo_connector_diagnostics', array( self::class, 'download_diagnostics' ) );
+		add_action( 'admin_post_arvaseo_connector_speed', array( self::class, 'speed' ) );
+		add_action( 'admin_post_arvaseo_connector_speed_options', array( self::class, 'speed_options' ) );
+		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 	}
 
 	/**
@@ -89,6 +94,7 @@ final class AdminController {
 			'arvaseo-content'     => __( 'Content Sync', 'arvaseo-connector' ),
 			'arvaseo-inventory'   => __( 'Plugin Inventory', 'arvaseo-connector' ),
 			'arvaseo-health'      => __( 'Website Health', 'arvaseo-connector' ),
+			'arvaseo-speed'       => __( 'PageSpeed fixes', 'arvaseo-connector' ),
 			'arvaseo-activity'    => __( 'Activity Log', 'arvaseo-connector' ),
 			'arvaseo-settings'    => __( 'Settings', 'arvaseo-connector' ),
 			'arvaseo-diagnostics' => __( 'Diagnostics & Privacy', 'arvaseo-connector' ),
@@ -121,7 +127,7 @@ final class AdminController {
 		printf(
 			'<h1 class="arvaseo-title"><img src="%1$s" alt="" width="28" height="28" class="arvaseo-logo" /> %2$s <span class="arvaseo-title-page">%3$s</span></h1>',
 			esc_url( plugins_url( 'assets/arvaseo-icon.svg', ARVASEO_CONNECTOR_FILE ) ),
-			esc_html__( 'Arva SEO Connector', 'arvaseo-connector' ),
+			esc_html__( 'Arva SEO – Speed Fixes & SEO Connector', 'arvaseo-connector' ),
 			esc_html( self::title( $current ) )
 		);
 		echo '<nav class="nav-tab-wrapper" aria-label="' . esc_attr__( 'Arva SEO Connector sections', 'arvaseo-connector' ) . '">';
@@ -160,6 +166,15 @@ final class AdminController {
 			'poll_done'                      => array( 'success', __( 'Checked Arva SEO for content.', 'arvaseo-connector' ) ),
 			'consent_saved'                  => array( 'success', __( 'Your data-sharing choice was saved.', 'arvaseo-connector' ) ),
 			'consent_required'               => array( 'error', __( 'Tick the box to agree to share this data, or connect without it.', 'arvaseo-connector' ) ),
+			'speed_trying'                   => array( 'success', __( 'Trying it: only you see the change while you’re signed in. Open your website to check it, then turn it on.', 'arvaseo-connector' ) ),
+			'speed_on'                       => array( 'success', __( 'Turned on for every visitor. Run a new PageSpeed test in Arva SEO to see the change. If you use a page cache, clear it.', 'arvaseo-connector' ) ),
+			'speed_off'                      => array( 'success', __( 'Turned off. Your pages are back to how they were. If you use a page cache, clear it.', 'arvaseo-connector' ) ),
+			'speed_options_saved'            => array( 'success', __( 'Your choices were saved.', 'arvaseo-connector' ) ),
+			'speed_invalid'                  => array( 'error', __( 'That fix or setting doesn’t exist.', 'arvaseo-connector' ) ),
+			'speed_handled'                  => array( 'error', __( 'Another speed plugin already does this. Use its setting instead.', 'arvaseo-connector' ) ),
+			'speed_unavailable'              => array( 'error', __( 'This fix isn’t available on this server.', 'arvaseo-connector' ) ),
+			'speed_try_first'                => array( 'error', __( 'Try Defer scripts first, check your important pages, then turn it on.', 'arvaseo-connector' ) ),
+			'speed_check_pages'              => array( 'error', __( 'Tick each page you checked while trying Defer scripts before you turn it on.', 'arvaseo-connector' ) ),
 		);
 		if ( isset( $map[ $code ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
@@ -292,6 +307,61 @@ final class AdminController {
 		exit;
 	}
 
+	// ----- PageSpeed fixes -------------------------------------------------------------------
+
+	/**
+	 * Try, turn on or turn off a PageSpeed fix.
+	 */
+	public static function speed(): void {
+		self::guard( 'arvaseo_connector_speed', Capabilities::MANAGE );
+		$fix     = isset( $_POST['fix'] ) ? sanitize_key( wp_unslash( $_POST['fix'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$to      = isset( $_POST['to'] ) ? sanitize_key( wp_unslash( $_POST['to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$pages   = isset( $_POST['checked'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['checked'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$checked = array() === array_diff( array( 'home', 'forms', 'menus' ), $pages );
+		$error   = Fixes::set( $fix, $to, $checked );
+		self::back_to_fix( $fix, null === $error ? 'speed_' . $to : 'speed_' . $error );
+	}
+
+	/**
+	 * Save the extras to remove and the scripts Defer scripts leaves alone.
+	 */
+	public static function speed_options(): void {
+		self::guard( 'arvaseo_connector_speed_options', Capabilities::MANAGE );
+		$extras  = isset( $_POST['extras'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['extras'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$exclude = isset( $_POST['defer_exclude'] ) ? sanitize_textarea_field( wp_unslash( $_POST['defer_exclude'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		Fixes::save_options( array_fill_keys( $extras, true ), $exclude );
+		$fix = isset( $_POST['fix'] ) ? sanitize_key( wp_unslash( $_POST['fix'] ) ) : 'wp_extras'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		self::back_to_fix( $fix, 'speed_options_saved' );
+	}
+
+	/**
+	 * For a week after Defer scripts goes on: where to turn it off if something stopped working.
+	 */
+	public static function defer_notice(): void {
+		$on_at = Fixes::stored()['defer_on_at'];
+		if ( ! current_user_can( Capabilities::MANAGE ) || 'on' !== Fixes::state( 'defer_scripts' ) || null === $on_at || $on_at < time() - WEEK_IN_SECONDS ) {
+			return;
+		}
+		printf(
+			'<div class="notice notice-warning"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+			esc_html__( 'Arva SEO: Defer scripts is on. If something stopped working on your site, such as a menu, slider, form or checkout, turn it off or leave that script alone.', 'arvaseo-connector' ),
+			esc_url( admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( 'defer_scripts' ) ) ),
+			esc_html__( 'PageSpeed fixes', 'arvaseo-connector' )
+		);
+	}
+
+	/**
+	 * Back to a fix's card with a notice code.
+	 *
+	 * @param string $fix    Fix ID.
+	 * @param string $notice Notice code.
+	 */
+	private static function back_to_fix( string $fix, string $notice ): void {
+		$anchor = isset( Fixes::all()[ $fix ] ) ? '#' . Fixes::anchor( $fix ) : '';
+		wp_safe_redirect( add_query_arg( 'arvaseo_notice', $notice, admin_url( 'admin.php?page=arvaseo-speed' ) ) . $anchor );
+		exit;
+	}
+
 	// ----- Settings -----------------------------------------------------------------------
 
 	/**
@@ -330,6 +400,8 @@ final class AdminController {
 				'confirmFull'       => __( 'Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?', 'arvaseo-connector' ),
 				'confirmOverwrite'  => __( 'With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?', 'arvaseo-connector' ),
 				'confirmSeoUpdates' => __( 'With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?', 'arvaseo-connector' ),
+				'confirmDefer'      => __( 'Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?', 'arvaseo-connector' ),
+				'confirmRisky'      => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
 			)
 		);
 	}

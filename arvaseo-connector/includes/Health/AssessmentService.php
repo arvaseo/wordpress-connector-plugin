@@ -70,6 +70,8 @@ final class AssessmentService {
 				'vulnerability'      => self::text( $data['vulnerability_assessment']['reason'] ?? '', 300 ),
 				'findings'           => $findings,
 				'app_url'            => ApiClient::app_link( $data['app_url'] ?? null ),
+				// The homepage's latest phone test, for the PageSpeed fixes page (1.3.0+).
+				'pagespeed'          => self::clean_pagespeed( $data['pagespeed'] ?? null ),
 				'stale'              => false,
 			),
 			false
@@ -96,6 +98,46 @@ final class AssessmentService {
 			default => (string) $value['data_freshness'],
 		};
 		return $value;
+	}
+
+	/**
+	 * The homepage's latest phone PageSpeed test, as Arva SEO last reported it.
+	 *
+	 * @return array{tested_at: string|null, performance_score: int|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
+	 */
+	public static function pagespeed_result(): ?array {
+		$value = self::get();
+		return is_array( $value['pagespeed'] ?? null ) ? $value['pagespeed'] : null;
+	}
+
+	/**
+	 * Only Lighthouse audit IDs, plain-text titles and whole milliseconds.
+	 *
+	 * @param mixed $raw The assessment's pagespeed section.
+	 * @return array{tested_at: string|null, performance_score: int|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
+	 */
+	private static function clean_pagespeed( $raw ): ?array {
+		if ( ! is_array( $raw ) ) {
+			return null;
+		}
+		$audits = array();
+		foreach ( array_slice( (array) ( $raw['audits'] ?? array() ), 0, 40 ) as $audit ) {
+			$id = is_array( $audit ) && is_string( $audit['id'] ?? null ) ? $audit['id'] : '';
+			if ( ! preg_match( '/^[a-z0-9-]{1,80}$/', $id ) ) {
+				continue;
+			}
+			$audits[] = array(
+				'id'         => $id,
+				'title'      => self::text( $audit['title'] ?? $id, 200 ),
+				'savings_ms' => is_int( $audit['savings_ms'] ?? null ) && $audit['savings_ms'] >= 0 ? $audit['savings_ms'] : null,
+			);
+		}
+		$score = $raw['performance_score'] ?? null;
+		return array(
+			'tested_at'         => is_string( $raw['tested_at'] ?? null ) ? sanitize_text_field( $raw['tested_at'] ) : null,
+			'performance_score' => is_int( $score ) && $score >= 0 && $score <= 100 ? $score : null,
+			'audits'            => $audits,
+		);
 	}
 
 	/**

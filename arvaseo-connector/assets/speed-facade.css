@@ -1,0 +1,46 @@
+/* Arva SEO Connector: click-to-play videos. */
+.arvaseo-yt {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	max-width: 100%;
+	overflow: hidden;
+	background: #000;
+}
+.arvaseo-yt img,
+.arvaseo-yt iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	object-fit: cover;
+}
+.arvaseo-yt__play {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+}
+.arvaseo-yt__play svg {
+	filter: drop-shadow( 0 2px 8px rgb( 0 0 0 / 0.4 ) );
+	transition: transform 0.15s ease;
+}
+.arvaseo-yt__play:hover svg,
+.arvaseo-yt__play:focus-visible svg {
+	transform: scale( 1.08 );
+}
+.arvaseo-yt__play:focus-visible {
+	outline: 3px solid #fff;
+	outline-offset: -6px;
+}
+@media ( prefers-reduced-motion: reduce ) {
+	.arvaseo-yt__play svg {
+		transition: none;
+	}
+}

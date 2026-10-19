@@ -95,6 +95,11 @@ final class DiagnosticsService {
 				'purposes'       => PrivacyService::current()['purposes'],
 				'consented_at'   => PrivacyService::current()['consented_at'],
 			),
+			// The PageSpeed fixes and whether they're all switched off in wp-config.php.
+			'speed_fixes'     => array(
+				'fixes'       => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
+				'kill_switch' => defined( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ) && (bool) constant( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ),
+			),
 			'settings'        => array(
 				'publishing_mode'       => $settings['publishing_mode'],
 				'downgrade_to_draft'    => $settings['downgrade_to_draft'],
