@@ -4,7 +4,7 @@ Tags: pagespeed, performance, core web vitals, seo, site health
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,8 @@ Arva SEO → PageSpeed fixes lists each fix with the PageSpeed (Lighthouse) prob
 * **Browser caching and compression** on Apache and LiteSpeed: year-long browser caching for images, fonts, styles and scripts, and compressed pages, as rules in .htaccess that are checked straight away and taken out again if your site doesn't answer normally (Serve static assets with an efficient cache policy; Enable text compression)
 * **Remove unused WordPress extras** you choose: the emoji script, embed discovery, Dashicons for visitors, jQuery Migrate, block styles on pages without blocks
 * **New uploads as WebP**, and convert the images already in your media library in the background, keeping the originals (Serve images in next-gen formats)
+
+If you allow it on the PageSpeed fixes page ("Let Arva SEO switch these fixes", off by default), the people who manage this website in Arva SEO can try, turn on and turn off the fixes from its PageSpeed results, by the same rules as the page: a fix that can be tried goes on for everyone only after it's been tried, Defer scripts goes on only in WordPress, and turning a fix off always works. Every change is in the Activity Log with who asked.
 
 If a speed plugin such as WP Rocket, LiteSpeed Cache, Perfmatters or FlyingPress already does one of these jobs, that fix stays off and the page tells you to use that plugin's setting, so pages are never processed twice. When the site is connected, the page also shows which fixes your homepage's latest PageSpeed test asks for, and Arva SEO's PageSpeed results link straight to the right switch.
 
@@ -79,6 +81,10 @@ Yes, in Arva SEO → PageSpeed fixes → Leave things alone:
 
 Yes, from 1.6.0, when the site is connected: Load styles faster and Remove unused CSS. Arva SEO loads one page of each type (homepage, page, post, product, category and so on) on its servers, as a phone and as a computer, and sends back each stylesheet's critical and used CSS. Each page type uses one page optimization of your plan (Free 50 a month, more on paid plans, and an add-on of 15,000). A stylesheet whose contents change makes a new page type; clearing your cache costs nothing. When the month's page optimizations run out, page types whose styles haven't changed keep their optimized CSS and the others load their normal stylesheets, never out-of-date CSS.
 
+= Can my agency switch the fixes from Arva SEO? =
+
+Yes, from 1.7.0, once an administrator ticks "Let Arva SEO switch these fixes" on the PageSpeed fixes page. Arva SEO's PageSpeed results then show Try it, Turn on and Turn off next to each fix for people who manage the website's integrations there. Switches are picked up within a minute or two; the rules are the same as in WordPress, and each change is logged with the name of the person who asked. Untick the box to stop it at any time.
+
 = Is Browser caching and compression safe? =
 
 The rules only use standard Apache settings, wrapped so a server without those modules ignores them. Still, a server that doesn't allow one of them in .htaccess would answer every page with an error, so the plugin checks your homepage and one of its own files from the server right after adding them, and takes them out again in the same moment if either doesn't answer normally, or if the check can't be made. Turning the fix off, deactivating or deleting the plugin, or the wp-config.php switch removes them.
@@ -114,6 +120,7 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 * **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, and your data-sharing choice.
 * **Plugin inventory and Website Health (only if you agree on the Connection screen):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
 * **Content:** every 5 minutes the plugin asks api.arvaseo.com for content you sent from Arva SEO, and reports back the post ID, status and link it created.
+* **Switching fixes from Arva SEO (off by default):** when allowed, the plugin asks api.arvaseo.com every 5 minutes (and when Arva SEO signals it) for fixes switched there, and reports back what it did and each fix's state.
 * **Signed requests from Arva SEO:** api.arvaseo.com may call this site's /wp-json/arvaseo/v1/events endpoint to ask it to check for content or run a recheck sooner.
 * **Featured images (off by default):** only from image hosts you approve.
 * **Load styles faster and Remove unused CSS (PageSpeed fixes, off by default, only when connected):** the plugin sends api.arvaseo.com the address of one public page of each type, and Arva SEO's renderer loads it like a visitor, as a phone and as a computer, to work out its styles; the critical and used CSS come back to this site. Only page addresses are sent. While Arva SEO loads a page, the address carries a short-lived signed parameter so the page is served with its original styles.
@@ -136,6 +143,9 @@ See Arva SEO → Diagnostics & Privacy for the full list of shared fields and th
 
 == Upgrade Notice ==
 
+= 1.7.0 =
+Switch PageSpeed fixes from Arva SEO's PageSpeed results, once you allow it on the PageSpeed fixes page (off by default).
+
 = 1.6.0 =
 Load styles faster and Remove unused CSS: critical and used CSS worked out on Arva SEO's servers, off until you turn them on.
 
@@ -152,6 +162,9 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 1.7.0 =
+* New: "Let Arva SEO switch these fixes" (PageSpeed fixes page, off by default). People who manage the website in Arva SEO can then try, turn on and turn off fixes from its PageSpeed results, by the same rules as the page; Defer scripts still goes on only in WordPress, after its checklist. Each change is in the Activity Log with who asked.
 
 = 1.6.0 =
 * New: Load styles faster. The styles each page type needs for its first screen go straight into the page, and stylesheets load without holding it up.

@@ -355,6 +355,8 @@ final class AdminController {
 				'defer_exclude' => $exclude,
 				'defer_plugins' => $list( 'defer_plugins' ),
 			);
+		} elseif ( 'remote' === $fix ) {
+			$choices = array( 'remote' => ! empty( $_POST['remote'] ) );
 		} elseif ( 'critical_css' === $fix || 'unused_css' === $fix ) {
 			$choices = array( 'css_exclude' => $text( 'css_exclude' ) );
 		} elseif ( 'delay_scripts' === $fix ) {
@@ -442,7 +444,7 @@ final class AdminController {
 	 * @param string $notice Notice code.
 	 */
 	private static function back_to_fix( string $fix, string $notice ): void {
-		$anchor = isset( Fixes::all()[ $fix ] ) ? '#' . Fixes::anchor( $fix ) : ( 'exclusions' === $fix ? '#arvaseo-speed-exclusions' : '' );
+		$anchor = isset( Fixes::all()[ $fix ] ) ? '#' . Fixes::anchor( $fix ) : ( 'exclusions' === $fix ? '#arvaseo-speed-exclusions' : ( 'remote' === $fix ? '#arvaseo-speed-remote' : '' ) );
 		wp_safe_redirect( add_query_arg( 'arvaseo_notice', $notice, admin_url( 'admin.php?page=arvaseo-speed' ) ) . $anchor );
 		exit;
 	}

@@ -72,6 +72,22 @@ defined( 'ABSPATH' ) || exit;
 	<div class="notice notice-warning inline"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
 	<?php endif; ?>
 
+	<?php if ( TokenStore::is_connected() ) : ?>
+	<section id="arvaseo-speed-remote" class="card arvaseo-card arvaseo-speed-test" aria-labelledby="arvaseo-remote-heading">
+		<h2 id="arvaseo-remote-heading"><?php esc_html_e( 'Switching from Arva SEO', 'arvaseo-connector' ); ?></h2>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
+			<input type="hidden" name="fix" value="remote" />
+			<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+			<p>
+				<label><input type="checkbox" name="remote" value="1" <?php checked( $arvaseo_stored['remote'] ); ?> /> <strong><?php esc_html_e( 'Let Arva SEO switch these fixes', 'arvaseo-connector' ); ?></strong></label><br />
+				<span class="description"><?php esc_html_e( 'People who manage this website in Arva SEO can try, turn on and turn off these fixes from its PageSpeed results, by the same rules as this page: a fix that can be tried goes on for everyone only after it’s been tried, Defer scripts goes on only here, and turning a fix off always works. Each change is in the Activity Log with who asked.', 'arvaseo-connector' ); ?></span>
+			</p>
+			<button type="submit" class="button"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button>
+		</form>
+	</section>
+	<?php endif; ?>
+
 <section class="card arvaseo-card arvaseo-speed-test" aria-labelledby="arvaseo-test-heading">
 	<h2 id="arvaseo-test-heading"><?php esc_html_e( 'From your latest PageSpeed test', 'arvaseo-connector' ); ?></h2>
 	<?php if ( null === $arvaseo_test ) : ?>

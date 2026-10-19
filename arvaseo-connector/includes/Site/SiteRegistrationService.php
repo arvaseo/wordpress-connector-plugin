@@ -63,24 +63,26 @@ final class SiteRegistrationService {
 	public static function payload(): array {
 		$settings = Settings::all();
 		return array(
-			'schema_version'   => '1.0',
-			'site_url'         => AuthService::site_url(),
-			'site_name'        => mb_substr( wp_strip_all_tags( get_bloginfo( 'name' ) ), 0, 200 ),
-			'events_url'       => rest_url( 'arvaseo/v1/events' ),
-			'plugin_version'   => ARVASEO_CONNECTOR_VERSION,
-			'wp_version'       => (string) get_bloginfo( 'version' ),
-			'timezone'         => self::timezone(),
-			'environment_type' => wp_get_environment_type(),
-			'multisite'        => is_multisite(),
-			'publishing'       => array(
+			'schema_version'     => '1.0',
+			'site_url'           => AuthService::site_url(),
+			'site_name'          => mb_substr( wp_strip_all_tags( get_bloginfo( 'name' ) ), 0, 200 ),
+			'events_url'         => rest_url( 'arvaseo/v1/events' ),
+			'plugin_version'     => ARVASEO_CONNECTOR_VERSION,
+			'wp_version'         => (string) get_bloginfo( 'version' ),
+			'timezone'           => self::timezone(),
+			'environment_type'   => wp_get_environment_type(),
+			'multisite'          => is_multisite(),
+			'publishing'         => array(
 				'mode'               => $settings['publishing_mode'],
 				'downgrade_to_draft' => (bool) $settings['downgrade_to_draft'],
 				'allowed_post_types' => array_values( $settings['allowed_post_types'] ),
 			),
-			'seo'              => self::seo(),
+			'seo'                => self::seo(),
 			// The Connector's own PageSpeed fixes and their state (1.3.0+).
-			'speed_fixes'      => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
-			'consent'          => PrivacyService::for_registration(),
+			'speed_fixes'        => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
+			// 1.7.0: an administrator lets Arva SEO switch the fixes.
+			'speed_fixes_remote' => \ArvaSEO\Connector\Speed\Fixes::stored()['remote'],
+			'consent'            => PrivacyService::for_registration(),
 		);
 	}
 

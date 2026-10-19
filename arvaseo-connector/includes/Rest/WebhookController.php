@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class WebhookController {
 
-	public const EVENT_TYPES = array( 'content.available', 'seo.updates_available', 'health.refresh_requested', 'inventory.refresh_requested', 'connection.challenge', 'connection.revoked' );
+	public const EVENT_TYPES = array( 'content.available', 'seo.updates_available', 'speed.fixes_requested', 'health.refresh_requested', 'inventory.refresh_requested', 'connection.challenge', 'connection.revoked' );
 
 	/**
 	 * The secret that signed the current request.
@@ -123,6 +123,7 @@ final class WebhookController {
 
 			case 'content.available':
 			case 'seo.updates_available':
+			case 'speed.fixes_requested':
 				CronManager::run_soon( 'arvaseo_connector_poll', 0 );
 				return self::accepted( $event );
 

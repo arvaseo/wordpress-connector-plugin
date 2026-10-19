@@ -115,7 +115,9 @@ final class PollingService {
 				return array( 'status' => 'failed' );
 			}
 		}
-		$acks = ContentDeliveryService::flush_outbox() + SeoUpdateService::flush_outbox();
+		// PageSpeed fixes switched in Arva SEO, when an administrator allows it (1.7.0).
+		$switched = \ArvaSEO\Connector\Speed\RemoteFixes::poll();
+		$acks     = ContentDeliveryService::flush_outbox() + SeoUpdateService::flush_outbox() + $switched;
 		SyncState::success( 'poll', array( 'deliveries' => $processed ) );
 		if ( $processed > 0 || $seo > 0 || $acks > 0 ) {
 			AuditLogger::info(

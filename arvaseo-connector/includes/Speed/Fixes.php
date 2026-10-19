@@ -283,7 +283,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[]}
+	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], remote: bool}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -315,6 +315,7 @@ final class Fixes {
 			'fonts_local'      => (bool) ( $saved['fonts_local'] ?? false ),
 			'delay_scripts'    => self::strings( $saved['delay_scripts'] ?? array() ),
 			'css_exclude'      => self::strings( $saved['css_exclude'] ?? array() ),
+			'remote'           => (bool) ( $saved['remote'] ?? false ),
 			'server_check'     => is_array( $saved['server_check'] ?? null ) && is_string( $saved['server_check']['at'] ?? null ) ? array(
 				'at'          => $saved['server_check']['at'],
 				'cache'       => (bool) ( $saved['server_check']['cache'] ?? false ),
@@ -542,6 +543,9 @@ final class Fixes {
 		}
 		if ( array_key_exists( 'shop_pages', $choices ) ) {
 			$data['shop_pages'] = (bool) $choices['shop_pages'];
+		}
+		if ( array_key_exists( 'remote', $choices ) ) {
+			$data['remote'] = (bool) $choices['remote'];
 		}
 		if ( array_key_exists( 'css_exclude', $choices ) ) {
 			$data['css_exclude'] = array_slice( array_values( array_unique( array_filter( array_map( 'sanitize_key', Exclusions::lines( (string) $choices['css_exclude'] ) ) ) ) ), 0, Exclusions::MAX_LINES );
