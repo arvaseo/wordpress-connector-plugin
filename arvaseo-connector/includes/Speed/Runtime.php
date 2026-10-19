@@ -49,6 +49,14 @@ final class Runtime {
 	private static bool $main_image_done = false;
 
 	/**
+	 * On the homepage: the folder and name of the image the latest PageSpeed test found as the
+	 * largest content, without size or extension (/wp-content/uploads/2026/10/hero), or null.
+	 *
+	 * @var string|null
+	 */
+	private static ?string $report_image = null;
+
+	/**
 	 * Scripts deferred on this page, shown to administrators trying the fix.
 	 *
 	 * @var string[]
@@ -64,6 +72,8 @@ final class Runtime {
 		add_action( 'template_redirect', array( self::class, 'on_page' ), 0 );
 		add_action( 'admin_bar_menu', array( self::class, 'admin_bar' ), 90 );
 		Exclusions::init();
+		ServerRules::init();
+		LocalFonts::init();
 	}
 
 	/**
@@ -111,6 +121,7 @@ final class Runtime {
 		self::$main_image_done = false;
 		self::$deferred        = array();
 		self::$eager           = Fixes::stored()['eager_images'];
+		self::$report_image    = Fixes::applies( 'lcp_image' ) ? self::report_image() : null;
 
 		if ( Fixes::applies( 'lcp_image' ) ) {
 			add_filter( 'wp_get_attachment_image_attributes', array( self::class, 'main_image' ), 20, 2 );
@@ -120,7 +131,7 @@ final class Runtime {
 			add_filter( 'pre_render_block', array( Exclusions::class, 'block_start' ), 10, 2 );
 			add_filter( 'render_block', array( Exclusions::class, 'block_end' ), PHP_INT_MAX, 2 );
 		}
-		if ( Fixes::applies( 'image_dimensions' ) || Fixes::applies( 'lazy_media' ) ) {
+		if ( Fixes::applies( 'image_dimensions' ) || Fixes::applies( 'lazy_media' ) || null !== self::$report_image ) {
 			add_filter( 'render_block', array( self::class, 'filter_html' ), 20 );
 			add_filter( 'the_content', array( self::class, 'filter_html' ), 20 );
 			add_filter( 'widget_text_content', array( self::class, 'filter_html' ), 20 );
@@ -138,6 +149,9 @@ final class Runtime {
 		if ( Fixes::applies( 'defer_scripts' ) ) {
 			add_action( 'wp_enqueue_scripts', array( self::class, 'defer_scripts' ), PHP_INT_MAX );
 			add_action( 'wp_footer', array( self::class, 'remember_deferred' ), PHP_INT_MAX );
+		}
+		if ( Fixes::applies( 'delay_scripts' ) ) {
+			DelayScripts::on_page();
 		}
 		if ( Fixes::applies( 'wp_extras' ) ) {
 			self::remove_extras();
@@ -171,11 +185,12 @@ final class Runtime {
 	 * @return array<string, string>
 	 */
 	public static function main_image( array $attr, $attachment ): array {
-		if ( self::$main_image_done || ! is_singular() ) {
+		if ( self::$main_image_done ) {
 			return $attr;
 		}
-		$post_id = get_queried_object_id();
-		if ( ! $post_id || (int) get_post_thumbnail_id( $post_id ) !== (int) $attachment->ID ) {
+		$post_id  = is_singular() ? get_queried_object_id() : 0;
+		$featured = $post_id > 0 && (int) get_post_thumbnail_id( $post_id ) === (int) $attachment->ID;
+		if ( ! $featured && ! self::is_report_image( (string) ( $attr['src'] ?? '' ), (string) ( $attr['srcset'] ?? '' ) ) ) {
 			return $attr;
 		}
 		self::$main_image_done = true;
@@ -211,6 +226,14 @@ final class Runtime {
 				$tags->set_attribute( 'data-arvaseo-seen', '1' );
 				++self::$images_seen;
 				$attrs = Exclusions::attributes( $tags );
+				if ( ! self::$main_image_done && self::is_report_image( (string) $tags->get_attribute( 'src' ), (string) $tags->get_attribute( 'srcset' ) ) ) {
+					// The image the latest PageSpeed test found as the homepage's largest content.
+					self::$main_image_done = true;
+					if ( 'lazy' === $tags->get_attribute( 'loading' ) ) {
+						$tags->remove_attribute( 'loading' );
+					}
+					$tags->set_attribute( 'fetchpriority', 'high' );
+				}
 				if ( $sizes && ! Exclusions::leaves_element( 'image_dimensions', $name, $attrs ) ) {
 					self::add_size( $tags );
 				}
@@ -222,6 +245,49 @@ final class Runtime {
 			}
 		}
 		return $tags->get_updated_html();
+	}
+
+	/**
+	 * The latest PageSpeed test's largest-content image, for the homepage it tested.
+	 */
+	private static function report_image(): ?string {
+		if ( ! is_front_page() ) {
+			return null;
+		}
+		$image = \ArvaSEO\Connector\Health\AssessmentService::pagespeed_result()['lcp_image'] ?? null;
+		return is_string( $image ) ? self::image_stem( $image ) : null;
+	}
+
+	/**
+	 * An image's folder and name, without a size suffix (-300x200, -scaled) or extension, lower case.
+	 *
+	 * @param string $url Image address.
+	 */
+	public static function image_stem( string $url ): ?string {
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! preg_match( '~^(.*/)?([^/]+?)(?:-\d+x\d+)?(?:-scaled)?\.[a-z0-9]+$~i', $path, $m ) ) {
+			return null;
+		}
+		return strtolower( $m[1] . $m[2] );
+	}
+
+	/**
+	 * Whether an image (any of its sizes) is the report's image.
+	 *
+	 * @param string $src    The image's address.
+	 * @param string $srcset Its other sizes.
+	 */
+	private static function is_report_image( string $src, string $srcset ): bool {
+		if ( null === self::$report_image || '' === $src ) {
+			return false;
+		}
+		foreach ( array_merge( array( $src ), preg_split( '/\s*,\s*/', $srcset ) ?: array() ) as $candidate ) {
+			$url = strtok( trim( (string) $candidate ), ' ' );
+			if ( is_string( $url ) && self::image_stem( $url ) === self::$report_image ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -373,11 +439,16 @@ final class Runtime {
 	 * @return mixed
 	 */
 	public static function font_display( $src ) {
-		if ( ! is_string( $src ) || ! str_contains( $src, 'fonts.googleapis.com/css' ) || str_contains( $src, 'display=' ) ) {
+		if ( ! is_string( $src ) || ! str_contains( $src, 'fonts.googleapis.com/css' ) ) {
 			return $src;
 		}
+		// Served from the site once its copy is ready; Google's address until then.
+		$local = Fixes::stored()['fonts_local'] && LocalFonts::is_google_css( $src ) ? LocalFonts::local_url( $src ) : null;
+		if ( null !== $local ) {
+			return $local;
+		}
 		// Added as is: add_query_arg() would keep only the last of several family= parameters.
-		return $src . ( str_contains( $src, '?' ) ? '&' : '?' ) . 'display=swap';
+		return str_contains( $src, 'display=' ) ? $src : $src . ( str_contains( $src, '?' ) ? '&' : '?' ) . 'display=swap';
 	}
 
 	/**
@@ -404,9 +475,10 @@ final class Runtime {
 	 */
 	private static function uses_google_fonts(): bool {
 		$styles = wp_styles();
+		$local  = Fixes::stored()['fonts_local'];
 		foreach ( $styles->queue as $handle ) {
 			$style = $styles->registered[ $handle ] ?? null;
-			if ( null !== $style && is_string( $style->src ) && str_contains( $style->src, 'fonts.googleapis.com' ) ) {
+			if ( null !== $style && is_string( $style->src ) && str_contains( $style->src, 'fonts.googleapis.com' ) && ! ( $local && LocalFonts::has_copy( $style->src ) ) ) {
 				return true;
 			}
 		}

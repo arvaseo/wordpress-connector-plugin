@@ -101,9 +101,10 @@ final class AssessmentService {
 	}
 
 	/**
-	 * The homepage's latest phone PageSpeed test, as Arva SEO last reported it.
+	 * The homepage's latest phone PageSpeed test, as Arva SEO last reported it (lcp_image is
+	 * missing from tests stored before 1.5.0).
 	 *
-	 * @return array{tested_at: string|null, performance_score: int|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
+	 * @return array{tested_at: string|null, performance_score: int|null, lcp_image?: string|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
 	 */
 	public static function pagespeed_result(): ?array {
 		$value = self::get();
@@ -114,7 +115,7 @@ final class AssessmentService {
 	 * Only Lighthouse audit IDs, plain-text titles and whole milliseconds.
 	 *
 	 * @param mixed $raw The assessment's pagespeed section.
-	 * @return array{tested_at: string|null, performance_score: int|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
+	 * @return array{tested_at: string|null, performance_score: int|null, lcp_image: string|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
 	 */
 	private static function clean_pagespeed( $raw ): ?array {
 		if ( ! is_array( $raw ) ) {
@@ -133,9 +134,12 @@ final class AssessmentService {
 			);
 		}
 		$score = $raw['performance_score'] ?? null;
+		// The image that was the homepage's largest content (Arva SEO 2026-10-19 on): an address only.
+		$image = is_string( $raw['lcp_image'] ?? null ) && strlen( $raw['lcp_image'] ) <= 2048 ? esc_url_raw( $raw['lcp_image'], array( 'http', 'https' ) ) : '';
 		return array(
 			'tested_at'         => is_string( $raw['tested_at'] ?? null ) ? sanitize_text_field( $raw['tested_at'] ) : null,
 			'performance_score' => is_int( $score ) && $score >= 0 && $score <= 100 ? $score : null,
+			'lcp_image'         => '' !== $image ? $image : null,
 			'audits'            => $audits,
 		);
 	}

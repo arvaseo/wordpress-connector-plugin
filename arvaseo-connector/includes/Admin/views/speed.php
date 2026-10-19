@@ -10,6 +10,7 @@ use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Health\AssessmentService;
 use ArvaSEO\Connector\Speed\Exclusions;
 use ArvaSEO\Connector\Speed\Fixes;
+use ArvaSEO\Connector\Speed\ServerRules;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -140,13 +141,21 @@ defined( 'ABSPATH' ) || exit;
 					<?php echo esc_html( implode( ' · ', array_map( static fn ( string $title ) => '“' . $title . '”', array_values( $arvaseo_fix['audits'] ) ) ) ); ?>
 				</p>
 				<?php if ( 'check' === $arvaseo_fix['risk'] ) : ?>
-					<p class="arvaseo-speed-risk"><span class="dashicons dashicons-warning" aria-hidden="true"></span> <?php esc_html_e( 'Can affect how your site works. Try it first and check your important pages.', 'arvaseo-connector' ); ?></p>
+					<p class="arvaseo-speed-risk"><span class="dashicons dashicons-warning" aria-hidden="true"></span>
+						<?php
+						echo esc_html(
+							in_array( 'trying', $arvaseo_fix['states'], true )
+								? __( 'Can affect how your site works. Try it first and check your important pages.', 'arvaseo-connector' )
+								: __( 'Changes your server’s settings for every visitor at once. Check your important pages after turning it on.', 'arvaseo-connector' )
+						);
+						?>
+					</p>
 				<?php else : ?>
 					<p class="description"><?php esc_html_e( 'Safe: it only changes how things load, not what visitors see.', 'arvaseo-connector' ); ?></p>
 				<?php endif; ?>
 				<?php if ( in_array( $arvaseo_id, Exclusions::ELEMENT_FIXES, true ) ) : ?>
 					<p class="description"><a href="#arvaseo-speed-exclusions"><?php esc_html_e( 'Leave a page, image or video alone', 'arvaseo-connector' ); ?></a></p>
-				<?php elseif ( 'webp_uploads' !== $arvaseo_id && 'defer_scripts' !== $arvaseo_id ) : ?>
+				<?php elseif ( ! in_array( $arvaseo_id, array( 'webp_uploads', 'defer_scripts', 'browser_caching' ), true ) ) : ?>
 					<p class="description"><a href="#arvaseo-speed-exclusions"><?php esc_html_e( 'Leave a page alone', 'arvaseo-connector' ); ?></a></p>
 				<?php endif; ?>
 
@@ -157,8 +166,20 @@ defined( 'ABSPATH' ) || exit;
 						printf( esc_html__( '%s can do this. Turn it on there instead, so your pages aren’t processed twice.', 'arvaseo-connector' ), esc_html( (string) $arvaseo_handled ) );
 						?>
 					</p>
+					<?php if ( 'browser_caching' === $arvaseo_id && ServerRules::present() ) : ?>
+						<div class="arvaseo-actions"><?php $arvaseo_button( $arvaseo_id, 'off', __( 'Remove Arva SEO’s rules', 'arvaseo-connector' ) ); ?></div>
+					<?php endif; ?>
 				<?php elseif ( 'unavailable' === $arvaseo_state ) : ?>
 					<p><?php echo esc_html( (string) Fixes::unavailable( $arvaseo_id ) ); ?></p>
+					<?php if ( 'browser_caching' === $arvaseo_id ) : ?>
+						<details>
+							<summary><?php esc_html_e( 'The rules for your host', 'arvaseo-connector' ); ?></summary>
+							<p class="description"><?php esc_html_e( 'nginx:', 'arvaseo-connector' ); ?></p>
+							<pre class="arvaseo-code"><?php echo esc_html( ServerRules::nginx() ); ?></pre>
+							<p class="description"><?php esc_html_e( 'Apache or LiteSpeed (.htaccess):', 'arvaseo-connector' ); ?></p>
+							<pre class="arvaseo-code"><?php echo esc_html( implode( "\n", ServerRules::lines() ) ); ?></pre>
+						</details>
+					<?php endif; ?>
 				<?php else : ?>
 					<?php if ( 'trying' === $arvaseo_state ) : ?>
 						<p>
@@ -174,6 +195,34 @@ defined( 'ABSPATH' ) || exit;
 						</p>
 					<?php endif; ?>
 
+					<?php if ( 'browser_caching' === $arvaseo_id && 'on' === $arvaseo_state ) : ?>
+						<?php $arvaseo_check = $arvaseo_stored['server_check']; ?>
+						<?php if ( ! ServerRules::present() ) : ?>
+							<p class="arvaseo-speed-risk"><span class="dashicons dashicons-warning" aria-hidden="true"></span> <?php esc_html_e( 'The rules aren’t in your .htaccess file any more: another plugin or your host may have rewritten it. Turn this off and on again to add them back.', 'arvaseo-connector' ); ?></p>
+						<?php elseif ( null !== $arvaseo_check ) : ?>
+							<ul class="arvaseo-list">
+								<li><?php echo esc_html( $arvaseo_check['cache'] ? __( 'Checked: images, fonts, styles and scripts now stay in browsers for a year.', 'arvaseo-connector' ) : __( 'Your server didn’t add the cache lifetimes. Ask your host to turn on mod_expires.', 'arvaseo-connector' ) ); ?></li>
+								<li>
+									<?php
+									echo esc_html(
+										null !== $arvaseo_check['compression']
+											/* translators: %s: compression method, such as br or gzip. */
+											? sprintf( __( 'Checked: pages are sent compressed (%s).', 'arvaseo-connector' ), $arvaseo_check['compression'] )
+											: __( 'Pages weren’t compressed when checked from your server. Your host may compress them further along (a CDN, for example); if PageSpeed still asks for it, ask your host to turn on mod_deflate or Brotli.', 'arvaseo-connector' )
+									);
+									?>
+								</li>
+							</ul>
+						<?php endif; ?>
+					<?php endif; ?>
+					<?php if ( 'browser_caching' === $arvaseo_id ) : ?>
+						<p class="description"><?php esc_html_e( 'If you edit your theme’s files by hand, visitors may see the old version for a while; WordPress and plugins add a version to their files, so their updates show straight away.', 'arvaseo-connector' ); ?></p>
+						<details>
+							<summary><?php esc_html_e( 'The rules it adds', 'arvaseo-connector' ); ?></summary>
+							<pre class="arvaseo-code"><?php echo esc_html( implode( "\n", ServerRules::lines() ) ); ?></pre>
+						</details>
+					<?php endif; ?>
+
 					<?php if ( 'wp_extras' === $arvaseo_id ) : ?>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-speed-options">
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
@@ -186,6 +235,46 @@ defined( 'ABSPATH' ) || exit;
 								<?php endforeach; ?>
 							</fieldset>
 							<button type="submit" class="button"><?php esc_html_e( 'Save choices', 'arvaseo-connector' ); ?></button>
+						</form>
+					<?php endif; ?>
+
+					<?php if ( 'delay_scripts' === $arvaseo_id ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-speed-options">
+							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
+							<input type="hidden" name="fix" value="delay_scripts" />
+							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+							<details>
+								<summary><?php esc_html_e( 'The widgets it delays by itself', 'arvaseo-connector' ); ?></summary>
+								<p class="description"><?php esc_html_e( 'Tawk.to, Crisp, Intercom, LiveChat, Tidio, Zendesk, Drift and HubSpot chat; Hotjar and Microsoft Clarity; Facebook, X (Twitter) and Pinterest widgets; Elfsight widgets. Only scripts your theme or plugins add the WordPress way can be delayed.', 'arvaseo-connector' ); ?></p>
+							</details>
+							<p>
+								<label for="arvaseo-delay-scripts"><strong><?php esc_html_e( 'Also delay these scripts', 'arvaseo-connector' ); ?></strong></label>
+								<textarea id="arvaseo-delay-scripts" name="delay_scripts" rows="3" class="large-text code" placeholder="reviews-widget&#10;widget.example.com"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['delay_scripts'] ) ); ?></textarea>
+								<span class="description"><?php esc_html_e( 'One per line: a script name (handle) or part of its file address. A script that other scripts need is never delayed. To keep a widget loading straight away on some pages, leave those pages alone below.', 'arvaseo-connector' ); ?></span>
+							</p>
+							<button type="submit" class="button"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button>
+						</form>
+					<?php endif; ?>
+
+					<?php if ( 'google_fonts' === $arvaseo_id ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-speed-options">
+							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
+							<input type="hidden" name="fix" value="google_fonts" />
+							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+							<p>
+								<label><input type="checkbox" name="fonts_local" value="1" <?php checked( $arvaseo_stored['fonts_local'] ); ?> /> <strong><?php esc_html_e( 'Serve them from your site', 'arvaseo-connector' ); ?></strong></label><br />
+								<span class="description"><?php esc_html_e( 'Copies of the fonts your pages use are kept in your uploads folder and used instead of Google’s, so browsers don’t connect to Google for them (better for privacy too). Each copy is made in the background the first time a page needs it; until then Google’s fonts are used.', 'arvaseo-connector' ); ?></span>
+								<?php if ( $arvaseo_stored['fonts_local'] && \ArvaSEO\Connector\Speed\LocalFonts::copied() > 0 ) : ?>
+									<br /><span class="description">
+										<?php
+										$arvaseo_copies = \ArvaSEO\Connector\Speed\LocalFonts::copied();
+										/* translators: %d: number of Google Fonts stylesheets copied. */
+										printf( esc_html( _n( '%d font stylesheet is served from your site.', '%d font stylesheets are served from your site.', $arvaseo_copies, 'arvaseo-connector' ) ), (int) $arvaseo_copies );
+										?>
+									</span>
+								<?php endif; ?>
+							</p>
+							<button type="submit" class="button"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button>
 						</form>
 					<?php endif; ?>
 

@@ -71,6 +71,7 @@ final class Lifecycle {
 			return;
 		}
 		CronManager::clear_all();
+		\ArvaSEO\Connector\Speed\ServerRules::remove_on_exit();
 	}
 
 	/**

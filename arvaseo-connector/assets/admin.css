@@ -63,3 +63,4 @@
 .arvaseo-speed-plugins fieldset p { margin: 0 0 6px; }
 .arvaseo-speed-dev { margin-top: 16px; }
 .arvaseo-speed-options .arvaseo-list .button-link { margin-left: 6px; }
+.arvaseo-code { max-width: 640px; overflow: auto; padding: 8px 10px; background: #f6f7f7; border: 1px solid #dcdcde; font-size: 12px; white-space: pre; }

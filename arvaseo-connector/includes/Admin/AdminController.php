@@ -175,6 +175,9 @@ final class AdminController {
 			'speed_unavailable'              => array( 'error', __( 'This fix isn’t available on this server.', 'arvaseo-connector' ) ),
 			'speed_try_first'                => array( 'error', __( 'Try Defer scripts first, check your important pages, then turn it on.', 'arvaseo-connector' ) ),
 			'speed_check_pages'              => array( 'error', __( 'Tick each page you checked while trying Defer scripts before you turn it on.', 'arvaseo-connector' ) ),
+			'speed_not_written'              => array( 'error', __( 'WordPress couldn’t write to your .htaccess file, so nothing changed. Ask your host to make it writable.', 'arvaseo-connector' ) ),
+			'speed_unchecked'                => array( 'error', __( 'Your site couldn’t be checked from your server (some hosts block this), so the rules were taken out again to be safe. Nothing changed. Your host can add them for you: they’re listed on the card.', 'arvaseo-connector' ) ),
+			'speed_server_error'             => array( 'error', __( 'Your server answered with an error once the rules were in, so they were taken out straight away. Your site is as before. Your host can say which rule it doesn’t allow.', 'arvaseo-connector' ) ),
 		);
 		if ( isset( $map[ $code ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
@@ -342,6 +345,10 @@ final class AdminController {
 				'defer_exclude' => $exclude,
 				'defer_plugins' => $list( 'defer_plugins' ),
 			);
+		} elseif ( 'delay_scripts' === $fix ) {
+			$choices = array( 'delay_scripts' => $text( 'delay_scripts' ) );
+		} elseif ( 'google_fonts' === $fix ) {
+			$choices = array( 'fonts_local' => ! empty( $_POST['fonts_local'] ) );
 		} elseif ( 'exclusions' === $fix ) {
 			$choices = array(
 				'exclude_pages'    => $text( 'exclude_pages' ),

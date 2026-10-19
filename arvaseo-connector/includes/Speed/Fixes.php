@@ -59,7 +59,7 @@ final class Fixes {
 		return array(
 			'lcp_image'        => array(
 				'title'      => __( 'Show the main image first', 'arvaseo-connector' ),
-				'what'       => __( 'On posts and pages, the featured image loads straight away with a high priority instead of waiting its turn, so the largest thing on the screen appears sooner.', 'arvaseo-connector' ),
+				'what'       => __( 'On posts and pages, the featured image loads straight away with a high priority instead of waiting its turn, so the largest thing on the screen appears sooner. On your homepage, so does the image your latest PageSpeed test in Arva SEO found as the largest thing on the screen.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'safe',
 				'audits'     => array(
@@ -132,6 +132,20 @@ final class Fixes {
 				'handled_by' => array_merge( $speed_plugins, array( 'wp-youtube-lyte' ) ),
 				'states'     => self::STATES,
 			),
+			'delay_scripts'    => array(
+				'title'      => __( 'Delay chat widgets and trackers', 'arvaseo-connector' ),
+				'what'       => __( 'Chat boxes, heatmaps and social widgets load on the visitor’s first scroll, tap, click or key press instead of while the page loads, so the page is ready to use sooner. Analytics and consent tools are never delayed unless you list them.', 'arvaseo-connector' ),
+				'group'      => 'nothing',
+				'risk'       => 'check',
+				'audits'     => array(
+					'third-party-summary'       => 'Reduce the impact of third-party code',
+					'third-parties-insight'     => '3rd parties',
+					'bootup-time'               => 'Reduce JavaScript execution time',
+					'mainthread-work-breakdown' => 'Minimize main-thread work',
+				),
+				'handled_by' => array( 'wp-rocket', 'perfmatters', 'flying-press', 'nitropack', 'flying-scripts', 'litespeed-cache' ),
+				'states'     => self::STATES,
+			),
 			'google_fonts'     => array(
 				'title'      => __( 'Faster Google Fonts', 'arvaseo-connector' ),
 				'what'       => __( 'Text shows straight away in a similar font while Google Fonts load, and the browser connects to Google’s font servers early.', 'arvaseo-connector' ),
@@ -157,6 +171,21 @@ final class Fixes {
 				),
 				'handled_by' => array(),
 				'states'     => self::STATES,
+			),
+			'browser_caching'  => array(
+				'title'      => __( 'Browser caching and compression', 'arvaseo-connector' ),
+				'what'       => __( 'Visitors’ browsers keep your images, fonts, styles and scripts for a year instead of downloading them on every visit, and pages, styles and scripts are sent compressed. The rules go in your .htaccess file, and your site is checked straight away: if it doesn’t answer normally, they’re taken out again.', 'arvaseo-connector' ),
+				'group'      => 'smaller',
+				'risk'       => 'check',
+				'audits'     => array(
+					'uses-long-cache-ttl'      => 'Serve static assets with an efficient cache policy',
+					'cache-insight'            => 'Use efficient cache lifetimes',
+					'uses-text-compression'    => 'Enable text compression',
+					'document-latency-insight' => 'Document request latency',
+				),
+				'handled_by' => array( 'wp-rocket', 'litespeed-cache', 'w3-total-cache', 'wp-fastest-cache', 'sg-cachepress', 'breeze', 'hummingbird-performance', 'wp-optimize', 'swift-performance-lite', 'nitropack' ),
+				// Server rules apply to every visitor at once, so there's nothing to try first.
+				'states'     => array( 'off', 'on' ),
 			),
 			'webp_uploads'     => array(
 				'title'      => __( 'New uploads as WebP', 'arvaseo-connector' ),
@@ -217,13 +246,19 @@ final class Fixes {
 			'optimole-wp'                => 'Optimole',
 			'webp-express'               => 'WebP Express',
 			'webp-converter-for-media'   => 'Converter for Media',
+			'wp-fastest-cache'           => 'WP Fastest Cache',
+			'breeze'                     => 'Breeze',
+			'hummingbird-performance'    => 'Hummingbird',
+			'wp-optimize'                => 'WP-Optimize',
+			'swift-performance-lite'     => 'Swift Performance',
+			'flying-scripts'             => 'Flying Scripts',
 		);
 	}
 
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null}
+	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[]}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -252,6 +287,13 @@ final class Fixes {
 			'eager_images'     => is_int( $saved['eager_images'] ?? null ) ? max( 0, min( self::MAX_EAGER_IMAGES, $saved['eager_images'] ) ) : self::EAGER_IMAGES,
 			'defer_checked_at' => is_string( $saved['defer_checked_at'] ?? null ) ? $saved['defer_checked_at'] : null,
 			'defer_on_at'      => is_int( $saved['defer_on_at'] ?? null ) ? $saved['defer_on_at'] : null,
+			'fonts_local'      => (bool) ( $saved['fonts_local'] ?? false ),
+			'delay_scripts'    => self::strings( $saved['delay_scripts'] ?? array() ),
+			'server_check'     => is_array( $saved['server_check'] ?? null ) && is_string( $saved['server_check']['at'] ?? null ) ? array(
+				'at'          => $saved['server_check']['at'],
+				'cache'       => (bool) ( $saved['server_check']['cache'] ?? false ),
+				'compression' => is_string( $saved['server_check']['compression'] ?? null ) ? $saved['server_check']['compression'] : null,
+			) : null,
 		);
 	}
 
@@ -317,6 +359,9 @@ final class Fixes {
 		if ( 'webp_uploads' === $id && ! wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) ) ) {
 			return __( 'This server’s image library can’t make WebP images. Ask your host to enable WebP in Imagick or GD.', 'arvaseo-connector' );
 		}
+		if ( 'browser_caching' === $id && 'on' !== ( self::stored()['fixes'][ $id ]['state'] ?? 'off' ) ) {
+			return ServerRules::unavailable();
+		}
 		return null;
 	}
 
@@ -365,7 +410,8 @@ final class Fixes {
 	 * @param string $state off|trying|on.
 	 * @param bool   $checked Defer scripts: the checklist was ticked.
 	 * @return string|null Why it didn't change (invalid, handled, unavailable, try_first,
-	 *                     check_pages), or null when it did.
+	 *                     check_pages, and for Browser caching not_written, unchecked or
+	 *                     server_error), or null when it did.
 	 */
 	public static function set( string $id, string $state, bool $checked = false ): ?string {
 		$fix = self::all()[ $id ] ?? null;
@@ -391,6 +437,27 @@ final class Fixes {
 		}
 		if ( 'defer_scripts' === $id && 'on' !== $state ) {
 			$data['defer_on_at'] = null;
+		}
+		if ( 'browser_caching' === $id ) {
+			if ( 'on' === $state ) {
+				$check = ServerRules::enable();
+				if ( null !== $check['error'] ) {
+					AuditLogger::warning(
+						'speed.server_rules_refused',
+						__( 'PageSpeed fix “Browser caching and compression” wasn’t turned on: the site didn’t answer normally with the rules, so they were taken out again.', 'arvaseo-connector' ),
+						array( 'reason' => $check['error'] )
+					);
+					return $check['error'];
+				}
+				$data['server_check'] = array(
+					'at'          => Ids::iso(),
+					'cache'       => $check['cache'],
+					'compression' => $check['compression'],
+				);
+			} else {
+				ServerRules::disable();
+				$data['server_check'] = null;
+			}
 		}
 		$from                 = $data['fixes'][ $id ]['state'];
 		$data['fixes'][ $id ] = array(
@@ -419,7 +486,9 @@ final class Fixes {
 	 * - exclude_pages: text box of page addresses;
 	 * - exclude_elements: text box of .classes, #ids or parts of file addresses;
 	 * - shop_pages: leave shop pages alone (Defer scripts);
-	 * - eager_images: images at the top of each page that load straight away.
+	 * - eager_images: images at the top of each page that load straight away;
+	 * - fonts_local: Faster Google Fonts serves copies from the site;
+	 * - delay_scripts: text box of scripts Delay chat widgets and trackers also delays.
 	 *
 	 * @param array<string, mixed> $choices Choices.
 	 */
@@ -444,6 +513,12 @@ final class Fixes {
 		}
 		if ( array_key_exists( 'shop_pages', $choices ) ) {
 			$data['shop_pages'] = (bool) $choices['shop_pages'];
+		}
+		if ( array_key_exists( 'delay_scripts', $choices ) ) {
+			$data['delay_scripts'] = Exclusions::script_lines( (string) $choices['delay_scripts'] );
+		}
+		if ( array_key_exists( 'fonts_local', $choices ) ) {
+			$data['fonts_local'] = (bool) $choices['fonts_local'];
 		}
 		if ( array_key_exists( 'eager_images', $choices ) ) {
 			$data['eager_images'] = max( 0, min( self::MAX_EAGER_IMAGES, (int) $choices['eager_images'] ) );
