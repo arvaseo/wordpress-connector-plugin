@@ -37,7 +37,7 @@ final class Exclusions {
 	public const SKIP_ATTRIBUTE = 'data-arvaseo-skip';
 
 	/** The fixes that change images and frames. */
-	public const ELEMENT_FIXES = array( 'lazy_media', 'image_dimensions', 'video_facades' );
+	public const ELEMENT_FIXES = array( 'lazy_media', 'image_dimensions', 'video_facades', 'webp_uploads' );
 
 	/** The fixes shop pages are left alone by. */
 	public const SHOP_FIXES = array( 'defer_scripts', 'delay_scripts' );

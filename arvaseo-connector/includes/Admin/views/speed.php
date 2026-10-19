@@ -66,7 +66,7 @@ defined( 'ABSPATH' ) || exit;
 		echo '</form>';
 	};
 	?>
-<p class="arvaseo-lead"><?php esc_html_e( 'Switch on fixes for the speed problems Google’s PageSpeed test finds. Each one is off until you turn it on, you can try it first (only you see it while you’re signed in), and turning it off puts your pages back as they were. Nothing changes in your database or theme files.', 'arvaseo-connector' ); ?></p>
+<p class="arvaseo-lead"><?php esc_html_e( 'Switch on fixes for the speed problems Google’s PageSpeed test finds. Each one is off until you turn it on, most can be tried first (only you see them while you’re signed in), and turning one off puts your pages back as they were. Your theme files and content are never changed; the few fixes that add files say so on their card.', 'arvaseo-connector' ); ?></p>
 
 	<?php if ( $arvaseo_killed ) : ?>
 	<div class="notice notice-warning inline"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
@@ -236,6 +236,57 @@ defined( 'ABSPATH' ) || exit;
 							</fieldset>
 							<button type="submit" class="button"><?php esc_html_e( 'Save choices', 'arvaseo-connector' ); ?></button>
 						</form>
+					<?php endif; ?>
+
+					<?php if ( 'webp_uploads' === $arvaseo_id ) : ?>
+						<?php $arvaseo_webp = \ArvaSEO\Connector\Speed\WebpLibrary::progress(); ?>
+						<div class="arvaseo-speed-options">
+							<p><strong><?php esc_html_e( 'Convert your existing images too', 'arvaseo-connector' ); ?></strong><br />
+								<span class="description"><?php esc_html_e( 'Each JPEG and PNG in your media library, and each of its sizes, gets a WebP copy beside it, kept only when it’s smaller. Your originals stay as they are, and Undo removes every copy. It runs in the background, a few images at a time.', 'arvaseo-connector' ); ?></span>
+							</p>
+							<?php if ( $arvaseo_webp['total'] > 0 ) : ?>
+								<p>
+									<progress max="<?php echo esc_attr( (string) $arvaseo_webp['total'] ); ?>" value="<?php echo esc_attr( (string) $arvaseo_webp['done'] ); ?>"></progress>
+									<?php
+									printf(
+										/* translators: 1: images done, 2: all images, 3: space saved, such as 2 MB. */
+										esc_html__( '%1$d of %2$d images, %3$s smaller so far.', 'arvaseo-connector' ),
+										(int) $arvaseo_webp['done'],
+										(int) $arvaseo_webp['total'],
+										esc_html( size_format( $arvaseo_webp['saved_bytes'] ) ? (string) size_format( $arvaseo_webp['saved_bytes'] ) : '0 B' )
+									);
+									echo $arvaseo_webp['running'] ? ' ' . esc_html__( 'Converting…', 'arvaseo-connector' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+									?>
+								</p>
+							<?php endif; ?>
+							<div class="arvaseo-actions">
+								<?php
+								foreach ( array_filter(
+									array(
+										'start' => ! $arvaseo_webp['running'] && 'on' === $arvaseo_state,
+										'stop'  => $arvaseo_webp['running'],
+										'undo'  => $arvaseo_webp['done'] > 0,
+									)
+								) as $arvaseo_do => $arvaseo_show ) :
+									?>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-inline-form"<?php echo 'undo' === $arvaseo_do ? ' data-arvaseo-confirm="confirmWebpUndo"' : ''; ?>>
+										<input type="hidden" name="action" value="arvaseo_connector_webp" />
+										<input type="hidden" name="do" value="<?php echo esc_attr( $arvaseo_do ); ?>" />
+										<?php wp_nonce_field( 'arvaseo_connector_webp' ); ?>
+										<button type="submit" class="button">
+											<?php
+											$arvaseo_labels = array(
+												'start' => $arvaseo_webp['done'] > 0 && null === $arvaseo_webp['finished_at'] ? __( 'Continue', 'arvaseo-connector' ) : ( null !== $arvaseo_webp['finished_at'] ? __( 'Convert images added since', 'arvaseo-connector' ) : __( 'Convert existing images', 'arvaseo-connector' ) ),
+												'stop'  => __( 'Stop', 'arvaseo-connector' ),
+												'undo'  => __( 'Undo: remove the copies', 'arvaseo-connector' ),
+											);
+											echo esc_html( $arvaseo_labels[ $arvaseo_do ] );
+											?>
+										</button>
+									</form>
+								<?php endforeach; ?>
+							</div>
+						</div>
 					<?php endif; ?>
 
 					<?php if ( 'delay_scripts' === $arvaseo_id ) : ?>

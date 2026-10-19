@@ -74,6 +74,7 @@ final class Runtime {
 		Exclusions::init();
 		ServerRules::init();
 		LocalFonts::init();
+		WebpLibrary::init();
 	}
 
 	/**
@@ -152,6 +153,9 @@ final class Runtime {
 		}
 		if ( Fixes::applies( 'delay_scripts' ) ) {
 			DelayScripts::on_page();
+		}
+		if ( Fixes::applies( 'webp_uploads' ) ) {
+			WebpLibrary::on_page();
 		}
 		if ( Fixes::applies( 'wp_extras' ) ) {
 			self::remove_extras();

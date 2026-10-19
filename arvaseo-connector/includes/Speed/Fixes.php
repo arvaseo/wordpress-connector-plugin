@@ -189,7 +189,7 @@ final class Fixes {
 			),
 			'webp_uploads'     => array(
 				'title'      => __( 'New uploads as WebP', 'arvaseo-connector' ),
-				'what'       => __( 'Images you upload from now on also get smaller WebP copies, which WordPress shows instead. Your existing images and the originals stay as they are.', 'arvaseo-connector' ),
+				'what'       => __( 'Images you upload from now on also get smaller WebP copies, which WordPress shows instead. You can convert the images already in your media library too. Your originals always stay as they are.', 'arvaseo-connector' ),
 				'group'      => 'smaller',
 				'risk'       => 'safe',
 				'audits'     => array(

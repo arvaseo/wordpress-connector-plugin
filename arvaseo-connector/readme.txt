@@ -4,7 +4,7 @@ Tags: pagespeed, performance, core web vitals, seo, site health
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,17 +16,19 @@ Fix the speed problems Google's PageSpeed test finds, one switch at a time, and 
 
 = PageSpeed fixes =
 
-Arva SEO → PageSpeed fixes lists each fix with the PageSpeed (Lighthouse) problem it addresses, worded as the report shows it. Every fix is off until you turn it on. You can try it first: while you try a fix, only you see the change when you're signed in, and visitors see your site as before. Turning a fix off puts your pages back as they were. Nothing changes in your database or theme files, and the fixes work without an Arva SEO account.
+Arva SEO → PageSpeed fixes lists each fix with the PageSpeed (Lighthouse) problem it addresses, worded as the report shows it. Every fix is off until you turn it on. You can try it first: while you try a fix, only you see the change when you're signed in, and visitors see your site as before. Turning a fix off puts your pages back as they were. Your theme files and content are never changed. The few fixes that add files say so on their cards (server rules in .htaccess, WebP and font copies in your uploads folder) and take them away again. The fixes work without an Arva SEO account.
 
-* **Show the main image first** (Largest Contentful Paint image was lazily loaded; Preload Largest Contentful Paint image)
+* **Show the main image first**: the featured image on posts and pages, and on the homepage the image your latest PageSpeed test in Arva SEO named (Largest Contentful Paint image was lazily loaded; LCP request discovery)
 * **Lazy-load images, videos and maps** below the first few images (Defer offscreen images)
 * **Defer scripts** in the page's head, leaving jQuery, consent tools and any scripts you choose alone (Eliminate render-blocking resources). Because this one can affect how a site works, it can only be turned on after you've tried it and ticked off your important pages.
 * **Add missing image sizes** to media-library images (Image elements do not have explicit width and height)
 * **Add the mobile viewport tag**, when PageSpeed says it's missing
 * **Click-to-play videos**: YouTube embeds show a preview picture, and the player loads when someone presses play (Lazy load third-party resources with facades)
-* **Faster Google Fonts**: text shows straight away while fonts load, and the browser connects early (Ensure text remains visible during webfont load)
+* **Faster Google Fonts**: text shows straight away while fonts load, and the browser connects early; or serve copies of the fonts from your own site (Ensure text remains visible during webfont load)
+* **Delay chat widgets and trackers**: chat boxes, heatmaps and social widgets load on the visitor's first scroll, tap or key press; analytics and consent tools are never delayed unless you list them (Reduce the impact of third-party code)
+* **Browser caching and compression** on Apache and LiteSpeed: year-long browser caching for images, fonts, styles and scripts, and compressed pages, as rules in .htaccess that are checked straight away and taken out again if your site doesn't answer normally (Serve static assets with an efficient cache policy; Enable text compression)
 * **Remove unused WordPress extras** you choose: the emoji script, embed discovery, Dashicons for visitors, jQuery Migrate, block styles on pages without blocks
-* **New uploads as WebP** (Serve images in next-gen formats)
+* **New uploads as WebP**, and convert the images already in your media library in the background, keeping the originals (Serve images in next-gen formats)
 
 If a speed plugin such as WP Rocket, LiteSpeed Cache, Perfmatters or FlyingPress already does one of these jobs, that fix stays off and the page tells you to use that plugin's setting, so pages are never processed twice. When the site is connected, the page also shows which fixes your homepage's latest PageSpeed test asks for, and Arva SEO's PageSpeed results link straight to the right switch.
 
@@ -57,7 +59,7 @@ Only in the ways you switch on. PageSpeed fixes change how your pages load, only
 
 = Can a PageSpeed fix break my site? =
 
-Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. If you use a page cache, clear it after changing a fix.
+Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Delay chat widgets and trackers, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. Browser caching and compression changes your server's settings, so it can't be tried first; it checks your site straight away instead (see below). If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. If you use a page cache, clear it after changing a fix.
 
 = Can I leave a page, script or image alone? =
 
@@ -71,6 +73,14 @@ Yes, in Arva SEO → PageSpeed fixes → Leave things alone:
 = Are there filters for developers? =
 
 `arvaseo_connector_speed_fix_applies` (bool $applies, string $fix_id) turns a fix off for any condition, `arvaseo_connector_defer_script` (bool $defer, string $handle, string $src) leaves a script alone, and `arvaseo_connector_optimize_element` (bool $optimize, string $fix_id, string $tag, array $attributes) leaves an image or frame alone.
+
+= Can it make critical CSS or remove unused CSS? =
+
+No. Both need every page drawn in a real browser to see which styles it uses, which is a job for a caching plugin with its own service (WP Rocket's Remove unused CSS, LiteSpeed Cache's critical and unused CSS options). The PageSpeed fixes page and Arva SEO name the setting to use in the plugin you have. Remove unused WordPress extras does take block styles off pages without blocks.
+
+= Is Browser caching and compression safe? =
+
+The rules only use standard Apache settings, wrapped so a server without those modules ignores them. Still, a server that doesn't allow one of them in .htaccess would answer every page with an error, so the plugin checks your homepage and one of its own files from the server right after adding them, and takes them out again in the same moment if either doesn't answer normally, or if the check can't be made. Turning the fix off, deactivating or deleting the plugin, or the wp-config.php switch removes them.
 
 = Do the PageSpeed fixes need an Arva SEO account? =
 
@@ -123,6 +133,9 @@ See Arva SEO → Diagnostics & Privacy for the full list of shared fields and th
 
 == Upgrade Notice ==
 
+= 1.5.0 =
+Four more PageSpeed fixes, each off until you turn it on: browser caching and compression, delay chat widgets and trackers, Google Fonts from your own site, and converting existing images to WebP.
+
 = 1.4.0 =
 Leave things alone: keep chosen pages, scripts, images and videos out of the PageSpeed fixes. Nothing changes on your site by updating.
 
@@ -133,6 +146,14 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 1.5.0 =
+* New: Browser caching and compression (Apache and LiteSpeed). Rules in .htaccess for year-long browser caching and compression, checked from your server straight away and taken out again if your site doesn't answer normally or can't be checked. Removed when turned off, when the plugin is deactivated or deleted, and with the wp-config.php switch. On nginx, the card shows the rules to give your host.
+* New: Delay chat widgets and trackers. Known chat, heatmap and social widgets (Tawk.to, Crisp, Intercom, LiveChat, Tidio, Zendesk, Drift, HubSpot chat, Hotjar, Clarity, Facebook, X and Pinterest widgets, Elfsight) and scripts you list load on the first scroll, tap, click or key press. Analytics, tag managers, consent tools and scripts that other scripts need are never delayed.
+* New: Faster Google Fonts can serve copies of the fonts from your site (uploads/arvaseo-fonts), made in the background; Google's fonts are used until a copy is ready.
+* New: New uploads as WebP can convert the images already in your media library, a few at a time in the background, with progress, Stop and Undo. Copies sit beside the originals and are kept only when smaller.
+* Show the main image first: on the homepage, the image your latest PageSpeed test in Arva SEO found as the largest thing on the screen loads first too.
+* The cards say which fixes change your server's settings, and a fix that can't be tried first says so.
 
 = 1.4.0 =
 * New: Leave things alone (Arva SEO → PageSpeed fixes). Keep pages out of every fix by address (with * wildcards), with a tick box in the editor, or from the toolbar while viewing a page.

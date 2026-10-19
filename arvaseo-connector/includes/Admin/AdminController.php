@@ -62,6 +62,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_diagnostics', array( self::class, 'download_diagnostics' ) );
 		add_action( 'admin_post_arvaseo_connector_speed', array( self::class, 'speed' ) );
 		add_action( 'admin_post_arvaseo_connector_speed_options', array( self::class, 'speed_options' ) );
+		add_action( 'admin_post_arvaseo_connector_webp', array( self::class, 'webp' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 	}
 
@@ -175,6 +176,10 @@ final class AdminController {
 			'speed_unavailable'              => array( 'error', __( 'This fix isn’t available on this server.', 'arvaseo-connector' ) ),
 			'speed_try_first'                => array( 'error', __( 'Try Defer scripts first, check your important pages, then turn it on.', 'arvaseo-connector' ) ),
 			'speed_check_pages'              => array( 'error', __( 'Tick each page you checked while trying Defer scripts before you turn it on.', 'arvaseo-connector' ) ),
+			'speed_webp_started'             => array( 'success', __( 'Converting your existing images in the background. You can leave this page; come back to see how far it got.', 'arvaseo-connector' ) ),
+			'speed_webp_stopped'             => array( 'success', __( 'Stopped. Images converted so far keep their WebP copies; Continue picks up where it stopped.', 'arvaseo-connector' ) ),
+			'speed_webp_undone'              => array( 'success', __( 'The WebP copies of your existing images were removed. Pages show the originals again.', 'arvaseo-connector' ) ),
+			'speed_webp_off'                 => array( 'error', __( 'Turn on New uploads as WebP first.', 'arvaseo-connector' ) ),
 			'speed_not_written'              => array( 'error', __( 'WordPress couldn’t write to your .htaccess file, so nothing changed. Ask your host to make it writable.', 'arvaseo-connector' ) ),
 			'speed_unchecked'                => array( 'error', __( 'Your site couldn’t be checked from your server (some hosts block this), so the rules were taken out again to be safe. Nothing changed. Your host can add them for you: they’re listed on the card.', 'arvaseo-connector' ) ),
 			'speed_server_error'             => array( 'error', __( 'Your server answered with an error once the rules were in, so they were taken out straight away. Your site is as before. Your host can say which rule it doesn’t allow.', 'arvaseo-connector' ) ),
@@ -368,6 +373,24 @@ final class AdminController {
 	}
 
 	/**
+	 * Convert existing images to WebP: start or continue, stop, or undo.
+	 */
+	public static function webp(): void {
+		self::guard( 'arvaseo_connector_webp', Capabilities::MANAGE );
+		$do = isset( $_POST['do'] ) ? sanitize_key( wp_unslash( $_POST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		if ( 'stop' === $do ) {
+			\ArvaSEO\Connector\Speed\WebpLibrary::stop();
+			$notice = 'speed_webp_stopped';
+		} elseif ( 'undo' === $do ) {
+			\ArvaSEO\Connector\Speed\WebpLibrary::undo();
+			$notice = 'speed_webp_undone';
+		} else {
+			$notice = \ArvaSEO\Connector\Speed\WebpLibrary::start() ? 'speed_webp_started' : 'speed_webp_off';
+		}
+		self::back_to_fix( 'webp_uploads', $notice );
+	}
+
+	/**
 	 * For a week after Defer scripts goes on: where to turn it off if something stopped working.
 	 */
 	public static function defer_notice(): void {
@@ -435,6 +458,7 @@ final class AdminController {
 				'confirmSeoUpdates' => __( 'With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?', 'arvaseo-connector' ),
 				'confirmDefer'      => __( 'Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?', 'arvaseo-connector' ),
 				'confirmRisky'      => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
+				'confirmWebpUndo'   => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
 			)
 		);
 	}
