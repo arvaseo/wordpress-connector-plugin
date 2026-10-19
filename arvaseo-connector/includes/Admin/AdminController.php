@@ -63,6 +63,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_speed', array( self::class, 'speed' ) );
 		add_action( 'admin_post_arvaseo_connector_speed_options', array( self::class, 'speed_options' ) );
 		add_action( 'admin_post_arvaseo_connector_webp', array( self::class, 'webp' ) );
+		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 	}
 
@@ -176,6 +177,10 @@ final class AdminController {
 			'speed_unavailable'              => array( 'error', __( 'This fix isn’t available on this server.', 'arvaseo-connector' ) ),
 			'speed_try_first'                => array( 'error', __( 'Try Defer scripts first, check your important pages, then turn it on.', 'arvaseo-connector' ) ),
 			'speed_check_pages'              => array( 'error', __( 'Tick each page you checked while trying Defer scripts before you turn it on.', 'arvaseo-connector' ) ),
+			'speed_css_queued'               => array( 'success', __( 'Your homepage and main page types were sent to Arva SEO. Their optimized CSS is usually ready within a few minutes; other page types follow as they’re visited.', 'arvaseo-connector' ) ),
+			'speed_css_regenerate'           => array( 'success', __( 'The optimized CSS will be worked out again, each page type using a page optimization.', 'arvaseo-connector' ) ),
+			'speed_css_ready'                => array( 'success', __( 'New optimized CSS is ready.', 'arvaseo-connector' ) ),
+			'speed_css_waiting'              => array( 'success', __( 'Nothing new yet. Arva SEO is still working on it; check again in a minute.', 'arvaseo-connector' ) ),
 			'speed_webp_started'             => array( 'success', __( 'Converting your existing images in the background. You can leave this page; come back to see how far it got.', 'arvaseo-connector' ) ),
 			'speed_webp_stopped'             => array( 'success', __( 'Stopped. Images converted so far keep their WebP copies; Continue picks up where it stopped.', 'arvaseo-connector' ) ),
 			'speed_webp_undone'              => array( 'success', __( 'The WebP copies of your existing images were removed. Pages show the originals again.', 'arvaseo-connector' ) ),
@@ -350,6 +355,8 @@ final class AdminController {
 				'defer_exclude' => $exclude,
 				'defer_plugins' => $list( 'defer_plugins' ),
 			);
+		} elseif ( 'critical_css' === $fix || 'unused_css' === $fix ) {
+			$choices = array( 'css_exclude' => $text( 'css_exclude' ) );
 		} elseif ( 'delay_scripts' === $fix ) {
 			$choices = array( 'delay_scripts' => $text( 'delay_scripts' ) );
 		} elseif ( 'google_fonts' === $fix ) {
@@ -370,6 +377,28 @@ final class AdminController {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		Fixes::save_choices( $choices );
 		self::back_to_fix( $fix, 'speed_options_saved' );
+	}
+
+	/**
+	 * Optimized CSS: work out the main page types now, regenerate every one, or check for results.
+	 */
+	public static function css(): void {
+		self::guard( 'arvaseo_connector_css', Capabilities::MANAGE );
+		$do  = isset( $_POST['do'] ) ? sanitize_key( wp_unslash( $_POST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$fix = isset( $_POST['fix'] ) ? sanitize_key( wp_unslash( $_POST['fix'] ) ) : 'unused_css'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		if ( 'regenerate' === $do ) {
+			\ArvaSEO\Connector\Speed\CssOptimizer::forget_all();
+			\ArvaSEO\Connector\Speed\CssOptimizer::queue_samples();
+			$notice = 'speed_css_regenerate';
+		} elseif ( 'check' === $do ) {
+			$ready  = \ArvaSEO\Connector\Speed\CssOptimizer::sync()['ready'];
+			$notice = $ready > 0 ? 'speed_css_ready' : 'speed_css_waiting';
+		} else {
+			\ArvaSEO\Connector\Speed\CssOptimizer::queue_samples();
+			\ArvaSEO\Connector\Speed\CssOptimizer::sync();
+			$notice = 'speed_css_queued';
+		}
+		self::back_to_fix( $fix, $notice );
 	}
 
 	/**
@@ -451,14 +480,15 @@ final class AdminController {
 			'arvaseo-connector-admin',
 			'arvaseoConnector',
 			array(
-				'copied'            => __( 'Copied.', 'arvaseo-connector' ),
-				'confirmDisconnect' => __( 'Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again.', 'arvaseo-connector' ),
-				'confirmFull'       => __( 'Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?', 'arvaseo-connector' ),
-				'confirmOverwrite'  => __( 'With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?', 'arvaseo-connector' ),
-				'confirmSeoUpdates' => __( 'With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?', 'arvaseo-connector' ),
-				'confirmDefer'      => __( 'Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?', 'arvaseo-connector' ),
-				'confirmRisky'      => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
-				'confirmWebpUndo'   => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
+				'copied'               => __( 'Copied.', 'arvaseo-connector' ),
+				'confirmDisconnect'    => __( 'Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again.', 'arvaseo-connector' ),
+				'confirmFull'          => __( 'Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?', 'arvaseo-connector' ),
+				'confirmOverwrite'     => __( 'With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?', 'arvaseo-connector' ),
+				'confirmSeoUpdates'    => __( 'With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?', 'arvaseo-connector' ),
+				'confirmDefer'         => __( 'Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?', 'arvaseo-connector' ),
+				'confirmRisky'         => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
+				'confirmCssRegenerate' => __( 'Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance.', 'arvaseo-connector' ),
+				'confirmWebpUndo'      => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
 			)
 		);
 	}

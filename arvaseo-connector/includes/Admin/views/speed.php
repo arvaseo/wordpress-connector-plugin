@@ -238,6 +238,77 @@ defined( 'ABSPATH' ) || exit;
 						</form>
 					<?php endif; ?>
 
+					<?php if ( in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) ) : ?>
+						<?php
+						$arvaseo_css       = \ArvaSEO\Connector\Speed\CssOptimizer::counts();
+						$arvaseo_allowance = get_option( 'arvaseo_connector_css_allowance', array() );
+						$arvaseo_allowance = is_array( $arvaseo_allowance ) ? $arvaseo_allowance : array();
+						?>
+						<div class="arvaseo-speed-options">
+							<p>
+								<?php
+								printf(
+									/* translators: 1: page types with optimized CSS, 2: page types waiting. */
+									esc_html__( 'Optimized CSS for %1$d page types; %2$d waiting.', 'arvaseo-connector' ),
+									(int) $arvaseo_css['ready'],
+									(int) $arvaseo_css['waiting']
+								);
+								if ( isset( $arvaseo_allowance['used'], $arvaseo_allowance['limit'] ) ) {
+									echo ' ';
+									printf(
+										/* translators: 1: page optimizations used, 2: page optimizations included this month. */
+										esc_html__( 'Page optimizations this month: %1$d of %2$d.', 'arvaseo-connector' ),
+										(int) $arvaseo_allowance['used'],
+										(int) $arvaseo_allowance['limit']
+									);
+								}
+								?>
+								<br /><span class="description"><?php esc_html_e( 'Pages are grouped by type (homepage, page, post, product, category…) and by their stylesheets; each group uses one page optimization. A stylesheet that changes, after a theme or plugin update, makes a new group; clearing your cache costs nothing.', 'arvaseo-connector' ); ?></span>
+							</p>
+							<?php if ( $arvaseo_css['no_allowance'] > 0 ) : ?>
+								<p class="arvaseo-speed-risk"><span class="dashicons dashicons-warning" aria-hidden="true"></span>
+									<?php
+									printf(
+										/* translators: %d: page types waiting for next month's page optimizations. */
+										esc_html( _n( '%d page type waits for next month’s page optimizations; it loads its normal styles until then.', '%d page types wait for next month’s page optimizations; they load their normal styles until then.', $arvaseo_css['no_allowance'], 'arvaseo-connector' ) ),
+										(int) $arvaseo_css['no_allowance']
+									);
+									?>
+									<a href="https://app.arvaseo.com/billing" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'More page optimizations', 'arvaseo-connector' ); ?></a>
+								</p>
+							<?php endif; ?>
+							<div class="arvaseo-actions">
+								<?php
+								foreach ( array(
+									'optimize'   => __( 'Optimize now', 'arvaseo-connector' ),
+									'check'      => __( 'Check for results', 'arvaseo-connector' ),
+									'regenerate' => __( 'Regenerate', 'arvaseo-connector' ),
+								) as $arvaseo_do => $arvaseo_label ) :
+									?>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-inline-form"<?php echo 'regenerate' === $arvaseo_do ? ' data-arvaseo-confirm="confirmCssRegenerate"' : ''; ?>>
+										<input type="hidden" name="action" value="arvaseo_connector_css" />
+										<input type="hidden" name="do" value="<?php echo esc_attr( $arvaseo_do ); ?>" />
+										<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />
+										<?php wp_nonce_field( 'arvaseo_connector_css' ); ?>
+										<button type="submit" class="button"><?php echo esc_html( $arvaseo_label ); ?></button>
+									</form>
+								<?php endforeach; ?>
+							</div>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
+								<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />
+								<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+								<p>
+									<label for="arvaseo-css-exclude-<?php echo esc_attr( $arvaseo_id ); ?>"><strong><?php esc_html_e( 'Leave these stylesheets alone', 'arvaseo-connector' ); ?></strong></label>
+									<textarea id="arvaseo-css-exclude-<?php echo esc_attr( $arvaseo_id ); ?>" name="css_exclude" rows="2" class="large-text code" placeholder="slider-styles"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['css_exclude'] ) ); ?></textarea>
+									<span class="description"><?php esc_html_e( 'One stylesheet name (handle) per line; they load as before. Both CSS fixes share this list.', 'arvaseo-connector' ); ?></span>
+								</p>
+								<button type="submit" class="button"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button>
+							</form>
+							<p class="description"><?php esc_html_e( 'Arva SEO loads your public pages like a visitor, as a phone and as a computer, to see which styles they use. Only page addresses are sent, never content or visitor data.', 'arvaseo-connector' ); ?></p>
+						</div>
+					<?php endif; ?>
+
 					<?php if ( 'webp_uploads' === $arvaseo_id ) : ?>
 						<?php $arvaseo_webp = \ArvaSEO\Connector\Speed\WebpLibrary::progress(); ?>
 						<div class="arvaseo-speed-options">

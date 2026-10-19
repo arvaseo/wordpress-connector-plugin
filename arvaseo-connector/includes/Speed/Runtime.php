@@ -75,6 +75,7 @@ final class Runtime {
 		ServerRules::init();
 		LocalFonts::init();
 		WebpLibrary::init();
+		CssOptimizer::init();
 	}
 
 	/**
@@ -116,6 +117,12 @@ final class Runtime {
 		if ( ! self::is_page_request() ) {
 			return;
 		}
+		CssOptimizer::reset();
+		// Arva SEO's renderer: the page with its original styles, uncached, and none of the fixes.
+		if ( CssOptimizer::is_render_request() ) {
+			CssOptimizer::serve_original();
+			return;
+		}
 		Exclusions::reset();
 		self::$images_seen     = 0;
 		self::$lookups         = 0;
@@ -153,6 +160,9 @@ final class Runtime {
 		}
 		if ( Fixes::applies( 'delay_scripts' ) ) {
 			DelayScripts::on_page();
+		}
+		if ( CssOptimizer::wanted() && null === Exclusions::page_reason( 'critical_css' ) ) {
+			CssOptimizer::on_page();
 		}
 		if ( Fixes::applies( 'webp_uploads' ) ) {
 			WebpLibrary::on_page();

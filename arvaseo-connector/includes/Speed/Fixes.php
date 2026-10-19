@@ -82,6 +82,31 @@ final class Fixes {
 				'handled_by' => array_merge( $speed_plugins, array( 'a3-lazy-load', 'rocket-lazy-load', 'sg-cachepress', 'w3-total-cache', 'autoptimize', 'wp-smushit' ) ),
 				'states'     => self::STATES,
 			),
+			'critical_css'     => array(
+				'title'      => __( 'Load styles faster', 'arvaseo-connector' ),
+				'what'       => __( 'The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan.', 'arvaseo-connector' ),
+				'group'      => 'sooner',
+				'risk'       => 'check',
+				'audits'     => array(
+					'render-blocking-resources' => 'Eliminate render-blocking resources',
+					'render-blocking-insight'   => 'Render blocking requests',
+				),
+				'handled_by' => array( 'wp-rocket', 'litespeed-cache', 'perfmatters', 'flying-press', 'nitropack', 'autoptimize', 'jetpack-boost' ),
+				'states'     => self::STATES,
+			),
+			'unused_css'       => array(
+				'title'      => __( 'Remove unused CSS', 'arvaseo-connector' ),
+				'what'       => __( 'Each page gets only the styles it uses, worked out by Arva SEO for each type of page. The full stylesheets load on the visitor’s first scroll, tap, click or key press, so menus, pop-ups and sliders keep their styles.', 'arvaseo-connector' ),
+				'group'      => 'sooner',
+				'risk'       => 'check',
+				'audits'     => array(
+					'unused-css-rules'          => 'Reduce unused CSS',
+					'render-blocking-resources' => 'Eliminate render-blocking resources',
+					'render-blocking-insight'   => 'Render blocking requests',
+				),
+				'handled_by' => array( 'wp-rocket', 'litespeed-cache', 'perfmatters', 'flying-press', 'nitropack' ),
+				'states'     => self::STATES,
+			),
 			'defer_scripts'    => array(
 				'title'      => __( 'Defer scripts', 'arvaseo-connector' ),
 				'what'       => __( 'Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery, consent tools and any scripts you list are left alone.', 'arvaseo-connector' ),
@@ -258,7 +283,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[]}
+	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[]}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -289,6 +314,7 @@ final class Fixes {
 			'defer_on_at'      => is_int( $saved['defer_on_at'] ?? null ) ? $saved['defer_on_at'] : null,
 			'fonts_local'      => (bool) ( $saved['fonts_local'] ?? false ),
 			'delay_scripts'    => self::strings( $saved['delay_scripts'] ?? array() ),
+			'css_exclude'      => self::strings( $saved['css_exclude'] ?? array() ),
 			'server_check'     => is_array( $saved['server_check'] ?? null ) && is_string( $saved['server_check']['at'] ?? null ) ? array(
 				'at'          => $saved['server_check']['at'],
 				'cache'       => (bool) ( $saved['server_check']['cache'] ?? false ),
@@ -361,6 +387,9 @@ final class Fixes {
 		}
 		if ( 'browser_caching' === $id && 'on' !== ( self::stored()['fixes'][ $id ]['state'] ?? 'off' ) ) {
 			return ServerRules::unavailable();
+		}
+		if ( in_array( $id, array( 'critical_css', 'unused_css' ), true ) && 'off' === ( self::stored()['fixes'][ $id ]['state'] ?? 'off' ) && ! \ArvaSEO\Connector\Auth\TokenStore::is_connected() ) {
+			return __( 'Connect to Arva SEO first: these styles are worked out on Arva SEO’s servers, using the page optimizations in your plan.', 'arvaseo-connector' );
 		}
 		return null;
 	}
@@ -513,6 +542,9 @@ final class Fixes {
 		}
 		if ( array_key_exists( 'shop_pages', $choices ) ) {
 			$data['shop_pages'] = (bool) $choices['shop_pages'];
+		}
+		if ( array_key_exists( 'css_exclude', $choices ) ) {
+			$data['css_exclude'] = array_slice( array_values( array_unique( array_filter( array_map( 'sanitize_key', Exclusions::lines( (string) $choices['css_exclude'] ) ) ) ) ), 0, Exclusions::MAX_LINES );
 		}
 		if ( array_key_exists( 'delay_scripts', $choices ) ) {
 			$data['delay_scripts'] = Exclusions::script_lines( (string) $choices['delay_scripts'] );

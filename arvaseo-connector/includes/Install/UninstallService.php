@@ -76,5 +76,6 @@ final class UninstallService {
 		delete_post_meta_by_key( \ArvaSEO\Connector\Speed\Exclusions::META );
 		\ArvaSEO\Connector\Speed\LocalFonts::delete_all();
 		\ArvaSEO\Connector\Speed\WebpLibrary::undo();
+		\ArvaSEO\Connector\Speed\CssOptimizer::delete_all();
 	}
 }
