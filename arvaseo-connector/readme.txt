@@ -4,7 +4,7 @@ Tags: pagespeed, performance, core web vitals, seo, site health
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,7 +57,20 @@ Only in the ways you switch on. PageSpeed fixes change how your pages load, only
 
 = Can a PageSpeed fix break my site? =
 
-Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. If something stops working, turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. If you use a page cache, clear it after changing a fix.
+Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. If you use a page cache, clear it after changing a fix.
+
+= Can I leave a page, script or image alone? =
+
+Yes, in Arva SEO → PageSpeed fixes → Leave things alone:
+
+* Pages: addresses such as `/checkout/` or `/shop/*`, a "Leave this page alone" tick box when you edit a post or page, or Arva SEO in the toolbar while you view any page. Defer scripts also leaves WooCommerce and Easy Digital Downloads cart, checkout and account pages alone unless you untick it.
+* Scripts (Defer scripts): a script name (handle), part of its file address such as `booking.js`, or every script from a plugin you choose.
+* Images, videos and maps: a CSS class (`.hero-slide`), an id (`#main-banner`) or part of the file address (`logo.svg`). A block's Additional CSS class counts for everything inside the block. Lazy-load also respects the `skip-lazy` and `no-lazy` classes other plugins use, and every fix skips an element with the `data-arvaseo-skip` attribute.
+* How many images at the top of each page always load straight away (3 unless you change it).
+
+= Are there filters for developers? =
+
+`arvaseo_connector_speed_fix_applies` (bool $applies, string $fix_id) turns a fix off for any condition, `arvaseo_connector_defer_script` (bool $defer, string $handle, string $src) leaves a script alone, and `arvaseo_connector_optimize_element` (bool $optimize, string $fix_id, string $tag, array $attributes) leaves an image or frame alone.
 
 = Do the PageSpeed fixes need an Arva SEO account? =
 
@@ -106,8 +119,12 @@ See Arva SEO → Diagnostics & Privacy for the full list of shared fields and th
 2. Defer scripts: try it while only you see it, check your important pages, then turn it on for everyone.
 3. Connection: sign in on Arva SEO to connect, and see exactly what is shared before you do.
 4. Settings: choose how far Arva SEO can go when it sends posts, from drafts only to full publishing.
+5. Leave things alone: pages, images, videos and maps the PageSpeed fixes skip.
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+Leave things alone: keep chosen pages, scripts, images and videos out of the PageSpeed fixes. Nothing changes on your site by updating.
 
 = 1.3.1 =
 The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer scripts lists the right page while you try it.
@@ -116,6 +133,14 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 1.4.0 =
+* New: Leave things alone (Arva SEO → PageSpeed fixes). Keep pages out of every fix by address (with * wildcards), with a tick box in the editor, or from the toolbar while viewing a page.
+* Defer scripts leaves alone scripts by name or part of their file address, every script of a plugin you choose, and WooCommerce and Easy Digital Downloads cart, checkout and account pages (on by default; untick to include them). Each script it deferred while you try it has its own Leave alone button.
+* Lazy-load, Add missing image sizes and Click-to-play videos leave alone images and frames by CSS class, id or file address, including everything inside a block with a listed class. Lazy-load respects the skip-lazy and no-lazy markers other plugins use.
+* Choose how many images at the top of each page always load straight away.
+* The toolbar's Arva SEO item shows while any fix is on, not only while trying one.
+* Filters for developers: arvaseo_connector_speed_fix_applies, arvaseo_connector_defer_script, arvaseo_connector_optimize_element.
 
 = 1.3.1 =
 * The plugin is now called Arva SEO – Speed Booster & SEO Connector. Its address on WordPress.org, its settings and everything it does stay the same.

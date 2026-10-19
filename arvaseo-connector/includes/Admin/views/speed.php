@@ -8,6 +8,7 @@
 use ArvaSEO\Connector\Admin\AdminController;
 use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Health\AssessmentService;
+use ArvaSEO\Connector\Speed\Exclusions;
 use ArvaSEO\Connector\Speed\Fixes;
 
 defined( 'ABSPATH' ) || exit;
@@ -21,6 +22,7 @@ defined( 'ABSPATH' ) || exit;
 	$arvaseo_killed   = defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH );
 	$arvaseo_deferred = get_transient( 'arvaseo_connector_deferred' );
 	$arvaseo_deferred = is_array( $arvaseo_deferred ) ? $arvaseo_deferred : array();
+	$arvaseo_plugins  = Exclusions::plugin_choices();
 	$arvaseo_tones    = array(
 		'off'         => 'neutral',
 		'trying'      => 'warn',
@@ -142,6 +144,11 @@ defined( 'ABSPATH' ) || exit;
 				<?php else : ?>
 					<p class="description"><?php esc_html_e( 'Safe: it only changes how things load, not what visitors see.', 'arvaseo-connector' ); ?></p>
 				<?php endif; ?>
+				<?php if ( in_array( $arvaseo_id, Exclusions::ELEMENT_FIXES, true ) ) : ?>
+					<p class="description"><a href="#arvaseo-speed-exclusions"><?php esc_html_e( 'Leave a page, image or video alone', 'arvaseo-connector' ); ?></a></p>
+				<?php elseif ( 'webp_uploads' !== $arvaseo_id && 'defer_scripts' !== $arvaseo_id ) : ?>
+					<p class="description"><a href="#arvaseo-speed-exclusions"><?php esc_html_e( 'Leave a page alone', 'arvaseo-connector' ); ?></a></p>
+				<?php endif; ?>
 
 				<?php if ( 'handled' === $arvaseo_state ) : ?>
 					<p>
@@ -171,7 +178,6 @@ defined( 'ABSPATH' ) || exit;
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-speed-options">
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="wp_extras" />
-							<input type="hidden" name="defer_exclude" value="<?php echo esc_attr( implode( "\n", $arvaseo_stored['defer_exclude'] ) ); ?>" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
 							<fieldset>
 								<legend><?php esc_html_e( 'Remove these', 'arvaseo-connector' ); ?></legend>
@@ -187,11 +193,6 @@ defined( 'ABSPATH' ) || exit;
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-speed-options">
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="defer_scripts" />
-							<?php foreach ( $arvaseo_stored['extras'] as $arvaseo_key => $arvaseo_on ) : ?>
-								<?php if ( $arvaseo_on ) : ?>
-									<input type="hidden" name="extras[]" value="<?php echo esc_attr( $arvaseo_key ); ?>" />
-								<?php endif; ?>
-							<?php endforeach; ?>
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
 							<?php if ( array() === $arvaseo_deferred && 'trying' === $arvaseo_state ) : ?>
 								<p class="description"><?php esc_html_e( 'Open your homepage while trying it: the scripts it defers are listed here, so you can leave one alone if something stops working.', 'arvaseo-connector' ); ?></p>
@@ -199,15 +200,45 @@ defined( 'ABSPATH' ) || exit;
 								<p><?php esc_html_e( 'Scripts it deferred on the last page you opened while trying it:', 'arvaseo-connector' ); ?></p>
 								<ul class="arvaseo-list">
 									<?php foreach ( $arvaseo_deferred as $arvaseo_handle => $arvaseo_host ) : ?>
-										<li><code><?php echo esc_html( (string) $arvaseo_handle ); ?></code> <span class="description"><?php echo esc_html( (string) $arvaseo_host ); ?></span></li>
+										<li>
+											<code><?php echo esc_html( (string) $arvaseo_handle ); ?></code> <span class="description"><?php echo esc_html( (string) $arvaseo_host ); ?></span>
+											<?php if ( in_array( (string) $arvaseo_handle, $arvaseo_stored['defer_exclude'], true ) ) : ?>
+												<span class="description">· <?php esc_html_e( 'Left alone', 'arvaseo-connector' ); ?></span>
+											<?php else : ?>
+												<button type="submit" name="leave_alone" value="<?php echo esc_attr( (string) $arvaseo_handle ); ?>" class="button-link">
+													<?php esc_html_e( 'Leave alone', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php echo esc_html( (string) $arvaseo_handle ); ?></span>
+												</button>
+											<?php endif; ?>
+										</li>
 									<?php endforeach; ?>
 								</ul>
 							<?php endif; ?>
 							<p>
 								<label for="arvaseo-defer-exclude"><strong><?php esc_html_e( 'Leave these scripts alone', 'arvaseo-connector' ); ?></strong></label><br />
 								<textarea id="arvaseo-defer-exclude" name="defer_exclude" rows="3" class="large-text code"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['defer_exclude'] ) ); ?></textarea>
-								<span class="description"><?php esc_html_e( 'One script name (handle) per line, such as one from the list above. jQuery and consent or cookie tools are always left alone.', 'arvaseo-connector' ); ?></span>
+								<span class="description"><?php esc_html_e( 'One per line: a script name (handle), such as one from the list above, or part of its file address, such as booking.js or /plugins/contact-form-7/. jQuery and consent or cookie tools are always left alone.', 'arvaseo-connector' ); ?></span>
 							</p>
+							<?php if ( array() !== $arvaseo_plugins ) : ?>
+								<details class="arvaseo-speed-plugins" <?php echo array() !== $arvaseo_stored['defer_plugins'] ? 'open' : ''; ?>>
+									<summary>
+										<?php
+										echo esc_html(
+											array() === $arvaseo_stored['defer_plugins']
+												? __( 'Leave every script from a plugin alone', 'arvaseo-connector' )
+												/* translators: %d: number of plugins chosen. */
+												: sprintf( _n( 'Leave every script from a plugin alone (%d chosen)', 'Leave every script from a plugin alone (%d chosen)', count( $arvaseo_stored['defer_plugins'] ), 'arvaseo-connector' ), count( $arvaseo_stored['defer_plugins'] ) )
+										);
+										?>
+									</summary>
+									<fieldset>
+										<legend class="screen-reader-text"><?php esc_html_e( 'Plugins whose scripts Defer scripts leaves alone', 'arvaseo-connector' ); ?></legend>
+										<?php foreach ( $arvaseo_plugins as $arvaseo_slug => $arvaseo_name ) : ?>
+											<p><label><input type="checkbox" name="defer_plugins[]" value="<?php echo esc_attr( $arvaseo_slug ); ?>" <?php checked( in_array( $arvaseo_slug, $arvaseo_stored['defer_plugins'], true ) ); ?> /> <?php echo esc_html( $arvaseo_name ); ?></label></p>
+										<?php endforeach; ?>
+									</fieldset>
+								</details>
+							<?php endif; ?>
+							<p class="description"><a href="#arvaseo-speed-exclusions"><?php esc_html_e( 'Leave a page alone', 'arvaseo-connector' ); ?></a></p>
 							<button type="submit" class="button"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button>
 						</form>
 					<?php endif; ?>
@@ -246,6 +277,62 @@ defined( 'ABSPATH' ) || exit;
 			<?php endforeach; ?>
 	</div>
 	<?php endforeach; ?>
+
+
+<section id="arvaseo-speed-exclusions" class="card arvaseo-card arvaseo-speed-exclusions" aria-labelledby="arvaseo-exclusions-heading">
+	<h2 id="arvaseo-exclusions-heading"><?php esc_html_e( 'Leave things alone', 'arvaseo-connector' ); ?></h2>
+	<p><?php esc_html_e( 'If a fix stops something working on part of your site, leave that part alone instead of turning the fix off everywhere.', 'arvaseo-connector' ); ?></p>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
+		<input type="hidden" name="fix" value="exclusions" />
+		<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+		<p>
+			<label for="arvaseo-exclude-pages"><strong><?php esc_html_e( 'Pages', 'arvaseo-connector' ); ?></strong></label><br />
+			<textarea id="arvaseo-exclude-pages" name="exclude_pages" rows="4" class="large-text code" placeholder="/checkout/&#10;/book-now/*"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['exclude_pages'] ) ); ?></textarea>
+			<span class="description"><?php esc_html_e( 'One address per line, the part after your domain, such as /contact/. A * matches anything: /shop/* is every page under /shop/. No fix runs on these pages. You can also tick “Leave this page alone” when you edit a post or page, or use Arva SEO in the toolbar while you view any page.', 'arvaseo-connector' ); ?></span>
+			<?php $arvaseo_skipped = Exclusions::skipped_posts(); ?>
+			<?php if ( $arvaseo_skipped > 0 ) : ?>
+				<br /><span class="description">
+					<?php
+					/* translators: %d: number of posts and pages. */
+					printf( esc_html( _n( '%d post or page is left alone by its own tick box.', '%d posts and pages are left alone by their own tick box.', $arvaseo_skipped, 'arvaseo-connector' ) ), (int) $arvaseo_skipped );
+					?>
+				</span>
+			<?php endif; ?>
+		</p>
+		<?php if ( Exclusions::has_shop() ) : ?>
+			<input type="hidden" name="shop_pages_shown" value="1" />
+			<p>
+				<label><input type="checkbox" name="shop_pages" value="1" <?php checked( $arvaseo_stored['shop_pages'] ); ?> /> <?php esc_html_e( 'Defer scripts leaves the cart, checkout and account pages alone', 'arvaseo-connector' ); ?></label><br />
+				<span class="description"><?php esc_html_e( 'Recommended: payment and account forms often need their scripts loaded in order.', 'arvaseo-connector' ); ?></span>
+			</p>
+		<?php endif; ?>
+		<p>
+			<label for="arvaseo-exclude-elements"><strong><?php esc_html_e( 'Images, videos and maps', 'arvaseo-connector' ); ?></strong></label><br />
+			<textarea id="arvaseo-exclude-elements" name="exclude_elements" rows="4" class="large-text code" placeholder=".hero-slide&#10;#main-banner&#10;logo.svg"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['exclude_elements'] ) ); ?></textarea>
+			<span class="description"><?php esc_html_e( 'One per line: a CSS class starting with a dot (.hero-slide), an id starting with # (#main-banner), or part of the file’s address (logo.svg, vimeo.com). Lazy-load, Add missing image sizes and Click-to-play videos leave these alone. A block’s Additional CSS class counts for everything inside the block; in older content, put the class on the image itself.', 'arvaseo-connector' ); ?></span><br />
+			<span class="description"><?php esc_html_e( 'Lazy-load also leaves alone images marked skip-lazy or no-lazy, as other speed plugins do, and every fix leaves alone an element with the data-arvaseo-skip attribute.', 'arvaseo-connector' ); ?></span>
+		</p>
+		<p>
+			<label for="arvaseo-eager-images"><strong><?php esc_html_e( 'Images loaded straight away', 'arvaseo-connector' ); ?></strong></label><br />
+			<input type="number" id="arvaseo-eager-images" name="eager_images" min="0" max="<?php echo esc_attr( (string) Fixes::MAX_EAGER_IMAGES ); ?>" value="<?php echo esc_attr( (string) $arvaseo_stored['eager_images'] ); ?>" class="small-text" />
+			<span class="description"><?php esc_html_e( 'How many images at the top of each page Lazy-load never delays. 3 suits most sites; raise it if a slider at the top shows its slides late.', 'arvaseo-connector' ); ?></span>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'Scripts are left alone on the Defer scripts card.', 'arvaseo-connector' ); ?>
+			<a href="#<?php echo esc_attr( Fixes::anchor( 'defer_scripts' ) ); ?>"><?php esc_html_e( 'Go to Defer scripts', 'arvaseo-connector' ); ?></a>
+		</p>
+		<button type="submit" class="button"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button>
+	</form>
+	<details class="arvaseo-speed-dev">
+		<summary><?php esc_html_e( 'For developers', 'arvaseo-connector' ); ?></summary>
+		<ul class="arvaseo-list">
+			<li><code>arvaseo_connector_speed_fix_applies</code> <span class="description"><?php esc_html_e( '(bool $applies, string $fix_id): turn a fix off for any page condition.', 'arvaseo-connector' ); ?></span></li>
+			<li><code>arvaseo_connector_defer_script</code> <span class="description"><?php esc_html_e( '(bool $defer, string $handle, string $src): leave a script alone.', 'arvaseo-connector' ); ?></span></li>
+			<li><code>arvaseo_connector_optimize_element</code> <span class="description"><?php esc_html_e( '(bool $optimize, string $fix_id, string $tag, array $attributes): leave an image or frame alone.', 'arvaseo-connector' ); ?></span></li>
+		</ul>
+	</details>
+</section>
 
 <p class="description arvaseo-speed-foot"><?php esc_html_e( 'Page caching, removing unused CSS and minifying files need a caching plugin, such as LiteSpeed Cache or WP Rocket. Arva SEO’s PageSpeed page says which setting to change in the one you have. If you use a page cache, clear it after changing a fix here. In an emergency, add define( \'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES\', true ); to wp-config.php to switch every fix off.', 'arvaseo-connector' ); ?></p>
 	<?php

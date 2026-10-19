@@ -99,6 +99,16 @@ final class DiagnosticsService {
 			'speed_fixes'     => array(
 				'fixes'       => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
 				'kill_switch' => defined( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ) && (bool) constant( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ),
+				// What's left alone, as counts (no addresses or class names).
+				'left_alone'  => array(
+					'pages'        => count( \ArvaSEO\Connector\Speed\Fixes::stored()['exclude_pages'] ),
+					'posts'        => \ArvaSEO\Connector\Speed\Exclusions::skipped_posts(),
+					'shop_pages'   => \ArvaSEO\Connector\Speed\Fixes::stored()['shop_pages'],
+					'scripts'      => count( \ArvaSEO\Connector\Speed\Fixes::stored()['defer_exclude'] ),
+					'plugins'      => count( \ArvaSEO\Connector\Speed\Fixes::stored()['defer_plugins'] ),
+					'elements'     => count( \ArvaSEO\Connector\Speed\Fixes::stored()['exclude_elements'] ),
+					'eager_images' => \ArvaSEO\Connector\Speed\Fixes::stored()['eager_images'],
+				),
 			),
 			'settings'        => array(
 				'publishing_mode'       => $settings['publishing_mode'],

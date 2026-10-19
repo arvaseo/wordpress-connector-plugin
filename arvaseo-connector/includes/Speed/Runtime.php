@@ -17,9 +17,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Runtime {
 
-	/** Images at the top of a page that always load straight away (one is usually the main image). */
-	private const EAGER_IMAGES = 3;
-
 	/** Images on a page whose size we looked up, at most (each can be a database query). */
 	private const MAX_LOOKUPS = 20;
 
@@ -29,6 +26,13 @@ final class Runtime {
 	 * @var int
 	 */
 	private static int $images_seen = 0;
+
+	/**
+	 * Images at the top of the page that always load straight away (one is usually the main image).
+	 *
+	 * @var int
+	 */
+	private static int $eager = Fixes::EAGER_IMAGES;
 
 	/**
 	 * Media-library lookups on this page so far.
@@ -59,32 +63,39 @@ final class Runtime {
 		add_filter( 'image_editor_output_format', array( self::class, 'webp_output' ) );
 		add_action( 'template_redirect', array( self::class, 'on_page' ), 0 );
 		add_action( 'admin_bar_menu', array( self::class, 'admin_bar' ), 90 );
+		Exclusions::init();
 	}
 
 	/**
-	 * While an administrator tries fixes: a reminder in the toolbar that visitors don't see them.
+	 * For administrators while fixes are on or being tried: an Arva SEO item in the toolbar (a
+	 * reminder that visitors don't see the fixes being tried), with "Leave this page alone" on
+	 * the pages of the site.
 	 *
 	 * @param \WP_Admin_Bar $bar The toolbar.
 	 */
 	public static function admin_bar( $bar ): void {
-		if ( ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) ) {
+		if ( ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) || ( defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH ) ) ) {
 			return;
 		}
-		$trying = count( array_filter( array_keys( Fixes::all() ), static fn ( string $id ) => 'trying' === Fixes::state( $id ) ) );
-		if ( 0 === $trying ) {
+		$states = array_map( array( Fixes::class, 'state' ), array_keys( Fixes::all() ) );
+		$trying = count( array_keys( $states, 'trying', true ) );
+		if ( 0 === $trying && ! in_array( 'on', $states, true ) ) {
 			return;
 		}
 		$bar->add_node(
 			array(
 				'id'    => 'arvaseo-speed-trying',
 				'title' => esc_html(
-					/* translators: %d: number of fixes being tried. */
-					sprintf( _n( 'Arva SEO: trying %d PageSpeed fix', 'Arva SEO: trying %d PageSpeed fixes', $trying, 'arvaseo-connector' ), $trying )
+					$trying > 0
+						/* translators: %d: number of fixes being tried. */
+						? sprintf( _n( 'Arva SEO: trying %d PageSpeed fix', 'Arva SEO: trying %d PageSpeed fixes', $trying, 'arvaseo-connector' ), $trying )
+						: __( 'Arva SEO: PageSpeed fixes', 'arvaseo-connector' )
 				),
 				'href'  => admin_url( 'admin.php?page=arvaseo-speed' ),
-				'meta'  => array( 'title' => __( 'Only you see these while signed in. Visitors see your site as before.', 'arvaseo-connector' ) ),
+				'meta'  => array( 'title' => $trying > 0 ? __( 'Only you see the fixes you’re trying while signed in. Visitors see your site as before.', 'arvaseo-connector' ) : __( 'PageSpeed fixes are on for your visitors.', 'arvaseo-connector' ) ),
 			)
 		);
+		Exclusions::toolbar_items( $bar, 'arvaseo-speed-trying' );
 	}
 
 	/**
@@ -94,13 +105,20 @@ final class Runtime {
 		if ( ! self::is_page_request() ) {
 			return;
 		}
+		Exclusions::reset();
 		self::$images_seen     = 0;
 		self::$lookups         = 0;
 		self::$main_image_done = false;
 		self::$deferred        = array();
+		self::$eager           = Fixes::stored()['eager_images'];
 
 		if ( Fixes::applies( 'lcp_image' ) ) {
 			add_filter( 'wp_get_attachment_image_attributes', array( self::class, 'main_image' ), 20, 2 );
+		}
+		if ( Fixes::applies( 'image_dimensions' ) || Fixes::applies( 'lazy_media' ) || Fixes::applies( 'video_facades' ) ) {
+			// A block whose class is in the list leaves everything inside it alone.
+			add_filter( 'pre_render_block', array( Exclusions::class, 'block_start' ), 10, 2 );
+			add_filter( 'render_block', array( Exclusions::class, 'block_end' ), PHP_INT_MAX, 2 );
 		}
 		if ( Fixes::applies( 'image_dimensions' ) || Fixes::applies( 'lazy_media' ) ) {
 			add_filter( 'render_block', array( self::class, 'filter_html' ), 20 );
@@ -111,7 +129,7 @@ final class Runtime {
 		}
 		if ( Fixes::applies( 'video_facades' ) ) {
 			add_filter( 'embed_oembed_html', array( self::class, 'youtube_facade' ), 20, 2 );
-			add_filter( 'render_block_core/embed', array( self::class, 'youtube_block' ), 20, 2 );
+			add_filter( 'render_block', array( self::class, 'youtube_block' ), 20, 2 );
 		}
 		if ( Fixes::applies( 'google_fonts' ) ) {
 			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
@@ -192,13 +210,14 @@ final class Runtime {
 				}
 				$tags->set_attribute( 'data-arvaseo-seen', '1' );
 				++self::$images_seen;
-				if ( $sizes ) {
+				$attrs = Exclusions::attributes( $tags );
+				if ( $sizes && ! Exclusions::leaves_element( 'image_dimensions', $name, $attrs ) ) {
 					self::add_size( $tags );
 				}
-				if ( $lazy && self::$images_seen > self::EAGER_IMAGES && null === $tags->get_attribute( 'loading' ) && 'high' !== $tags->get_attribute( 'fetchpriority' ) ) {
+				if ( $lazy && self::$images_seen > self::$eager && null === $tags->get_attribute( 'loading' ) && 'high' !== $tags->get_attribute( 'fetchpriority' ) && ! Exclusions::leaves_element( 'lazy_media', $name, $attrs ) ) {
 					$tags->set_attribute( 'loading', 'lazy' );
 				}
-			} elseif ( 'IFRAME' === $name && $lazy && null === $tags->get_attribute( 'loading' ) ) {
+			} elseif ( 'IFRAME' === $name && $lazy && null === $tags->get_attribute( 'loading' ) && ! Exclusions::leaves_element( 'lazy_media', $name, Exclusions::attributes( $tags ) ) ) {
 				$tags->set_attribute( 'loading', 'lazy' );
 			}
 		}
@@ -279,6 +298,13 @@ final class Runtime {
 		if ( null === $video || ! str_contains( $html, '<iframe' ) ) {
 			return $html;
 		}
+		// The frame's own class, id and address, and the video's link as it was pasted in.
+		$frame             = new \WP_HTML_Tag_Processor( $html );
+		$attrs             = $frame->next_tag( array( 'tag_name' => 'iframe' ) ) ? Exclusions::attributes( $frame ) : array();
+		$attrs['data-src'] = trim( ( $attrs['data-src'] ?? '' ) . ' ' . $url );
+		if ( Exclusions::leaves_element( 'video_facades', 'IFRAME', $attrs ) ) {
+			return $html;
+		}
 		$title = __( 'YouTube video', 'arvaseo-connector' );
 		if ( preg_match( '/\btitle="([^"]{1,200})"/', $html, $m ) ) {
 			$title = html_entity_decode( $m[1], ENT_QUOTES );
@@ -303,7 +329,10 @@ final class Runtime {
 	 * @return mixed
 	 */
 	public static function youtube_block( $html, $block ) {
-		$url = is_array( $block ) ? ( $block['attrs']['url'] ?? '' ) : '';
+		if ( ! is_array( $block ) || 'core/embed' !== ( $block['blockName'] ?? '' ) ) {
+			return $html;
+		}
+		$url = $block['attrs']['url'] ?? '';
 		if ( ! is_string( $html ) || ! is_string( $url ) || null === self::youtube( $url ) || str_contains( $html, 'arvaseo-yt' ) ) {
 			return $html;
 		}
@@ -391,7 +420,6 @@ final class Runtime {
 	 */
 	public static function defer_scripts(): void {
 		$scripts = wp_scripts();
-		$exclude = array_merge( Fixes::DEFER_ALWAYS_EXCLUDED, Fixes::stored()['defer_exclude'] );
 		$handles = array();
 		$walk    = static function ( string $handle ) use ( &$walk, &$handles, $scripts ): void {
 			if ( isset( $handles[ $handle ] ) || ! isset( $scripts->registered[ $handle ] ) ) {
@@ -407,7 +435,7 @@ final class Runtime {
 		}
 		foreach ( array_keys( $handles ) as $handle ) {
 			$script = $scripts->registered[ $handle ];
-			if ( in_array( $handle, $exclude, true ) || preg_match( Fixes::DEFER_EXCLUDED_PATTERN, $handle ) || ! $script->src ) {
+			if ( ! $script->src || Exclusions::leaves_script( $handle, (string) $script->src ) ) {
 				continue;
 			}
 			if ( 1 === (int) $scripts->get_data( $handle, 'group' ) || $scripts->get_data( $handle, 'strategy' ) ) {

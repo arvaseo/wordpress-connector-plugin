@@ -44,6 +44,11 @@ final class Fixes {
 	/** Script handles that look like consent or cookie tools, left alone too. */
 	public const DEFER_EXCLUDED_PATTERN = '/(consent|cookie|gdpr|complianz|cmplz|cookiebot|iubenda|borlabs|termly|usercentrics)/i';
 
+	/** Images at the top of each page that lazy loading leaves alone, by default and at most. */
+	public const EAGER_IMAGES = 3;
+
+	public const MAX_EAGER_IMAGES = 10;
+
 	/**
 	 * The fixes, in the order the page lists them.
 	 *
@@ -218,7 +223,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_checked_at: string|null, defer_on_at: int|null}
+	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -239,10 +244,25 @@ final class Fixes {
 		return array(
 			'fixes'            => $fixes,
 			'extras'           => $extras,
-			'defer_exclude'    => array_values( array_filter( (array) ( $saved['defer_exclude'] ?? array() ), 'is_string' ) ),
+			'defer_exclude'    => self::strings( $saved['defer_exclude'] ?? array() ),
+			'defer_plugins'    => self::strings( $saved['defer_plugins'] ?? array() ),
+			'exclude_pages'    => self::strings( $saved['exclude_pages'] ?? array() ),
+			'exclude_elements' => self::strings( $saved['exclude_elements'] ?? array() ),
+			'shop_pages'       => (bool) ( $saved['shop_pages'] ?? true ),
+			'eager_images'     => is_int( $saved['eager_images'] ?? null ) ? max( 0, min( self::MAX_EAGER_IMAGES, $saved['eager_images'] ) ) : self::EAGER_IMAGES,
 			'defer_checked_at' => is_string( $saved['defer_checked_at'] ?? null ) ? $saved['defer_checked_at'] : null,
 			'defer_on_at'      => is_int( $saved['defer_on_at'] ?? null ) ? $saved['defer_on_at'] : null,
 		);
+	}
+
+	/**
+	 * The strings in a stored list.
+	 *
+	 * @param mixed $stored Stored list.
+	 * @return string[]
+	 */
+	private static function strings( $stored ): array {
+		return array_values( array_filter( (array) $stored, 'is_string' ) );
 	}
 
 	/**
@@ -325,8 +345,16 @@ final class Fixes {
 		if ( defined( self::KILL_SWITCH ) && constant( self::KILL_SWITCH ) ) {
 			return false;
 		}
-		$state = self::state( $id );
-		return 'on' === $state || ( 'trying' === $state && current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) );
+		$state   = self::state( $id );
+		$applies = ( 'on' === $state || ( 'trying' === $state && current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) ) )
+			&& null === Exclusions::page_reason( $id );
+		/**
+		 * Whether a PageSpeed fix runs on the page being viewed.
+		 *
+		 * @param bool   $applies True when it runs.
+		 * @param string $id      Fix ID, such as defer_scripts or lazy_media.
+		 */
+		return (bool) apply_filters( 'arvaseo_connector_speed_fix_applies', $applies, $id );
 	}
 
 	/**
@@ -384,26 +412,45 @@ final class Fixes {
 	}
 
 	/**
-	 * Save the extras to remove and the scripts Defer scripts leaves alone.
+	 * Save choices. Only the keys given change:
+	 * - extras: the ticked extras (key => anything truthy);
+	 * - defer_exclude: text box of script handles or parts of file addresses;
+	 * - defer_plugins: plugin folders whose scripts Defer scripts leaves alone;
+	 * - exclude_pages: text box of page addresses;
+	 * - exclude_elements: text box of .classes, #ids or parts of file addresses;
+	 * - shop_pages: leave shop pages alone (Defer scripts);
+	 * - eager_images: images at the top of each page that load straight away.
 	 *
-	 * @param array<string, mixed> $extras  Ticked extras (key => anything truthy).
-	 * @param string               $exclude Script handles, one per line or comma separated.
+	 * @param array<string, mixed> $choices Choices.
 	 */
-	public static function save_options( array $extras, string $exclude ): void {
+	public static function save_choices( array $choices ): void {
 		$data = self::stored();
-		foreach ( array_keys( self::EXTRAS ) as $key ) {
-			$data['extras'][ $key ] = ! empty( $extras[ $key ] );
-		}
-		$handles = array();
-		foreach ( preg_split( '/[\s,]+/', $exclude ) as $handle ) {
-			$handle = sanitize_key( $handle );
-			if ( '' !== $handle ) {
-				$handles[] = $handle;
+		if ( array_key_exists( 'extras', $choices ) ) {
+			foreach ( array_keys( self::EXTRAS ) as $key ) {
+				$data['extras'][ $key ] = ! empty( ( (array) $choices['extras'] )[ $key ] );
 			}
 		}
-		$data['defer_exclude'] = array_slice( array_values( array_unique( $handles ) ), 0, 100 );
+		if ( array_key_exists( 'defer_exclude', $choices ) ) {
+			$data['defer_exclude'] = Exclusions::script_lines( (string) $choices['defer_exclude'] );
+		}
+		if ( array_key_exists( 'defer_plugins', $choices ) ) {
+			$data['defer_plugins'] = array_slice( array_values( array_unique( array_filter( array_map( 'sanitize_key', (array) $choices['defer_plugins'] ) ) ) ), 0, Exclusions::MAX_LINES );
+		}
+		if ( array_key_exists( 'exclude_pages', $choices ) ) {
+			$data['exclude_pages'] = Exclusions::page_lines( (string) $choices['exclude_pages'] );
+		}
+		if ( array_key_exists( 'exclude_elements', $choices ) ) {
+			$data['exclude_elements'] = Exclusions::element_lines( (string) $choices['exclude_elements'] );
+		}
+		if ( array_key_exists( 'shop_pages', $choices ) ) {
+			$data['shop_pages'] = (bool) $choices['shop_pages'];
+		}
+		if ( array_key_exists( 'eager_images', $choices ) ) {
+			$data['eager_images'] = max( 0, min( self::MAX_EAGER_IMAGES, (int) $choices['eager_images'] ) );
+		}
 		self::save( $data );
-		AuditLogger::info( 'speed.options_saved', __( 'PageSpeed fix choices saved.', 'arvaseo-connector' ) );
+		Exclusions::reset();
+		AuditLogger::info( 'speed.options_saved', __( 'PageSpeed fix choices saved.', 'arvaseo-connector' ), array( 'changed' => array_keys( $choices ) ) );
 	}
 
 	/**

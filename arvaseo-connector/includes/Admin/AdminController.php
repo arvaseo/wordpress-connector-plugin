@@ -323,14 +323,40 @@ final class AdminController {
 	}
 
 	/**
-	 * Save the extras to remove and the scripts Defer scripts leaves alone.
+	 * Save a card's choices: the extras to remove, what Defer scripts leaves alone, or the
+	 * pages, images and frames every fix leaves alone.
 	 */
 	public static function speed_options(): void {
 		self::guard( 'arvaseo_connector_speed_options', Capabilities::MANAGE );
-		$extras  = isset( $_POST['extras'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['extras'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
-		$exclude = isset( $_POST['defer_exclude'] ) ? sanitize_textarea_field( wp_unslash( $_POST['defer_exclude'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
-		Fixes::save_options( array_fill_keys( $extras, true ), $exclude );
-		$fix = isset( $_POST['fix'] ) ? sanitize_key( wp_unslash( $_POST['fix'] ) ) : 'wp_extras'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$fix  = isset( $_POST['fix'] ) ? sanitize_key( wp_unslash( $_POST['fix'] ) ) : 'wp_extras';
+		$list = static fn ( string $key ): array => isset( $_POST[ $key ] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST[ $key ] ) ) : array();
+		$text = static fn ( string $key ): string => isset( $_POST[ $key ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ) : '';
+		if ( 'defer_scripts' === $fix ) {
+			$exclude = $text( 'defer_exclude' );
+			if ( isset( $_POST['leave_alone'] ) ) {
+				// "Leave alone" next to a script it deferred: that one is added to the list.
+				$exclude .= "\n" . sanitize_key( wp_unslash( $_POST['leave_alone'] ) );
+			}
+			$choices = array(
+				'defer_exclude' => $exclude,
+				'defer_plugins' => $list( 'defer_plugins' ),
+			);
+		} elseif ( 'exclusions' === $fix ) {
+			$choices = array(
+				'exclude_pages'    => $text( 'exclude_pages' ),
+				'exclude_elements' => $text( 'exclude_elements' ),
+				'eager_images'     => isset( $_POST['eager_images'] ) ? absint( $_POST['eager_images'] ) : Fixes::EAGER_IMAGES,
+			);
+			if ( isset( $_POST['shop_pages_shown'] ) ) {
+				$choices['shop_pages'] = ! empty( $_POST['shop_pages'] );
+			}
+		} else {
+			$fix     = 'wp_extras';
+			$choices = array( 'extras' => array_fill_keys( $list( 'extras' ), true ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		Fixes::save_choices( $choices );
 		self::back_to_fix( $fix, 'speed_options_saved' );
 	}
 
@@ -357,7 +383,7 @@ final class AdminController {
 	 * @param string $notice Notice code.
 	 */
 	private static function back_to_fix( string $fix, string $notice ): void {
-		$anchor = isset( Fixes::all()[ $fix ] ) ? '#' . Fixes::anchor( $fix ) : '';
+		$anchor = isset( Fixes::all()[ $fix ] ) ? '#' . Fixes::anchor( $fix ) : ( 'exclusions' === $fix ? '#arvaseo-speed-exclusions' : '' );
 		wp_safe_redirect( add_query_arg( 'arvaseo_notice', $notice, admin_url( 'admin.php?page=arvaseo-speed' ) ) . $anchor );
 		exit;
 	}

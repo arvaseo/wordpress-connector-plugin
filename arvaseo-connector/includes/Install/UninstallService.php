@@ -71,5 +71,6 @@ final class UninstallService {
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'arvaseo\\_connector\\_%' OR option_name LIKE '\\_transient\\_arvaseo\\_connector\\_%' OR option_name LIKE '\\_transient\\_timeout\\_arvaseo\\_connector\\_%'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- uninstall clean-up of the plugin's own options.
 		delete_post_meta_by_key( '_arvaseo_source_hash' );
+		delete_post_meta_by_key( \ArvaSEO\Connector\Speed\Exclusions::META );
 	}
 }

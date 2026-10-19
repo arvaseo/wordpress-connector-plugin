@@ -55,3 +55,11 @@
 .arvaseo-speed-checklist { flex-basis: 100%; padding: 12px; background: #fcf9e8; border: 1px solid #dba617; }
 .arvaseo-speed-checklist p { margin: 0 0 8px; }
 .arvaseo-speed-foot { max-width: 820px; margin-top: 24px; }
+.arvaseo-speed-exclusions { margin-top: 28px; }
+.arvaseo-speed-exclusions textarea, .arvaseo-speed-options textarea { display: block; max-width: 640px; margin: 4px 0; }
+.arvaseo-speed-plugins { margin: 0 0 12px; }
+.arvaseo-speed-plugins summary, .arvaseo-speed-dev summary { cursor: pointer; font-weight: 600; }
+.arvaseo-speed-plugins fieldset { max-height: 240px; overflow: auto; margin-top: 8px; }
+.arvaseo-speed-plugins fieldset p { margin: 0 0 6px; }
+.arvaseo-speed-dev { margin-top: 16px; }
+.arvaseo-speed-options .arvaseo-list .button-link { margin-left: 6px; }
