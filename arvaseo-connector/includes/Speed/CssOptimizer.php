@@ -42,6 +42,24 @@ final class CssOptimizer {
 	private const SIGNED_IN_HANDLES = array( 'admin-bar', 'dashicons', 'arvaseo-speed-facade' );
 
 	/**
+	 * Whether a stylesheet is only there for signed-in people: the toolbar's own, and any other
+	 * plugin's toolbar styles (they depend on admin-bar or are named after it, like Yoast SEO's
+	 * yoast-seo-adminbar). Left out of the signature, so an administrator trying a fix gets the
+	 * same page type, and the same results, as visitors.
+	 *
+	 * @param string            $handle Style handle.
+	 * @param \_WP_Dependency|null $style  Its registration.
+	 */
+	private static function signed_in_only( string $handle, $style ): bool {
+		if ( in_array( $handle, self::SIGNED_IN_HANDLES, true ) || 1 === preg_match( '/admin[-_]?bar/i', $handle ) ) {
+			return true;
+		}
+		$deps   = null === $style ? array() : (array) $style->deps;
+		$hidden = (bool) apply_filters( 'arvaseo_connector_css_signed_in_only', array() !== array_intersect( $deps, array( 'admin-bar' ) ), $handle );
+		return $hidden;
+	}
+
+	/**
 	 * Whether this request is Arva SEO's renderer loading the page.
 	 *
 	 * @var bool|null
@@ -145,7 +163,7 @@ final class CssOptimizer {
 		$sheets = array();
 		foreach ( $styles->to_do as $handle ) {
 			$style = $styles->registered[ $handle ] ?? null;
-			if ( null === $style || ! is_string( $style->src ) || '' === $style->src || in_array( $handle, self::SIGNED_IN_HANDLES, true ) ) {
+			if ( null === $style || ! is_string( $style->src ) || '' === $style->src || self::signed_in_only( (string) $handle, $style ) ) {
 				continue;
 			}
 			if ( 1 === (int) $styles->get_data( $handle, 'group' ) ) {
