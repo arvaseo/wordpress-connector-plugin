@@ -430,8 +430,10 @@ final class Cloudflare {
 			),
 		);
 		if ( 'everything' === $what ) {
+			// Every page includes the ones waiting in the queue.
 			$changes['everything']    = false;
 			$changes['everything_at'] = time();
+			$changes['queue']         = array();
 		}
 		if ( in_array( $answer['status'], array( 401, 403 ), true ) ) {
 			$changes['refused'] = true;
