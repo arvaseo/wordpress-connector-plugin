@@ -54,6 +54,9 @@ final class DeepScan {
 	/** Files per upload request, by size (base64 makes it a third larger). */
 	private const UPLOAD_BYTES = 2000000;
 
+	/** And at most this many files a request (Arva SEO took 500 until 2026-10-22; a theme's small files reached 509). */
+	public const UPLOAD_FILES = 400;
+
 	private const SECONDS = 20;
 
 	/** How long to wait for Arva SEO's result before giving up. */
@@ -378,7 +381,7 @@ final class DeepScan {
 			$batch = array();
 			$bytes = 0;
 			$i     = (int) $state['index'];
-			while ( $i < $count && ( array() === $batch || $bytes + (int) @filesize( $root . ( $paths[ $needed[ $i ] ] ?? '' ) ) <= self::UPLOAD_BYTES ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a missing file is caught below.
+			while ( $i < $count && ( array() === $batch || ( $i - (int) $state['index'] < self::UPLOAD_FILES && $bytes + (int) @filesize( $root . ( $paths[ $needed[ $i ] ] ?? '' ) ) <= self::UPLOAD_BYTES ) ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a missing file is caught below.
 				$sha      = (string) $needed[ $i ];
 				$contents = isset( $paths[ $sha ] ) ? @file_get_contents( $root . $paths[ $sha ] ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file read for the deep scan the administrator started.
 				if ( false === $contents || hash( 'sha256', $contents ) !== $sha ) {

@@ -247,6 +247,7 @@ New PageSpeed fixes, each off until you turn it on. Nothing changes on your site
 * New: Speed lists other active speed plugins that do some of the same jobs (WP Rocket, LiteSpeed Cache, Autoptimize, Smush and others), with the fixes each one does, and a Deactivate button for each. A plugin that also caches pages or compresses images says so first, because Arva SEO doesn't do either. "Keep them" leaves those fixes to them until another speed plugin is activated.
 * After activating Arva SEO, the next dashboard page names those plugins once, and Overview lists them under Needs you until you choose.
 * "Done by another plugin" on your latest test links to that list.
+* Fixed: a deep scan of a site with many small files stopped while sending them, and then every new one was refused as "already running". It now sends at most 400 files a request.
 * Fixed: a running deep scan showed one line and no progress. It now shows its step (1 of 3), a progress bar while the files are sent, how many are sent, and when it started.
 
 = 2.2.1 =
