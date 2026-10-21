@@ -47,6 +47,7 @@ final class Plugin {
 		add_filter( 'wp_privacy_personal_data_erasers', array( PrivacyService::class, 'register_eraser' ) );
 		CronManager::init();
 		\ArvaSEO\Connector\Speed\Runtime::init();
+		\ArvaSEO\Connector\Security\Scanner::init();
 		if ( is_admin() ) {
 			AdminController::init();
 		}

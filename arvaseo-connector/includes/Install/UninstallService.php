@@ -69,6 +69,8 @@ final class UninstallService {
 		SyncState::clear();
 		AssessmentService::clear();
 		HealthSnapshotService::clear();
+		\ArvaSEO\Connector\Security\Scanner::clear();
+		\ArvaSEO\Connector\Security\Findings::clear();
 		PrivacyService::withdraw();
 		delete_option( Settings::OPTION );
 		global $wpdb;

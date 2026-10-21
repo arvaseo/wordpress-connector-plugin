@@ -79,4 +79,34 @@
 			}
 		} );
 	}
+	// Health → Security: while a scan runs, show its progress, and reload when it's done.
+	var running = document.querySelector( '[data-arvaseo-security-running]' );
+	if ( running && strings.ajaxUrl && strings.securityNonce ) {
+		var check = function () {
+			var body = new window.FormData();
+			body.append( 'action', 'arvaseo_connector_security_progress' );
+			body.append( '_ajax_nonce', strings.securityNonce );
+			window.fetch( strings.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' } )
+				.then( function ( response ) {
+					return response.json();
+				} )
+				.then( function ( reply ) {
+					if ( ! reply || ! reply.success ) {
+						return;
+					}
+					if ( ! reply.data.running ) {
+						window.location.reload();
+						return;
+					}
+					running.textContent = ( strings.securityProgress || '%1$s · %2$s' )
+						.replace( '%1$s', reply.data.step )
+						.replace( '%2$s', Number( reply.data.files ).toLocaleString() );
+					window.setTimeout( check, 5000 );
+				} )
+				.catch( function () {
+					window.setTimeout( check, 15000 );
+				} );
+		};
+		window.setTimeout( check, 3000 );
+	}
 } )();

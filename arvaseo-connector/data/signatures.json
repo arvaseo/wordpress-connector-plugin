@@ -1,0 +1,347 @@
+{
+	"version": "2026.10.21",
+	"note": "Patterns the security scan looks for in files that are not official WordPress.org copies. Data, not code: matched with preg_match, never run.",
+	"signatures": [
+		{
+			"id": "php.eval_decoded",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Runs hidden code: decodes text and runs it",
+			"pattern": "\\b(?:eval|assert)\\s*\\(\\s*(?:@\\s*)?(?:base64_decode|gzinflate|gzuncompress|gzdecode|str_rot13|strrev|rawurldecode|hex2bin|convert_uudecode)\\s*\\(",
+			"flags": "i"
+		},
+		{
+			"id": "php.decode_chain",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Runs hidden code: layers of decoding",
+			"pattern": "\\b(?:gzinflate|gzuncompress|gzdecode)\\s*\\(\\s*(?:base64_decode|str_rot13|strrev)\\s*\\(\\s*(?:base64_decode|str_rot13|strrev|gzinflate)\\s*\\(",
+			"flags": "i"
+		},
+		{
+			"id": "php.exec_request",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Runs commands sent by a visitor",
+			"pattern": "\\b(?:eval|assert|create_function|system|shell_exec|passthru|exec|popen|proc_open|pcntl_exec)\\s*\\(\\s*(?:@\\s*)?(?:stripslashes\\s*\\(\\s*|base64_decode\\s*\\(\\s*|trim\\s*\\(\\s*)?\\$_(?:GET|POST|REQUEST|COOKIE|SERVER)\\b",
+			"flags": "i"
+		},
+		{
+			"id": "php.call_request",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Calls a function named by the visitor",
+			"pattern": "\\$_(?:GET|POST|REQUEST|COOKIE)\\s*\\[[^\\]\\n]{1,40}\\]\\s*\\(\\s*\\$_(?:GET|POST|REQUEST|COOKIE)",
+			"flags": "i"
+		},
+		{
+			"id": "php.backtick_request",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Runs shell commands sent by a visitor",
+			"pattern": "(?:=|\\becho\\b|\\bprint\\b|\\breturn\\b|\\()\\s*`[^`\\n]{0,80}\\$_(?:GET|POST|REQUEST|COOKIE)[^`\\n]{0,80}`\\s*[;),.]",
+			"flags": "i"
+		},
+		{
+			"id": "php.webshell_marker",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "A known web shell (a hacker’s control panel)",
+			"pattern": "(?:\\bFilesMan\\b|WSOsetcookie|\\bb374k\\b|\\bc99shell\\b|\\br57shell\\b|IndoXploit|AnonymousFox|Mini Shell|\\bAlfa(?:Team)?Shell\\b|<title>\\s*(?:WSO|Shell)\\b)",
+			"flags": ""
+		},
+		{
+			"id": "php.uploader",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Lets anyone upload files to the site",
+			"pattern": "move_uploaded_file\\s*\\(\\s*\\$_FILES\\s*\\[[^\\]\\n]+\\]\\s*\\[\\s*[\\'\"]tmp_name[\\'\"]\\s*\\]\\s*,\\s*(?:\\$_(?:GET|POST|REQUEST|FILES)|[\\'\"]\\.?/?[\\'\"]\\s*\\.\\s*\\$_FILES)",
+			"flags": "i"
+		},
+		{
+			"id": "php.write_request",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Writes files with what a visitor sends",
+			"pattern": "\\bfile_put_contents\\s*\\([^;\\n]{0,200}\\$_(?:GET|POST|REQUEST|COOKIE)",
+			"flags": "i"
+		},
+		{
+			"id": "php.include_remote",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Loads code from another website",
+			"pattern": "(?:^|[;{}]|<\\?php|\\?>)\\s*@?\\s*(?:include|require)(?:_once)?\\b\\s*\\(?\\s*[\\'\"](?:https?|ftp)://",
+			"flags": "im"
+		},
+		{
+			"id": "php.include_disguised",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Loads code hidden in an image or text file",
+			"pattern": "(?:^|[;{}]|<\\?php|\\?>)\\s*@?\\s*(?:include|require)(?:_once)?\\b\\s*\\(?\\s*(?:__DIR__\\s*\\.\\s*)?[\\'\"][^\\'\"\\n]{1,200}\\.(?:ico|png|jpe?g|gif|bmp|txt|log)[\\'\"]",
+			"flags": "im"
+		},
+		{
+			"id": "php.preg_e",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Runs code through an old preg_replace trick",
+			"pattern": "\\bpreg_replace\\s*\\(\\s*[\\'\"]([^\\w\\s\\'\"\\\\])[^\\'\"\\n]*\\1[imsxuADSUXJ]*e[imsxuADSUXJ]*[\\'\"]\\s*,",
+			"flags": ""
+		},
+		{
+			"id": "php.chr_chain",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Builds hidden code from character codes",
+			"pattern": "(?:\\bchr\\s*\\(\\s*\\d{2,3}\\s*\\)\\s*\\.\\s*){20,}",
+			"flags": "i"
+		},
+		{
+			"id": "php.hex_code",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Hides code as escaped characters and runs it",
+			"pattern": "(?:\\\\x[0-9a-fA-F]{2}){40,}",
+			"also": [
+				"\\b(?:eval|assert|create_function|call_user_func)\\s*\\(|\\$\\w+\\s*\\(\\s*\\$"
+			],
+			"flags": ""
+		},
+		{
+			"id": "php.long_encoded",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "A large block of encoded code that is run",
+			"pattern": "[\\'\"][A-Za-z0-9+/]{3000,}={0,2}[\\'\"]",
+			"also": [
+				"\\b(?:eval|assert|create_function)\\s*\\(|\\bgzinflate\\s*\\(|\\bstr_rot13\\s*\\("
+			],
+			"flags": ""
+		},
+		{
+			"id": "php.globals_obfuscated",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Code disguised through scrambled variable lists",
+			"pattern": "(?:\\$GLOBALS\\s*\\[\\s*[\\'\"][^\\'\"\\n]{1,12}[\\'\"]\\s*\\]\\s*\\[\\s*\\d+\\s*\\]\\s*(?:\\(|\\.\\s*\\$GLOBALS).{0,40}){6,}",
+			"flags": "s"
+		},
+		{
+			"id": "php.hidden_admin",
+			"applies": [
+				"php"
+			],
+			"severity": "critical",
+			"title": "Creates an administrator and hides it from the user list",
+			"pattern": "\\bwp_(?:insert|create)_user\\s*\\(",
+			"also": [
+				"[\\'\"]administrator[\\'\"]",
+				"\\b(?:pre_user_query|views_users|user_search_columns)\\b"
+			],
+			"flags": "i"
+		},
+		{
+			"id": "php.cloaking",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Shows search engines a different page from visitors",
+			"pattern": "HTTP_USER_AGENT.{0,160}(?:googlebot|bingbot|yandex|baiduspider)|(?:googlebot|bingbot|yandex|baiduspider).{0,160}HTTP_USER_AGENT",
+			"also": [
+				"\\b(?:file_get_contents|curl_exec|wp_remote_get|fopen)\\s*\\(\\s*[\\'\"]?https?://|\\bheader\\s*\\(\\s*[\\'\"]Location:\\s*https?://"
+			],
+			"flags": "is"
+		},
+		{
+			"id": "php.spam_mailer",
+			"applies": [
+				"php"
+			],
+			"severity": "high",
+			"title": "Sends email for anyone who asks (a spam mailer)",
+			"pattern": "\\bmail\\s*\\(\\s*(?:stripslashes\\s*\\(\\s*)?\\$_(?:POST|GET|REQUEST)\\b",
+			"flags": "i"
+		},
+		{
+			"id": "php.error_hidden_eval",
+			"applies": [
+				"php"
+			],
+			"severity": "medium",
+			"title": "Runs code with errors hidden",
+			"pattern": "@\\s*(?:eval|assert)\\s*\\(",
+			"flags": "i"
+		},
+		{
+			"id": "js.unescape_write",
+			"applies": [
+				"js",
+				"php"
+			],
+			"severity": "high",
+			"title": "Writes a hidden script into pages",
+			"pattern": "document\\.write\\s*\\(\\s*unescape\\s*\\(\\s*[\\'\"]%3[Cc]",
+			"flags": "i"
+		},
+		{
+			"id": "js.charcode_eval",
+			"applies": [
+				"js",
+				"php"
+			],
+			"severity": "critical",
+			"title": "Runs a script hidden as character codes",
+			"pattern": "\\beval\\s*\\(\\s*String\\.fromCharCode\\s*\\(\\s*\\d+(?:\\s*,\\s*\\d+){30,}",
+			"flags": "i"
+		},
+		{
+			"id": "js.atob_eval",
+			"applies": [
+				"js"
+			],
+			"severity": "high",
+			"title": "Runs a script hidden in encoded text",
+			"pattern": "\\beval\\s*\\(\\s*(?:window\\.)?atob\\s*\\(",
+			"flags": "i"
+		},
+		{
+			"id": "js.obfuscated_redirect",
+			"applies": [
+				"js",
+				"php"
+			],
+			"severity": "high",
+			"title": "Sends visitors to another website through hidden code",
+			"pattern": "\\b(?:window|document|top|self)\\.location(?:\\.href)?\\s*=\\s*(?:atob|unescape|String\\.fromCharCode|decodeURIComponent)\\s*\\(",
+			"flags": "i"
+		},
+		{
+			"id": "js.hidden_iframe",
+			"applies": [
+				"js",
+				"php"
+			],
+			"severity": "high",
+			"title": "Loads another website in a hidden frame",
+			"pattern": "(?:document\\.write(?:ln)?\\s*\\(|\\.innerHTML\\s*\\+?=|\\becho\\b|\\bprint\\b)\\s*\\\\?[\\'\"]\\s*<iframe[^>]{0,200}(?:(?<![\\w-])width\\s*=\\s*\\\\?[\\'\"]?[01]\\\\?[\\'\" >]|(?<![\\w-])height\\s*=\\s*\\\\?[\\'\"]?[01]\\\\?[\\'\" >]|display\\s*:\\s*none|visibility\\s*:\\s*hidden)[^>]{0,200}src\\s*=\\s*\\\\?[\\'\"]?https?://",
+			"flags": "i"
+		},
+		{
+			"id": "js.known_campaign",
+			"applies": [
+				"js",
+				"php",
+				"htaccess"
+			],
+			"severity": "critical",
+			"title": "Points to a known malware campaign",
+			"pattern": "(?:balantfromsun|lovegreenpencils|trackstatisticsss|collectfasttracks|letsmakeparty3|stay\\.decentralappps|dest\\.collectfasttracks|statisticscripts|cdn\\.scriptsplatform|js\\.donatelloflowfirstly|sweepstakesandcontestsdo|specialadves|gabbanaspa\\.com|wowhowp\\.com)",
+			"flags": "i"
+		},
+		{
+			"id": "js.packer_payload",
+			"applies": [
+				"js"
+			],
+			"severity": "medium",
+			"title": "Packed script that changes the page or sends visitors away",
+			"pattern": "eval\\s*\\(\\s*function\\s*\\(\\s*p\\s*,\\s*a\\s*,\\s*c\\s*,\\s*k\\s*,\\s*e\\s*,\\s*[rd]\\s*\\)",
+			"also": [
+				"document\\.cookie|\\.location|createElement\\s*\\(\\s*\\\\?[\\'\"]script"
+			],
+			"flags": "i"
+		},
+		{
+			"id": "htaccess.search_redirect",
+			"applies": [
+				"htaccess"
+			],
+			"severity": "critical",
+			"title": "Sends visitors from search engines to another website",
+			"pattern": "RewriteCond\\s+%\\{HTTP_REFERER\\}[^\\n]*(?:google|bing|yahoo|yandex|baidu)",
+			"also": [
+				"RewriteRule\\s+[^\\n]*https?://"
+			],
+			"flags": "i"
+		},
+		{
+			"id": "htaccess.images_as_php",
+			"applies": [
+				"htaccess"
+			],
+			"severity": "critical",
+			"title": "Runs images or text files as PHP",
+			"pattern": "(?:AddHandler|AddType|SetHandler|ForceType)\\s+[^\\n]*(?:x-httpd-php|application/x-httpd|php\\d?-script)[^\\n]*",
+			"also": [
+				"\\.(?:jpe?g|png|gif|ico|txt|html?|bmp)\\b|SetHandler|ForceType"
+			],
+			"flags": "i"
+		},
+		{
+			"id": "htaccess.auto_prepend",
+			"applies": [
+				"htaccess"
+			],
+			"severity": "high",
+			"title": "Adds code to every page through PHP settings",
+			"pattern": "php_value\\s+auto_(?:prepend|append)_file",
+			"flags": "i"
+		},
+		{
+			"id": "htaccess.mobile_redirect",
+			"applies": [
+				"htaccess"
+			],
+			"severity": "medium",
+			"title": "Sends phone visitors to another website",
+			"pattern": "RewriteCond\\s+%\\{HTTP_USER_AGENT\\}[^\\n]*(?:android|iphone|mobile|blackberry)",
+			"also": [
+				"RewriteRule\\s+[^\\n]*https?://(?!%\\{HTTP_HOST\\})"
+			],
+			"flags": "i"
+		},
+		{
+			"id": "svg.script",
+			"applies": [
+				"svg"
+			],
+			"severity": "medium",
+			"title": "An image with a script in it",
+			"pattern": "<script\\b|\\son(?:load|error|click|mouseover)\\s*=|javascript:",
+			"flags": "i"
+		}
+	]
+}

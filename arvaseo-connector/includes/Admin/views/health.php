@@ -67,6 +67,8 @@ defined( 'ABSPATH' ) || exit;
 	$arvaseo_freshness  = $arvaseo_assessment['display_freshness'] ?? 'none';
 	?>
 <div class="arvaseo-stack">
+	<?php require __DIR__ . '/security.php'; ?>
+
 	<section class="arvaseo-card" aria-labelledby="arvaseo-hs-heading">
 		<div class="arvaseo-between">
 			<div>

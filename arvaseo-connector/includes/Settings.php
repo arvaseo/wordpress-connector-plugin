@@ -44,6 +44,7 @@ final class Settings {
 			'seo_drafts'               => false,
 			'seo_updates'              => false,
 			'health_frequency'         => 'daily',
+			'security_weekly'          => true,
 			'log_retention_days'       => 90,
 			'delete_data_on_uninstall' => false,
 		);
@@ -97,6 +98,7 @@ final class Settings {
 		$clean['seo_plugin']               = in_array( $input['seo_plugin'] ?? '', self::SEO_PLUGINS, true ) ? $input['seo_plugin'] : 'auto';
 		$clean['seo_drafts']               = ! empty( $input['seo_drafts'] );
 		$clean['seo_updates']              = ! empty( $input['seo_updates'] );
+		$clean['security_weekly']          = ! empty( $input['security_weekly'] );
 		$clean['health_frequency']         = in_array( $input['health_frequency'] ?? '', array( 'daily', 'twicedaily' ), true ) ? $input['health_frequency'] : 'daily';
 		$clean['log_retention_days']       = in_array( (int) ( $input['log_retention_days'] ?? 90 ), array( 30, 90, 180, 365 ), true ) ? (int) $input['log_retention_days'] : 90;
 
@@ -141,6 +143,10 @@ final class Settings {
 		}
 		if ( $clean['health_frequency'] !== $old['health_frequency'] ) {
 			wp_clear_scheduled_hook( 'arvaseo_connector_health' );
+		}
+		if ( $clean['security_weekly'] !== $old['security_weekly'] ) {
+			// Security\Scanner::schedule_weekly() adds or removes the weekly scan on the next load.
+			wp_clear_scheduled_hook( Security\Scanner::WEEKLY );
 		}
 
 		return $clean;

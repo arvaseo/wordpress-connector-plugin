@@ -160,6 +160,7 @@ defined( 'ABSPATH' ) || exit;
 						<option value="twicedaily" <?php selected( $arvaseo_s['health_frequency'], 'twicedaily' ); ?>><?php esc_html_e( 'Twice a day', 'arvaseo-connector' ); ?></option>
 					</select>
 				</div>
+				<?php $arvaseo_toggle( 'security_weekly', __( 'Scan for security problems every week', 'arvaseo-connector' ), __( 'The scan runs on this server in small batches and only reports what it finds. You can always run one from Health.', 'arvaseo-connector' ) ); ?>
 				<div class="arvaseo-field">
 					<label class="arvaseo-label" for="arvaseo-log-days"><?php esc_html_e( 'Keep the activity log for', 'arvaseo-connector' ); ?></label>
 					<select id="arvaseo-log-days" name="<?php echo esc_attr( $arvaseo_name ); ?>[log_retention_days]">

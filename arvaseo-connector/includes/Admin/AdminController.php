@@ -73,6 +73,10 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_webp', array( self::class, 'webp' ) );
 		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
 		add_action( 'admin_post_arvaseo_connector_cloudflare', array( self::class, 'cloudflare' ) );
+		add_action( 'admin_post_arvaseo_connector_security_scan', array( self::class, 'security_scan' ) );
+		add_action( 'admin_post_arvaseo_connector_security_stop', array( self::class, 'security_stop' ) );
+		add_action( 'admin_post_arvaseo_connector_security_ignore', array( self::class, 'security_ignore' ) );
+		add_action( 'wp_ajax_arvaseo_connector_security_progress', array( self::class, 'security_progress' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
 		add_filter( 'submenu_file', array( self::class, 'submenu_file' ) );
@@ -274,7 +278,23 @@ final class AdminController {
 		if ( ! current_user_can( Capabilities::MANAGE ) ) {
 			return array();
 		}
-		$needs      = array();
+		$needs    = array();
+		$security = \ArvaSEO\Connector\Security\Findings::counts();
+		if ( $security['critical'] > 0 || $security['high'] > 0 ) {
+			$serious = $security['critical'] + $security['high'];
+			$needs[] = array(
+				$security['critical'] > 0 ? 'bad' : 'warn',
+				'shield',
+				$security['critical'] > 0
+					/* translators: %d: number of security problems. */
+					? sprintf( _n( 'The security scan found %d serious problem', 'The security scan found %d serious problems', $serious, 'arvaseo-connector' ), $serious )
+					/* translators: %d: number of security problems. */
+					: sprintf( _n( 'The security scan found %d problem to look at', 'The security scan found %d problems to look at', $serious, 'arvaseo-connector' ), $serious ),
+				__( 'See what it found, why it matters and how to fix it.', 'arvaseo-connector' ),
+				admin_url( 'admin.php?page=arvaseo-health#arvaseo-security' ),
+				__( 'Open the results', 'arvaseo-connector' ),
+			);
+		}
 		$connection = TokenStore::connection();
 		if ( TokenStore::unreadable() || 'reauth_required' === ( $connection['status'] ?? '' ) ) {
 			$needs[] = array( 'bad', 'alert', __( 'Reconnect to Arva SEO', 'arvaseo-connector' ), __( 'The connection stopped working, so nothing is sent or received until you connect again.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-connector#arvaseo-connect' ), __( 'Reconnect', 'arvaseo-connector' ) );
@@ -445,6 +465,11 @@ final class AdminController {
 			'cloudflare_checked'             => array( 'success', __( 'Checked with Cloudflare.', 'arvaseo-connector' ) ),
 			'cloudflare_saved'               => array( 'success', __( 'Your Cloudflare choice was saved.', 'arvaseo-connector' ) ),
 			'cloudflare_disconnected'        => array( 'success', __( 'Cloudflare is disconnected and its token was removed from this site. Nothing is cleared from now on.', 'arvaseo-connector' ) ),
+			'security_started'               => array( 'success', __( 'The security scan started. It runs in the background in small batches; you can leave this page and come back.', 'arvaseo-connector' ) ),
+			'security_running'               => array( 'info', __( 'A security scan is already running.', 'arvaseo-connector' ) ),
+			'security_stopped'               => array( 'success', __( 'The security scan stopped. The results of the previous scan are still shown.', 'arvaseo-connector' ) ),
+			'security_ignored'               => array( 'success', __( 'Marked as expected. It’s hidden from now on, unless the file changes.', 'arvaseo-connector' ) ),
+			'security_unignored'             => array( 'success', __( 'It’s shown again.', 'arvaseo-connector' ) ),
 		);
 		if ( isset( $map[ $code ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
@@ -528,6 +553,54 @@ final class AdminController {
 		self::guard( 'arvaseo_connector_sync_inventory', Capabilities::SYNC_INVENTORY );
 		PluginInventoryService::sync( true );
 		self::back( 'arvaseo-inventory', 'inventory_queued' );
+	}
+
+	/**
+	 * Start a security scan.
+	 */
+	public static function security_scan(): void {
+		self::guard( 'arvaseo_connector_security_scan', Capabilities::MANAGE );
+		self::back( 'arvaseo-health', \ArvaSEO\Connector\Security\Scanner::start( 'manual' ) ? 'security_started' : 'security_running' );
+	}
+
+	/**
+	 * Stop the security scan.
+	 */
+	public static function security_stop(): void {
+		self::guard( 'arvaseo_connector_security_stop', Capabilities::MANAGE );
+		\ArvaSEO\Connector\Security\Scanner::stop();
+		self::back( 'arvaseo-health', 'security_stopped' );
+	}
+
+	/**
+	 * Mark a security finding as expected, or show it again.
+	 */
+	public static function security_ignore(): void {
+		self::guard( 'arvaseo_connector_security_ignore', Capabilities::MANAGE );
+		$key    = isset( $_POST['finding'] ) ? sanitize_key( wp_unslash( $_POST['finding'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$ignore = empty( $_POST['show'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		\ArvaSEO\Connector\Security\Findings::ignore( $key, $ignore );
+		AuditLogger::info( $ignore ? 'security.finding_ignored' : 'security.finding_shown', $ignore ? __( 'A security finding was marked as expected.', 'arvaseo-connector' ) : __( 'A security finding is shown again.', 'arvaseo-connector' ) );
+		self::back( 'arvaseo-health', $ignore ? 'security_ignored' : 'security_unignored' );
+	}
+
+	/**
+	 * The scan's progress for the Health page (it also runs a batch when WP-Cron is slow).
+	 */
+	public static function security_progress(): void {
+		check_ajax_referer( 'arvaseo_connector_security_progress' );
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
+			wp_send_json_error( null, 403 );
+		}
+		\ArvaSEO\Connector\Security\Scanner::tick();
+		$progress = \ArvaSEO\Connector\Security\Scanner::progress();
+		wp_send_json_success(
+			array(
+				'running' => 'running' === ( $progress['status'] ?? '' ),
+				'files'   => (int) ( $progress['files'] ?? 0 ),
+				'step'    => \ArvaSEO\Connector\Security\Scanner::step_label( (string) ( $progress['step'] ?? '' ) ),
+			)
+		);
 	}
 
 	/**
@@ -801,6 +874,10 @@ final class AdminController {
 				'confirmCssRegenerate' => __( 'Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance.', 'arvaseo-connector' ),
 				'confirmWebpUndo'      => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
 				'confirmCloudflareOff' => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
+				'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
+				'securityNonce'        => wp_create_nonce( 'arvaseo_connector_security_progress' ),
+				/* translators: 1: what the scan is checking, 2: number of files. */
+				'securityProgress'     => __( '%1$s · %2$s files checked so far', 'arvaseo-connector' ),
 			)
 		);
 	}
