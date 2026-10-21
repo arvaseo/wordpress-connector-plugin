@@ -47,7 +47,7 @@ final class CssOptimizer {
 	 * yoast-seo-adminbar). Left out of the signature, so an administrator trying a fix gets the
 	 * same page type, and the same results, as visitors.
 	 *
-	 * @param string            $handle Style handle.
+	 * @param string               $handle Style handle.
 	 * @param \_WP_Dependency|null $style  Its registration.
 	 */
 	private static function signed_in_only( string $handle, $style ): bool {

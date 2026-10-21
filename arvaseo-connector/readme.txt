@@ -4,7 +4,7 @@ Tags: pagespeed, performance, core web vitals, seo, site health
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.7.1
+Stable tag: 1.8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,7 +16,7 @@ Fix the speed problems Google's PageSpeed test finds, one switch at a time, and 
 
 = PageSpeed fixes =
 
-Arva SEO → PageSpeed fixes lists each fix with the PageSpeed (Lighthouse) problem it addresses, worded as the report shows it. Every fix is off until you turn it on. You can try it first: while you try a fix, only you see the change when you're signed in, and visitors see your site as before. Turning a fix off puts your pages back as they were. Your theme files and content are never changed. The few fixes that add files say so on their cards (server rules in .htaccess, WebP and font copies in your uploads folder) and take them away again. The fixes work without an Arva SEO account.
+Arva SEO → Speed lists each fix with the PageSpeed (Lighthouse) problem it addresses, worded as the report shows it. Every fix is off until you turn it on. You can try it first: while you try a fix, only you see the change when you're signed in, and visitors see your site as before. Turning a fix off puts your pages back as they were. Your theme files and content are never changed. The few fixes that add files say so on their cards (server rules in .htaccess, WebP and font copies in your uploads folder) and take them away again. The fixes work without an Arva SEO account.
 
 * **Show the main image first**: the featured image on posts and pages, and on the homepage the image your latest PageSpeed test in Arva SEO named (Largest Contentful Paint image was lazily loaded; LCP request discovery)
 * **Lazy-load images, videos and maps** below the first few images (Defer offscreen images)
@@ -31,7 +31,7 @@ Arva SEO → PageSpeed fixes lists each fix with the PageSpeed (Lighthouse) prob
 * **Remove unused WordPress extras** you choose: the emoji script, embed discovery, Dashicons for visitors, jQuery Migrate, block styles on pages without blocks
 * **New uploads as WebP**, and convert the images already in your media library in the background, keeping the originals (Serve images in next-gen formats)
 
-If you allow it on the PageSpeed fixes page ("Let Arva SEO switch these fixes", off by default), the people who manage this website in Arva SEO can try, turn on and turn off the fixes from its PageSpeed results, by the same rules as the page: a fix that can be tried goes on for everyone only after it's been tried, Defer scripts goes on only in WordPress, and turning a fix off always works. Every change is in the Activity Log with who asked.
+If you allow it on the Speed page ("Let Arva SEO switch these fixes", off by default), the people who manage this website in Arva SEO can try, turn on and turn off the fixes from its PageSpeed results, by the same rules as the page: a fix that can be tried goes on for everyone only after it's been tried, Defer scripts goes on only in WordPress, and turning a fix off always works. Every change is in Arva SEO → Activity with who asked.
 
 If a speed plugin such as WP Rocket, LiteSpeed Cache, Perfmatters or FlyingPress already does one of these jobs, that fix stays off and the page tells you to use that plugin's setting, so pages are never processed twice. When the site is connected, the page also shows which fixes your homepage's latest PageSpeed test asks for, and Arva SEO's PageSpeed results link straight to the right switch.
 
@@ -48,7 +48,7 @@ If a speed plugin such as WP Rocket, LiteSpeed Cache, Perfmatters or FlyingPress
 == Installation ==
 
 1. Upload the plugin through Plugins → Add New → Upload Plugin, and activate it.
-2. Open Arva SEO → Connection, review what is shared, and click Connect to Arva SEO.
+2. Open Arva SEO → Get started, review what is shared, and click Connect to Arva SEO.
 3. Sign in to Arva SEO, choose the website, and approve. You return to WordPress connected.
 4. In Arva SEO → Settings, choose the default author and publishing mode.
 
@@ -66,7 +66,7 @@ Most only add or change attributes on images and links, and visitors see the sam
 
 = Can I leave a page, script or image alone? =
 
-Yes, in Arva SEO → PageSpeed fixes → Leave things alone:
+Yes, in Arva SEO → Speed → Leave things alone:
 
 * Pages: addresses such as `/checkout/` or `/shop/*`, a "Leave this page alone" tick box when you edit a post or page, or Arva SEO in the toolbar while you view any page. Defer scripts also leaves WooCommerce and Easy Digital Downloads cart, checkout and account pages alone unless you untick it.
 * Scripts (Defer scripts): a script name (handle), part of its file address such as `booking.js`, or every script from a plugin you choose.
@@ -83,7 +83,7 @@ Yes, from 1.6.0, when the site is connected: Load styles faster and Remove unuse
 
 = Can my agency switch the fixes from Arva SEO? =
 
-Yes, from 1.7.0, once an administrator ticks "Let Arva SEO switch these fixes" on the PageSpeed fixes page. Arva SEO's PageSpeed results then show Try it, Turn on and Turn off next to each fix for people who manage the website's integrations there. Switches are picked up within a minute or two; the rules are the same as in WordPress, and each change is logged with the name of the person who asked. Untick the box to stop it at any time.
+Yes, from 1.7.0, once an administrator ticks "Let Arva SEO switch these fixes" on the Speed page. Arva SEO's PageSpeed results then show Try it, Turn on and Turn off next to each fix for people who manage the website's integrations there. Switches are picked up within a minute or two; the rules are the same as in WordPress, and each change is logged with the name of the person who asked. Untick the box to stop it at any time.
 
 = Is Browser caching and compression safe? =
 
@@ -118,7 +118,7 @@ Credentials are always revoked and removed. Settings, logs and delivery records 
 This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service, and only after an administrator connects it. Nothing is sent before then.
 
 * **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, and your data-sharing choice.
-* **Plugin inventory and Website Health (only if you agree on the Connection screen):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
+* **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
 * **Content:** every 5 minutes the plugin asks api.arvaseo.com for content you sent from Arva SEO, and reports back the post ID, status and link it created.
 * **Switching fixes from Arva SEO (off by default):** when allowed, the plugin asks api.arvaseo.com every 5 minutes (and when Arva SEO signals it) for fixes switched there, and reports back what it did and each fix's state.
 * **Signed requests from Arva SEO:** api.arvaseo.com may call this site's /wp-json/arvaseo/v1/events endpoint to ask it to check for content or run a recheck sooner.
@@ -131,17 +131,23 @@ No visitor data, user accounts, emails, passwords, settings or existing content 
 
 == Privacy ==
 
-See Arva SEO → Diagnostics & Privacy for the full list of shared fields and their purpose, and the suggested text added to Settings → Privacy.
+See Arva SEO → Settings → Diagnostics and data sharing for the full list of shared fields and their purpose, and the suggested text added to Settings → Privacy.
+
+The plugin's admin pages use the Fraunces and Inter fonts, which come with the plugin (SIL Open Font License 1.1, see assets/fonts/OFL.txt); nothing is loaded from other sites to show them.
 
 == Screenshots ==
 
-1. PageSpeed fixes: which fixes your latest PageSpeed test calls for, and whether each one is off, being tried or on.
+1. Speed: your latest PageSpeed score, the fixes it asks for, and whether each one is off, being tried or on.
 2. Defer scripts: try it while only you see it, check your important pages, then turn it on for everyone.
-3. Connection: sign in on Arva SEO to connect, and see exactly what is shared before you do.
-4. Settings: choose how far Arva SEO can go when it sends posts, from drafts only to full publishing.
-5. Leave things alone: pages, images, videos and maps the PageSpeed fixes skip.
+3. Get started: the speed fixes work without an account; connect to Arva SEO when you want the rest.
+4. Overview: what needs you first, with speed, Website Health and content at a glance.
+5. Settings: choose how far Arva SEO can go when it sends posts, from drafts only to full publishing.
+6. Leave things alone: pages, images, videos and maps the speed fixes skip.
 
 == Upgrade Notice ==
+
+= 1.8.0 =
+A new look, with an Overview of what needs you first. Every fix and setting stays exactly as it was.
 
 = 1.7.1 =
 Trying Load styles faster or Remove unused CSS now shows administrators the same results visitors will get, also with SEO plugins that style the toolbar.
@@ -165,6 +171,15 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 1.8.0 =
+* New: a redesigned admin in Arva SEO's look, with tabs for Overview, Speed, Content, Health, Activity and Settings.
+* New: Overview shows what needs you first, most urgent at the top, with your PageSpeed score, Website Health results and content settings at a glance. Before connecting it's Get started, which shows the speed fixes work without an account.
+* Speed: your latest PageSpeed score at the top, the fixes it asks for, and a filter for all fixes, the ones the test asks for, and those on, being tried or off. Fixes are grouped by what they improve.
+* Settings has a section list, and the plugin list and Diagnostics and data sharing are now pages of Settings (under Data and privacy).
+* The pages are named Overview (was Connection), Speed (PageSpeed fixes), Content (Content Sync), Health (Website Health), Activity (Activity Log) and Plugin list (Plugin Inventory). Links from Arva SEO open the same pages as before.
+* The fonts (Fraunces and Inter) come with the plugin, so the admin pages load nothing from other sites.
+* Nothing changes on your site by updating: every fix, setting and switch stays as it was.
 
 = 1.7.1 =
 * Fixed: with Load styles faster or Remove unused CSS being tried, an administrator's view counted toolbar styles from other plugins (such as Yoast SEO's) as part of the page, so it was optimized as a different page from what visitors see and used an extra page optimization. Styles that depend on the toolbar, or are named after it, are now left out, like the toolbar's own.

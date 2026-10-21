@@ -10,9 +10,12 @@ namespace ArvaSEO\Connector\Admin;
 use ArvaSEO\Connector\Api\ApiClient;
 use ArvaSEO\Connector\Auth\AuthService;
 use ArvaSEO\Connector\Auth\TokenStore;
+use ArvaSEO\Connector\Config;
 use ArvaSEO\Connector\Cron\CronManager;
 use ArvaSEO\Connector\Cron\PollingService;
 use ArvaSEO\Connector\Diagnostics\DiagnosticsService;
+use ArvaSEO\Connector\Health\AssessmentService;
+use ArvaSEO\Connector\Health\HealthSnapshotService;
 use ArvaSEO\Connector\Install\Capabilities;
 use ArvaSEO\Connector\Inventory\PluginInventoryService;
 use ArvaSEO\Connector\Logging\AuditLogger;
@@ -30,15 +33,19 @@ defined( 'ABSPATH' ) || exit;
  */
 final class AdminController {
 
+	/**
+	 * Slug => [name, capability, view, tab]. The tab is the one shown as current: the plugin list
+	 * and diagnostics are pages of Settings (1.8.0), reached from its Data and privacy section.
+	 */
 	public const PAGES = array(
-		'arvaseo-connector'   => array( 'Connection', Capabilities::VIEW_HEALTH, 'connection' ),
-		'arvaseo-content'     => array( 'Content Sync', Capabilities::PUBLISH_CONTENT, 'content' ),
-		'arvaseo-inventory'   => array( 'Plugin Inventory', Capabilities::SYNC_INVENTORY, 'inventory' ),
-		'arvaseo-health'      => array( 'Website Health', Capabilities::VIEW_HEALTH, 'health' ),
-		'arvaseo-speed'       => array( 'PageSpeed fixes', Capabilities::MANAGE, 'speed' ),
-		'arvaseo-activity'    => array( 'Activity Log', Capabilities::MANAGE, 'activity' ),
-		'arvaseo-settings'    => array( 'Settings', Capabilities::MANAGE, 'settings' ),
-		'arvaseo-diagnostics' => array( 'Diagnostics & Privacy', Capabilities::MANAGE, 'diagnostics' ),
+		'arvaseo-connector'   => array( 'Overview', Capabilities::VIEW_HEALTH, 'connection', 'arvaseo-connector' ),
+		'arvaseo-speed'       => array( 'Speed', Capabilities::MANAGE, 'speed', 'arvaseo-speed' ),
+		'arvaseo-content'     => array( 'Content', Capabilities::PUBLISH_CONTENT, 'content', 'arvaseo-content' ),
+		'arvaseo-health'      => array( 'Health', Capabilities::VIEW_HEALTH, 'health', 'arvaseo-health' ),
+		'arvaseo-activity'    => array( 'Activity', Capabilities::MANAGE, 'activity', 'arvaseo-activity' ),
+		'arvaseo-settings'    => array( 'Settings', Capabilities::MANAGE, 'settings', 'arvaseo-settings' ),
+		'arvaseo-inventory'   => array( 'Plugin list', Capabilities::SYNC_INVENTORY, 'inventory', 'arvaseo-settings' ),
+		'arvaseo-diagnostics' => array( 'Diagnostics and data sharing', Capabilities::MANAGE, 'diagnostics', 'arvaseo-settings' ),
 	);
 
 	/**
@@ -65,6 +72,36 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_webp', array( self::class, 'webp' ) );
 		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
+		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
+		add_filter( 'submenu_file', array( self::class, 'submenu_file' ) );
+	}
+
+	/**
+	 * The current Arva SEO page, or '' on other admin screens.
+	 */
+	private static function current_page(): string {
+		$slug = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page routing only.
+		return isset( self::PAGES[ $slug ] ) ? $slug : '';
+	}
+
+	/**
+	 * The app's ground on the plugin's pages.
+	 *
+	 * @param string $classes Body classes.
+	 */
+	public static function body_class( $classes ): string {
+		return '' === self::current_page() ? (string) $classes : $classes . ' arvaseo-admin';
+	}
+
+	/**
+	 * The plugin list and diagnostics highlight Settings in the menu.
+	 *
+	 * @param string|null $file Submenu file.
+	 * @return string|null
+	 */
+	public static function submenu_file( $file ) {
+		$page = self::current_page();
+		return '' !== $page && self::PAGES[ $page ][3] !== $page ? self::PAGES[ $page ][3] : $file;
 	}
 
 	/**
@@ -80,8 +117,23 @@ final class AdminController {
 			self::menu_icon(),
 			81
 		);
-		foreach ( self::PAGES as $slug => list( $title, $cap ) ) {
+		foreach ( self::PAGES as $slug => list( $title, $cap, $view, $tab ) ) {
 			add_submenu_page( 'arvaseo-connector', self::title( $slug ), self::title( $slug ), $cap, $slug, array( self::class, 'render' ) );
+		}
+		add_filter( 'parent_file', static fn ( $file ) => '' !== self::current_page() ? 'arvaseo-connector' : $file );
+		add_action( 'admin_head', array( self::class, 'hide_settings_pages' ) );
+	}
+
+	/**
+	 * The plugin list and diagnostics have no menu item of their own: Settings links to them.
+	 * They stay registered under Arva SEO until the page title is worked out (a page with no
+	 * parent gets no title or open menu), and leave the menu before it's drawn.
+	 */
+	public static function hide_settings_pages(): void {
+		foreach ( self::PAGES as $slug => $page ) {
+			if ( $page[3] !== $slug ) {
+				remove_submenu_page( 'arvaseo-connector', $slug );
+			}
 		}
 	}
 
@@ -92,14 +144,14 @@ final class AdminController {
 	 */
 	public static function title( string $slug ): string {
 		$titles = array(
-			'arvaseo-connector'   => __( 'Connection', 'arvaseo-connector' ),
-			'arvaseo-content'     => __( 'Content Sync', 'arvaseo-connector' ),
-			'arvaseo-inventory'   => __( 'Plugin Inventory', 'arvaseo-connector' ),
-			'arvaseo-health'      => __( 'Website Health', 'arvaseo-connector' ),
-			'arvaseo-speed'       => __( 'PageSpeed fixes', 'arvaseo-connector' ),
-			'arvaseo-activity'    => __( 'Activity Log', 'arvaseo-connector' ),
+			'arvaseo-connector'   => TokenStore::is_connected() ? __( 'Overview', 'arvaseo-connector' ) : __( 'Get started', 'arvaseo-connector' ),
+			'arvaseo-speed'       => __( 'Speed', 'arvaseo-connector' ),
+			'arvaseo-content'     => __( 'Content', 'arvaseo-connector' ),
+			'arvaseo-health'      => __( 'Health', 'arvaseo-connector' ),
+			'arvaseo-activity'    => __( 'Activity', 'arvaseo-connector' ),
 			'arvaseo-settings'    => __( 'Settings', 'arvaseo-connector' ),
-			'arvaseo-diagnostics' => __( 'Diagnostics & Privacy', 'arvaseo-connector' ),
+			'arvaseo-inventory'   => __( 'Plugin list', 'arvaseo-connector' ),
+			'arvaseo-diagnostics' => __( 'Diagnostics and data sharing', 'arvaseo-connector' ),
 		);
 		return $titles[ $slug ] ?? '';
 	}
@@ -108,44 +160,228 @@ final class AdminController {
 	 * Render the current page.
 	 */
 	public static function render(): void {
-		$slug = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : 'arvaseo-connector'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page routing only.
-		if ( ! isset( self::PAGES[ $slug ] ) || ! current_user_can( self::PAGES[ $slug ][1] ) ) {
+		$slug = '' !== self::current_page() ? self::current_page() : 'arvaseo-connector';
+		if ( ! current_user_can( self::PAGES[ $slug ][1] ) ) {
 			wp_die( esc_html__( 'You don’t have permission to view this page.', 'arvaseo-connector' ), 403 );
 		}
 		$view = self::PAGES[ $slug ][2];
-		echo '<div class="wrap arvaseo-wrap">';
+		echo '<div class="wrap arvaseo-wrap"><div class="arvaseo-app">';
 		self::header( $slug );
+		// WordPress puts other plugins' notices here, under the header.
+		echo '<hr class="wp-header-end" hidden />';
+		echo '<div class="arvaseo-page">';
 		self::notice();
+		self::page_head( $slug );
 		include ARVASEO_CONNECTOR_DIR . '/includes/Admin/views/' . $view . '.php';
-		echo '</div>';
+		echo '</div></div></div>';
 	}
 
 	/**
-	 * Logo, title and tabs.
+	 * The brand bar and the tabs.
 	 *
 	 * @param string $current Current page.
 	 */
 	private static function header( string $current ): void {
-		printf(
-			'<h1 class="arvaseo-title"><img src="%1$s" alt="" width="28" height="28" class="arvaseo-logo" /> %2$s <span class="arvaseo-title-page">%3$s</span></h1>',
-			esc_url( plugins_url( 'assets/arvaseo-icon.svg', ARVASEO_CONNECTOR_FILE ) ),
-			esc_html__( 'Arva SEO – Speed Booster & SEO Connector', 'arvaseo-connector' ),
-			esc_html( self::title( $current ) )
-		);
-		echo '<nav class="nav-tab-wrapper" aria-label="' . esc_attr__( 'Arva SEO Connector sections', 'arvaseo-connector' ) . '">';
+		$connection = TokenStore::connection();
+		$connected  = TokenStore::is_connected();
+		$app_url    = ! empty( $connection['app_url'] ) ? (string) $connection['app_url'] : Config::app_url();
+		echo '<div class="arvaseo-top">';
+		printf( '<img src="%s" alt="" width="28" height="28" />', esc_url( plugins_url( 'assets/arvaseo-icon.svg', ARVASEO_CONNECTOR_FILE ) ) );
+		echo '<span class="arvaseo-brand">' . esc_html__( 'Arva SEO', 'arvaseo-connector' ) . '</span>';
+		echo '<span class="arvaseo-prod">' . esc_html__( 'Speed Booster & SEO Connector', 'arvaseo-connector' ) . '</span>';
+		echo '<span class="arvaseo-grow"></span>';
+		if ( TokenStore::unreadable() || 'reauth_required' === ( $connection['status'] ?? '' ) ) {
+			echo self::badge( 'bad', __( 'Reconnect needed', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+		} elseif ( $connected ) {
+			echo '<span class="arvaseo-chip arvaseo-chip--good"><span class="arvaseo-dot"></span>' . esc_html__( 'Connected to Arva SEO', 'arvaseo-connector' ) . '</span>';
+		} else {
+			echo self::badge( 'neutral', __( 'Not connected', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+		}
+		if ( $connected ) {
+			printf(
+				'<a class="arvaseo-btn arvaseo-btn--sm" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s %3$s<span class="screen-reader-text"> %4$s</span></a>',
+				esc_url( $app_url ),
+				esc_html__( 'Open Arva SEO', 'arvaseo-connector' ),
+				self::icon( 'external', 14 ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
+				esc_html__( '(opens in a new tab)', 'arvaseo-connector' )
+			);
+		} elseif ( current_user_can( Capabilities::MANAGE ) && 'arvaseo-connector' !== $current ) {
+			printf( '<a class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--pri" href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=arvaseo-connector#arvaseo-connect' ) ), esc_html__( 'Connect to Arva SEO', 'arvaseo-connector' ) );
+		}
+		echo '</div>';
+
+		$tab   = self::PAGES[ $current ][3];
+		$needs = count( self::needs() );
+		echo '<nav class="arvaseo-tabs" aria-label="' . esc_attr__( 'Arva SEO sections', 'arvaseo-connector' ) . '">';
 		foreach ( self::PAGES as $slug => $page ) {
-			if ( ! current_user_can( $page[1] ) ) {
+			// The tabs: each section once; Content only once content can arrive.
+			if ( $page[3] !== $slug || ! current_user_can( $page[1] ) || ( 'arvaseo-content' === $slug && ! $connected ) ) {
 				continue;
 			}
 			printf(
-				'<a href="%1$s" class="nav-tab%2$s"%3$s>%4$s</a>',
+				'<a href="%1$s"%2$s>%3$s%4$s</a>',
 				esc_url( admin_url( 'admin.php?page=' . $slug ) ),
-				$slug === $current ? ' nav-tab-active' : '',
-				$slug === $current ? ' aria-current="page"' : '',
-				esc_html( self::title( $slug ) )
+				$slug === $tab ? ' aria-current="page"' : '',
+				esc_html( self::title( $slug ) ),
+				'arvaseo-connector' === $slug && $connected && $needs > 0
+					/* translators: %d: number of things that need the administrator. */
+					? ' <span class="arvaseo-badge-count" aria-label="' . esc_attr( sprintf( _n( '%d thing needs you', '%d things need you', $needs, 'arvaseo-connector' ), $needs ) ) . '">' . (int) $needs . '</span>'
+					: ''
 			);
 		}
 		echo '</nav>';
+	}
+
+	/**
+	 * The page's icon, name and what it's for.
+	 *
+	 * @param string $slug Page slug.
+	 */
+	private static function page_head( string $slug ): void {
+		if ( 'arvaseo-connector' === $slug && ! TokenStore::is_connected() && current_user_can( Capabilities::MANAGE ) ) {
+			return; // Get started has its own welcome.
+		}
+		$heads = array(
+			'arvaseo-connector'   => array( 'overview', __( 'How this website is doing, and what needs you. Nothing here changes your site until you choose to.', 'arvaseo-connector' ) ),
+			'arvaseo-speed'       => array( 'gauge', __( 'Fix what Google’s PageSpeed test finds, one switch at a time. Every fix is off until you turn it on, most can be tried first where only you see them, and turning one off puts your pages back as they were. Your theme files and content are never changed; the few fixes that add files say so.', 'arvaseo-connector' ) ),
+			'arvaseo-content'     => array( 'file', __( 'Posts sent from Arva SEO arrive here, and the SEO titles your team approves are written to your SEO plugin, only as far as you allow.', 'arvaseo-connector' ) ),
+			'arvaseo-health'      => array( 'shield', __( 'What the daily check found on this website, and how to fix it. This page only reads: snoozing, assigning or accepting a finding happens in Arva SEO.', 'arvaseo-connector' ) ),
+			'arvaseo-activity'    => array( 'list', __( 'Everything the plugin did, and who asked. No keys, codes, content or personal data are kept.', 'arvaseo-connector' ) ),
+			'arvaseo-settings'    => array( 'sliders', __( 'You decide how far Arva SEO may go on this website. Every setting starts at the safest choice.', 'arvaseo-connector' ) ),
+			'arvaseo-inventory'   => array( 'list', __( 'The plugins and themes on this site, and exactly what is shared about them with Arva SEO.', 'arvaseo-connector' ) ),
+			'arvaseo-diagnostics' => array( 'shield', __( 'What to share with support if something isn’t working, and what this site shares with Arva SEO.', 'arvaseo-connector' ) ),
+		);
+		if ( self::PAGES[ $slug ][3] !== $slug ) {
+			// A page of Settings: the way back.
+			printf( '<a class="arvaseo-back" href="%1$s">← %2$s</a>', esc_url( admin_url( 'admin.php?page=arvaseo-settings#arvaseo-settings-privacy' ) ), esc_html__( 'Settings', 'arvaseo-connector' ) );
+		}
+		printf(
+			'<div class="arvaseo-head"><span class="arvaseo-tile" aria-hidden="true">%1$s</span><div><h1 class="arvaseo-h1">%2$s</h1><p class="arvaseo-lede">%3$s</p></div></div>',
+			self::icon( $heads[ $slug ][0], 22 ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
+			esc_html( self::title( $slug ) ),
+			esc_html( $heads[ $slug ][1] )
+		);
+	}
+
+	/**
+	 * What needs the administrator, most urgent first: [tone, icon, title, text, url, link label].
+	 *
+	 * @return array<int, array{0: string, 1: string, 2: string, 3: string, 4: string, 5: string}>
+	 */
+	public static function needs(): array {
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
+			return array();
+		}
+		$needs      = array();
+		$connection = TokenStore::connection();
+		if ( TokenStore::unreadable() || 'reauth_required' === ( $connection['status'] ?? '' ) ) {
+			$needs[] = array( 'bad', 'alert', __( 'Reconnect to Arva SEO', 'arvaseo-connector' ), __( 'The connection stopped working, so nothing is sent or received until you connect again.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-connector#arvaseo-connect' ), __( 'Reconnect', 'arvaseo-connector' ) );
+		}
+		if ( ! TokenStore::is_connected() ) {
+			return $needs;
+		}
+		if ( Settings::all()['default_author_id'] <= 0 ) {
+			$needs[] = array( 'warn', 'alert', __( 'Choose who posts content from Arva SEO', 'arvaseo-connector' ), __( 'Drafts sent from Arva SEO can’t be saved until you pick the WordPress user they’re created as.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-settings#arvaseo-settings-publishing' ), __( 'Choose an author', 'arvaseo-connector' ) );
+		}
+		$trying = array_filter( array_keys( Fixes::all() ), static fn ( string $id ): bool => 'trying' === Fixes::state( $id ) );
+		if ( array() !== $trying ) {
+			$needs[] = array( 'warn', 'eye', _n( 'You’re trying a speed fix', 'You’re trying speed fixes', count( $trying ), 'arvaseo-connector' ), implode( ', ', array_map( static fn ( string $id ): string => Fixes::all()[ $id ]['title'], $trying ) ) . '. ' . __( 'Only you see it. Check your pages, then turn it on for everyone or stop trying.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-speed' ), __( 'Open Speed', 'arvaseo-connector' ) );
+		}
+		$asked = self::asked_fixes();
+		if ( array() !== $asked ) {
+			$needs[] = array(
+				'acc',
+				'zap',
+				/* translators: %d: number of speed fixes. */
+				sprintf( _n( 'Your latest PageSpeed test asks for %d fix', 'Your latest PageSpeed test asks for %d fixes', count( $asked ), 'arvaseo-connector' ), count( $asked ) ),
+				implode( ', ', array_map( static fn ( string $id ): string => Fixes::all()[ $id ]['title'], $asked ) ) . '.',
+				admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( $asked[0] ) ),
+				_n( 'Review the fix', 'Review the fixes', count( $asked ), 'arvaseo-connector' ),
+			);
+		}
+		$summary = HealthSnapshotService::latest()['summary'] ?? array();
+		if ( (int) ( $summary['critical'] ?? 0 ) > 0 ) {
+			$needs[] = array(
+				'bad',
+				'shield',
+				/* translators: %d: number of critical Website Health results. */
+				sprintf( _n( '%d critical Website Health result', '%d critical Website Health results', (int) $summary['critical'], 'arvaseo-connector' ), (int) $summary['critical'] ),
+				__( 'See what’s wrong and how to fix it.', 'arvaseo-connector' ),
+				admin_url( 'admin.php?page=arvaseo-health' ),
+				__( 'Open Health', 'arvaseo-connector' ),
+			);
+		}
+		return $needs;
+	}
+
+	/**
+	 * The fixes the latest PageSpeed test asks for that are still off, in the test's order.
+	 *
+	 * @return string[]
+	 */
+	public static function asked_fixes(): array {
+		$test  = AssessmentService::pagespeed_result();
+		$asked = array();
+		foreach ( (array) ( $test['audits'] ?? array() ) as $audit ) {
+			foreach ( Fixes::for_audit( (string) ( $audit['id'] ?? '' ) ) as $id ) {
+				if ( 'off' === Fixes::state( $id ) && ! in_array( $id, $asked, true ) ) {
+					$asked[] = $id;
+				}
+			}
+		}
+		return $asked;
+	}
+
+	/**
+	 * One of the interface's icons (stroke SVG, decorative).
+	 *
+	 * @param string $name Icon name.
+	 * @param int    $size Pixels.
+	 */
+	public static function icon( string $name, int $size = 20 ): string {
+		$paths = array(
+			'overview' => '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+			'gauge'    => '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+			'file'     => '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+			'shield'   => '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+			'list'     => '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+			'sliders'  => '<path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/>',
+			'external' => '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+			'alert'    => '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 2-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+			'zap'      => '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+			'eye'      => '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
+			'check'    => '<path d="M20 6 9 17l-5-5"/>',
+			'arrow'    => '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+			'pencil'   => '<path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.85.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.85z"/>',
+		);
+		return '<svg width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' . ( $size <= 16 ? '2.25' : '1.85' ) . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . ( $paths[ $name ] ?? '' ) . '</svg>';
+	}
+
+	/**
+	 * A PageSpeed score ring (decorative; the score is also in the text beside it).
+	 *
+	 * @param int  $score 0–100.
+	 * @param bool $small The smaller ring.
+	 */
+	public static function ring( int $score, bool $small = false ): string {
+		$size  = $small ? 76 : 84;
+		$r     = $small ? 32 : 35;
+		$width = $small ? 8 : 9;
+		$c     = 2 * M_PI * $r;
+		$fill  = $c * max( 0, min( 100, $score ) ) / 100;
+		$color = $score >= 90 ? '#5e7f23' : ( $score >= 50 ? '#c78b00' : '#b42318' );
+		return sprintf(
+			'<span class="arvaseo-ring%1$s"><svg width="%2$d" height="%2$d" viewBox="0 0 %2$d %2$d" aria-hidden="true" focusable="false"><circle cx="%3$d" cy="%3$d" r="%4$d" fill="none" stroke="#efece3" stroke-width="%5$d"/><circle cx="%3$d" cy="%3$d" r="%4$d" fill="none" stroke="%6$s" stroke-width="%5$d" stroke-linecap="round" stroke-dasharray="%7$.1f %8$.1f" transform="rotate(-90 %3$d %3$d)"/></svg><b>%9$d</b></span>',
+			$small ? ' arvaseo-ring--sm' : '',
+			$size,
+			$size / 2,
+			$r,
+			$width,
+			$color,
+			$fill,
+			$c,
+			$score
+		);
 	}
 
 	/**
@@ -159,10 +395,10 @@ final class AdminController {
 			'cancelled'                      => array( 'info', __( 'Connecting was cancelled. Nothing was changed.', 'arvaseo-connector' ) ),
 			'state_mismatch'                 => array( 'error', __( 'That connection reply didn’t match a connection started from this site by you, or it expired after 10 minutes. Start again.', 'arvaseo-connector' ) ),
 			'invalid_code'                   => array( 'error', __( 'Arva SEO returned an invalid connection code. Start again.', 'arvaseo-connector' ) ),
-			'exchange_failed'                => array( 'error', __( 'Arva SEO didn’t accept the connection (the code may have expired or been used). Start again; check the Activity Log if it keeps happening.', 'arvaseo-connector' ) ),
+			'exchange_failed'                => array( 'error', __( 'Arva SEO didn’t accept the connection (the code may have expired or been used). Start again; if it keeps happening, Activity shows what went wrong.', 'arvaseo-connector' ) ),
 			'disconnected'                   => array( 'success', __( 'Disconnected. The credentials were removed from this site and revoked at Arva SEO, and synchronisation stopped.', 'arvaseo-connector' ) ),
 			'test_ok'                        => array( 'success', __( 'The connection works.', 'arvaseo-connector' ) ),
-			'test_failed'                    => array( 'error', __( 'The connection test failed. See Connection health below and the Activity Log.', 'arvaseo-connector' ) ),
+			'test_failed'                    => array( 'error', __( 'The connection test failed. Activity shows what went wrong.', 'arvaseo-connector' ) ),
 			'inventory_queued'               => array( 'success', __( 'Plugin inventory sync finished. See the result below.', 'arvaseo-connector' ) ),
 			'recheck_queued'                 => array( 'success', __( 'Website recheck queued. Checks run in the background and can take a minute; refresh this page to see the results.', 'arvaseo-connector' ) ),
 			'poll_done'                      => array( 'success', __( 'Checked Arva SEO for content.', 'arvaseo-connector' ) ),
@@ -433,7 +669,7 @@ final class AdminController {
 			'<div class="notice notice-warning"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
 			esc_html__( 'Arva SEO: Defer scripts is on. If something stopped working on your site, such as a menu, slider, form or checkout, turn it off or leave that script alone.', 'arvaseo-connector' ),
 			esc_url( admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( 'defer_scripts' ) ) ),
-			esc_html__( 'PageSpeed fixes', 'arvaseo-connector' )
+			esc_html__( 'Speed', 'arvaseo-connector' )
 		);
 	}
 
@@ -503,7 +739,8 @@ final class AdminController {
 	 */
 	public static function action_links( array $links ): array {
 		if ( current_user_can( Capabilities::MANAGE ) ) {
-			array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=arvaseo-connector' ) ) . '">' . esc_html__( 'Connection', 'arvaseo-connector' ) . '</a>' );
+			array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=arvaseo-speed' ) ) . '">' . esc_html__( 'Speed', 'arvaseo-connector' ) . '</a>' );
+			array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=arvaseo-connector' ) ) . '">' . esc_html( self::title( 'arvaseo-connector' ) ) . '</a>' );
 		}
 		return $links;
 	}
@@ -518,7 +755,7 @@ final class AdminController {
 	 * @param string $css_class Button classes.
 	 * @param string $confirm data-confirm key.
 	 */
-	public static function button( string $action, string $label, string $css_class = 'button', string $confirm = '' ): void {
+	public static function button( string $action, string $label, string $css_class = 'arvaseo-btn arvaseo-btn--sm', string $confirm = '' ): void {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form"' . ( '' !== $confirm ? ' data-arvaseo-confirm="' . esc_attr( $confirm ) . '"' : '' ) . '>';
 		echo '<input type="hidden" name="action" value="' . esc_attr( $action ) . '" />';
 		wp_nonce_field( $action );
@@ -529,11 +766,12 @@ final class AdminController {
 	/**
 	 * A status label (text, not colour alone).
 	 *
-	 * @param string $tone  good|warn|bad|neutral.
+	 * @param string $tone  good|warn|bad|neutral|acc.
 	 * @param string $label Text.
 	 */
 	public static function badge( string $tone, string $label ): string {
-		return '<span class="arvaseo-badge arvaseo-badge--' . esc_attr( $tone ) . '">' . esc_html( $label ) . '</span>';
+		$tone = in_array( $tone, array( 'good', 'warn', 'bad', 'neutral', 'acc', 'lime' ), true ) ? $tone : 'neutral';
+		return '<span class="arvaseo-chip arvaseo-chip--' . esc_attr( $tone ) . '">' . esc_html( $label ) . '</span>';
 	}
 
 	/**
