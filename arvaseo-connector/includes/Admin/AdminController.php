@@ -80,6 +80,8 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_consent_deep_scan', array( self::class, 'consent_deep_scan' ) );
 		add_action( 'admin_post_arvaseo_connector_deep_scan', array( self::class, 'deep_scan' ) );
 		add_action( 'admin_post_arvaseo_connector_deep_scan_stop', array( self::class, 'deep_scan_stop' ) );
+		add_action( 'admin_post_arvaseo_connector_security_repair', array( self::class, 'security_repair' ) );
+		add_action( 'admin_post_arvaseo_connector_security_undo', array( self::class, 'security_undo' ) );
 		add_action( 'wp_ajax_arvaseo_connector_security_progress', array( self::class, 'security_progress' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
@@ -255,7 +257,7 @@ final class AdminController {
 			'arvaseo-connector'   => array( 'overview', __( 'How this website is doing, and what needs you. Nothing here changes your site until you choose to.', 'arvaseo-connector' ) ),
 			'arvaseo-speed'       => array( 'gauge', __( 'Fix what Google’s PageSpeed test finds, one switch at a time. Every fix is off until you turn it on, most can be tried first where only you see them, and turning one off puts your pages back as they were. Your theme files and content are never changed; the few fixes that add files say so.', 'arvaseo-connector' ) ),
 			'arvaseo-content'     => array( 'file', __( 'Posts sent from Arva SEO arrive here, and the SEO titles your team approves are written to your SEO plugin, only as far as you allow.', 'arvaseo-connector' ) ),
-			'arvaseo-health'      => array( 'shield', __( 'What the security scan and the daily check found on this website, and how to fix it. Nothing here changes your site; snoozing, assigning or accepting a finding happens in Arva SEO.', 'arvaseo-connector' ) ),
+			'arvaseo-health'      => array( 'shield', __( 'What the security scan and the daily check found on this website, and how to fix it. Nothing changes on your site unless you choose a repair, which can be undone; snoozing, assigning or accepting a finding happens in Arva SEO.', 'arvaseo-connector' ) ),
 			'arvaseo-activity'    => array( 'list', __( 'Everything the plugin did, and who asked. No keys, codes, content or personal data are kept.', 'arvaseo-connector' ) ),
 			'arvaseo-settings'    => array( 'sliders', __( 'You decide how far Arva SEO may go on this website. Every setting starts at the safest choice.', 'arvaseo-connector' ) ),
 			'arvaseo-inventory'   => array( 'list', __( 'The plugins and themes on this site, and exactly what is shared about them with Arva SEO.', 'arvaseo-connector' ) ),
@@ -484,7 +486,17 @@ final class AdminController {
 			'deep_scan_unavailable'          => array( 'info', __( 'A deep scan is already running, or deep scans aren’t allowed here yet.', 'arvaseo-connector' ) ),
 			'deep_scan_stopped'              => array( 'success', __( 'The deep scan stopped. Nothing more is sent.', 'arvaseo-connector' ) ),
 			'deep_scan_needs_results'        => array( 'error', __( 'Deep scans send their results the same way as the security scan: share the scan’s results first.', 'arvaseo-connector' ) ),
+			'repair_done'                    => array( 'success', __( 'Done. It can be undone for 30 days under Changes made here.', 'arvaseo-connector' ) ),
+			'repair_failed'                  => array( 'error', __( 'Nothing was changed.', 'arvaseo-connector' ) ),
 		);
+		if ( in_array( $code, array( 'repair_done', 'repair_failed' ), true ) ) {
+			// What the repair did, kept a minute for this administrator (the address has only the code).
+			$said = get_transient( 'arvaseo_connector_repair_notice_' . get_current_user_id() );
+			delete_transient( 'arvaseo_connector_repair_notice_' . get_current_user_id() );
+			if ( is_string( $said ) && '' !== $said ) {
+				$map[ $code ][1] = $said;
+			}
+		}
 		if ( isset( $map[ $code ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
 		}
@@ -634,6 +646,36 @@ final class AdminController {
 		self::guard( 'arvaseo_connector_deep_scan_stop', Capabilities::MANAGE );
 		\ArvaSEO\Connector\Security\DeepScan::stop();
 		self::back( 'arvaseo-health', 'deep_scan_stopped' );
+	}
+
+	/**
+	 * Restore a file's official copy, or move a file to quarantine.
+	 */
+	public static function security_repair(): void {
+		self::guard( 'arvaseo_connector_security_repair', Capabilities::MANAGE );
+		$key    = isset( $_POST['finding'] ) ? sanitize_key( wp_unslash( $_POST['finding'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$do     = isset( $_POST['do'] ) ? sanitize_key( wp_unslash( $_POST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$result = 'restore' === $do ? \ArvaSEO\Connector\Security\Repairs::restore( $key ) : \ArvaSEO\Connector\Security\Repairs::quarantine( $key );
+		self::repair_notice( $result );
+	}
+
+	/**
+	 * Undo a repair.
+	 */
+	public static function security_undo(): void {
+		self::guard( 'arvaseo_connector_security_undo', Capabilities::MANAGE );
+		$id = isset( $_POST['repair'] ) ? sanitize_text_field( wp_unslash( $_POST['repair'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		self::repair_notice( \ArvaSEO\Connector\Security\Repairs::undo( $id ) );
+	}
+
+	/**
+	 * Back to Health with what a repair did (the text waits a minute for this administrator).
+	 *
+	 * @param array{ok: bool, message: string} $result Result.
+	 */
+	private static function repair_notice( array $result ): void {
+		set_transient( 'arvaseo_connector_repair_notice_' . get_current_user_id(), $result['message'], MINUTE_IN_SECONDS );
+		self::back( 'arvaseo-health', $result['ok'] ? 'repair_done' : 'repair_failed' );
 	}
 
 	/**
@@ -940,6 +982,8 @@ final class AdminController {
 			'arvaseoConnector',
 			array(
 				'copied'               => __( 'Copied.', 'arvaseo-connector' ),
+				'confirmRestore'       => __( 'Replace this file with WordPress.org’s official copy? The current file is kept for 30 days, so you can undo it.', 'arvaseo-connector' ),
+				'confirmQuarantine'    => __( 'Move this file to quarantine, where it can’t run? It’s kept for 30 days, so you can undo it. If you’re not sure what it does, back up your site first.', 'arvaseo-connector' ),
 				'confirmDisconnect'    => __( 'Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again.', 'arvaseo-connector' ),
 				'confirmFull'          => __( 'Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?', 'arvaseo-connector' ),
 				'confirmOverwrite'     => __( 'With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?', 'arvaseo-connector' ),

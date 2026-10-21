@@ -194,6 +194,25 @@ final class Findings {
 	}
 
 	/**
+	 * Take a finding out of the latest results (after a repair fixed it), and out of the last
+	 * deep scan's so it isn't carried into the next scan.
+	 *
+	 * @param string $key Finding key.
+	 */
+	public static function forget( string $key ): void {
+		$results = self::latest();
+		if ( null !== $results ) {
+			$results['findings'] = array_values( array_filter( (array) $results['findings'], static fn ( array $f ): bool => $key !== $f['key'] ) );
+			update_option( self::RESULTS, $results, false );
+		}
+		$deep = DeepScan::results();
+		if ( null !== $deep ) {
+			$deep['findings'] = array_values( array_filter( (array) $deep['findings'], static fn ( array $f ): bool => $key !== $f['key'] ) );
+			update_option( DeepScan::RESULTS, $deep, false );
+		}
+	}
+
+	/**
 	 * Findings from the latest scan that aren't marked as expected.
 	 *
 	 * @return array<int, array<string, mixed>>

@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,7 +41,7 @@ If your site is behind Cloudflare, connect it on the Speed page with a Cloudflar
 
 = Security scan =
 
-Arva SEO → Health → Security scans this site on your own server: every week, and whenever you choose Scan now. It runs in the background in small batches, so the site stays fast, and it works without an Arva SEO account. It only reports what it finds: it never changes or deletes a file.
+Arva SEO → Health → Security scans this site on your own server: every week, and whenever you choose Scan now. It runs in the background in small batches, so the site stays fast, and it works without an Arva SEO account. It never changes a file by itself: you choose each repair, and can undo it for 30 days.
 
 * **Changed WordPress files**: WordPress's own files compared with WordPress.org's official checksums for your version, including missing files and extra PHP files in wp-admin and wp-includes.
 * **Changed plugin files**: each plugin from the WordPress.org directory compared with its official checksums at the installed version, including PHP files it doesn't ship.
@@ -50,7 +50,7 @@ Arva SEO → Health → Security scans this site on your own server: every week,
 * **Exposed files**: a .env file, the .git folder, the debug log, database exports and backups (including copies of wp-config.php) that anyone could download, and folder listings in uploads.
 * **Settings that make an attack easier**: file editing in the dashboard, an administrator called "admin", XML-RPC, and lists of usernames.
 
-Each result says what it means and what to do. "This is expected" hides one you trust, and it's shown again if the file changes. Serious results come first on Overview. A scan finds known signs of trouble; it can't prove a site is clean, so keep WordPress, plugins and themes updated and keep backups.
+Each result says what it means and what to do. A changed WordPress or plugin file can be put back from its official copy on WordPress.org (used only when it matches WordPress.org's checksum), and PHP that shouldn't be there can be moved to quarantine, where it can't run. "This is expected" hides one you trust, and it's shown again if the file changes. Serious results come first on Overview. A scan finds known signs of trouble; it can't prove a site is clean, so keep WordPress, plugins and themes updated and keep backups.
 
 When the site is connected to Arva SEO, Health also lists known vulnerabilities in your installed plugins, themes and WordPress version, with the fixed version and a link to each record (vulnerability data: Wordfence Intelligence).
 
@@ -87,7 +87,7 @@ Only in the ways you switch on. PageSpeed fixes change how your pages load, only
 
 = Is the security scan a firewall or a malware cleaner? =
 
-No. It finds problems and says what to do: it doesn't block traffic or log-in attempts, and it never changes or deletes a file. If it finds a hack, the results say where to start (reinstall the official copy, delete files that shouldn't be there, change passwords), and your host or developer can help with a clean-up.
+No. It finds problems and says what to do, and it doesn't block traffic or log-in attempts. It can put back official copies of WordPress and plugin files and move PHP out of the uploads folder into quarantine, when you choose to, and each can be undone for 30 days. A hacked theme, a database or passwords still need a clean-up, which your host or developer can help with.
 
 = What does a deep scan send? =
 
@@ -175,6 +175,8 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 * **Cloudflare (off until you connect it on the Speed page):** with the API token you enter, the plugin asks api.cloudflare.com which zone your site's domain is in, reads the Rocket Loader setting, and asks Cloudflare to clear its cached copy of your pages: every page when a fix or choice changes what visitors get, and a post's own page addresses when it's published, updated or unpublished. Only page addresses and the token are sent. Cloudflare's terms: https://www.cloudflare.com/website-terms/ · Privacy policy: https://www.cloudflare.com/privacypolicy/
 * **Click-to-play videos (a PageSpeed fix, off by default):** visitors' browsers load each video's preview picture from YouTube (i.ytimg.com), and the player from youtube-nocookie.com only when they press play. YouTube's terms: https://www.youtube.com/t/terms · Google's privacy policy: https://policies.google.com/privacy
 
+Restoring a file's official copy (only when you choose it) downloads that one file from core.svn.wordpress.org or plugins.svn.wordpress.org, for your WordPress or plugin version, and uses it only when it matches WordPress.org's checksum.
+
 The security scan also asks WordPress.org for the official checksums of your WordPress version (api.wordpress.org/core/checksums) and of each installed plugin from its directory (downloads.wordpress.org/plugin-checksums), sending only the version number, language and plugin folder names, and it requests a few files from your own site to see whether they can be downloaded. WordPress.org's privacy policy: https://wordpress.org/about/privacy/
 
 No visitor data, user accounts, emails, passwords, settings or existing content is ever sent. Arva SEO terms: https://arvaseo.com/terms/ · Privacy policy: https://arvaseo.com/privacy/
@@ -196,6 +198,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.2.0 =
+Repairs on Health → Security: put back official copies of changed WordPress and plugin files, and move PHP that shouldn't be there into quarantine. Each one is your choice and can be undone for 30 days.
 
 = 2.1.0 =
 Deep scans: check your theme, premium plugins and other files that aren't official copies for known malware on Arva SEO's servers. Off until an administrator allows them.
@@ -231,6 +236,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.2.0 =
+* New: "Restore the official copy" for a changed or missing WordPress file or a changed WordPress.org plugin file. The copy comes from WordPress.org for your version and is used only when it matches WordPress.org's checksum.
+* New: "Move to quarantine" for PHP in the uploads folder, code disguised as an image and PHP files WordPress doesn't ship. Quarantined files are kept where they can't run (wp-content/arvaseo-quarantine, closed to web requests, under random names).
+* Every repair can be undone for 30 days under "Changes made here", unless the file changed again since. Nothing is repaired where WordPress disallows file changes or needs FTP details.
 
 = 2.1.0 =
 * New, when connected: deep scans on Health → Security. The files the security scan couldn't match to an official copy go to Arva SEO, where ClamAV's database of known malware and Arva SEO's own rules check them, and are deleted straight after. What a deep scan finds joins the scan's results, stays while the file is unchanged, and reaches Arva SEO with them.

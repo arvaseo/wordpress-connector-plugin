@@ -12,6 +12,7 @@ use ArvaSEO\Connector\Install\Capabilities;
 use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Security\DeepScan;
 use ArvaSEO\Connector\Security\Findings;
+use ArvaSEO\Connector\Security\Repairs;
 use ArvaSEO\Connector\Security\Scanner;
 
 defined( 'ABSPATH' ) || exit;
@@ -39,6 +40,18 @@ defined( 'ABSPATH' ) || exit;
 	$arvaseo_deep_res = DeepScan::results();
 	$arvaseo_deep_ok  = DeepScan::allowed();
 	$arvaseo_left     = $arvaseo_deep_ok ? DeepScan::allowance() : null;
+	$arvaseo_can_fix  = $arvaseo_manage && Repairs::available();
+	$arvaseo_repairs  = Repairs::all();
+	$arvaseo_repair   = static function ( string $key, string $kind ): void {
+		$confirm = 'restore' === $kind ? 'confirmRestore' : 'confirmQuarantine';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form" data-arvaseo-confirm="' . esc_attr( $confirm ) . '">';
+		echo '<input type="hidden" name="action" value="arvaseo_connector_security_repair" />';
+		echo '<input type="hidden" name="finding" value="' . esc_attr( $key ) . '" />';
+		echo '<input type="hidden" name="do" value="' . esc_attr( $kind ) . '" />';
+		wp_nonce_field( 'arvaseo_connector_security_repair' );
+		echo '<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark">' . esc_html( 'restore' === $kind ? __( 'Restore the official copy', 'arvaseo-connector' ) : __( 'Move to quarantine', 'arvaseo-connector' ) ) . '</button>';
+		echo '</form>';
+	};
 	$arvaseo_severity = array(
 		'critical' => array( 'bad', __( 'Critical', 'arvaseo-connector' ) ),
 		'high'     => array( 'bad', __( 'High', 'arvaseo-connector' ) ),
@@ -339,6 +352,10 @@ defined( 'ABSPATH' ) || exit;
 							</details>
 						<?php endif; ?>
 						<?php
+						$arvaseo_offer = $arvaseo_can_fix ? Repairs::offer( $arvaseo_finding ) : null;
+						if ( null !== $arvaseo_offer ) {
+							$arvaseo_repair( (string) $arvaseo_finding['key'], $arvaseo_offer );
+						}
 						if ( $arvaseo_manage ) {
 							$arvaseo_form( (string) $arvaseo_finding['key'], false, __( 'This is expected', 'arvaseo-connector' ) );
 						}
@@ -347,6 +364,48 @@ defined( 'ABSPATH' ) || exit;
 				</article>
 			<?php endforeach; ?>
 		<?php endforeach; ?>
+	<?php endif; ?>
+
+	<?php if ( array() !== $arvaseo_repairs ) : ?>
+		<details class="arvaseo-card arvaseo-more" style="margin-top: 0" id="arvaseo-repairs">
+			<summary>
+				<?php
+				/* translators: %d: number of changes. */
+				echo esc_html( sprintf( _n( '%d change made here', '%d changes made here', count( $arvaseo_repairs ), 'arvaseo-connector' ), count( $arvaseo_repairs ) ) );
+				?>
+			</summary>
+			<ul class="arvaseo-bullets">
+				<?php foreach ( $arvaseo_repairs as $arvaseo_id => $arvaseo_change ) : ?>
+					<li class="arvaseo-row" style="justify-content: space-between">
+						<span>
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: 1: what was done, 2: relative time such as "2 hours". */
+									__( '%1$s, %2$s ago', 'arvaseo-connector' ),
+									'restore' === $arvaseo_change['type'] ? __( 'Official copy restored', 'arvaseo-connector' ) : __( 'Moved to quarantine', 'arvaseo-connector' ),
+									human_time_diff( (int) $arvaseo_change['at'] )
+								)
+							);
+							?>
+							· <code><?php echo esc_html( (string) $arvaseo_change['path'] ); ?></code>
+							<?php if ( ! empty( $arvaseo_change['undone_at'] ) ) : ?>
+								· <?php esc_html_e( 'undone', 'arvaseo-connector' ); ?>
+							<?php endif; ?>
+						</span>
+						<?php if ( $arvaseo_can_fix && empty( $arvaseo_change['undone_at'] ) ) : ?>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-inline-form">
+								<input type="hidden" name="action" value="arvaseo_connector_security_undo" />
+								<input type="hidden" name="repair" value="<?php echo esc_attr( (string) $arvaseo_id ); ?>" />
+								<?php wp_nonce_field( 'arvaseo_connector_security_undo' ); ?>
+								<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Undo', 'arvaseo-connector' ); ?></button>
+							</form>
+						<?php endif; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+			<p class="arvaseo-hint"><?php esc_html_e( 'Each change can be undone for 30 days; the previous file is kept until then in wp-content/arvaseo-quarantine, where it can’t run.', 'arvaseo-connector' ); ?></p>
+		</details>
 	<?php endif; ?>
 
 	<?php if ( array() !== $arvaseo_hidden ) : ?>

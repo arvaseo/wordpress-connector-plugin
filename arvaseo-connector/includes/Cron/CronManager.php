@@ -193,5 +193,7 @@ final class CronManager {
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE result_sent = 1 AND received_at < %s', $seo, Ids::mysql( time() - 180 * DAY_IN_SECONDS ) ) );
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE created_at < %s', $log, Ids::mysql( time() - $days * DAY_IN_SECONDS ) ) );
 		// phpcs:enable
+		// Repairs can be undone for 30 days; after that their kept copies are deleted.
+		\ArvaSEO\Connector\Security\Repairs::purge();
 	}
 }
