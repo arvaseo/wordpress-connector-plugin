@@ -77,6 +77,9 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_security_scan', array( self::class, 'security_scan' ) );
 		add_action( 'admin_post_arvaseo_connector_security_stop', array( self::class, 'security_stop' ) );
 		add_action( 'admin_post_arvaseo_connector_security_ignore', array( self::class, 'security_ignore' ) );
+		add_action( 'admin_post_arvaseo_connector_consent_deep_scan', array( self::class, 'consent_deep_scan' ) );
+		add_action( 'admin_post_arvaseo_connector_deep_scan', array( self::class, 'deep_scan' ) );
+		add_action( 'admin_post_arvaseo_connector_deep_scan_stop', array( self::class, 'deep_scan_stop' ) );
 		add_action( 'wp_ajax_arvaseo_connector_security_progress', array( self::class, 'security_progress' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
@@ -477,6 +480,10 @@ final class AdminController {
 			'security_stopped'               => array( 'success', __( 'The security scan stopped. The results of the previous scan are still shown.', 'arvaseo-connector' ) ),
 			'security_ignored'               => array( 'success', __( 'Marked as expected. It’s hidden from now on, unless the file changes.', 'arvaseo-connector' ) ),
 			'security_unignored'             => array( 'success', __( 'It’s shown again.', 'arvaseo-connector' ) ),
+			'deep_scan_started'              => array( 'success', __( 'The deep scan started. It sends the files in the background; you can leave this page and come back.', 'arvaseo-connector' ) ),
+			'deep_scan_unavailable'          => array( 'info', __( 'A deep scan is already running, or deep scans aren’t allowed here yet.', 'arvaseo-connector' ) ),
+			'deep_scan_stopped'              => array( 'success', __( 'The deep scan stopped. Nothing more is sent.', 'arvaseo-connector' ) ),
+			'deep_scan_needs_results'        => array( 'error', __( 'Deep scans send their results the same way as the security scan: share the scan’s results first.', 'arvaseo-connector' ) ),
 		);
 		if ( isset( $map[ $code ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
@@ -594,6 +601,42 @@ final class AdminController {
 	}
 
 	/**
+	 * Allow (or stop allowing) deep scans: files sent to Arva SEO when an administrator starts one.
+	 */
+	public static function consent_deep_scan(): void {
+		self::guard( 'arvaseo_connector_consent_deep_scan', Capabilities::MANAGE );
+		$give = ! empty( $_POST['consent'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$back = isset( $_POST['back'] ) && 'health' === $_POST['back'] ? 'arvaseo-health' : 'arvaseo-diagnostics'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		if ( $give && null === PrivacyService::security_consent() ) {
+			self::back( $back, 'deep_scan_needs_results' );
+		}
+		PrivacyService::consent_deep_scan( $give );
+		if ( ! $give ) {
+			\ArvaSEO\Connector\Security\DeepScan::stop();
+		}
+		AuditLogger::info( $give ? 'consent.deep_scan_given' : 'consent.deep_scan_withdrawn', $give ? __( 'Deep scans allowed.', 'arvaseo-connector' ) : __( 'Deep scans no longer allowed.', 'arvaseo-connector' ) );
+		SiteRegistrationService::register();
+		self::back( $back, 'consent_saved' );
+	}
+
+	/**
+	 * Start a deep scan.
+	 */
+	public static function deep_scan(): void {
+		self::guard( 'arvaseo_connector_deep_scan', Capabilities::MANAGE );
+		self::back( 'arvaseo-health', \ArvaSEO\Connector\Security\DeepScan::start() ? 'deep_scan_started' : 'deep_scan_unavailable' );
+	}
+
+	/**
+	 * Stop the deep scan.
+	 */
+	public static function deep_scan_stop(): void {
+		self::guard( 'arvaseo_connector_deep_scan_stop', Capabilities::MANAGE );
+		\ArvaSEO\Connector\Security\DeepScan::stop();
+		self::back( 'arvaseo-health', 'deep_scan_stopped' );
+	}
+
+	/**
 	 * The scan's progress for the Health page (it also runs a batch when WP-Cron is slow).
 	 */
 	public static function security_progress(): void {
@@ -602,12 +645,16 @@ final class AdminController {
 			wp_send_json_error( null, 403 );
 		}
 		\ArvaSEO\Connector\Security\Scanner::tick();
+		\ArvaSEO\Connector\Security\DeepScan::tick();
 		$progress = \ArvaSEO\Connector\Security\Scanner::progress();
+		$deep     = \ArvaSEO\Connector\Security\DeepScan::state();
 		wp_send_json_success(
 			array(
-				'running' => 'running' === ( $progress['status'] ?? '' ),
-				'files'   => (int) ( $progress['files'] ?? 0 ),
-				'step'    => \ArvaSEO\Connector\Security\Scanner::step_label( (string) ( $progress['step'] ?? '' ) ),
+				'running'   => 'running' === ( $progress['status'] ?? '' ),
+				'files'     => (int) ( $progress['files'] ?? 0 ),
+				'step'      => \ArvaSEO\Connector\Security\Scanner::step_label( (string) ( $progress['step'] ?? '' ) ),
+				'deep'      => \ArvaSEO\Connector\Security\DeepScan::running(),
+				'deep_step' => \ArvaSEO\Connector\Security\DeepScan::step_label( (string) ( $deep['step'] ?? '' ) ),
 			)
 		);
 	}

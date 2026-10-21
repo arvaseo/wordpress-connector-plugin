@@ -35,6 +35,7 @@ final class Findings {
 	public static function groups(): array {
 		return array(
 			'vulnerabilities' => array( __( 'Known vulnerabilities', 'arvaseo-connector' ), __( 'Installed versions with a published security hole.', 'arvaseo-connector' ) ),
+			'deep'            => array( __( 'Found by the deep scan', 'arvaseo-connector' ), __( 'Known malware and hacking patterns found on Arva SEO’s servers in files that aren’t official copies.', 'arvaseo-connector' ) ),
 			'code'            => array( __( 'Suspicious code', 'arvaseo-connector' ), __( 'Patterns hackers use, in files that aren’t official copies.', 'arvaseo-connector' ) ),
 			'changed'         => array( __( 'Changed files', 'arvaseo-connector' ), __( 'WordPress and plugin files that differ from the official copies.', 'arvaseo-connector' ) ),
 			'unexpected'      => array( __( 'Files that shouldn’t be there', 'arvaseo-connector' ), __( 'Code where WordPress never puts it.', 'arvaseo-connector' ) ),
@@ -51,6 +52,7 @@ final class Findings {
 	public static function group( string $type ): string {
 		return match ( $type ) {
 			'vulnerability'                                                                         => 'vulnerabilities',
+			'deep_malware', 'deep_code'                                                             => 'deep',
 			'code'                                                                                  => 'code',
 			'core_changed', 'core_missing', 'plugin_changed'                                        => 'changed',
 			'core_unexpected', 'root_unexpected', 'plugin_unexpected', 'uploads_php', 'uploads_disguised' => 'unexpected',
@@ -100,6 +102,16 @@ final class Findings {
 				__( 'This file contains a pattern found in hacked websites. Some premium plugins and themes use similar tricks to hide their code, so check where the file comes from.', 'arvaseo-connector' ),
 				__( 'If the file isn’t part of a plugin or theme you installed on purpose, it’s likely malware: restore the plugin or theme from a fresh copy, delete files you don’t recognise, then change your WordPress, hosting and database passwords. If it’s from a product you trust, mark it as expected.', 'arvaseo-connector' ),
 			),
+			'deep_malware'          => array(
+				(string) ( $finding['title'] ?? __( 'Known malware', 'arvaseo-connector' ) ),
+				__( 'ClamAV’s database of known malware matched this file: it’s code from a known hacking campaign or tool, not just a suspicious pattern, so the site has very likely been hacked.', 'arvaseo-connector' ),
+				__( 'Restore the plugin or theme the file belongs to from a fresh copy, or delete the file if nothing you installed needs it. Then change your WordPress, hosting and database passwords, and look for how it got in (an outdated plugin, a nulled theme or a stolen password). Ask your host or a security specialist if more files are affected.', 'arvaseo-connector' ),
+			),
+			'deep_code'             => array(
+				(string) ( $finding['title'] ?? __( 'Suspicious code', 'arvaseo-connector' ) ),
+				__( 'The deep scan found a pattern from hacked websites in this file. A few premium plugins and themes hide their code in similar ways, so check where the file comes from.', 'arvaseo-connector' ),
+				__( 'If the file isn’t part of a plugin or theme you installed on purpose, restore that plugin or theme from a fresh copy, delete files you don’t recognise and change your passwords. If it’s from a product you trust, mark it as expected.', 'arvaseo-connector' ),
+			),
 			'core_changed'          => array( __( 'A WordPress file was changed', 'arvaseo-connector' ), __( 'WordPress files are the same on every site. A changed one usually means a hack, or a developer edited WordPress itself (which updates undo).', 'arvaseo-connector' ), __( 'Dashboard → Updates → Re-install version puts back WordPress’s own files without touching your content. Then run the scan again.', 'arvaseo-connector' ) ),
 			'core_missing'          => array( __( 'A WordPress file is missing', 'arvaseo-connector' ), __( 'A file that comes with WordPress isn’t there, so parts of the dashboard may fail, and it can be a sign that files were tampered with.', 'arvaseo-connector' ), __( 'Dashboard → Updates → Re-install version puts it back.', 'arvaseo-connector' ) ),
 			'core_unexpected'       => array( __( 'An extra file among WordPress’s own', 'arvaseo-connector' ), __( 'WordPress never adds files to wp-admin or wp-includes outside updates, so hackers hide backdoors there.', 'arvaseo-connector' ), __( 'If nobody on your team put it there, delete it, then re-install WordPress from Dashboard → Updates and change your passwords.', 'arvaseo-connector' ) ),
@@ -141,7 +153,9 @@ final class Findings {
 	 * @param array<string, mixed>             $meta     scanned_at, seconds, files, coverage, partial.
 	 */
 	public static function save( array $findings, array $meta ): void {
-		$order = array_flip( self::SEVERITIES );
+		// What the last deep scan found stays while the file is there and unchanged.
+		$findings = array_merge( $findings, DeepScan::carried() );
+		$order    = array_flip( self::SEVERITIES );
 		usort( $findings, static fn ( array $a, array $b ): int => ( $order[ $a['severity'] ] ?? 9 ) <=> ( $order[ $b['severity'] ] ?? 9 ) );
 		update_option(
 			self::RESULTS,
@@ -159,6 +173,24 @@ final class Findings {
 			),
 			false
 		);
+	}
+
+	/**
+	 * Put a deep scan's findings in place of the previous deep scan's.
+	 *
+	 * @param array<int, array<string, mixed>> $deep Findings of the types deep_malware and deep_code.
+	 */
+	public static function replace_deep( array $deep ): void {
+		$results = self::latest();
+		if ( null === $results ) {
+			return;
+		}
+		$kept  = array_filter( (array) $results['findings'], static fn ( array $f ): bool => 'deep' !== ( $f['group'] ?? '' ) );
+		$order = array_flip( self::SEVERITIES );
+		$all   = array_merge( $deep, array_values( $kept ) );
+		usort( $all, static fn ( array $a, array $b ): int => ( $order[ $a['severity'] ] ?? 9 ) <=> ( $order[ $b['severity'] ] ?? 9 ) );
+		$results['findings'] = array_slice( $all, 0, self::MAX );
+		update_option( self::RESULTS, $results, false );
 	}
 
 	/**

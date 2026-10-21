@@ -66,6 +66,34 @@ defined( 'ABSPATH' ) || exit;
 			</span></span></label>
 			<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save this choice', 'arvaseo-connector' ); ?></button></div>
 		</form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 14px">
+			<input type="hidden" name="action" value="arvaseo_connector_consent_deep_scan" />
+			<?php wp_nonce_field( 'arvaseo_connector_consent_deep_scan' ); ?>
+			<?php $arvaseo_deep = PrivacyService::deep_scan_consent(); ?>
+			<label class="arvaseo-toggle"><input type="checkbox" name="consent" value="1" <?php checked( null !== $arvaseo_deep && null !== $arvaseo_security ); ?> <?php disabled( null === $arvaseo_security ); ?> /><span class="arvaseo-switch" aria-hidden="true"></span><span><span class="arvaseo-label"><?php esc_html_e( 'Allow deep scans', 'arvaseo-connector' ); ?></span><span class="arvaseo-hint" style="display: block">
+				<?php
+				if ( null === $arvaseo_security ) {
+					esc_html_e( 'Share the security scan’s results first.', 'arvaseo-connector' );
+				} elseif ( null !== $arvaseo_deep ) {
+					/* translators: %s: date and time. */
+					echo esc_html( sprintf( __( 'Allowed since %s', 'arvaseo-connector' ), AdminController::when( $arvaseo_deep['consented_at'] ) ) );
+				} else {
+					esc_html_e( 'Only when an administrator starts one: the files that aren’t official copies go to Arva SEO to be checked for known malware, and are deleted after.', 'arvaseo-connector' );
+				}
+				?>
+			</span></span></label>
+			<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save this choice', 'arvaseo-connector' ); ?></button></div>
+		</form>
+		<details class="arvaseo-more">
+			<summary><?php esc_html_e( 'Deep scans: every field', 'arvaseo-connector' ); ?></summary>
+			<div class="arvaseo-more-in">
+				<ul class="arvaseo-bullets" style="margin: 0">
+					<?php foreach ( PrivacyService::deep_scan_field_set() as $arvaseo_field ) : ?>
+						<li><strong><?php echo esc_html( $arvaseo_field['field'] ); ?></strong>: <?php echo esc_html( $arvaseo_field['purpose'] ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+		</details>
 		<details class="arvaseo-more">
 			<summary><?php esc_html_e( 'Security scan results: every field', 'arvaseo-connector' ); ?></summary>
 			<div class="arvaseo-more-in">

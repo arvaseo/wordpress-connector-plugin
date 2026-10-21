@@ -25,6 +25,9 @@ final class PrivacyService {
 	/** The security scan's results: agreed to separately (2.0.0), so the main consent's field set stays the same. */
 	private const SECURITY_OPTION = 'arvaseo_connector_consent_security';
 
+	/** Sending files for deep scans (2.1.0): agreed to separately again, and only with the security consent. */
+	private const DEEP_SCAN_OPTION = 'arvaseo_connector_consent_deep_scan';
+
 	/**
 	 * Every field the plugin can send, with its purpose (the field-set hash covers this list).
 	 *
@@ -90,6 +93,25 @@ final class PrivacyService {
 	}
 
 	/**
+	 * What a deep scan sends (its own consent, with its own hash). Only when an administrator
+	 * starts one.
+	 *
+	 * @return array<int, array{field: string, purpose: string}>
+	 */
+	public static function deep_scan_field_set(): array {
+		return array(
+			array(
+				'field'   => 'For each deep scan an administrator starts: the code files the security scan couldn’t match to an official copy (the theme, premium and custom plugins, and anything unexpected) with their paths inside the site, 2 MB each and 50 MB in all at most; never wp-config.php, .env files, logs, database exports, backups or media',
+				'purpose' => 'Check them for known malware on Arva SEO’s servers, where they’re deleted as soon as the scan finishes',
+			),
+			array(
+				'field'   => 'Each of those files’ SHA-256 fingerprint and size',
+				'purpose' => 'Skip files checked in the last few days, and keep what was found without keeping the files',
+			),
+		);
+	}
+
+	/**
 	 * Data that is never sent.
 	 *
 	 * @return string[]
@@ -97,7 +119,7 @@ final class PrivacyService {
 	public static function never_sent(): array {
 		return array(
 			__( 'Passwords, salts, access or refresh tokens, signing secrets, license keys or API keys', 'arvaseo-connector' ),
-			__( 'Database credentials, configuration files, server or debug logs, and file paths (except the paths of files the security scan flags, if you share its results)', 'arvaseo-connector' ),
+			__( 'Database credentials, configuration files, server or debug logs, and file paths (except the paths of files the security scan flags, if you share its results, and the files a deep scan checks, when an administrator starts one)', 'arvaseo-connector' ),
 			__( 'Usernames, email addresses, visitor data or form submissions', 'arvaseo-connector' ),
 			__( 'Plugin or theme settings, uploaded files, and the content of your existing posts and pages (if you let Arva SEO update SEO titles and descriptions, only the previous title and description of the pages it updates)', 'arvaseo-connector' ),
 		);
@@ -141,11 +163,12 @@ final class PrivacyService {
 	}
 
 	/**
-	 * Withdraw consent (the security scan's too: it needs the main consent).
+	 * Withdraw consent (the security scan's and deep scans' too: they need the main consent).
 	 */
 	public static function withdraw(): void {
 		delete_option( self::OPTION );
 		delete_option( self::SECURITY_OPTION );
+		delete_option( self::DEEP_SCAN_OPTION );
 	}
 
 	/**
@@ -156,6 +179,7 @@ final class PrivacyService {
 	public static function consent_security( bool $give ): void {
 		if ( ! $give ) {
 			delete_option( self::SECURITY_OPTION );
+			delete_option( self::DEEP_SCAN_OPTION ); // A deep scan's results arrive the same way.
 			return;
 		}
 		update_option(
@@ -184,6 +208,41 @@ final class PrivacyService {
 	}
 
 	/**
+	 * Agree (or stop agreeing) to send files for deep scans.
+	 *
+	 * @param bool $give Agree.
+	 */
+	public static function consent_deep_scan( bool $give ): void {
+		if ( ! $give ) {
+			delete_option( self::DEEP_SCAN_OPTION );
+			return;
+		}
+		update_option(
+			self::DEEP_SCAN_OPTION,
+			array(
+				'schema_version' => Config::CONSENT_SCHEMA_VERSION,
+				'consented_at'   => Ids::iso(),
+				'user_id'        => get_current_user_id(),
+				'field_set_hash' => Ids::hash( array( 'deep_scan' => self::deep_scan_field_set() ) ),
+			),
+			false
+		);
+	}
+
+	/**
+	 * The deep scan consent, if it still matches this version's field list.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public static function deep_scan_consent(): ?array {
+		$consent = get_option( self::DEEP_SCAN_OPTION );
+		if ( ! is_array( $consent ) || ( $consent['field_set_hash'] ?? '' ) !== Ids::hash( array( 'deep_scan' => self::deep_scan_field_set() ) ) ) {
+			return null;
+		}
+		return $consent;
+	}
+
+	/**
 	 * The current consent, if it still matches this version's field set.
 	 *
 	 * @return array<string, mixed>|null
@@ -199,12 +258,15 @@ final class PrivacyService {
 	/**
 	 * Whether a purpose is consented.
 	 *
-	 * @param string $purpose inventory|health|security.
+	 * @param string $purpose inventory|health|security|deep_scan.
 	 */
 	public static function allows( string $purpose ): bool {
 		$consent = self::current();
 		if ( 'security' === $purpose ) {
 			return null !== $consent && null !== self::security_consent();
+		}
+		if ( 'deep_scan' === $purpose ) {
+			return null !== $consent && null !== self::security_consent() && null !== self::deep_scan_consent();
 		}
 		return null !== $consent && in_array( $purpose, (array) $consent['purposes'], true );
 	}
@@ -222,6 +284,9 @@ final class PrivacyService {
 		$purposes = (array) $consent['purposes'];
 		if ( null !== self::security_consent() ) {
 			$purposes[] = 'security';
+			if ( null !== self::deep_scan_consent() ) {
+				$purposes[] = 'deep_scan';
+			}
 		}
 		return array(
 			'schema_version'       => $consent['schema_version'],
@@ -242,6 +307,7 @@ final class PrivacyService {
 		$content  = '<p>' . esc_html__( 'This site uses the Arva SEO Connector to work with Arva SEO, an SEO service used by the site owner or their agency.', 'arvaseo-connector' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'With an administrator’s consent, the connector sends Arva SEO technical information about this website: the installed plugins and themes with their versions and update state, and the results of WordPress health checks (software versions and configuration facts such as whether HTTPS is used). It does not send visitor information, comments, form submissions, user accounts or email addresses.', 'arvaseo-connector' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'The plugin’s security scan runs on this site’s own server and only looks at the site’s files and settings. If an administrator also agrees, its results (the kind of each problem found and the path of the file concerned) are sent to Arva SEO. They contain no information about visitors.', 'arvaseo-connector' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'If an administrator allows deep scans and starts one, the site’s code files that aren’t official copies of WordPress or its plugins (such as the theme and premium plugins) are sent to Arva SEO to be checked for known malware, and deleted there as soon as the scan finishes. Configuration files, logs, database exports, backups and uploaded media are never sent.', 'arvaseo-connector' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'Content written in Arva SEO may be sent to this site as posts or pages. If an administrator allows it, Arva SEO may also update the SEO titles and meta descriptions of published content; the previous title and description of each changed page are sent to Arva SEO so the change can be undone. The connector keeps a log of its own activity, which may record which administrator performed an action (by user ID), for the retention period set in the plugin.', 'arvaseo-connector' ) . '</p>';
 		wp_add_privacy_policy_content( 'Arva SEO Connector', wp_kses_post( $content ) );
 	}

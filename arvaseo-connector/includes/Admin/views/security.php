@@ -10,6 +10,7 @@ use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Health\AssessmentService;
 use ArvaSEO\Connector\Install\Capabilities;
 use ArvaSEO\Connector\Privacy\PrivacyService;
+use ArvaSEO\Connector\Security\DeepScan;
 use ArvaSEO\Connector\Security\Findings;
 use ArvaSEO\Connector\Security\Scanner;
 
@@ -33,6 +34,11 @@ defined( 'ABSPATH' ) || exit;
 		)
 	);
 	$arvaseo_ask      = $arvaseo_manage && TokenStore::is_connected() && null !== PrivacyService::current() && null === PrivacyService::security_consent();
+	$arvaseo_deep     = DeepScan::state();
+	$arvaseo_deep_on  = DeepScan::running();
+	$arvaseo_deep_res = DeepScan::results();
+	$arvaseo_deep_ok  = DeepScan::allowed();
+	$arvaseo_left     = $arvaseo_deep_ok ? DeepScan::allowance() : null;
 	$arvaseo_severity = array(
 		'critical' => array( 'bad', __( 'Critical', 'arvaseo-connector' ) ),
 		'high'     => array( 'bad', __( 'High', 'arvaseo-connector' ) ),
@@ -135,6 +141,98 @@ defined( 'ABSPATH' ) || exit;
 						<p><?php esc_html_e( 'A scan finds known signs of trouble; it can’t prove a site is clean. Keep WordPress, plugins and themes updated, and keep backups.', 'arvaseo-connector' ); ?></p></div>
 				</div>
 			<?php endif; ?>
+		<?php endif; ?>
+	</section>
+
+	<section class="arvaseo-card" id="arvaseo-deep-scan" aria-labelledby="arvaseo-deep-heading">
+		<div class="arvaseo-between">
+			<div>
+				<p class="arvaseo-eyebrow"><?php esc_html_e( 'Deep scan', 'arvaseo-connector' ); ?></p>
+				<h2 class="arvaseo-h3" id="arvaseo-deep-heading">
+					<?php
+					if ( $arvaseo_deep_on ) {
+						esc_html_e( 'Deep scan under way', 'arvaseo-connector' );
+					} elseif ( null !== $arvaseo_deep_res ) {
+						/* translators: %s: relative time such as "5 hours". */
+						echo esc_html( sprintf( __( 'Deep scan %s ago', 'arvaseo-connector' ), human_time_diff( (int) strtotime( (string) $arvaseo_deep_res['finished_at'] ) ) ) );
+					} else {
+						esc_html_e( 'Check further on Arva SEO’s servers', 'arvaseo-connector' );
+					}
+					?>
+				</h2>
+				<?php if ( $arvaseo_deep_on ) : ?>
+					<p class="arvaseo-muted" style="margin-top: 6px" data-arvaseo-deep-running aria-live="polite"><?php echo esc_html( DeepScan::step_label( (string) ( $arvaseo_deep['step'] ?? '' ) ) ); ?></p>
+				<?php elseif ( null !== $arvaseo_deep_res ) : ?>
+					<p class="arvaseo-muted" style="margin-top: 6px">
+						<?php
+						$arvaseo_deep_found = count( (array) $arvaseo_deep_res['findings'] );
+						echo esc_html(
+							0 === $arvaseo_deep_found
+								/* translators: %s: number of files. */
+								? sprintf( __( '%s files checked: no known malware found', 'arvaseo-connector' ), number_format_i18n( (int) $arvaseo_deep_res['scanned'] ) )
+								/* translators: 1: number of files, 2: number of findings. */
+								: sprintf( _n( '%1$s files checked: %2$d finding, listed below', '%1$s files checked: %2$d findings, listed below', $arvaseo_deep_found, 'arvaseo-connector' ), number_format_i18n( (int) $arvaseo_deep_res['scanned'] ), $arvaseo_deep_found )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+			</div>
+			<?php if ( $arvaseo_manage && $arvaseo_deep_ok ) : ?>
+				<div class="arvaseo-row">
+					<?php
+					if ( $arvaseo_deep_on ) {
+						AdminController::button( 'arvaseo_connector_deep_scan_stop', __( 'Stop', 'arvaseo-connector' ) );
+					} elseif ( null === $arvaseo_left || $arvaseo_left['remaining'] > 0 ) {
+						AdminController::button( 'arvaseo_connector_deep_scan', __( 'Run a deep scan', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
+					} elseif ( null !== $arvaseo_left['buy_url'] ) {
+						printf( '<a class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="screen-reader-text"> %3$s</span></a>', esc_url( $arvaseo_left['buy_url'] ), esc_html__( 'Get more deep scans', 'arvaseo-connector' ), esc_html__( '(opens in a new tab)', 'arvaseo-connector' ) );
+					}
+					?>
+				</div>
+			<?php endif; ?>
+		</div>
+		<?php if ( ! $arvaseo_deep_on ) : ?>
+			<p class="arvaseo-hint" style="margin-top: 14px"><?php esc_html_e( 'A deep scan sends the files the security scan couldn’t match to an official copy (your theme, premium plugins and anything unexpected) to Arva SEO, where ClamAV’s database of known malware and Arva SEO’s own rules check them. They’re deleted as soon as the scan finishes. Configuration files, logs, database exports, backups and media are never sent.', 'arvaseo-connector' ); ?></p>
+		<?php endif; ?>
+		<?php if ( 'ended' === ( $arvaseo_deep['step'] ?? '' ) && '' !== (string) ( $arvaseo_deep['message'] ?? '' ) && (int) ( $arvaseo_deep['finished_at'] ?? 0 ) > (int) strtotime( (string) ( $arvaseo_deep_res['finished_at'] ?? '' ) ) ) : ?>
+			<p class="arvaseo-row" style="margin-top: 10px"><?php echo AdminController::badge( 'warn', __( 'Last attempt', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?> <?php echo esc_html( (string) $arvaseo_deep['message'] ); ?></p>
+		<?php endif; ?>
+		<?php if ( ! $arvaseo_deep_on ) : ?>
+			<p class="arvaseo-hint" style="margin-top: 10px">
+				<?php
+				if ( ! TokenStore::is_connected() ) {
+					esc_html_e( 'Deep scans need a connection to Arva SEO. They’re included on paid plans, and a top-up adds them on any plan.', 'arvaseo-connector' );
+				} elseif ( null === PrivacyService::security_consent() ) {
+					esc_html_e( 'Deep scans send their results the same way as the security scan, so share the scan’s results first.', 'arvaseo-connector' );
+				} elseif ( null !== $arvaseo_left ) {
+					if ( $arvaseo_left['included'] > 0 ) {
+						$arvaseo_month = max( 0, $arvaseo_left['included'] - $arvaseo_left['used'] );
+						echo esc_html(
+							$arvaseo_left['packs'] > 0
+								/* translators: 1: deep scans left this month, 2: included a month, 3: deep scans in top-ups. */
+								? sprintf( __( '%1$d of %2$d deep scans left this month for this website, and %3$d in top-ups.', 'arvaseo-connector' ), $arvaseo_month, $arvaseo_left['included'], $arvaseo_left['packs'] )
+								/* translators: 1: deep scans left this month, 2: included a month. */
+								: sprintf( __( '%1$d of %2$d deep scans left this month for this website.', 'arvaseo-connector' ), $arvaseo_month, $arvaseo_left['included'] )
+						);
+					} elseif ( $arvaseo_left['packs'] > 0 ) {
+						/* translators: %d: deep scans in top-ups. */
+						echo esc_html( sprintf( _n( '%d deep scan left in top-ups.', '%d deep scans left in top-ups.', $arvaseo_left['packs'], 'arvaseo-connector' ), $arvaseo_left['packs'] ) );
+					} else {
+						esc_html_e( 'Deep scans are included on paid plans, and a top-up adds them on any plan.', 'arvaseo-connector' );
+					}
+				}
+				?>
+			</p>
+		<?php endif; ?>
+		<?php if ( $arvaseo_manage && TokenStore::is_connected() && null !== PrivacyService::security_consent() && ! $arvaseo_deep_ok ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-row" style="margin-top: 12px">
+				<input type="hidden" name="action" value="arvaseo_connector_consent_deep_scan" />
+				<input type="hidden" name="consent" value="1" />
+				<input type="hidden" name="back" value="health" />
+				<?php wp_nonce_field( 'arvaseo_connector_consent_deep_scan' ); ?>
+				<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark"><?php esc_html_e( 'Allow deep scans', 'arvaseo-connector' ); ?></button>
+				<a class="arvaseo-hint" href="<?php echo esc_url( admin_url( 'admin.php?page=arvaseo-diagnostics#arvaseo-privacy-heading' ) ); ?>"><?php esc_html_e( 'Every field that’s sent', 'arvaseo-connector' ); ?></a>
+			</form>
 		<?php endif; ?>
 	</section>
 

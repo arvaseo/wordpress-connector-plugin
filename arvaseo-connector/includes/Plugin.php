@@ -49,6 +49,7 @@ final class Plugin {
 		\ArvaSEO\Connector\Speed\Runtime::init();
 		\ArvaSEO\Connector\Security\Scanner::init();
 		\ArvaSEO\Connector\Security\Report::init();
+		\ArvaSEO\Connector\Security\DeepScan::init();
 		if ( is_admin() ) {
 			AdminController::init();
 		}

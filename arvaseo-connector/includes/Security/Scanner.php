@@ -133,6 +133,9 @@ final class Scanner {
 				'findings'      => array(),
 				'partial'       => false,
 				'exposure'      => null,
+				// Files that aren't verified official copies, for a deep scan (DeepScan).
+				'candidates'    => array(),
+				'more_files'    => false,
 			),
 			false
 		);
@@ -253,7 +256,7 @@ final class Scanner {
 			}
 			$md5 = md5_file( $file );
 			if ( false !== $md5 && $md5 !== $sums[ $path ] ) {
-				$state = self::add( $state, self::changed_file( 'core_changed', $path, $file, $md5 ) );
+				$state = self::add( self::candidate( $state, $path ), self::changed_file( 'core_changed', $path, $file, $md5 ) );
 			}
 		}
 		$state['core_ok'] = true;
@@ -313,7 +316,7 @@ final class Scanner {
 			} else {
 				$state['plugins'][ $slug ] = 'verified';
 				foreach ( $found as $finding ) {
-					$state = self::add( $state, $finding );
+					$state = self::add( self::candidate( $state, (string) $finding['path'] ), $finding );
 				}
 			}
 			$state = self::next_plugin( $state );
@@ -451,6 +454,7 @@ final class Scanner {
 				if ( self::is_silent_php( $path ) ) {
 					return $state;
 				}
+				$state = self::candidate( $state, $relative );
 				$match = self::read_and_match( $path, 'php' );
 				return self::add( $state, Findings::make( 'uploads_php', null !== $match ? 'critical' : 'high', self::details( $relative, $path, $match ) ) );
 			}
@@ -479,6 +483,7 @@ final class Scanner {
 				// Without WordPress.org's list the folder can only be checked by pattern.
 				return self::pattern( $state, $path, $relative, $kind );
 			}
+			$state = self::candidate( $state, $relative );
 			$match = self::read_and_match( $path, 'php' );
 			$type  = $in_core ? 'core_unexpected' : 'root_unexpected';
 			$level = null !== $match ? 'critical' : ( $in_core ? 'high' : 'medium' );
@@ -501,6 +506,7 @@ final class Scanner {
 					return $state;
 				}
 				if ( 'php' === $kind ) {
+					$state = self::candidate( $state, $relative );
 					$match = self::read_and_match( $path, 'php' );
 					return self::add( $state, Findings::make( 'plugin_unexpected', null !== $match ? 'critical' : 'high', self::details( $relative, $path, $match ) ) );
 				}
@@ -551,10 +557,20 @@ final class Scanner {
 				),
 			)
 		);
+		update_option(
+			DeepScan::CANDIDATES,
+			array(
+				'scanned_at' => time(),
+				'paths'      => (array) ( $state['candidates'] ?? array() ),
+				'partial'    => ! empty( $state['more_files'] ) || ! empty( $state['partial'] ),
+			),
+			false
+		);
 		$state['status']      = 'done';
 		$state['finished_at'] = time();
 		$state['findings']    = array();
 		$state['walk']        = array();
+		$state['candidates']  = array();
 		$counts               = Findings::counts();
 		AuditLogger::info(
 			'security.scan_finished',
@@ -650,6 +666,7 @@ final class Scanner {
 	 * @return array<string, mixed>
 	 */
 	private static function pattern( array $state, string $path, string $relative, string $kind ): array {
+		$state = self::candidate( $state, $relative );
 		$match = self::read_and_match( $path, $kind );
 		if ( null === $match ) {
 			return $state;
@@ -706,6 +723,23 @@ final class Scanner {
 		$head = fread( $handle, 512 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- see above.
 		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- see above.
 		return false === $head ? null : $head;
+	}
+
+	/**
+	 * Remember a file that isn't a verified official copy, for a deep scan.
+	 *
+	 * @param array<string, mixed> $state    State.
+	 * @param string               $relative Path from the main folder.
+	 * @return array<string, mixed>
+	 */
+	private static function candidate( array $state, string $relative ): array {
+		$state['candidates'] ??= array();
+		if ( count( $state['candidates'] ) < DeepScan::MAX_CANDIDATES ) {
+			$state['candidates'][] = $relative;
+		} else {
+			$state['more_files'] = true;
+		}
+		return $state;
 	}
 
 	/**

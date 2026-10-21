@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.0.0
+Stable tag: 2.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,15 @@ Each result says what it means and what to do. "This is expected" hides one you 
 
 When the site is connected to Arva SEO, Health also lists known vulnerabilities in your installed plugins, themes and WordPress version, with the fixed version and a link to each record (vulnerability data: Wordfence Intelligence).
 
+= Deep scan =
+
+Files that aren't official copies, such as your theme and premium plugins, can only be checked by pattern on your server. A deep scan checks them further on Arva SEO's servers, with ClamAV's database of known malware and Arva SEO's own rules. It's part of the Arva SEO service: deep scans are included on its paid plans for each website, and top-ups add them on any plan.
+
+* Off until an administrator allows deep scans on Health, and each one is started by an administrator with "Run a deep scan".
+* Only code files the security scan couldn't match to an official copy are sent (2 MB each and 50 MB in all at most). Never wp-config.php, .env files, logs, database exports, backups or uploaded media.
+* The files are deleted on Arva SEO's servers as soon as the scan finishes; only each file's fingerprint (SHA-256) and what was found are kept. Files checked in the last few days aren't sent again.
+* What it finds joins the security scan's results on Health, with what it means and what to do, and "This is expected" works the same way.
+
 = Arva SEO Connector =
 
 * **Secure connection.** Approve the connection on app.arvaseo.com. No Arva SEO password is ever entered in WordPress; the site gets its own revocable, encrypted credentials.
@@ -84,6 +93,10 @@ Only in the ways you switch on. PageSpeed fixes change how your pages load, only
 = Is the security scan a firewall or a malware cleaner? =
 
 No. It finds problems and says what to do: it doesn't block traffic or log-in attempts, and it never changes or deletes a file. If it finds a hack, the results say where to start (reinstall the official copy, delete files that shouldn't be there, change passwords), and your host or developer can help with a clean-up.
+
+= What does a deep scan send? =
+
+Only when an administrator has allowed deep scans and starts one: the code files the security scan couldn't match to an official copy, with their paths inside the site, their SHA-256 fingerprints and sizes. Configuration files, logs, database exports, backups and media are never sent, and the files are deleted on Arva SEO's servers as soon as the scan finishes.
 
 = Does the security scan slow my site down? =
 
@@ -157,6 +170,7 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 * **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, and your data-sharing choice.
 * **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
 * **Security scan results (off by default, a separate choice):** after each scan, when an administrator agreed to share them, each open problem's kind, severity, a key, the file's path inside the site, and for suspicious code the pattern's name, line and the start of that line, with how many files were checked. Never the files themselves.
+* **Deep scans (off by default, a separate choice, and each one started by an administrator):** the code files the security scan couldn't match to an official copy (the theme, premium and custom plugins, and anything unexpected), with their paths inside the site, SHA-256 fingerprints and sizes, 2 MB each and 50 MB in all at most, sent to api.arvaseo.com to be checked for known malware and deleted as soon as the scan finishes. Never wp-config.php, .env files, logs, database exports, backups or media. The plugin then fetches what was found.
 * **Content:** every 5 minutes the plugin asks api.arvaseo.com for content you sent from Arva SEO, and reports back the post ID, status and link it created.
 * **Switching fixes from Arva SEO (off by default):** when allowed, the plugin asks api.arvaseo.com every 5 minutes (and when Arva SEO signals it) for fixes switched there, and reports back what it did and each fix's state.
 * **Signed requests from Arva SEO:** api.arvaseo.com may call this site's /wp-json/arvaseo/v1/events endpoint to ask it to check for content or run a recheck sooner.
@@ -187,6 +201,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.1.0 =
+Deep scans: check your theme, premium plugins and other files that aren't official copies for known malware on Arva SEO's servers. Off until an administrator allows them.
 
 = 2.0.0 =
 Now Arva SEO – Speed Booster & Security Scanner: a free security scan on Health, weekly and on Scan now. It only reports what it finds; nothing on your site changes.
@@ -219,6 +236,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.1.0 =
+* New, when connected: deep scans on Health → Security. The files the security scan couldn't match to an official copy go to Arva SEO, where ClamAV's database of known malware and Arva SEO's own rules check them, and are deleted straight after. What a deep scan finds joins the scan's results, stays while the file is unchanged, and reaches Arva SEO with them.
+* Deep scans have their own choice (on Health, or in Settings → Diagnostics and data sharing), need the scan's results to be shared, and are each started by an administrator. Secrets, logs, database exports, backups and media are never sent.
+* Each website's deep scans this month show on Health, with a link to get more in Arva SEO when they run out.
 
 = 2.0.0 =
 * New name: Arva SEO – Speed Booster & Security Scanner. Your settings, fixes and connection stay as they are.

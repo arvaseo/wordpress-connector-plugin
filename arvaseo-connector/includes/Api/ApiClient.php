@@ -57,9 +57,10 @@ final class ApiClient {
 	 *
 	 * @param string                    $method HTTP method.
 	 * @param string                    $path   Path under the site, e.g. "/inventory" ("" for the site itself).
-	 * @param array<string, mixed>|null $body   JSON body.
+	 * @param array<string, mixed>|null $body    JSON body.
+	 * @param int                       $timeout Seconds (deep scans send files with longer ones).
 	 */
-	public function site( string $method, string $path, ?array $body = null ): ApiResponse {
+	public function site( string $method, string $path, ?array $body = null, int $timeout = 15 ): ApiResponse {
 		$site_id = TokenStore::site_id();
 		if ( null === $site_id || ! TokenStore::is_connected() ) {
 			return new ApiResponse( 0, array(), 'not_connected', __( 'This site isn’t connected to Arva SEO.', 'arvaseo-connector' ) );
@@ -70,11 +71,11 @@ final class ApiClient {
 		if ( null === $token ) {
 			return new ApiResponse( 401, array(), 'reauth_required', __( 'Reconnect this site to Arva SEO.', 'arvaseo-connector' ) );
 		}
-		$response = $this->send( $method, $url, $body, $token );
+		$response = $this->send( $method, $url, $body, $token, $timeout );
 		if ( 401 === $response->status && 'invalid_token' === $response->error_code ) {
 			$token = $this->access_token( true );
 			if ( null !== $token ) {
-				$response = $this->send( $method, $url, $body, $token );
+				$response = $this->send( $method, $url, $body, $token, $timeout );
 			}
 		}
 		if ( 401 === $response->status ) {
@@ -258,12 +259,13 @@ final class ApiClient {
 	/**
 	 * One HTTP request to the API host.
 	 *
-	 * @param string                    $method Method.
-	 * @param string                    $path   Path starting with /api/.
-	 * @param array<string, mixed>|null $body   JSON body.
-	 * @param string|null               $token  Bearer token.
+	 * @param string                    $method  Method.
+	 * @param string                    $path    Path starting with /api/.
+	 * @param array<string, mixed>|null $body    JSON body.
+	 * @param string|null               $token   Bearer token.
+	 * @param int                       $timeout Seconds.
 	 */
-	private function send( string $method, string $path, ?array $body, ?string $token ): ApiResponse {
+	private function send( string $method, string $path, ?array $body, ?string $token, int $timeout = 15 ): ApiResponse {
 		$headers = array(
 			'Accept'       => 'application/json',
 			'User-Agent'   => 'ArvaSEO-Connector/' . ARVASEO_CONNECTOR_VERSION . '; WordPress/' . get_bloginfo( 'version' ),
@@ -275,7 +277,7 @@ final class ApiClient {
 		$args = array(
 			'method'              => $method,
 			'headers'             => $headers,
-			'timeout'             => 15,
+			'timeout'             => $timeout,
 			'redirection'         => 0,
 			'sslverify'           => true,
 			'limit_response_size' => 2097152,

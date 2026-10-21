@@ -109,4 +109,32 @@
 		};
 		window.setTimeout( check, 3000 );
 	}
+	// Health → Deep scan: the same check (it also moves the deep scan on), reloading when it's done.
+	var deep = document.querySelector( '[data-arvaseo-deep-running]' );
+	if ( deep && ! running && strings.ajaxUrl && strings.securityNonce ) {
+		var checkDeep = function () {
+			var body = new window.FormData();
+			body.append( 'action', 'arvaseo_connector_security_progress' );
+			body.append( '_ajax_nonce', strings.securityNonce );
+			window.fetch( strings.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' } )
+				.then( function ( response ) {
+					return response.json();
+				} )
+				.then( function ( reply ) {
+					if ( ! reply || ! reply.success ) {
+						return;
+					}
+					if ( ! reply.data.deep ) {
+						window.location.reload();
+						return;
+					}
+					deep.textContent = reply.data.deep_step;
+					window.setTimeout( checkDeep, 5000 );
+				} )
+				.catch( function () {
+					window.setTimeout( checkDeep, 15000 );
+				} );
+		};
+		window.setTimeout( checkDeep, 3000 );
+	}
 } )();
