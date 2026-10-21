@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.3.0
+Stable tag: 2.4.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,7 @@ Arva SEO → Speed lists each fix with the PageSpeed (Lighthouse) problem it add
 * **Browser caching and compression** on Apache and LiteSpeed: year-long browser caching for images, fonts, styles and scripts, and compressed pages, as rules in .htaccess that are checked straight away and taken out again if your site doesn't answer normally (Serve static assets with an efficient cache policy; Enable text compression)
 * **Remove unused WordPress extras** you choose: the emoji script, embed discovery, Dashicons for visitors, jQuery Migrate, block styles on pages without blocks
 * **New uploads as WebP**, and convert the images already in your media library in the background, keeping the originals (Serve images in next-gen formats)
+* **Compress images**, new uploads and the media library, on your server or Arva SEO's, keeping the originals (Efficiently encode images)
 
 If you allow it on the Speed page ("Let Arva SEO switch these fixes", off by default), the people who manage this website in Arva SEO can try, turn on and turn off the fixes from its PageSpeed results, by the same rules as the page: a fix that can be tried goes on for everyone only after it's been tried, Defer scripts goes on only in WordPress, and turning a fix off always works. Every change is in Arva SEO → Activity with who asked.
 
@@ -37,7 +38,7 @@ If a speed plugin such as WP Rocket or LiteSpeed Cache already does one of these
 
 = Cloudflare =
 
-If your site is behind Cloudflare, connect it on the Speed page with a Cloudflare API token. Cloudflare's copy of your pages is then cleared whenever a fix goes on or off for visitors, your choices change, or new optimized CSS, WebP copies or local fonts are ready, so visitors and your next PageSpeed test see the change straight away. A post's own pages (the post, the homepage, the blog page, the feed and its category and tag pages) are cleared when it's published, updated or unpublished. The plugin also checks whether Cloudflare's Rocket Loader is on, which clashes with Defer scripts. It works without an Arva SEO account.
+If your site is behind Cloudflare, connect it on the Speed page with a Cloudflare API token. Cloudflare's copy of your pages is then cleared whenever a fix or your choices change, or new optimized CSS, WebP copies or local fonts are ready, so visitors see the change straight away. A post's own pages (the post, the homepage, its archives and the feed) are cleared when it changes. The plugin also checks whether Cloudflare's Rocket Loader is on, which clashes with Defer scripts. It works without an Arva SEO account.
 
 = Security scan =
 
@@ -199,6 +200,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.4.0 =
+New: Compress images, on your own server or Arva SEO's. The security scan shows its progress, and other speed plugins are listed with a Deactivate button.
+
 = 2.3.0 =
 The Speed page names other active speed plugins that do the same jobs and offers to deactivate them, and a running deep scan shows its progress.
 
@@ -242,6 +246,13 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.4.0 =
+* New: Compress images (Speed). Images you upload are saved smaller a minute after WordPress makes their sizes, and the media library can be done in the background with progress, Stop and Restore. A file is replaced only when it gets at least 5% smaller, and the original is kept in wp-content/arvaseo-originals unless you turn that off.
+* On your own server, free: full-size photos above quality 85 are saved at 82 without the hidden camera data (the colour profile is kept, and a photo that still needs turning upright is left alone), and PNGs are saved again without loss. On Arva SEO's servers, when the site is connected and an administrator allows it: stronger compression of every size, each image counted once against the plan's monthly image compressions, and only when it gets at least 5% smaller. When none are left, your own server carries on.
+* The security scan shows its step (1 of 4), a progress bar and how many files it checked, against the last scan's count.
+* SiteGround's and LiteSpeed's own plugins are named as running your host's page cache; keeping them is usually best.
+* A deep scan's result says it checked the files that aren't official copies.
 
 = 2.3.0 =
 * New: Speed lists other active speed plugins that do some of the same jobs (WP Rocket, LiteSpeed Cache, Autoptimize, Smush and others), with the fixes each one does, and a Deactivate button for each. A plugin that also caches pages or compresses images says so first, because Arva SEO doesn't do either. "Keep them" leaves those fixes to them until another speed plugin is activated.

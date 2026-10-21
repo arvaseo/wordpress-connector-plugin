@@ -829,13 +829,20 @@ final class ImageCompression {
 	 * The originals folder doesn't list its files or answer web requests.
 	 */
 	private static function protect_folder(): void {
-		$dir = WP_CONTENT_DIR . '/' . self::FOLDER;
+		$dir = wp_normalize_path( WP_CONTENT_DIR ) . '/' . self::FOLDER;
 		if ( is_file( $dir . '/index.php' ) ) {
 			return;
 		}
 		wp_mkdir_p( $dir );
-		file_put_contents( $dir . '/index.php', "<?php\n// Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- the folder's own guard files.
-		file_put_contents( $dir . '/.htaccess', "Require all denied\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- see above.
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		global $wp_filesystem;
+		if ( 'direct' !== get_filesystem_method( array(), $dir, true ) || ! WP_Filesystem( false, $dir, true ) || ! $wp_filesystem instanceof \WP_Filesystem_Base ) {
+			return; // The folder still works; it just isn't closed to web requests.
+		}
+		$wp_filesystem->put_contents( $dir . '/.htaccess', "Require all denied\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n", FS_CHMOD_FILE );
+		$wp_filesystem->put_contents( $dir . '/index.php', "<?php\n// Silence is golden.\n", FS_CHMOD_FILE );
 	}
 
 	/**
