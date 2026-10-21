@@ -11,6 +11,7 @@ use ArvaSEO\Connector\Health\AssessmentService;
 use ArvaSEO\Connector\Speed\Cloudflare;
 use ArvaSEO\Connector\Speed\Exclusions;
 use ArvaSEO\Connector\Speed\Fixes;
+use ArvaSEO\Connector\Speed\OtherPlugins;
 use ArvaSEO\Connector\Speed\ServerRules;
 
 defined( 'ABSPATH' ) || exit;
@@ -25,6 +26,15 @@ defined( 'ABSPATH' ) || exit;
 	$arvaseo_deferred = get_transient( 'arvaseo_connector_deferred' );
 	$arvaseo_deferred = is_array( $arvaseo_deferred ) ? $arvaseo_deferred : array();
 	$arvaseo_plugins  = Exclusions::plugin_choices();
+	$arvaseo_others   = OtherPlugins::active();
+	$arvaseo_keep     = static function ( bool $keep, string $label, string $css_class ): void {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form">';
+		echo '<input type="hidden" name="action" value="arvaseo_connector_keep_others" />';
+		echo '<input type="hidden" name="keep" value="' . ( $keep ? '1' : '0' ) . '" />';
+		wp_nonce_field( 'arvaseo_connector_keep_others' );
+		echo '<button type="submit" class="' . esc_attr( $css_class ) . '">' . esc_html( $label ) . '</button>';
+		echo '</form>';
+	};
 	$arvaseo_tones    = array(
 		'off'         => 'neutral',
 		'trying'      => 'warn',
@@ -139,12 +149,83 @@ defined( 'ABSPATH' ) || exit;
 								?>
 							</span>
 						</a>
-						<?php echo 'off' === $arvaseo_states[ $arvaseo_id ] ? '' : AdminController::badge( $arvaseo_tones[ $arvaseo_states[ $arvaseo_id ] ] ?? 'neutral', Fixes::state_label( $arvaseo_states[ $arvaseo_id ] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?>
+						<?php if ( 'handled' === $arvaseo_states[ $arvaseo_id ] ) : ?>
+							<a class="arvaseo-badge-link" href="#arvaseo-other-plugins"><?php echo AdminController::badge( 'neutral', Fixes::state_label( 'handled' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?></a>
+						<?php else : ?>
+							<?php echo 'off' === $arvaseo_states[ $arvaseo_id ] ? '' : AdminController::badge( $arvaseo_tones[ $arvaseo_states[ $arvaseo_id ] ] ?? 'neutral', Fixes::state_label( $arvaseo_states[ $arvaseo_id ] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?>
+						<?php endif; ?>
 					<?php endforeach; ?>
 				<?php endif; ?>
 			</div>
 		<?php endif; ?>
 	</section>
+
+	<?php if ( array() !== $arvaseo_others && OtherPlugins::kept() ) : ?>
+		<div id="arvaseo-other-plugins" class="arvaseo-row">
+			<span class="arvaseo-hint">
+				<?php
+				/* translators: %s: plugin names. */
+				echo esc_html( sprintf( __( 'Arva SEO leaves the fixes %s can do to them.', 'arvaseo-connector' ), OtherPlugins::names( array_column( $arvaseo_others, 'name' ) ) ) );
+				?>
+			</span>
+			<?php $arvaseo_keep( false, __( 'Review', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--ghost' ); ?>
+		</div>
+	<?php elseif ( array() !== $arvaseo_others ) : ?>
+		<section id="arvaseo-other-plugins" class="arvaseo-card" aria-labelledby="arvaseo-others-heading">
+			<p class="arvaseo-eyebrow"><?php esc_html_e( 'Other speed plugins', 'arvaseo-connector' ); ?></p>
+			<h2 class="arvaseo-h3" id="arvaseo-others-heading">
+				<?php
+				echo esc_html(
+					1 === count( $arvaseo_others )
+						/* translators: %s: plugin name. */
+						? sprintf( __( '%s does some of the same jobs', 'arvaseo-connector' ), $arvaseo_others[0]['name'] )
+						/* translators: %d: number of plugins. */
+						: sprintf( __( '%d other speed plugins do some of the same jobs', 'arvaseo-connector' ), count( $arvaseo_others ) )
+				);
+				?>
+			</h2>
+			<p class="arvaseo-muted" style="margin: 8px 0 0; max-width: 760px"><?php esc_html_e( 'Two plugins changing how the same things load can break pages or undo each other’s work. Deactivate one to use Arva SEO’s fixes instead, or keep it and Arva SEO leaves those fixes to it.', 'arvaseo-connector' ); ?></p>
+			<div class="arvaseo-rows" style="margin-top: 16px"><div class="arvaseo-rows-in">
+				<?php foreach ( $arvaseo_others as $arvaseo_other ) : ?>
+					<div class="arvaseo-fix">
+						<div class="arvaseo-fix-body">
+							<h3><?php echo esc_html( $arvaseo_other['name'] ); ?></h3>
+							<div class="arvaseo-warns">
+								<span class="arvaseo-warns-lbl"><?php esc_html_e( 'Does the same as:', 'arvaseo-connector' ); ?></span>
+								<?php foreach ( $arvaseo_other['fixes'] as $arvaseo_title ) : ?>
+									<span class="arvaseo-warn-item"><?php echo esc_html( $arvaseo_title ); ?></span>
+								<?php endforeach; ?>
+							</div>
+							<?php if ( '' !== OtherPlugins::caveat( $arvaseo_other['also'] ) ) : ?>
+								<div class="arvaseo-risk arvaseo-risk--check"><?php echo AdminController::icon( 'alert', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php echo esc_html( OtherPlugins::caveat( $arvaseo_other['also'] ) ); ?></span></div>
+							<?php endif; ?>
+						</div>
+						<div class="arvaseo-fix-acts">
+							<?php if ( $arvaseo_other['network'] ) : ?>
+								<span class="arvaseo-hint arvaseo-fix-acts-note"><?php esc_html_e( 'On for the whole network: a network administrator can deactivate it.', 'arvaseo-connector' ); ?></span>
+							<?php else : ?>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-inline-form" data-arvaseo-confirm="confirmDeactivate">
+									<input type="hidden" name="action" value="arvaseo_connector_deactivate_other" />
+									<input type="hidden" name="plugin" value="<?php echo esc_attr( $arvaseo_other['slug'] ); ?>" />
+									<?php wp_nonce_field( 'arvaseo_connector_deactivate_other' ); ?>
+									<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark">
+										<?php
+										/* translators: %s: plugin name. */
+										echo esc_html( sprintf( __( 'Deactivate %s', 'arvaseo-connector' ), $arvaseo_other['name'] ) );
+										?>
+									</button>
+								</form>
+							<?php endif; ?>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			</div></div>
+			<div class="arvaseo-row" style="margin-top: 16px">
+				<?php $arvaseo_keep( true, 1 === count( $arvaseo_others ) ? __( 'Keep it', 'arvaseo-connector' ) : __( 'Keep them', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm' ); ?>
+				<span class="arvaseo-hint"><?php esc_html_e( 'Deactivating keeps the plugin’s settings, so you can activate it again from Plugins.', 'arvaseo-connector' ); ?></span>
+			</div>
+		</section>
+	<?php endif; ?>
 
 	<?php if ( array() !== $arvaseo_trying ) : ?>
 		<div class="arvaseo-trybar" role="status">
@@ -251,8 +332,9 @@ defined( 'ABSPATH' ) || exit;
 					<p>
 						<?php
 						/* translators: %s: plugin name. */
-						printf( esc_html__( '%s can do this. Turn it on there instead, so your pages aren’t processed twice.', 'arvaseo-connector' ), esc_html( (string) $arvaseo_handled ) );
+						printf( esc_html__( '%s can do this, so Arva SEO leaves it to that plugin and your pages aren’t processed twice.', 'arvaseo-connector' ), esc_html( (string) $arvaseo_handled ) );
 						?>
+						<a href="#arvaseo-other-plugins"><?php esc_html_e( 'Use Arva SEO’s instead', 'arvaseo-connector' ); ?></a>
 					</p>
 					<?php if ( 'browser_caching' === $arvaseo_id && ServerRules::present() ) : ?>
 						<div class="arvaseo-row"><?php $arvaseo_button( $arvaseo_id, 'off', __( 'Remove Arva SEO’s rules', 'arvaseo-connector' ) ); ?></div>

@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.2.1
+Stable tag: 2.3.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,7 +33,7 @@ Arva SEO → Speed lists each fix with the PageSpeed (Lighthouse) problem it add
 
 If you allow it on the Speed page ("Let Arva SEO switch these fixes", off by default), the people who manage this website in Arva SEO can try, turn on and turn off the fixes from its PageSpeed results, by the same rules as the page: a fix that can be tried goes on for everyone only after it's been tried, Defer scripts goes on only in WordPress, and turning a fix off always works. Every change is in Arva SEO → Activity with who asked.
 
-If a speed plugin such as WP Rocket, LiteSpeed Cache, Perfmatters or FlyingPress already does one of these jobs, that fix stays off and the page tells you to use that plugin's setting, so pages are never processed twice. When the site is connected, the page also shows which fixes your homepage's latest PageSpeed test asks for, and Arva SEO's PageSpeed results link straight to the right switch.
+If a speed plugin such as WP Rocket or LiteSpeed Cache already does one of these jobs, that fix stays off, so pages are never processed twice, and the page offers to deactivate that plugin (only if you click). When the site is connected, the page also shows which fixes your homepage's latest PageSpeed test asks for, and Arva SEO's PageSpeed results link straight to the right switch.
 
 = Cloudflare =
 
@@ -199,6 +199,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.3.0 =
+The Speed page names other active speed plugins that do the same jobs and offers to deactivate them, with a plain note when one also caches pages or compresses images.
+
 = 2.2.1 =
 Other plugins' and themes' notices no longer crowd the Arva SEO pages, and the security scan no longer reports Wordfence's and other security plugins' firewalls, or plugin logs that can't run, as signs of a hack.
 
@@ -239,6 +242,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.3.0 =
+* New: Speed lists other active speed plugins that do some of the same jobs (WP Rocket, LiteSpeed Cache, Autoptimize, Smush and others), with the fixes each one does, and a Deactivate button for each. A plugin that also caches pages or compresses images says so first, because Arva SEO doesn't do either. "Keep them" leaves those fixes to them until another speed plugin is activated.
+* After activating Arva SEO, the next dashboard page names those plugins once, and Overview lists them under Needs you until you choose.
+* "Done by another plugin" on your latest test links to that list.
 
 = 2.2.1 =
 * Other plugins' and themes' notices ("recommended plugin" reminders, offers and the like) no longer show on the Arva SEO pages. They still show everywhere else in the dashboard. Arva SEO's own notices and WordPress's recovery mode notice stay.

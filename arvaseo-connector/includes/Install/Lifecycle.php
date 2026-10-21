@@ -49,6 +49,8 @@ final class Lifecycle {
 			add_option( 'arvaseo_connector_settings', \ArvaSEO\Connector\Settings::defaults(), '', false );
 		}
 		CronManager::schedule_maintenance();
+		// The next dashboard page names any other speed plugins doing some of the fixes, once.
+		update_option( \ArvaSEO\Connector\Speed\OtherPlugins::AFTER_ACTIVATION, time(), false );
 	}
 
 	/**

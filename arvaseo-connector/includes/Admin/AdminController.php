@@ -23,6 +23,7 @@ use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Settings;
 use ArvaSEO\Connector\Speed\Cloudflare;
 use ArvaSEO\Connector\Speed\Fixes;
+use ArvaSEO\Connector\Speed\OtherPlugins;
 use ArvaSEO\Connector\Site\SiteRegistrationService;
 
 defined( 'ABSPATH' ) || exit;
@@ -83,7 +84,10 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_security_repair', array( self::class, 'security_repair' ) );
 		add_action( 'admin_post_arvaseo_connector_security_undo', array( self::class, 'security_undo' ) );
 		add_action( 'wp_ajax_arvaseo_connector_security_progress', array( self::class, 'security_progress' ) );
+		add_action( 'admin_post_arvaseo_connector_deactivate_other', array( self::class, 'deactivate_other' ) );
+		add_action( 'admin_post_arvaseo_connector_keep_others', array( self::class, 'keep_others' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
+		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
 		add_action( 'in_admin_header', array( self::class, 'quiet_notices' ), PHP_INT_MAX );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
 		add_filter( 'submenu_file', array( self::class, 'submenu_file' ) );
@@ -103,6 +107,7 @@ final class AdminController {
 		}
 		add_action( 'admin_notices', array( self::class, 'recovery_notice' ), 1 );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
+		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
 	}
 
 	/**
@@ -352,6 +357,18 @@ final class AdminController {
 		} elseif ( Cloudflare::seen() && ! Cloudflare::connected() ) {
 			$needs[] = array( 'acc', 'cloud', __( 'This website is behind Cloudflare', 'arvaseo-connector' ), __( 'Connect Cloudflare, so visitors and your next PageSpeed test get a fix as soon as you turn it on.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-speed#arvaseo-cloudflare' ), __( 'Connect Cloudflare', 'arvaseo-connector' ) );
 		}
+		$others = OtherPlugins::active();
+		if ( array() !== $others && ! OtherPlugins::kept() ) {
+			$needs[] = array(
+				'warn',
+				'gauge',
+				/* translators: %s: plugin names. */
+				sprintf( _n( '%s does some of the same speed fixes', '%s do some of the same speed fixes', count( $others ), 'arvaseo-connector' ), OtherPlugins::names( array_column( $others, 'name' ) ) ),
+				__( 'Two plugins changing how the same things load can break pages. Choose which one does each job.', 'arvaseo-connector' ),
+				admin_url( 'admin.php?page=arvaseo-speed#arvaseo-other-plugins' ),
+				__( 'Review on Speed', 'arvaseo-connector' ),
+			);
+		}
 		if ( ! TokenStore::is_connected() ) {
 			return $needs;
 		}
@@ -521,8 +538,11 @@ final class AdminController {
 			'deep_scan_needs_results'        => array( 'error', __( 'Deep scans send their results the same way as the security scan: share the scan’s results first.', 'arvaseo-connector' ) ),
 			'repair_done'                    => array( 'success', __( 'Done. It can be undone for 30 days under Changes made here.', 'arvaseo-connector' ) ),
 			'repair_failed'                  => array( 'error', __( 'Nothing was changed.', 'arvaseo-connector' ) ),
+			'other_deactivated'              => array( 'success', __( 'The plugin was deactivated.', 'arvaseo-connector' ) ),
+			'other_not_deactivated'          => array( 'error', __( 'Nothing was changed.', 'arvaseo-connector' ) ),
+			'others_kept'                    => array( 'success', __( 'Kept. Arva SEO leaves those fixes to them, and asks again if another speed plugin is activated.', 'arvaseo-connector' ) ),
 		);
-		if ( in_array( $code, array( 'repair_done', 'repair_failed' ), true ) ) {
+		if ( in_array( $code, array( 'repair_done', 'repair_failed', 'other_deactivated', 'other_not_deactivated' ), true ) ) {
 			// What the repair did, kept a minute for this administrator (the address has only the code).
 			$said = get_transient( 'arvaseo_connector_repair_notice_' . get_current_user_id() );
 			delete_transient( 'arvaseo_connector_repair_notice_' . get_current_user_id() );
@@ -699,6 +719,58 @@ final class AdminController {
 		self::guard( 'arvaseo_connector_security_undo', Capabilities::MANAGE );
 		$id = isset( $_POST['repair'] ) ? sanitize_text_field( wp_unslash( $_POST['repair'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		self::repair_notice( \ArvaSEO\Connector\Security\Repairs::undo( $id ) );
+	}
+
+	/**
+	 * Deactivate another speed plugin the Speed page lists, when an administrator clicks for it.
+	 */
+	public static function deactivate_other(): void {
+		self::guard( 'arvaseo_connector_deactivate_other', Capabilities::MANAGE );
+		$slug   = isset( $_POST['plugin'] ) ? sanitize_key( wp_unslash( $_POST['plugin'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$result = OtherPlugins::deactivate( $slug );
+		set_transient( 'arvaseo_connector_repair_notice_' . get_current_user_id(), $result['message'], MINUTE_IN_SECONDS );
+		// No jump to the card: what happened shows at the top of the page.
+		self::back( 'arvaseo-speed', $result['ok'] ? 'other_deactivated' : 'other_not_deactivated' );
+	}
+
+	/**
+	 * Keep the other speed plugins (Speed shows one line), or show the choice again.
+	 */
+	public static function keep_others(): void {
+		self::guard( 'arvaseo_connector_keep_others', Capabilities::MANAGE );
+		$keep = isset( $_POST['keep'] ) && '1' === sanitize_key( wp_unslash( $_POST['keep'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		OtherPlugins::keep( $keep );
+		if ( $keep ) {
+			self::back( 'arvaseo-speed', 'others_kept' );
+		}
+		wp_safe_redirect( admin_url( 'admin.php?page=arvaseo-speed' ) . '#arvaseo-other-plugins' );
+		exit;
+	}
+
+	/**
+	 * Once, after the plugin is activated: name the other speed plugins doing some of the fixes.
+	 */
+	public static function other_plugins_notice(): void {
+		if ( ! get_option( OtherPlugins::AFTER_ACTIVATION ) || ! current_user_can( Capabilities::MANAGE ) ) {
+			return;
+		}
+		delete_option( OtherPlugins::AFTER_ACTIVATION );
+		$others = OtherPlugins::active();
+		if ( array() === $others || 'arvaseo-speed' === self::current_page() ) {
+			return; // Nothing to say, or the Speed page shows them itself.
+		}
+		printf(
+			'<div class="notice notice-warning is-dismissible arvaseo-own"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+			esc_html(
+				sprintf(
+					/* translators: %s: plugin names. */
+					_n( 'Arva SEO: %s does some of the same speed fixes. Two plugins changing how the same things load can break pages, so choose which one does each job.', 'Arva SEO: %s do some of the same speed fixes. Two plugins changing how the same things load can break pages, so choose which one does each job.', count( $others ), 'arvaseo-connector' ),
+					OtherPlugins::names( array_column( $others, 'name' ) )
+				)
+			),
+			esc_url( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-other-plugins' ) ),
+			esc_html__( 'Review on Speed', 'arvaseo-connector' )
+		);
 	}
 
 	/**
@@ -1016,6 +1088,7 @@ final class AdminController {
 			array(
 				'copied'               => __( 'Copied.', 'arvaseo-connector' ),
 				'confirmRestore'       => __( 'Replace this file with WordPress.org’s official copy? The current file is kept for 30 days, so you can undo it.', 'arvaseo-connector' ),
+				'confirmDeactivate'    => __( 'Deactivate this plugin? Its settings stay, so you can activate it again from the Plugins page. Clear any page cache afterwards.', 'arvaseo-connector' ),
 				'confirmQuarantine'    => __( 'Move this file to quarantine, where it can’t run? It’s kept for 30 days, so you can undo it. If you’re not sure what it does, back up your site first.', 'arvaseo-connector' ),
 				'confirmDisconnect'    => __( 'Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again.', 'arvaseo-connector' ),
 				'confirmFull'          => __( 'Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?', 'arvaseo-connector' ),
