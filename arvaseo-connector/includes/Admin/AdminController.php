@@ -67,6 +67,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_recheck', array( self::class, 'recheck' ) );
 		add_action( 'admin_post_arvaseo_connector_poll_now', array( self::class, 'poll_now' ) );
 		add_action( 'admin_post_arvaseo_connector_consent', array( self::class, 'consent' ) );
+		add_action( 'admin_post_arvaseo_connector_consent_security', array( self::class, 'consent_security' ) );
 		add_action( 'admin_post_arvaseo_connector_diagnostics', array( self::class, 'download_diagnostics' ) );
 		add_action( 'admin_post_arvaseo_connector_speed', array( self::class, 'speed' ) );
 		add_action( 'admin_post_arvaseo_connector_speed_options', array( self::class, 'speed_options' ) );
@@ -194,7 +195,7 @@ final class AdminController {
 		echo '<div class="arvaseo-top">';
 		printf( '<img src="%s" alt="" width="28" height="28" />', esc_url( plugins_url( 'assets/arvaseo-icon.svg', ARVASEO_CONNECTOR_FILE ) ) );
 		echo '<span class="arvaseo-brand">' . esc_html__( 'Arva SEO', 'arvaseo-connector' ) . '</span>';
-		echo '<span class="arvaseo-prod">' . esc_html__( 'Speed Booster & SEO Connector', 'arvaseo-connector' ) . '</span>';
+		echo '<span class="arvaseo-prod">' . esc_html__( 'Speed Booster & Security Scanner', 'arvaseo-connector' ) . '</span>';
 		echo '<span class="arvaseo-grow"></span>';
 		if ( TokenStore::unreadable() || 'reauth_required' === ( $connection['status'] ?? '' ) ) {
 			echo self::badge( 'bad', __( 'Reconnect needed', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
@@ -251,7 +252,7 @@ final class AdminController {
 			'arvaseo-connector'   => array( 'overview', __( 'How this website is doing, and what needs you. Nothing here changes your site until you choose to.', 'arvaseo-connector' ) ),
 			'arvaseo-speed'       => array( 'gauge', __( 'Fix what Google’s PageSpeed test finds, one switch at a time. Every fix is off until you turn it on, most can be tried first where only you see them, and turning one off puts your pages back as they were. Your theme files and content are never changed; the few fixes that add files say so.', 'arvaseo-connector' ) ),
 			'arvaseo-content'     => array( 'file', __( 'Posts sent from Arva SEO arrive here, and the SEO titles your team approves are written to your SEO plugin, only as far as you allow.', 'arvaseo-connector' ) ),
-			'arvaseo-health'      => array( 'shield', __( 'What the daily check found on this website, and how to fix it. This page only reads: snoozing, assigning or accepting a finding happens in Arva SEO.', 'arvaseo-connector' ) ),
+			'arvaseo-health'      => array( 'shield', __( 'What the security scan and the daily check found on this website, and how to fix it. Nothing here changes your site; snoozing, assigning or accepting a finding happens in Arva SEO.', 'arvaseo-connector' ) ),
 			'arvaseo-activity'    => array( 'list', __( 'Everything the plugin did, and who asked. No keys, codes, content or personal data are kept.', 'arvaseo-connector' ) ),
 			'arvaseo-settings'    => array( 'sliders', __( 'You decide how far Arva SEO may go on this website. Every setting starts at the safest choice.', 'arvaseo-connector' ) ),
 			'arvaseo-inventory'   => array( 'list', __( 'The plugins and themes on this site, and exactly what is shared about them with Arva SEO.', 'arvaseo-connector' ) ),
@@ -280,6 +281,12 @@ final class AdminController {
 		}
 		$needs    = array();
 		$security = \ArvaSEO\Connector\Security\Findings::counts();
+		foreach ( (array) ( AssessmentService::get()['findings'] ?? array() ) as $finding ) {
+			// Known vulnerabilities from Arva SEO count with the scan's own results.
+			if ( 'known_vulnerability' === ( $finding['rule_id'] ?? '' ) && 'resolved' !== $finding['finding_status'] && isset( $security[ $finding['assessed_severity'] ] ) ) {
+				++$security[ $finding['assessed_severity'] ];
+			}
+		}
 		if ( $security['critical'] > 0 || $security['high'] > 0 ) {
 			$serious = $security['critical'] + $security['high'];
 			$needs[] = array(
@@ -287,9 +294,9 @@ final class AdminController {
 				'shield',
 				$security['critical'] > 0
 					/* translators: %d: number of security problems. */
-					? sprintf( _n( 'The security scan found %d serious problem', 'The security scan found %d serious problems', $serious, 'arvaseo-connector' ), $serious )
+					? sprintf( _n( '%d serious security problem', '%d serious security problems', $serious, 'arvaseo-connector' ), $serious )
 					/* translators: %d: number of security problems. */
-					: sprintf( _n( 'The security scan found %d problem to look at', 'The security scan found %d problems to look at', $serious, 'arvaseo-connector' ), $serious ),
+					: sprintf( _n( '%d security problem to look at', '%d security problems to look at', $serious, 'arvaseo-connector' ), $serious ),
 				__( 'See what it found, why it matters and how to fix it.', 'arvaseo-connector' ),
 				admin_url( 'admin.php?page=arvaseo-health#arvaseo-security' ),
 				__( 'Open the results', 'arvaseo-connector' ),
@@ -492,10 +499,11 @@ final class AdminController {
 		$share   = ! empty( $_POST['share_health'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		$agree   = ! empty( $_POST['consent'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		$content = ! empty( $_POST['allow_content'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
-		if ( $share && ! $agree ) {
+		$secure  = ! empty( $_POST['share_security'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		if ( ( $share || $secure ) && ! $agree ) {
 			self::back( 'arvaseo-connector', 'consent_required' );
 		}
-		wp_redirect( AuthService::start( $share, $content ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the fixed Arva SEO app address from Config.
+		wp_redirect( AuthService::start( $share, $content, $secure ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the fixed Arva SEO app address from Config.
 		exit;
 	}
 
@@ -580,6 +588,7 @@ final class AdminController {
 		$key    = isset( $_POST['finding'] ) ? sanitize_key( wp_unslash( $_POST['finding'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		$ignore = empty( $_POST['show'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		\ArvaSEO\Connector\Security\Findings::ignore( $key, $ignore );
+		\ArvaSEO\Connector\Security\Report::send();
 		AuditLogger::info( $ignore ? 'security.finding_ignored' : 'security.finding_shown', $ignore ? __( 'A security finding was marked as expected.', 'arvaseo-connector' ) : __( 'A security finding is shown again.', 'arvaseo-connector' ) );
 		self::back( 'arvaseo-health', $ignore ? 'security_ignored' : 'security_unignored' );
 	}
@@ -637,6 +646,25 @@ final class AdminController {
 		}
 		SiteRegistrationService::register();
 		self::back( 'arvaseo-diagnostics', 'consent_saved' );
+	}
+
+	/**
+	 * Agree (or stop agreeing) to share the security scan's results.
+	 */
+	public static function consent_security(): void {
+		self::guard( 'arvaseo_connector_consent_security', Capabilities::MANAGE );
+		$give = ! empty( $_POST['consent'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		$back = isset( $_POST['back'] ) && 'health' === $_POST['back'] ? 'arvaseo-health' : 'arvaseo-diagnostics'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		if ( $give && null === PrivacyService::current() ) {
+			self::back( $back, 'consent_required' );
+		}
+		PrivacyService::consent_security( $give );
+		AuditLogger::info( $give ? 'consent.security_given' : 'consent.security_withdrawn', $give ? __( 'Consent to share the security scan’s results given.', 'arvaseo-connector' ) : __( 'Consent to share the security scan’s results withdrawn.', 'arvaseo-connector' ) );
+		SiteRegistrationService::register();
+		if ( $give ) {
+			\ArvaSEO\Connector\Security\Report::send();
+		}
+		self::back( $back, 'consent_saved' );
 	}
 
 	/**

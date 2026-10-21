@@ -34,10 +34,11 @@ final class AuthService {
 	/**
 	 * Start: remember state and verifier for this administrator, return the app's address.
 	 *
-	 * @param bool $share_health  Consent to share inventory and Website Health.
-	 * @param bool $allow_content Allow content delivery.
+	 * @param bool $share_health   Consent to share inventory and Website Health.
+	 * @param bool $allow_content  Allow content delivery.
+	 * @param bool $share_security Consent to share the security scan's results too.
 	 */
-	public static function start( bool $share_health, bool $allow_content ): string {
+	public static function start( bool $share_health, bool $allow_content, bool $share_security = false ): string {
 		$state    = Ids::token( 32 );
 		$verifier = Ids::token( 64 );
 		$scopes   = array( 'site:register' );
@@ -52,11 +53,12 @@ final class AuthService {
 			Crypto::encrypt(
 				(string) wp_json_encode(
 					array(
-						'state_hash'    => hash( 'sha256', $state ),
-						'verifier'      => $verifier,
-						'share_health'  => $share_health,
-						'allow_content' => $allow_content,
-						'site_url'      => self::site_url(),
+						'state_hash'     => hash( 'sha256', $state ),
+						'verifier'       => $verifier,
+						'share_health'   => $share_health,
+						'share_security' => $share_health && $share_security,
+						'allow_content'  => $allow_content,
+						'site_url'       => self::site_url(),
 					)
 				)
 			),
@@ -155,6 +157,7 @@ final class AuthService {
 		);
 		ApiClient::instance()->apply_site_details( $response->body );
 		PrivacyService::consent( ! empty( $pending['share_health'] ) ? array( 'inventory', 'health' ) : array() );
+		PrivacyService::consent_security( ! empty( $pending['share_health'] ) && ! empty( $pending['share_security'] ) );
 		AssessmentService::clear();
 
 		$registered = SiteRegistrationService::register();

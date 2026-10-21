@@ -192,6 +192,7 @@ final class AssessmentService {
 		$source = is_array( $f['source'] ?? null ) ? $f['source'] : array();
 		return array(
 			'issue_id'          => self::text( $f['issue_id'] ?? '', 40 ),
+			'rule_id'           => self::text( $f['rule_id'] ?? '', 60 ),
 			'category'          => $f['category'],
 			'finding_status'    => $f['finding_status'],
 			'freshness_status'  => $f['freshness_status'],
@@ -213,11 +214,49 @@ final class AssessmentService {
 			'source_type'       => in_array( $source['type'] ?? '', array( 'wordpress_fact', 'arvaseo_rule', 'arvaseo_remote_audit', 'authoritative_advisory' ), true ) ? $source['type'] : null,
 			'source_reference'  => self::text( $source['reference'] ?? '', 200 ),
 			'rules_version'     => self::text( $source['rules_version'] ?? '', 40 ),
+			// Known vulnerabilities (2.0.0): where the data comes from, as its licence asks to show it.
+			'attribution'       => self::attribution( $source['attribution'] ?? null ),
 			'edited'            => ! empty( $f['edited'] ),
 			'client_notes'      => self::text( $f['client_notes'] ?? '', 2000 ),
 			'last_detected_at'  => self::text( $f['last_detected_at'] ?? '', 40 ),
 			'assessed_at'       => self::text( $f['assessed_at'] ?? '', 40 ),
 		);
+	}
+
+	/**
+	 * A known vulnerability's attribution: the record's link and each copyright notice.
+	 *
+	 * @param mixed $raw From the API.
+	 * @return array{provider: string, record_url: string, notices: array<int, array{notice: string, license: string, license_url: string}>}|null
+	 */
+	private static function attribution( $raw ): ?array {
+		if ( ! is_array( $raw ) ) {
+			return null;
+		}
+		$notices = array();
+		foreach ( array_slice( (array) ( $raw['notices'] ?? array() ), 0, 3 ) as $notice ) {
+			if ( is_array( $notice ) && '' !== self::text( $notice['notice'] ?? '', 200 ) ) {
+				$notices[] = array(
+					'notice'      => self::text( $notice['notice'], 200 ),
+					'license'     => self::text( $notice['license'] ?? '', 2000 ),
+					'license_url' => self::https( $notice['license_url'] ?? null ),
+				);
+			}
+		}
+		return array(
+			'provider'   => self::text( $raw['provider'] ?? '', 60 ),
+			'record_url' => self::https( $raw['record_url'] ?? null ),
+			'notices'    => $notices,
+		);
+	}
+
+	/**
+	 * An https link, or "".
+	 *
+	 * @param mixed $url URL.
+	 */
+	private static function https( $url ): string {
+		return is_string( $url ) && str_starts_with( $url, 'https://' ) ? esc_url_raw( $url, array( 'https' ) ) : '';
 	}
 
 	/**

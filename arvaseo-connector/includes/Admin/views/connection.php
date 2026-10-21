@@ -86,6 +86,7 @@ defined( 'ABSPATH' ) || exit;
 			<fieldset class="arvaseo-options">
 				<legend class="screen-reader-text"><?php esc_html_e( 'What to allow', 'arvaseo-connector' ); ?></legend>
 				<label class="arvaseo-check"><input type="checkbox" name="share_health" value="1" checked="checked" /> <span><?php esc_html_e( 'Share the plugin list and Website Health checks with Arva SEO', 'arvaseo-connector' ); ?></span></label>
+				<label class="arvaseo-check"><input type="checkbox" name="share_security" value="1" /> <span><?php esc_html_e( 'Also share the security scan’s results (what it finds, and the files’ paths inside the site)', 'arvaseo-connector' ); ?></span></label>
 				<label class="arvaseo-check"><input type="checkbox" name="consent" value="1" /> <span><?php esc_html_e( 'I agree to share the data listed under “Exactly what is shared” with Arva SEO for these purposes.', 'arvaseo-connector' ); ?></span></label>
 				<label class="arvaseo-check"><input type="checkbox" name="allow_content" value="1" checked="checked" /> <span><?php esc_html_e( 'Allow Arva SEO to send content to this site (only as drafts until you choose another publishing mode in Settings)', 'arvaseo-connector' ); ?></span></label>
 			</fieldset>
@@ -124,6 +125,12 @@ defined( 'ABSPATH' ) || exit;
 						<?php endforeach; ?>
 					</ul>
 				<?php endforeach; ?>
+				<h3><?php esc_html_e( 'Security scan results (only if you tick that box)', 'arvaseo-connector' ); ?></h3>
+				<ul class="arvaseo-bullets">
+					<?php foreach ( PrivacyService::security_field_set() as $arvaseo_field ) : ?>
+						<li><strong><?php echo esc_html( $arvaseo_field['field'] ); ?></strong>: <?php echo esc_html( $arvaseo_field['purpose'] ); ?></li>
+					<?php endforeach; ?>
+				</ul>
 				<h3><?php esc_html_e( 'Never sent', 'arvaseo-connector' ); ?></h3>
 				<ul class="arvaseo-bullets">
 					<?php foreach ( PrivacyService::never_sent() as $arvaseo_never ) : ?>

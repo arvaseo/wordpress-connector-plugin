@@ -6,7 +6,10 @@
  */
 
 use ArvaSEO\Connector\Admin\AdminController;
+use ArvaSEO\Connector\Auth\TokenStore;
+use ArvaSEO\Connector\Health\AssessmentService;
 use ArvaSEO\Connector\Install\Capabilities;
+use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Security\Findings;
 use ArvaSEO\Connector\Security\Scanner;
 
@@ -23,6 +26,13 @@ defined( 'ABSPATH' ) || exit;
 	$arvaseo_counts   = Findings::counts();
 	$arvaseo_manage   = current_user_can( Capabilities::MANAGE );
 	$arvaseo_coverage = (array) ( $arvaseo_results['coverage'] ?? array() );
+	$arvaseo_vulns    = array_values(
+		array_filter(
+			(array) ( AssessmentService::get()['findings'] ?? array() ),
+			static fn ( array $f ): bool => 'known_vulnerability' === ( $f['rule_id'] ?? '' ) && 'resolved' !== $f['finding_status']
+		)
+	);
+	$arvaseo_ask      = $arvaseo_manage && TokenStore::is_connected() && null !== PrivacyService::current() && null === PrivacyService::security_consent();
 	$arvaseo_severity = array(
 		'critical' => array( 'bad', __( 'Critical', 'arvaseo-connector' ) ),
 		'high'     => array( 'bad', __( 'High', 'arvaseo-connector' ) ),
@@ -127,6 +137,67 @@ defined( 'ABSPATH' ) || exit;
 			<?php endif; ?>
 		<?php endif; ?>
 	</section>
+
+	<?php if ( $arvaseo_ask ) : ?>
+		<section class="arvaseo-card" aria-labelledby="arvaseo-sec-share">
+			<h2 class="arvaseo-h3" id="arvaseo-sec-share"><?php esc_html_e( 'Share the scan’s results with Arva SEO', 'arvaseo-connector' ); ?></h2>
+			<p class="arvaseo-hint" style="margin-top: 6px"><?php esc_html_e( 'Arva SEO then shows them in Website Health with what to do, emails you when something serious turns up, and can add them to tasks and reports. It receives what each problem is and the file’s path inside the site, never the files themselves.', 'arvaseo-connector' ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-row" style="margin-top: 12px">
+				<input type="hidden" name="action" value="arvaseo_connector_consent_security" />
+				<input type="hidden" name="consent" value="1" />
+				<input type="hidden" name="back" value="health" />
+				<?php wp_nonce_field( 'arvaseo_connector_consent_security' ); ?>
+				<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark"><?php esc_html_e( 'Share the results', 'arvaseo-connector' ); ?></button>
+				<a class="arvaseo-hint" href="<?php echo esc_url( admin_url( 'admin.php?page=arvaseo-diagnostics#arvaseo-privacy-heading' ) ); ?>"><?php esc_html_e( 'Every field that’s sent', 'arvaseo-connector' ); ?></a>
+			</form>
+		</section>
+	<?php endif; ?>
+
+	<?php if ( array() !== $arvaseo_vulns ) : ?>
+		<div class="arvaseo-grp-title"><h2><?php echo esc_html( Findings::groups()['vulnerabilities'][0] ); ?></h2>
+			<?php
+			/* translators: %d: number of findings. */
+			echo AdminController::badge( 'bad', sprintf( _n( '%d finding', '%d findings', count( $arvaseo_vulns ), 'arvaseo-connector' ), count( $arvaseo_vulns ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+			?>
+		</div>
+		<p class="arvaseo-hint" style="margin: -6px 0 4px"><?php echo esc_html( Findings::groups()['vulnerabilities'][1] ); ?></p>
+		<?php foreach ( $arvaseo_vulns as $arvaseo_vuln ) : ?>
+			<article class="arvaseo-finding">
+				<div class="arvaseo-row">
+					<?php echo AdminController::badge( $arvaseo_severity[ $arvaseo_vuln['assessed_severity'] ][0] ?? 'warn', $arvaseo_severity[ $arvaseo_vuln['assessed_severity'] ][1] ?? $arvaseo_vuln['assessed_severity'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?>
+				</div>
+				<h3><?php echo esc_html( $arvaseo_vuln['title'] ); ?></h3>
+				<div class="arvaseo-two">
+					<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What it means', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_vuln['what_is_wrong'] ); ?></div>
+					<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to do', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_vuln['what_to_fix'] ); ?></div>
+				</div>
+				<?php $arvaseo_attr = $arvaseo_vuln['attribution'] ?? null; ?>
+				<?php if ( is_array( $arvaseo_attr ) ) : ?>
+					<details class="arvaseo-more">
+						<summary>
+							<?php
+							/* translators: %s: the vulnerability data's provider. */
+							echo esc_html( sprintf( __( 'Vulnerability data: %s', 'arvaseo-connector' ), '' !== $arvaseo_attr['provider'] ? $arvaseo_attr['provider'] : 'Wordfence Intelligence' ) );
+							?>
+						</summary>
+						<div class="arvaseo-more-in">
+							<?php if ( '' !== $arvaseo_attr['record_url'] ) : ?>
+								<p><a href="<?php echo esc_url( $arvaseo_attr['record_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'See the vulnerability’s record', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a></p>
+							<?php endif; ?>
+							<?php foreach ( $arvaseo_attr['notices'] as $arvaseo_notice ) : ?>
+								<p class="arvaseo-hint"><strong><?php echo esc_html( $arvaseo_notice['notice'] ); ?></strong>
+									<?php echo esc_html( $arvaseo_notice['license'] ); ?>
+									<?php if ( '' !== $arvaseo_notice['license_url'] ) : ?>
+										<a href="<?php echo esc_url( $arvaseo_notice['license_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Licence', 'arvaseo-connector' ); ?></a>
+									<?php endif; ?>
+								</p>
+							<?php endforeach; ?>
+						</div>
+					</details>
+				<?php endif; ?>
+			</article>
+		<?php endforeach; ?>
+	<?php endif; ?>
 
 	<?php
 	if ( array() !== $arvaseo_open ) :

@@ -22,6 +22,9 @@ final class PrivacyService {
 
 	private const OPTION = 'arvaseo_connector_consent';
 
+	/** The security scan's results: agreed to separately (2.0.0), so the main consent's field set stays the same. */
+	private const SECURITY_OPTION = 'arvaseo_connector_consent_security';
+
 	/**
 	 * Every field the plugin can send, with its purpose (the field-set hash covers this list).
 	 *
@@ -65,6 +68,28 @@ final class PrivacyService {
 	}
 
 	/**
+	 * What sharing the security scan's results sends (its own consent, with its own hash).
+	 *
+	 * @return array<int, array{field: string, purpose: string}>
+	 */
+	public static function security_field_set(): array {
+		return array(
+			array(
+				'field'   => 'For each problem the latest security scan found: its kind, severity and a key that stays the same between scans',
+				'purpose' => 'Show the problem in Arva SEO with what to do, and alert you to serious ones',
+			),
+			array(
+				'field'   => 'For a problem in a file: the file’s path inside the site (such as wp-content/uploads/2026/10/x.php), and for suspicious code the pattern’s name, the line and the start of that line',
+				'purpose' => 'Say exactly where the problem is, so it can be checked and fixed',
+			),
+			array(
+				'field'   => 'When the scan ran, how many files it checked, and which checks it could run',
+				'purpose' => 'Show what the scan covered',
+			),
+		);
+	}
+
+	/**
 	 * Data that is never sent.
 	 *
 	 * @return string[]
@@ -72,7 +97,7 @@ final class PrivacyService {
 	public static function never_sent(): array {
 		return array(
 			__( 'Passwords, salts, access or refresh tokens, signing secrets, license keys or API keys', 'arvaseo-connector' ),
-			__( 'Database credentials, file paths, configuration files, server or debug logs', 'arvaseo-connector' ),
+			__( 'Database credentials, configuration files, server or debug logs, and file paths (except the paths of files the security scan flags, if you share its results)', 'arvaseo-connector' ),
 			__( 'Usernames, email addresses, visitor data or form submissions', 'arvaseo-connector' ),
 			__( 'Plugin or theme settings, uploaded files, and the content of your existing posts and pages (if you let Arva SEO update SEO titles and descriptions, only the previous title and description of the pages it updates)', 'arvaseo-connector' ),
 		);
@@ -116,10 +141,46 @@ final class PrivacyService {
 	}
 
 	/**
-	 * Withdraw consent.
+	 * Withdraw consent (the security scan's too: it needs the main consent).
 	 */
 	public static function withdraw(): void {
 		delete_option( self::OPTION );
+		delete_option( self::SECURITY_OPTION );
+	}
+
+	/**
+	 * Agree (or stop agreeing) to share the security scan's results.
+	 *
+	 * @param bool $give Agree.
+	 */
+	public static function consent_security( bool $give ): void {
+		if ( ! $give ) {
+			delete_option( self::SECURITY_OPTION );
+			return;
+		}
+		update_option(
+			self::SECURITY_OPTION,
+			array(
+				'schema_version' => Config::CONSENT_SCHEMA_VERSION,
+				'consented_at'   => Ids::iso(),
+				'user_id'        => get_current_user_id(),
+				'field_set_hash' => Ids::hash( array( 'security' => self::security_field_set() ) ),
+			),
+			false
+		);
+	}
+
+	/**
+	 * The security scan's consent, if it still matches this version's field list.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public static function security_consent(): ?array {
+		$consent = get_option( self::SECURITY_OPTION );
+		if ( ! is_array( $consent ) || ( $consent['field_set_hash'] ?? '' ) !== Ids::hash( array( 'security' => self::security_field_set() ) ) ) {
+			return null;
+		}
+		return $consent;
 	}
 
 	/**
@@ -138,10 +199,13 @@ final class PrivacyService {
 	/**
 	 * Whether a purpose is consented.
 	 *
-	 * @param string $purpose inventory|health.
+	 * @param string $purpose inventory|health|security.
 	 */
 	public static function allows( string $purpose ): bool {
 		$consent = self::current();
+		if ( 'security' === $purpose ) {
+			return null !== $consent && null !== self::security_consent();
+		}
 		return null !== $consent && in_array( $purpose, (array) $consent['purposes'], true );
 	}
 
@@ -155,11 +219,15 @@ final class PrivacyService {
 		if ( null === $consent ) {
 			return null;
 		}
+		$purposes = (array) $consent['purposes'];
+		if ( null !== self::security_consent() ) {
+			$purposes[] = 'security';
+		}
 		return array(
 			'schema_version'       => $consent['schema_version'],
 			'consented_at'         => $consent['consented_at'],
 			'field_set_hash'       => $consent['field_set_hash'],
-			'purposes'             => array_values( $consent['purposes'] ),
+			'purposes'             => array_values( $purposes ),
 			'recipient_categories' => array( 'arvaseo' ),
 		);
 	}
@@ -173,6 +241,7 @@ final class PrivacyService {
 		}
 		$content  = '<p>' . esc_html__( 'This site uses the Arva SEO Connector to work with Arva SEO, an SEO service used by the site owner or their agency.', 'arvaseo-connector' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'With an administrator’s consent, the connector sends Arva SEO technical information about this website: the installed plugins and themes with their versions and update state, and the results of WordPress health checks (software versions and configuration facts such as whether HTTPS is used). It does not send visitor information, comments, form submissions, user accounts or email addresses.', 'arvaseo-connector' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'The plugin’s security scan runs on this site’s own server and only looks at the site’s files and settings. If an administrator also agrees, its results (the kind of each problem found and the path of the file concerned) are sent to Arva SEO. They contain no information about visitors.', 'arvaseo-connector' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'Content written in Arva SEO may be sent to this site as posts or pages. If an administrator allows it, Arva SEO may also update the SEO titles and meta descriptions of published content; the previous title and description of each changed page are sent to Arva SEO so the change can be undone. The connector keeps a log of its own activity, which may record which administrator performed an action (by user ID), for the retention period set in the plugin.', 'arvaseo-connector' ) . '</p>';
 		wp_add_privacy_policy_content( 'Arva SEO Connector', wp_kses_post( $content ) );
 	}

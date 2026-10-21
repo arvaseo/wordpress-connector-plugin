@@ -48,6 +48,7 @@ final class Plugin {
 		CronManager::init();
 		\ArvaSEO\Connector\Speed\Runtime::init();
 		\ArvaSEO\Connector\Security\Scanner::init();
+		\ArvaSEO\Connector\Security\Report::init();
 		if ( is_admin() ) {
 			AdminController::init();
 		}

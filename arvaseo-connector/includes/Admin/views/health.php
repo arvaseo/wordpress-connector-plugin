@@ -19,6 +19,10 @@ defined( 'ABSPATH' ) || exit;
 
 	$arvaseo_latest     = HealthSnapshotService::latest();
 	$arvaseo_assessment = AssessmentService::get();
+	if ( null !== $arvaseo_assessment ) {
+		// Known vulnerabilities and the security scan's own results are shown in Security above.
+		$arvaseo_assessment['findings'] = array_values( array_filter( (array) $arvaseo_assessment['findings'], static fn ( array $f ): bool => ! in_array( $f['rule_id'] ?? '', array( 'known_vulnerability', 'security_scan' ), true ) ) );
+	}
 	$arvaseo_changes    = HealthSnapshotService::changes();
 	$arvaseo_health     = SyncState::get( 'health' );
 	$arvaseo_status_ui  = array(

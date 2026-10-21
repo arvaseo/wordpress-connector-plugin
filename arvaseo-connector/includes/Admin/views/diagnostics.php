@@ -48,6 +48,34 @@ defined( 'ABSPATH' ) || exit;
 			<label class="arvaseo-toggle"><input type="checkbox" name="consent" value="1" <?php checked( null !== $arvaseo_consent ); ?> /><span class="arvaseo-switch" aria-hidden="true"></span><span><span class="arvaseo-label"><?php esc_html_e( 'Share the plugin list and Website Health checks listed below with Arva SEO', 'arvaseo-connector' ); ?></span></span></label>
 			<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark"><?php esc_html_e( 'Save data-sharing choice', 'arvaseo-connector' ); ?></button></div>
 		</form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 14px">
+			<input type="hidden" name="action" value="arvaseo_connector_consent_security" />
+			<?php wp_nonce_field( 'arvaseo_connector_consent_security' ); ?>
+			<?php $arvaseo_security = PrivacyService::security_consent(); ?>
+			<label class="arvaseo-toggle"><input type="checkbox" name="consent" value="1" <?php checked( null !== $arvaseo_security ); ?> <?php disabled( null === $arvaseo_consent ); ?> /><span class="arvaseo-switch" aria-hidden="true"></span><span><span class="arvaseo-label"><?php esc_html_e( 'Also share the security scan’s results', 'arvaseo-connector' ); ?></span><span class="arvaseo-hint" style="display: block">
+				<?php
+				if ( null === $arvaseo_consent ) {
+					esc_html_e( 'Share the plugin list and Website Health checks first.', 'arvaseo-connector' );
+				} elseif ( null !== $arvaseo_security ) {
+					/* translators: %s: date and time. */
+					echo esc_html( sprintf( __( 'Shared since %s', 'arvaseo-connector' ), AdminController::when( $arvaseo_security['consented_at'] ) ) );
+				} else {
+					esc_html_e( 'What each problem is and the file’s path inside the site, never the files themselves.', 'arvaseo-connector' );
+				}
+				?>
+			</span></span></label>
+			<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save this choice', 'arvaseo-connector' ); ?></button></div>
+		</form>
+		<details class="arvaseo-more">
+			<summary><?php esc_html_e( 'Security scan results: every field', 'arvaseo-connector' ); ?></summary>
+			<div class="arvaseo-more-in">
+				<ul class="arvaseo-bullets" style="margin: 0">
+					<?php foreach ( PrivacyService::security_field_set() as $arvaseo_field ) : ?>
+						<li><strong><?php echo esc_html( $arvaseo_field['field'] ); ?></strong>: <?php echo esc_html( $arvaseo_field['purpose'] ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+		</details>
 		<?php foreach ( PrivacyService::field_set() as $arvaseo_group => $arvaseo_fields ) : ?>
 			<details class="arvaseo-more">
 				<summary><?php echo 'inventory' === $arvaseo_group ? esc_html__( 'Plugin and theme list: every field', 'arvaseo-connector' ) : esc_html__( 'Website Health: every field', 'arvaseo-connector' ); ?></summary>

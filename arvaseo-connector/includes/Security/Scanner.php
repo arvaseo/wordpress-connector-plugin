@@ -276,7 +276,7 @@ final class Scanner {
 			if ( $moved && microtime( true ) >= $until ) {
 				return $state;
 			}
-			$moved = true;
+			$moved                  = true;
 			list( $slug, $version ) = $queue[ (int) $state['plugin_index'] ];
 			$reachable              = true;
 			$sums                   = Checksums::plugin( $slug, $version, $reachable );

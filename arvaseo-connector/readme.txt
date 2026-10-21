@@ -1,18 +1,18 @@
-=== Arva SEO – Speed Booster & SEO Connector ===
+=== Arva SEO – Speed Booster & Security Scanner ===
 Contributors: arvaseo, avdajay
-Tags: pagespeed, performance, core web vitals, seo, site health
+Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.9.0
+Stable tag: 2.0.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-PageSpeed fixes you switch on one at a time, and a connection to Arva SEO for Website Health, content and SEO title updates.
+PageSpeed fixes you switch on one at a time, a free security scan of your files, and a connection to Arva SEO for health, content and SEO titles.
 
 == Description ==
 
-Fix the speed problems Google's PageSpeed test finds, one switch at a time, and connect this site to a website in your Arva SEO workspace.
+Fix the speed problems Google's PageSpeed test finds, one switch at a time, scan the site for security problems, and connect it to a website in your Arva SEO workspace.
 
 = PageSpeed fixes =
 
@@ -39,10 +39,27 @@ If a speed plugin such as WP Rocket, LiteSpeed Cache, Perfmatters or FlyingPress
 
 If your site is behind Cloudflare, connect it on the Speed page with a Cloudflare API token. Cloudflare's copy of your pages is then cleared whenever a fix goes on or off for visitors, your choices change, or new optimized CSS, WebP copies or local fonts are ready, so visitors and your next PageSpeed test see the change straight away. A post's own pages (the post, the homepage, the blog page, the feed and its category and tag pages) are cleared when it's published, updated or unpublished. The plugin also checks whether Cloudflare's Rocket Loader is on, which clashes with Defer scripts. It works without an Arva SEO account.
 
+= Security scan =
+
+Arva SEO → Health → Security scans this site on your own server: every week, and whenever you choose Scan now. It runs in the background in small batches, so the site stays fast, and it works without an Arva SEO account. It only reports what it finds: it never changes or deletes a file.
+
+* **Changed WordPress files**: WordPress's own files compared with WordPress.org's official checksums for your version, including missing files and extra PHP files in wp-admin and wp-includes.
+* **Changed plugin files**: each plugin from the WordPress.org directory compared with its official checksums at the installed version, including PHP files it doesn't ship.
+* **Code where it shouldn't be**: PHP in the uploads folder, code disguised as an image, and unexpected PHP files in the site's main folder.
+* **Suspicious code**: patterns found in hacked websites (web shells, hidden or encoded code that runs, injected scripts and redirects, .htaccess rules that send search visitors elsewhere) in files that aren't official copies, such as themes and premium plugins. The patterns come with the plugin and are updated with it.
+* **Exposed files**: a .env file, the .git folder, the debug log, database exports and backups (including copies of wp-config.php) that anyone could download, and folder listings in uploads.
+* **Settings that make an attack easier**: file editing in the dashboard, an administrator called "admin", XML-RPC, and lists of usernames.
+
+Each result says what it means and what to do. "This is expected" hides one you trust, and it's shown again if the file changes. Serious results come first on Overview. A scan finds known signs of trouble; it can't prove a site is clean, so keep WordPress, plugins and themes updated and keep backups.
+
+When the site is connected to Arva SEO, Health also lists known vulnerabilities in your installed plugins, themes and WordPress version, with the fixed version and a link to each record (vulnerability data: Wordfence Intelligence).
+
 = Arva SEO Connector =
 
 * **Secure connection.** Approve the connection on app.arvaseo.com. No Arva SEO password is ever entered in WordPress; the site gets its own revocable, encrypted credentials.
 * **Plugin inventory.** Installed plugins (including must-use and drop-ins) and themes with their versions, active state and update state, from WordPress's own data. Missing or old update data is shown as unknown, never as up to date.
+* **Known vulnerabilities.** Arva SEO checks the plugin list it receives against Wordfence Intelligence's vulnerability data every day, and emails you when a new one affects an installed version. Nothing extra is sent for this.
+* **Security scan results (optional).** If an administrator also agrees to share them (a separate choice), the scan's results go to Arva SEO: Website Health shows them with what to do, serious ones are emailed, and they can become tasks and appear in reports.
 * **Website Health.** Around 40 checks across core, plugins and themes, runtime, security, reliability, performance and SEO, using WordPress's Site Health tests and APIs. Arva SEO turns them into findings that say what is wrong, why it matters, how to fix it, who should do it, and how to verify and undo the change. Nothing is ever changed on your site automatically.
 * **Content from Arva SEO.** Drafts written in Arva SEO arrive as drafts, pending review, scheduled or published posts, but never beyond the publishing mode you choose here (Draft only by default).
 * **SEO titles and descriptions.** If an administrator allows it (off by default), the SEO titles and meta descriptions your team approves in Arva SEO are written to Yoast SEO or Rank Math for published posts, pages and products and the homepage, in bulk. Only those two fields change, the page caches are cleared, and every change can be undone from Arva SEO.
@@ -62,7 +79,19 @@ For reliable scheduled publishing on low-traffic sites, run WP-Cron from a serve
 
 = Does the plugin change my site? =
 
-Only in the ways you switch on. PageSpeed fixes change how your pages load, only after you turn each one on, and turning it off undoes it. Website Health is read-only and every finding is a recommendation. Arva SEO can only create or update posts it sent, within your publishing mode, and, if you allow it in Settings, change the SEO title and meta description of published content in Yoast SEO or Rank Math.
+Only in the ways you switch on. PageSpeed fixes change how your pages load, only after you turn each one on, and turning it off undoes it. Website Health and the security scan are read-only: they report, and every finding is a recommendation. Arva SEO can only create or update posts it sent, within your publishing mode, and, if you allow it in Settings, change the SEO title and meta description of published content in Yoast SEO or Rank Math.
+
+= Is the security scan a firewall or a malware cleaner? =
+
+No. It finds problems and says what to do: it doesn't block traffic or log-in attempts, and it never changes or deletes a file. If it finds a hack, the results say where to start (reinstall the official copy, delete files that shouldn't be there, change passwords), and your host or developer can help with a clean-up.
+
+= Does the security scan slow my site down? =
+
+It runs in the background in batches of about 20 seconds with pauses in between, reading files only up to 2 MB for patterns, and stops after 150,000 files. You can stop a scan at any time, and turn the weekly scan off in Settings.
+
+= What does the security scan send to Arva SEO? =
+
+Nothing, unless the site is connected and an administrator ticks "Also share the security scan's results" when connecting or in Settings → Diagnostics and data sharing. Then it sends each open problem's kind, severity and the file's path inside the site (for suspicious code, the pattern's name, the line and the start of that line), and how many files the scan checked. The files themselves are never sent.
 
 = Can a PageSpeed fix break my site? =
 
@@ -127,6 +156,7 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 
 * **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, and your data-sharing choice.
 * **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
+* **Security scan results (off by default, a separate choice):** after each scan, when an administrator agreed to share them, each open problem's kind, severity, a key, the file's path inside the site, and for suspicious code the pattern's name, line and the start of that line, with how many files were checked. Never the files themselves.
 * **Content:** every 5 minutes the plugin asks api.arvaseo.com for content you sent from Arva SEO, and reports back the post ID, status and link it created.
 * **Switching fixes from Arva SEO (off by default):** when allowed, the plugin asks api.arvaseo.com every 5 minutes (and when Arva SEO signals it) for fixes switched there, and reports back what it did and each fix's state.
 * **Signed requests from Arva SEO:** api.arvaseo.com may call this site's /wp-json/arvaseo/v1/events endpoint to ask it to check for content or run a recheck sooner.
@@ -135,6 +165,8 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 * **Faster Google Fonts, "Serve them from your site" (off by default):** the plugin downloads the Google Fonts stylesheets and font files your pages already use from fonts.googleapis.com and fonts.gstatic.com, once, into your uploads folder, so visitors' browsers no longer connect to Google for them. Google's privacy policy: https://policies.google.com/privacy
 * **Cloudflare (off until you connect it on the Speed page):** with the API token you enter, the plugin asks api.cloudflare.com which zone your site's domain is in, reads the Rocket Loader setting, and asks Cloudflare to clear its cached copy of your pages: every page when a fix or choice changes what visitors get, and a post's own page addresses when it's published, updated or unpublished. Only page addresses and the token are sent. Cloudflare's terms: https://www.cloudflare.com/website-terms/ · Privacy policy: https://www.cloudflare.com/privacypolicy/
 * **Click-to-play videos (a PageSpeed fix, off by default):** visitors' browsers load each video's preview picture from YouTube (i.ytimg.com), and the player from youtube-nocookie.com only when they press play. YouTube's terms: https://www.youtube.com/t/terms · Google's privacy policy: https://policies.google.com/privacy
+
+The security scan also asks WordPress.org for the official checksums of your WordPress version (api.wordpress.org/core/checksums) and of each installed plugin from its directory (downloads.wordpress.org/plugin-checksums), sending only the version number, language and plugin folder names, and it requests a few files from your own site to see whether they can be downloaded. WordPress.org's privacy policy: https://wordpress.org/about/privacy/
 
 No visitor data, user accounts, emails, passwords, settings or existing content is ever sent. Arva SEO terms: https://arvaseo.com/terms/ · Privacy policy: https://arvaseo.com/privacy/
 
@@ -152,8 +184,12 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 4. Overview: what needs you first, with speed, Website Health and content at a glance.
 5. Settings: choose how far Arva SEO can go when it sends posts, from drafts only to full publishing.
 6. Leave things alone: pages, images, videos and maps the speed fixes skip.
+7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.0.0 =
+Now Arva SEO – Speed Booster & Security Scanner: a free security scan on Health, weekly and on Scan now. It only reports what it finds; nothing on your site changes.
 
 = 1.9.0 =
 Cloudflare support: connect it on the Speed page, and Cloudflare's copy of your pages is cleared whenever a fix changes what visitors get.
@@ -183,6 +219,14 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.0.0 =
+* New name: Arva SEO – Speed Booster & Security Scanner. Your settings, fixes and connection stay as they are.
+* New: a security scan on Health → Security, on your own server, weekly (Settings can turn that off) and on Scan now, in background batches that resume where they stopped. It works without an account and only reports.
+* It compares WordPress's own files and your WordPress.org plugins with their official checksums (changed, missing and extra files), looks for PHP in uploads, code disguised as images and unexpected PHP in the main folder, matches patterns found in hacked websites in files that aren't official copies, and checks for exposed .env, .git, debug log and backup files, folder listings, file editing in the dashboard, an "admin" administrator, XML-RPC and username lists.
+* Each result says what it means and what to do; "This is expected" hides one until the file changes. Serious results come first on Overview.
+* New, when connected: known vulnerabilities in your installed plugins, themes and WordPress version on Health, from Wordfence Intelligence, with a link to each record and the data's copyright notices.
+* New, optional: share the scan's results with Arva SEO (a separate choice when connecting, on Health, or in Settings → Diagnostics and data sharing), for Website Health, email alerts, tasks and reports. Withdrawing the plugin list and health consent withdraws it too.
 
 = 1.9.0 =
 * New: Cloudflare, on the Speed page. Connect it with an API token, and Cloudflare's copy of every page is cleared when a fix goes on or off for visitors, your choices change, or new optimized CSS, WebP copies or local fonts are ready. Trying a fix clears nothing, since only you see it.
