@@ -106,7 +106,8 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app textarea { display: block; width: 100%; max-width: 620px; min-height: 76px; margin-top: 8px; padding: 10px 12px; font: 13px/1.5 var(--a-mono); }
 .arvaseo-app select { height: 40px; min-height: 40px; min-width: 220px; padding: 0 36px 0 14px; border-radius: 999px; font-size: 14px; font-weight: 500; margin-top: 8px; background-position: right 12px top 55%; }
 .arvaseo-app input[type="number"] { height: 40px; width: 90px; padding: 0 12px; margin-top: 8px; }
-.arvaseo-app textarea:focus, .arvaseo-app select:focus, .arvaseo-app input[type="number"]:focus { border-color: var(--a-ink); box-shadow: 0 0 0 1px var(--a-ink); outline: none; }
+.arvaseo-app input[type="password"] { display: block; width: 100%; max-width: 460px; height: 40px; margin-top: 8px; padding: 0 12px; border: 1px solid var(--a-border-strong); border-radius: 10px; background-color: var(--a-raised); color: var(--a-ink); font: 13px/1.5 var(--a-mono); box-shadow: none; }
+.arvaseo-app textarea:focus, .arvaseo-app select:focus, .arvaseo-app input[type="number"]:focus, .arvaseo-app input[type="password"]:focus { border-color: var(--a-ink); box-shadow: 0 0 0 1px var(--a-ink); outline: none; }
 .arvaseo-app input[type="checkbox"], .arvaseo-app input[type="radio"] { accent-color: var(--a-ink); }
 .arvaseo-label { font-weight: 600; display: block; }
 .arvaseo-field { padding: 18px 0; border-top: 1px solid var(--a-border); }

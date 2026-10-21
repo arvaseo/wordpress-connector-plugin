@@ -105,6 +105,7 @@ final class LocalFonts {
 			self::failed( $key, 'stylesheet_write' );
 			return;
 		}
+		Fixes::pages_changed( 'fonts' );
 		AuditLogger::info(
 			'speed.fonts_copied',
 			/* translators: %d: number of font files. */

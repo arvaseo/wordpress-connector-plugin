@@ -141,6 +141,7 @@ final class CronManager {
 	public static function clear_all(): void {
 		self::clear_sync();
 		wp_clear_scheduled_hook( 'arvaseo_connector_maintenance' );
+		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\Cloudflare::HOOK );
 	}
 
 	/**

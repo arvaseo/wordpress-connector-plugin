@@ -223,6 +223,9 @@ defined( 'ABSPATH' ) || exit;
 						/* translators: %d: number of speed fixes the latest test asks for. */
 						echo AdminController::badge( 'acc', sprintf( _n( '%d asked for', '%d asked for', $arvaseo_asked, 'arvaseo-connector' ), $arvaseo_asked ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
 					}
+					if ( \ArvaSEO\Connector\Speed\Cloudflare::connected() ) {
+						echo AdminController::badge( \ArvaSEO\Connector\Speed\Cloudflare::details()['refused'] ? 'bad' : 'neutral', __( 'Cloudflare connected', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+					}
 					?>
 				</div>
 				<a class="arvaseo-more-link" href="<?php echo esc_url( admin_url( 'admin.php?page=arvaseo-speed' ) ); ?>"><?php esc_html_e( 'Open Speed', 'arvaseo-connector' ); ?> <?php echo $arvaseo_arrow; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?></a>

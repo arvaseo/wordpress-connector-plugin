@@ -21,6 +21,7 @@ use ArvaSEO\Connector\Inventory\PluginInventoryService;
 use ArvaSEO\Connector\Logging\AuditLogger;
 use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Settings;
+use ArvaSEO\Connector\Speed\Cloudflare;
 use ArvaSEO\Connector\Speed\Fixes;
 use ArvaSEO\Connector\Site\SiteRegistrationService;
 
@@ -71,6 +72,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_speed_options', array( self::class, 'speed_options' ) );
 		add_action( 'admin_post_arvaseo_connector_webp', array( self::class, 'webp' ) );
 		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
+		add_action( 'admin_post_arvaseo_connector_cloudflare', array( self::class, 'cloudflare' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
 		add_filter( 'submenu_file', array( self::class, 'submenu_file' ) );
@@ -277,6 +279,14 @@ final class AdminController {
 		if ( TokenStore::unreadable() || 'reauth_required' === ( $connection['status'] ?? '' ) ) {
 			$needs[] = array( 'bad', 'alert', __( 'Reconnect to Arva SEO', 'arvaseo-connector' ), __( 'The connection stopped working, so nothing is sent or received until you connect again.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-connector#arvaseo-connect' ), __( 'Reconnect', 'arvaseo-connector' ) );
 		}
+		$cloudflare = Cloudflare::details();
+		if ( Cloudflare::connected() && $cloudflare['refused'] ) {
+			$needs[] = array( 'bad', 'cloud', __( 'Cloudflare refused the saved token', 'arvaseo-connector' ), __( 'Its copy of your pages isn’t cleared any more, so visitors may get old pages after a change. Connect it again with a working token.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-speed#arvaseo-cloudflare' ), __( 'Fix Cloudflare', 'arvaseo-connector' ) );
+		} elseif ( Cloudflare::rocket_loader_clash() ) {
+			$needs[] = array( 'warn', 'cloud', __( 'Rocket Loader is on in Cloudflare', 'arvaseo-connector' ), __( 'It changes how scripts load, as Defer scripts and Delay chat widgets do here. Use one or the other, or menus and forms may stop working.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-speed#arvaseo-cloudflare' ), __( 'Open Speed', 'arvaseo-connector' ) );
+		} elseif ( Cloudflare::seen() && ! Cloudflare::connected() ) {
+			$needs[] = array( 'acc', 'cloud', __( 'This website is behind Cloudflare', 'arvaseo-connector' ), __( 'Connect Cloudflare, so visitors and your next PageSpeed test get a fix as soon as you turn it on.', 'arvaseo-connector' ), admin_url( 'admin.php?page=arvaseo-speed#arvaseo-cloudflare' ), __( 'Connect Cloudflare', 'arvaseo-connector' ) );
+		}
 		if ( ! TokenStore::is_connected() ) {
 			return $needs;
 		}
@@ -352,6 +362,7 @@ final class AdminController {
 			'eye'      => '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
 			'check'    => '<path d="M20 6 9 17l-5-5"/>',
 			'arrow'    => '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+			'cloud'    => '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
 			'pencil'   => '<path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.85.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.85z"/>',
 		);
 		return '<svg width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' . ( $size <= 16 ? '2.25' : '1.85' ) . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . ( $paths[ $name ] ?? '' ) . '</svg>';
@@ -424,9 +435,22 @@ final class AdminController {
 			'speed_not_written'              => array( 'error', __( 'WordPress couldn’t write to your .htaccess file, so nothing changed. Ask your host to make it writable.', 'arvaseo-connector' ) ),
 			'speed_unchecked'                => array( 'error', __( 'Your site couldn’t be checked from your server (some hosts block this), so the rules were taken out again to be safe. Nothing changed. Your host can add them for you: they’re listed on the card.', 'arvaseo-connector' ) ),
 			'speed_server_error'             => array( 'error', __( 'Your server answered with an error once the rules were in, so they were taken out straight away. Your site is as before. Your host can say which rule it doesn’t allow.', 'arvaseo-connector' ) ),
+			'cloudflare_connected'           => array( 'success', __( 'Cloudflare is connected. From now on its copy of your pages is cleared whenever a change here affects what visitors get.', 'arvaseo-connector' ) ),
+			'cloudflare_token_format'        => array( 'error', __( 'That doesn’t look like a Cloudflare API token. Copy the token Cloudflare showed when you created it (not the Global API Key).', 'arvaseo-connector' ) ),
+			'cloudflare_token_refused'       => array( 'error', __( 'Cloudflare didn’t accept that token. Check that it’s active and has Zone: Read and Cache Purge for this website’s domain.', 'arvaseo-connector' ) ),
+			'cloudflare_zone_missing'        => array( 'error', __( 'The token works, but it can’t see this website’s domain. Give it access to the zone (Zone Resources) for this domain, or check that the domain is on Cloudflare.', 'arvaseo-connector' ) ),
+			'cloudflare_unreachable'         => array( 'error', __( 'Cloudflare couldn’t be reached from your server. Try again in a minute; if it keeps happening, your host may block outgoing connections.', 'arvaseo-connector' ) ),
+			'cloudflare_cleared'             => array( 'success', __( 'Cloudflare’s copy of every page was cleared. Visitors get the current pages from now on.', 'arvaseo-connector' ) ),
+			'cloudflare_clear_failed'        => array( 'error', __( 'Cloudflare didn’t clear its copy. The card below says what it answered.', 'arvaseo-connector' ) ),
+			'cloudflare_checked'             => array( 'success', __( 'Checked with Cloudflare.', 'arvaseo-connector' ) ),
+			'cloudflare_saved'               => array( 'success', __( 'Your Cloudflare choice was saved.', 'arvaseo-connector' ) ),
+			'cloudflare_disconnected'        => array( 'success', __( 'Cloudflare is disconnected and its token was removed from this site. Nothing is cleared from now on.', 'arvaseo-connector' ) ),
 		);
 		if ( isset( $map[ $code ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
+		}
+		if ( in_array( $code, array( 'speed_on', 'speed_off', 'speed_options_saved', 'speed_css_ready', 'speed_css_regenerate', 'speed_webp_undone' ), true ) ) {
+			self::cloudflare_notice();
 		}
 		if ( TokenStore::unreadable() ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'The saved Arva SEO credentials can’t be read (the site’s security keys or ARVASEO_CONNECTOR_ENCRYPTION_KEY changed). Disconnect and connect again.', 'arvaseo-connector' ) . '</p></div>';
@@ -658,6 +682,55 @@ final class AdminController {
 	}
 
 	/**
+	 * Cloudflare: connect with a token, clear its copy, check again, choose, disconnect.
+	 */
+	public static function cloudflare(): void {
+		self::guard( 'arvaseo_connector_cloudflare', Capabilities::MANAGE );
+		$do = isset( $_POST['do'] ) ? sanitize_key( wp_unslash( $_POST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		if ( 'connect' === $do ) {
+			$token  = isset( $_POST['cloudflare_token'] ) ? sanitize_text_field( wp_unslash( $_POST['cloudflare_token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+			$error  = Cloudflare::connect( $token );
+			$notice = null === $error ? 'cloudflare_connected' : 'cloudflare_' . $error;
+		} elseif ( 'purge' === $do ) {
+			$notice = Cloudflare::purge_everything( 'manual' ) ? 'cloudflare_cleared' : 'cloudflare_clear_failed';
+		} elseif ( 'check' === $do ) {
+			Cloudflare::check();
+			$notice = 'cloudflare_checked';
+		} elseif ( 'options' === $do ) {
+			Cloudflare::set_posts( ! empty( $_POST['clear_posts'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+			$notice = 'cloudflare_saved';
+		} elseif ( 'disconnect' === $do ) {
+			Cloudflare::disconnect();
+			$notice = 'cloudflare_disconnected';
+		} else {
+			$notice = 'speed_invalid';
+		}
+		wp_safe_redirect( add_query_arg( 'arvaseo_notice', $notice, admin_url( 'admin.php?page=arvaseo-speed' ) ) . '#arvaseo-cloudflare' );
+		exit;
+	}
+
+	/**
+	 * After a change on Speed: what Cloudflare did with its copy of the pages.
+	 */
+	private static function cloudflare_notice(): void {
+		if ( ! Cloudflare::connected() ) {
+			return;
+		}
+		$details = Cloudflare::details();
+		$last    = $details['last'];
+		if ( $details['everything'] ) {
+			$message = array( 'info', __( 'Cloudflare’s copy of your pages is cleared within a minute.', 'arvaseo-connector' ) );
+		} elseif ( null !== $last && 'everything' === $last['what'] && strtotime( $last['at'] ) > time() - 2 * MINUTE_IN_SECONDS ) {
+			$message = $last['ok']
+				? array( 'success', __( 'Cloudflare’s copy of your pages was cleared too, so visitors get the change straight away.', 'arvaseo-connector' ) )
+				: array( 'error', __( 'Cloudflare’s copy of your pages couldn’t be cleared. The Cloudflare card below says why; you can clear it there.', 'arvaseo-connector' ) );
+		} else {
+			return;
+		}
+		printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $message[0] ), esc_html( $message[1] ) );
+	}
+
+	/**
 	 * For a week after Defer scripts goes on: where to turn it off if something stopped working.
 	 */
 	public static function defer_notice(): void {
@@ -727,6 +800,7 @@ final class AdminController {
 				'confirmRisky'         => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
 				'confirmCssRegenerate' => __( 'Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance.', 'arvaseo-connector' ),
 				'confirmWebpUndo'      => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
+				'confirmCloudflareOff' => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
 			)
 		);
 	}

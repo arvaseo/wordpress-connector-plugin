@@ -527,6 +527,7 @@ final class Exclusions {
 			delete_post_meta( $post_id, self::META );
 		}
 		self::reset();
+		Fixes::pages_changed( 'exclusions' );
 		AuditLogger::info(
 			$skip ? 'speed.page_left_alone' : 'speed.page_used_again',
 			sprintf(

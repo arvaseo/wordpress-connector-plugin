@@ -492,6 +492,7 @@ JS;
 			wp_schedule_single_event( time() + 2 * MINUTE_IN_SECONDS, self::HOOK );
 		}
 		if ( $out['ready'] > 0 ) {
+			Fixes::pages_changed( 'css' );
 			AuditLogger::info(
 				'speed.css_ready',
 				/* translators: %d: number of page types. */
@@ -547,6 +548,7 @@ JS;
 			unset( $index[ $signature ]['error'], $index[ $signature ]['retry_at'] );
 		}
 		self::save_index( $index );
+		Fixes::pages_changed( 'css' );
 		AuditLogger::info( 'speed.css_regenerate', __( 'PageSpeed fixes: optimized CSS will be worked out again.', 'arvaseo-connector' ) );
 	}
 

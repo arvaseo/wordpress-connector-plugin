@@ -115,6 +115,7 @@ final class WebpLibrary {
 		if ( count( $ids ) < self::BATCH || array() === self::next_ids( $progress['last_id'], 1 ) ) {
 			$progress['running']     = false;
 			$progress['finished_at'] = gmdate( 'c' );
+			Fixes::pages_changed( 'webp' );
 			AuditLogger::info(
 				'speed.webp_finished',
 				/* translators: %d: number of images. */
@@ -191,6 +192,7 @@ final class WebpLibrary {
 			$removed += self::delete_copies( $id );
 		}
 		delete_option( self::OPTION );
+		Fixes::pages_changed( 'webp' );
 		AuditLogger::info( 'speed.webp_undone', __( 'PageSpeed fixes: the WebP copies of existing images were removed.', 'arvaseo-connector' ), array( 'files' => $removed ) );
 		return $removed;
 	}

@@ -495,6 +495,9 @@ final class Fixes {
 			'since' => $from === $state ? $data['fixes'][ $id ]['since'] : Ids::iso(),
 		);
 		self::save( $data );
+		if ( ( 'on' === $from ) !== ( 'on' === $state ) ) {
+			self::pages_changed( 'fix' );
+		}
 		AuditLogger::info(
 			'speed.fix_changed',
 			/* translators: 1: fix name, 2: new state (off, trying, on). */
@@ -561,7 +564,24 @@ final class Fixes {
 		}
 		self::save( $data );
 		Exclusions::reset();
+		if ( array() !== array_diff( array_keys( $choices ), array( 'remote' ) ) ) {
+			self::pages_changed( 'choices' );
+		}
 		AuditLogger::info( 'speed.options_saved', __( 'PageSpeed fix choices saved.', 'arvaseo-connector' ), array( 'changed' => array_keys( $choices ) ) );
+	}
+
+	/**
+	 * What visitors get changed on every page: page caches (Cloudflare here) clear their copies.
+	 *
+	 * @param string $why fix, choices, css, webp, fonts or exclusions.
+	 */
+	public static function pages_changed( string $why ): void {
+		/**
+		 * After a change that alters what visitors get on the site's pages.
+		 *
+		 * @param string $why fix, choices, css, webp, fonts or exclusions.
+		 */
+		do_action( 'arvaseo_connector_pages_changed', $why );
 	}
 
 	/**

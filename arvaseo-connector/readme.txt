@@ -4,7 +4,7 @@ Tags: pagespeed, performance, core web vitals, seo, site health
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,10 @@ If you allow it on the Speed page ("Let Arva SEO switch these fixes", off by def
 
 If a speed plugin such as WP Rocket, LiteSpeed Cache, Perfmatters or FlyingPress already does one of these jobs, that fix stays off and the page tells you to use that plugin's setting, so pages are never processed twice. When the site is connected, the page also shows which fixes your homepage's latest PageSpeed test asks for, and Arva SEO's PageSpeed results link straight to the right switch.
 
+= Cloudflare =
+
+If your site is behind Cloudflare, connect it on the Speed page with a Cloudflare API token. Cloudflare's copy of your pages is then cleared whenever a fix goes on or off for visitors, your choices change, or new optimized CSS, WebP copies or local fonts are ready, so visitors and your next PageSpeed test see the change straight away. A post's own pages (the post, the homepage, the blog page, the feed and its category and tag pages) are cleared when it's published, updated or unpublished. The plugin also checks whether Cloudflare's Rocket Loader is on, which clashes with Defer scripts. It works without an Arva SEO account.
+
 = Arva SEO Connector =
 
 * **Secure connection.** Approve the connection on app.arvaseo.com. No Arva SEO password is ever entered in WordPress; the site gets its own revocable, encrypted credentials.
@@ -63,6 +67,10 @@ Only in the ways you switch on. PageSpeed fixes change how your pages load, only
 = Can a PageSpeed fix break my site? =
 
 Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Delay chat widgets and trackers, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. Browser caching and compression changes your server's settings, so it can't be tried first; it checks your site straight away instead (see below). If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. If you use a page cache, clear it after changing a fix.
+
+= Does it work with Cloudflare? =
+
+Yes. In Arva SEO → Speed → Cloudflare, paste a Cloudflare API token with Zone → Zone → Read and Zone → Cache Purge → Purge for your site's domain (add Zone → Zone Settings → Read so Rocket Loader can be checked). The token is stored encrypted and only ever sent to Cloudflare. If Cloudflare's own plugin already clears a post's pages when it changes, switch that part off here; the plugin still clears Cloudflare's copy when a fix changes.
 
 = Can I leave a page, script or image alone? =
 
@@ -125,6 +133,7 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 * **Featured images (off by default):** only from image hosts you approve.
 * **Load styles faster and Remove unused CSS (PageSpeed fixes, off by default, only when connected):** the plugin sends api.arvaseo.com the address of one public page of each type, and Arva SEO's renderer loads it like a visitor, as a phone and as a computer, to work out its styles; the critical and used CSS come back to this site. Only page addresses are sent. While Arva SEO loads a page, the address carries a short-lived signed parameter so the page is served with its original styles.
 * **Faster Google Fonts, "Serve them from your site" (off by default):** the plugin downloads the Google Fonts stylesheets and font files your pages already use from fonts.googleapis.com and fonts.gstatic.com, once, into your uploads folder, so visitors' browsers no longer connect to Google for them. Google's privacy policy: https://policies.google.com/privacy
+* **Cloudflare (off until you connect it on the Speed page):** with the API token you enter, the plugin asks api.cloudflare.com which zone your site's domain is in, reads the Rocket Loader setting, and asks Cloudflare to clear its cached copy of your pages: every page when a fix or choice changes what visitors get, and a post's own page addresses when it's published, updated or unpublished. Only page addresses and the token are sent. Cloudflare's terms: https://www.cloudflare.com/website-terms/ · Privacy policy: https://www.cloudflare.com/privacypolicy/
 * **Click-to-play videos (a PageSpeed fix, off by default):** visitors' browsers load each video's preview picture from YouTube (i.ytimg.com), and the player from youtube-nocookie.com only when they press play. YouTube's terms: https://www.youtube.com/t/terms · Google's privacy policy: https://policies.google.com/privacy
 
 No visitor data, user accounts, emails, passwords, settings or existing content is ever sent. Arva SEO terms: https://arvaseo.com/terms/ · Privacy policy: https://arvaseo.com/privacy/
@@ -145,6 +154,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 6. Leave things alone: pages, images, videos and maps the speed fixes skip.
 
 == Upgrade Notice ==
+
+= 1.9.0 =
+Cloudflare support: connect it on the Speed page, and Cloudflare's copy of your pages is cleared whenever a fix changes what visitors get.
 
 = 1.8.0 =
 A new look, with an Overview of what needs you first. Every fix and setting stays exactly as it was.
@@ -171,6 +183,14 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 1.9.0 =
+* New: Cloudflare, on the Speed page. Connect it with an API token, and Cloudflare's copy of every page is cleared when a fix goes on or off for visitors, your choices change, or new optimized CSS, WebP copies or local fonts are ready. Trying a fix clears nothing, since only you see it.
+* New: a post's own pages on Cloudflare (the post, the homepage, the blog page, the feed and its category and tag pages) are cleared when it's published, updated or unpublished, including content sent from Arva SEO. It can be switched off if Cloudflare's own plugin does it.
+* New: "Clear Cloudflare's copy now", the last clear and its result, and a warning when Cloudflare's Rocket Loader is on alongside Defer scripts or Delay chat widgets and trackers.
+* New: when an administrator opens the site through Cloudflare, Overview suggests connecting it; a token Cloudflare stops accepting shows there too.
+* For developers: the arvaseo_connector_pages_changed action runs after any change that alters what visitors get, so other page caches can clear their copies.
+* The Cloudflare token is stored encrypted and removed when you disconnect or delete the plugin. Diagnostics show only whether Cloudflare is connected and the last clear.
 
 = 1.8.0 =
 * New: a redesigned admin in Arva SEO's look, with tabs for Overview, Speed, Content, Health, Activity and Settings.

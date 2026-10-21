@@ -76,6 +76,7 @@ final class Runtime {
 		LocalFonts::init();
 		WebpLibrary::init();
 		CssOptimizer::init();
+		Cloudflare::init();
 	}
 
 	/**

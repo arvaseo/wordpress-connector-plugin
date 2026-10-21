@@ -110,6 +110,15 @@ final class DiagnosticsService {
 					'elements'     => count( \ArvaSEO\Connector\Speed\Fixes::stored()['exclude_elements'] ),
 					'eager_images' => \ArvaSEO\Connector\Speed\Fixes::stored()['eager_images'],
 				),
+				// Cloudflare: whether it's in front and connected, and the last clear (no token or zone).
+				'cloudflare'  => array(
+					'seen'          => \ArvaSEO\Connector\Speed\Cloudflare::seen(),
+					'connected'     => \ArvaSEO\Connector\Speed\Cloudflare::connected(),
+					'token_refused' => \ArvaSEO\Connector\Speed\Cloudflare::details()['refused'],
+					'rocket_loader' => \ArvaSEO\Connector\Speed\Cloudflare::details()['rocket_loader'],
+					'clear_posts'   => \ArvaSEO\Connector\Speed\Cloudflare::details()['posts'],
+					'last_clear'    => \ArvaSEO\Connector\Speed\Cloudflare::details()['last'],
+				),
 			),
 			'settings'        => array(
 				'publishing_mode'       => $settings['publishing_mode'],

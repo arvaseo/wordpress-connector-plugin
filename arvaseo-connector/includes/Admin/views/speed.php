@@ -8,6 +8,7 @@
 use ArvaSEO\Connector\Admin\AdminController;
 use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Health\AssessmentService;
+use ArvaSEO\Connector\Speed\Cloudflare;
 use ArvaSEO\Connector\Speed\Exclusions;
 use ArvaSEO\Connector\Speed\Fixes;
 use ArvaSEO\Connector\Speed\ServerRules;
@@ -240,6 +241,9 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 			<?php else : ?>
 				<div class="arvaseo-risk arvaseo-risk--safe"><?php echo AdminController::icon( 'check', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Safe: it only changes how things load, not what visitors see.', 'arvaseo-connector' ); ?></span></div>
+			<?php endif; ?>
+			<?php if ( in_array( $arvaseo_id, array( 'defer_scripts', 'delay_scripts' ), true ) && 'on' === Cloudflare::details()['rocket_loader'] ) : ?>
+				<div class="arvaseo-risk arvaseo-risk--check"><?php echo AdminController::icon( 'cloud', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Rocket Loader is on in Cloudflare and also changes how scripts load. Use one or the other.', 'arvaseo-connector' ); ?> <a href="#arvaseo-cloudflare"><?php esc_html_e( 'See Cloudflare', 'arvaseo-connector' ); ?></a></span></div>
 			<?php endif; ?>
 
 			<?php if ( 'handled' === $arvaseo_state ) : ?>
@@ -614,8 +618,117 @@ defined( 'ABSPATH' ) || exit;
 </div></div>
 	<?php endforeach; ?>
 
-<div class="arvaseo-grp" id="arvaseo-speed-exclusions">
+<div class="arvaseo-grp" id="arvaseo-cloudflare">
 	<span class="arvaseo-grp-n" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', $arvaseo_n + 1 ) ); ?></span>
+	<div><h2><?php esc_html_e( 'Cloudflare', 'arvaseo-connector' ); ?></h2><p><?php esc_html_e( 'Visitors get your changes straight away.', 'arvaseo-connector' ); ?></p></div>
+</div>
+	<?php
+	$arvaseo_cf      = Cloudflare::details();
+	$arvaseo_cf_form = static function ( string $step, string $label, string $classes, string $confirm = '' ): void {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form"' . ( '' !== $confirm ? ' data-arvaseo-confirm="' . esc_attr( $confirm ) . '"' : '' ) . '>';
+		echo '<input type="hidden" name="action" value="arvaseo_connector_cloudflare" />';
+		echo '<input type="hidden" name="do" value="' . esc_attr( $step ) . '" />';
+		wp_nonce_field( 'arvaseo_connector_cloudflare' );
+		echo '<button type="submit" class="' . esc_attr( $classes ) . '">' . esc_html( $label ) . '</button>';
+		echo '</form>';
+	};
+	?>
+<section class="arvaseo-card" aria-labelledby="arvaseo-cf-heading">
+	<?php if ( Cloudflare::connected() ) : ?>
+		<div class="arvaseo-between">
+			<div style="flex: 999 1 420px">
+				<p class="arvaseo-eyebrow"><?php esc_html_e( 'Cloudflare is connected', 'arvaseo-connector' ); ?></p>
+				<h2 class="arvaseo-h2" id="arvaseo-cf-heading"><?php echo esc_html( (string) $arvaseo_cf['zone_name'] ); ?></h2>
+				<p class="arvaseo-hint" style="max-width: 680px"><?php esc_html_e( 'Cloudflare’s copy of every page is cleared when a fix goes on or off for visitors, when your choices here change, and when new optimized CSS, WebP copies or local fonts are ready.', 'arvaseo-connector' ); ?></p>
+			</div>
+			<?php $arvaseo_cf_form( 'purge', __( 'Clear Cloudflare’s copy now', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' ); ?>
+		</div>
+		<?php if ( $arvaseo_cf['refused'] ) : ?>
+			<div class="arvaseo-alert" role="alert" style="margin-top: 16px">
+				<div>
+					<h2><?php esc_html_e( 'Cloudflare refused the saved token', 'arvaseo-connector' ); ?></h2>
+					<p style="margin: 4px 0 0"><?php esc_html_e( 'It may have been deleted, have expired or lost a permission. Disconnect, then connect again with a new token.', 'arvaseo-connector' ); ?></p>
+				</div>
+			</div>
+		<?php endif; ?>
+		<dl class="arvaseo-facts">
+			<div><dt><?php esc_html_e( 'Last cleared', 'arvaseo-connector' ); ?></dt><dd>
+				<?php
+				if ( null === $arvaseo_cf['last'] ) {
+					esc_html_e( 'Not yet', 'arvaseo-connector' );
+				} else {
+					/* translators: %d: number of pages. */
+					$arvaseo_cf_what = 'everything' === $arvaseo_cf['last']['what'] ? __( 'Every page', 'arvaseo-connector' ) : sprintf( _n( '%d page', '%d pages', $arvaseo_cf['last']['count'], 'arvaseo-connector' ), $arvaseo_cf['last']['count'] );
+					echo esc_html( AdminController::when( $arvaseo_cf['last']['at'] ) ) . ' ';
+					echo AdminController::badge( $arvaseo_cf['last']['ok'] ? 'good' : 'bad', $arvaseo_cf['last']['ok'] ? $arvaseo_cf_what : __( 'Failed', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+					if ( null !== $arvaseo_cf['last']['error'] ) {
+						echo '<br /><span class="arvaseo-hint">' . esc_html( $arvaseo_cf['last']['error'] ) . '</span>';
+					}
+				}
+				?>
+			</dd></div>
+			<div><dt><?php esc_html_e( 'Rocket Loader', 'arvaseo-connector' ); ?></dt><dd>
+				<?php
+				if ( 'on' === $arvaseo_cf['rocket_loader'] ) {
+					echo AdminController::badge( Cloudflare::rocket_loader_clash() ? 'warn' : 'neutral', __( 'On', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+				} elseif ( 'off' === $arvaseo_cf['rocket_loader'] ) {
+					echo AdminController::badge( 'good', __( 'Off', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+				} else {
+					echo AdminController::badge( 'neutral', __( 'Unknown', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+					echo '<br /><span class="arvaseo-hint">' . esc_html__( 'Give the token Zone Settings: Read to check it.', 'arvaseo-connector' ) . '</span>';
+				}
+				?>
+			</dd></div>
+			<div><dt><?php esc_html_e( 'Checked', 'arvaseo-connector' ); ?></dt><dd><?php echo esc_html( AdminController::when( $arvaseo_cf['checked_at'] ) ); ?></dd></div>
+		</dl>
+		<?php if ( Cloudflare::rocket_loader_clash() ) : ?>
+			<p class="arvaseo-note" style="margin-top: 16px; background: var(--a-warn-soft); color: #4d3800"><?php esc_html_e( 'Rocket Loader changes how scripts load, as Defer scripts and Delay chat widgets and trackers do here. Using both can stop menus, forms or checkouts working. Keep the fixes here and turn Rocket Loader off in your Cloudflare dashboard, or turn these fixes off.', 'arvaseo-connector' ); ?></p>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-between" style="align-items: center; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--a-border)">
+			<input type="hidden" name="action" value="arvaseo_connector_cloudflare" />
+			<input type="hidden" name="do" value="options" />
+			<?php wp_nonce_field( 'arvaseo_connector_cloudflare' ); ?>
+			<label class="arvaseo-toggle" style="flex: 999 1 420px">
+				<input type="checkbox" name="clear_posts" value="1" <?php checked( $arvaseo_cf['posts'] ); ?> />
+				<span class="arvaseo-switch" aria-hidden="true"></span>
+				<span><strong><?php esc_html_e( 'Also clear a post’s pages when it’s published, updated or unpublished', 'arvaseo-connector' ); ?></strong><br /><span class="arvaseo-hint"><?php esc_html_e( 'The post, the homepage, the blog page, the feed and its category and tag pages. Leave this off if Cloudflare’s own plugin already does it.', 'arvaseo-connector' ); ?></span></span>
+			</label>
+			<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button>
+		</form>
+		<div class="arvaseo-row" style="margin-top: 16px">
+			<?php
+			$arvaseo_cf_form( 'check', __( 'Check again', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm' );
+			$arvaseo_cf_form( 'disconnect', __( 'Disconnect Cloudflare', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--ghost', 'confirmCloudflareOff' );
+			?>
+		</div>
+	<?php else : ?>
+		<p class="arvaseo-eyebrow"><?php echo Cloudflare::seen() ? esc_html__( 'Seen in front of this website', 'arvaseo-connector' ) : esc_html__( 'Optional', 'arvaseo-connector' ); ?></p>
+		<h2 class="arvaseo-h2" id="arvaseo-cf-heading"><?php echo Cloudflare::seen() ? esc_html__( 'This website is behind Cloudflare', 'arvaseo-connector' ) : esc_html__( 'Using Cloudflare?', 'arvaseo-connector' ); ?></h2>
+		<p class="arvaseo-hint" style="max-width: 720px"><?php esc_html_e( 'Cloudflare can keep copies of your pages. Connect it here and those copies are cleared whenever a change here affects what visitors get, so visitors and your next PageSpeed test see a fix as soon as you turn it on. It works without an Arva SEO account. Only page addresses are sent, to Cloudflare.', 'arvaseo-connector' ); ?></p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 16px">
+			<input type="hidden" name="action" value="arvaseo_connector_cloudflare" />
+			<input type="hidden" name="do" value="connect" />
+			<?php wp_nonce_field( 'arvaseo_connector_cloudflare' ); ?>
+			<ol>
+				<li><?php esc_html_e( 'In your Cloudflare dashboard, open My Profile → API Tokens → Create Token → Create Custom Token.', 'arvaseo-connector' ); ?></li>
+				<li><?php esc_html_e( 'Permissions: Zone → Zone → Read, Zone → Cache Purge → Purge, and Zone → Zone Settings → Read (so Rocket Loader can be checked).', 'arvaseo-connector' ); ?></li>
+				<li>
+					<?php
+					/* translators: %s: this website's domain. */
+					printf( esc_html__( 'Zone Resources: Include → Specific zone → %s. Create the token and paste it below.', 'arvaseo-connector' ), esc_html( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) );
+					?>
+				</li>
+			</ol>
+			<label class="arvaseo-label" for="arvaseo-cf-token"><?php esc_html_e( 'Cloudflare API token', 'arvaseo-connector' ); ?> <span class="arvaseo-req" aria-hidden="true">*</span></label>
+			<input type="password" id="arvaseo-cf-token" name="cloudflare_token" required="required" autocomplete="off" spellcheck="false" aria-describedby="arvaseo-cf-token-hint" />
+			<p class="arvaseo-hint" id="arvaseo-cf-token-hint" style="margin-top: 6px"><?php esc_html_e( 'Kept encrypted on this site and only ever sent to Cloudflare. A token, not the Global API Key.', 'arvaseo-connector' ); ?></p>
+			<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--dark"><?php esc_html_e( 'Connect Cloudflare', 'arvaseo-connector' ); ?></button></div>
+		</form>
+	<?php endif; ?>
+</section>
+
+<div class="arvaseo-grp" id="arvaseo-speed-exclusions">
+	<span class="arvaseo-grp-n" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', $arvaseo_n + 2 ) ); ?></span>
 	<div><h2><?php esc_html_e( 'Leave things alone', 'arvaseo-connector' ); ?></h2><p><?php esc_html_e( 'If a fix stops something working on part of your site, leave that part alone instead of turning the fix off everywhere.', 'arvaseo-connector' ); ?></p></div>
 </div>
 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -682,11 +795,12 @@ defined( 'ABSPATH' ) || exit;
 			<li><code>arvaseo_connector_speed_fix_applies</code> <span class="arvaseo-hint"><?php esc_html_e( '(bool $applies, string $fix_id): turn a fix off for any page condition.', 'arvaseo-connector' ); ?></span></li>
 			<li><code>arvaseo_connector_defer_script</code> <span class="arvaseo-hint"><?php esc_html_e( '(bool $defer, string $handle, string $src): leave a script alone.', 'arvaseo-connector' ); ?></span></li>
 			<li><code>arvaseo_connector_optimize_element</code> <span class="arvaseo-hint"><?php esc_html_e( '(bool $optimize, string $fix_id, string $tag, array $attributes): leave an image or frame alone.', 'arvaseo-connector' ); ?></span></li>
+			<li><code>arvaseo_connector_pages_changed</code> <span class="arvaseo-hint"><?php esc_html_e( '(string $why), an action: a change here altered what visitors get on every page, so a page cache can clear its copies.', 'arvaseo-connector' ); ?></span></li>
 		</ul>
 		<p class="arvaseo-hint" style="margin-top: 10px"><?php esc_html_e( 'Lazy-load also leaves alone images marked skip-lazy or no-lazy, as other speed plugins do, and every fix leaves alone an element with the data-arvaseo-skip attribute.', 'arvaseo-connector' ); ?></p>
 	</div>
 </details>
 
-<p class="arvaseo-hint" style="margin-top: 20px; max-width: 820px"><?php esc_html_e( 'Page caching, removing unused CSS and minifying files need a caching plugin, such as LiteSpeed Cache or WP Rocket. Arva SEO’s PageSpeed page says which setting to change in the one you have. If you use a page cache, clear it after changing a fix here. In an emergency, add define( \'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES\', true ); to wp-config.php to switch every fix off.', 'arvaseo-connector' ); ?></p>
+<p class="arvaseo-hint" style="margin-top: 20px; max-width: 820px"><?php esc_html_e( 'Page caching and minifying files need a caching plugin, such as LiteSpeed Cache or WP Rocket. Arva SEO’s PageSpeed page says which setting to change in the one you have. If you use a page cache other than Cloudflare, clear it after changing a fix here. In an emergency, add define( \'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES\', true ); to wp-config.php to switch every fix off.', 'arvaseo-connector' ); ?></p>
 	<?php
 } )();

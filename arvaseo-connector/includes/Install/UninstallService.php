@@ -57,8 +57,9 @@ final class UninstallService {
 		TokenStore::clear();
 		TokenStore::clear_connection();
 		delete_transient( 'arvaseo_connector_auth_probe' );
-		// Server rules never outlive the plugin, whatever else is kept.
+		// Server rules and the Cloudflare token never outlive the plugin, whatever else is kept.
 		\ArvaSEO\Connector\Speed\ServerRules::remove_on_exit();
+		\ArvaSEO\Connector\Speed\Cloudflare::remove_on_exit();
 
 		if ( ! Settings::get( 'delete_data_on_uninstall' ) ) {
 			return;
