@@ -154,7 +154,7 @@ defined( 'ABSPATH' ) || exit;
 		</section>
 	<?php else : ?>
 		<?php if ( 'current' !== $arvaseo_freshness ) : ?>
-			<div class="notice notice-warning inline"><p><?php esc_html_e( 'These findings are not current. They describe the site as it was at the last assessment.', 'arvaseo-connector' ); ?></p></div>
+			<div class="notice notice-warning inline arvaseo-own"><p><?php esc_html_e( 'These findings are not current. They describe the site as it was at the last assessment.', 'arvaseo-connector' ); ?></p></div>
 		<?php endif; ?>
 		<?php
 		$arvaseo_grouped = array();
@@ -192,7 +192,7 @@ defined( 'ABSPATH' ) || exit;
 						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What’s wrong', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_finding['what_is_wrong'] ); ?></div>
 						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to fix', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_finding['what_to_fix'] ); ?></div>
 					</div>
-					<div class="arvaseo-row" style="gap: 6px 20px">
+					<div>
 						<details class="arvaseo-more">
 							<summary><?php esc_html_e( 'See the evidence', 'arvaseo-connector' ); ?></summary>
 							<div class="arvaseo-more-in">

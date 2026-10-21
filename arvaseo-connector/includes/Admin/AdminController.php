@@ -84,8 +84,41 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_security_undo', array( self::class, 'security_undo' ) );
 		add_action( 'wp_ajax_arvaseo_connector_security_progress', array( self::class, 'security_progress' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
+		add_action( 'in_admin_header', array( self::class, 'quiet_notices' ), PHP_INT_MAX );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
 		add_filter( 'submenu_file', array( self::class, 'submenu_file' ) );
+	}
+
+	/**
+	 * Other plugins' and themes' notices stay off the plugin's pages: they still show everywhere
+	 * else in the dashboard. Kept: the plugin's own, and WordPress's way out of recovery mode.
+	 * (admin.css hides the few that are printed or added by script outside these hooks.)
+	 */
+	public static function quiet_notices(): void {
+		if ( '' === self::current_page() ) {
+			return;
+		}
+		foreach ( array( 'admin_notices', 'all_admin_notices', 'network_admin_notices', 'user_admin_notices' ) as $hook ) {
+			remove_all_actions( $hook );
+		}
+		add_action( 'admin_notices', array( self::class, 'recovery_notice' ), 1 );
+		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
+	}
+
+	/**
+	 * WordPress's recovery mode notice, marked as one that stays (admin.css).
+	 */
+	public static function recovery_notice(): void {
+		if ( ! function_exists( 'wp_recovery_mode_nag' ) ) {
+			return;
+		}
+		$mark = static function ( array $args ): array {
+			$args['additional_classes'] = array_merge( (array) ( $args['additional_classes'] ?? array() ), array( 'arvaseo-own' ) );
+			return $args;
+		};
+		add_filter( 'wp_admin_notice_args', $mark );
+		wp_recovery_mode_nag();
+		remove_filter( 'wp_admin_notice_args', $mark );
 	}
 
 	/**
@@ -498,13 +531,13 @@ final class AdminController {
 			}
 		}
 		if ( isset( $map[ $code ] ) ) {
-			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
+			printf( '<div class="notice notice-%1$s is-dismissible arvaseo-own"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
 		}
 		if ( in_array( $code, array( 'speed_on', 'speed_off', 'speed_options_saved', 'speed_css_ready', 'speed_css_regenerate', 'speed_webp_undone' ), true ) ) {
 			self::cloudflare_notice();
 		}
 		if ( TokenStore::unreadable() ) {
-			echo '<div class="notice notice-error"><p>' . esc_html__( 'The saved Arva SEO credentials can’t be read (the site’s security keys or ARVASEO_CONNECTOR_ENCRYPTION_KEY changed). Disconnect and connect again.', 'arvaseo-connector' ) . '</p></div>';
+			echo '<div class="notice notice-error arvaseo-own"><p>' . esc_html__( 'The saved Arva SEO credentials can’t be read (the site’s security keys or ARVASEO_CONNECTOR_ENCRYPTION_KEY changed). Disconnect and connect again.', 'arvaseo-connector' ) . '</p></div>';
 		}
 	}
 
@@ -917,7 +950,7 @@ final class AdminController {
 		} else {
 			return;
 		}
-		printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $message[0] ), esc_html( $message[1] ) );
+		printf( '<div class="notice notice-%1$s is-dismissible arvaseo-own"><p>%2$s</p></div>', esc_attr( $message[0] ), esc_html( $message[1] ) );
 	}
 
 	/**
@@ -929,7 +962,7 @@ final class AdminController {
 			return;
 		}
 		printf(
-			'<div class="notice notice-warning"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+			'<div class="notice notice-warning arvaseo-own"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
 			esc_html__( 'Arva SEO: Defer scripts is on. If something stopped working on your site, such as a menu, slider, form or checkout, turn it off or leave that script alone.', 'arvaseo-connector' ),
 			esc_url( admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( 'defer_scripts' ) ) ),
 			esc_html__( 'Speed', 'arvaseo-connector' )

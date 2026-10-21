@@ -56,24 +56,31 @@ final class Signatures {
 	/**
 	 * The first (most severe) signature a file's contents match.
 	 *
-	 * @param string $contents File contents.
-	 * @param string $kind     php, js, htaccess or svg.
+	 * @param string                                $contents File contents.
+	 * @param string                                $kind     php, js, htaccess or svg.
+	 * @param (callable(string, string): bool)|null $expected Given a signature's ID and the line it
+	 *                                                        matched, true when that line is known
+	 *                                                        to be safe; the search goes on past it.
 	 * @return array{id: string, severity: string, title: string, line: int, excerpt: string}|null
 	 */
-	public static function match( string $contents, string $kind ): ?array {
+	public static function match( string $contents, string $kind, ?callable $expected = null ): ?array {
 		foreach ( self::compiled() as $signature ) {
 			if ( ! in_array( $kind, $signature['applies'], true ) ) {
 				continue;
 			}
-			if ( 1 !== preg_match( $signature['regex'], $contents, $found, PREG_OFFSET_CAPTURE ) ) {
-				continue;
-			}
+			$from = 0;
+			do {
+				if ( 1 !== preg_match( $signature['regex'], $contents, $found, PREG_OFFSET_CAPTURE, $from ) ) {
+					continue 2;
+				}
+				$offset = (int) $found[0][1];
+				$from   = $offset + max( 1, strlen( $found[0][0] ) );
+			} while ( null !== $expected && $expected( $signature['id'], self::line( $contents, $offset ) ) );
 			foreach ( $signature['also'] as $also ) {
 				if ( 1 !== preg_match( $also, $contents ) ) {
 					continue 2;
 				}
 			}
-			$offset = (int) $found[0][1];
 			return array(
 				'id'       => $signature['id'],
 				'severity' => $signature['severity'],
@@ -83,6 +90,19 @@ final class Signatures {
 			);
 		}
 		return null;
+	}
+
+	/**
+	 * The whole line a match is on.
+	 *
+	 * @param string $contents File contents.
+	 * @param int    $offset   Where the match starts.
+	 */
+	private static function line( string $contents, int $offset ): string {
+		$start = strrpos( substr( $contents, 0, $offset ), "\n" );
+		$start = false === $start ? 0 : $start + 1;
+		$end   = strpos( $contents, "\n", $offset );
+		return substr( $contents, $start, false === $end ? null : $end - $start );
 	}
 
 	/**

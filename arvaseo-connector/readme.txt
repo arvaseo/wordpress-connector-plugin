@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -199,6 +199,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.2.1 =
+Other plugins' and themes' notices no longer crowd the Arva SEO pages, and the security scan no longer reports Wordfence's and other security plugins' firewalls, or plugin logs that can't run, as signs of a hack.
+
 = 2.2.0 =
 Repairs on Health → Security: put back official copies of changed WordPress and plugin files, and move PHP that shouldn't be there into quarantine. Each one is your choice and can be undone for 30 days.
 
@@ -236,6 +239,13 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.2.1 =
+* Other plugins' and themes' notices ("recommended plugin" reminders, offers and the like) no longer show on the Arva SEO pages. They still show everywhere else in the dashboard. Arva SEO's own notices and WordPress's recovery mode notice stay.
+* Fixed: the security scan reported the firewall of Wordfence, All In One WP Security, MalCare or NinjaFirewall as a hack (its line in .htaccess, and its loader file such as wordfence-waf.php). They're recognized now, and any other line in the same .htaccess is still checked.
+* Fixed: plugin logs kept in the uploads folder as PHP that stops on its first line (Mailchimp for WordPress's debug-log.php, for example) were reported as PHP in the uploads folder.
+* Results in .htaccess say what to do about a rule in a settings file, instead of restoring a plugin or theme.
+* Health → Security and Health → Website health: the buttons under a result no longer touch the boxes above them, and opening "See the code it matched" or the evidence no longer moves them.
 
 = 2.2.0 =
 * New: "Restore the official copy" for a changed or missing WordPress file or a changed WordPress.org plugin file. The copy comes from WordPress.org for your version and is used only when it matches WordPress.org's checksum.

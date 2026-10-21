@@ -451,7 +451,8 @@ final class Scanner {
 		if ( null !== $uploads && str_starts_with( $path, $uploads ) ) {
 			++$state['files'];
 			if ( 'php' === $kind ) {
-				if ( self::is_silent_php( $path ) ) {
+				// Empty index files, and plugins' logs that stop PHP on their first line.
+				if ( self::is_silent_php( $path ) || KnownFiles::exits_first( $path ) ) {
 					return $state;
 				}
 				$state = self::candidate( $state, $relative );
@@ -479,6 +480,10 @@ final class Scanner {
 				return $state;
 			}
 			++$state['files'];
+			// A security plugin's firewall loader (Wordfence's wordfence-waf.php) belongs here.
+			if ( ! $in_core && KnownFiles::firewall_loader( $path ) ) {
+				return $state;
+			}
 			if ( null === $core ) {
 				// Without WordPress.org's list the folder can only be checked by pattern.
 				return self::pattern( $state, $path, $relative, $kind );
@@ -666,6 +671,9 @@ final class Scanner {
 	 * @return array<string, mixed>
 	 */
 	private static function pattern( array $state, string $path, string $relative, string $kind ): array {
+		if ( 'php' === $kind && KnownFiles::exits_first( $path ) ) {
+			return $state; // Nothing in it can run.
+		}
 		$state = self::candidate( $state, $relative );
 		$match = self::read_and_match( $path, $kind );
 		if ( null === $match ) {
@@ -707,7 +715,9 @@ final class Scanner {
 			return null;
 		}
 		$contents = @file_get_contents( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file read for patterns; unreadable files are skipped.
-		return is_string( $contents ) ? Signatures::match( $contents, $kind ) : null;
+		// A security plugin's firewall loads through auto_prepend_file: those lines are expected.
+		$expected = 'htaccess' === $kind ? static fn ( string $id, string $line ): bool => 'htaccess.auto_prepend' === $id && KnownFiles::firewall_prepend( $line ) : null;
+		return is_string( $contents ) ? Signatures::match( $contents, $kind, $expected ) : null;
 	}
 
 	/**

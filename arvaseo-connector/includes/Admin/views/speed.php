@@ -80,7 +80,7 @@ defined( 'ABSPATH' ) || exit;
 	?>
 <div class="arvaseo-stack">
 	<?php if ( $arvaseo_killed ) : ?>
-		<div class="notice notice-warning inline"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
+		<div class="notice notice-warning inline arvaseo-own"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
 	<?php endif; ?>
 
 	<section class="arvaseo-card" aria-labelledby="arvaseo-test-heading">

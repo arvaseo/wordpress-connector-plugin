@@ -271,6 +271,12 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app .arvaseo-finding h3 { margin: 10px 0 0; padding: 0; font: 400 22px/1.2 var(--a-serif); color: var(--a-ink); }
 .arvaseo-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-top: 14px; }
 .arvaseo-box { padding: 14px 16px; border-radius: 12px; background: var(--a-sunken); }
+.arvaseo-finding-actions { margin-top: 16px; }
+/* Other plugins' notices printed or added by script outside the notice hooks (AdminController::quiet_notices). */
+body.arvaseo-admin #wpbody-content .notice:not(.arvaseo-own),
+body.arvaseo-admin #wpbody-content div.updated:not(.arvaseo-own),
+body.arvaseo-admin #wpbody-content div.error:not(.arvaseo-own),
+body.arvaseo-admin #wpbody-content .update-nag { display: none !important; }
 .arvaseo-box-lbl { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--a-subtle); font-weight: 600; margin-bottom: 4px; }
 
 /* Settings. */

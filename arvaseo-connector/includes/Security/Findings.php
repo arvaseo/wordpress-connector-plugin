@@ -96,11 +96,16 @@ final class Findings {
 	public static function describe( array $finding ): array {
 		$detail  = (string) ( $finding['detail'] ?? '' );
 		$restore = __( 'If you didn’t change it yourself, reinstall the same version from WordPress.org (Dashboard → Updates → Re-install, or the plugin’s page) and change your passwords. Restore from a backup if more files are affected.', 'arvaseo-connector' );
+		$rules   = in_array( strtolower( basename( (string) ( $finding['path'] ?? '' ) ) ), array( '.htaccess', '.user.ini' ), true );
 		return match ( (string) $finding['type'] ) {
-			'code'                  => array(
+			'code'                  => $rules ? array(
+				(string) ( $finding['title'] ?? __( 'Suspicious code', 'arvaseo-connector' ) ),
+				__( 'This settings file has a rule found in hacked websites. A few security, caching and redirect plugins write similar rules, so check which plugin added it.', 'arvaseo-connector' ),
+				__( 'If no plugin you use added it, save a copy of the file, remove the rule, delete any file the rule names, then change your WordPress, hosting and database passwords. If a plugin you trust added it, mark it as expected.', 'arvaseo-connector' ),
+			) : array(
 				(string) ( $finding['title'] ?? __( 'Suspicious code', 'arvaseo-connector' ) ),
 				__( 'This file contains a pattern found in hacked websites. Some premium plugins and themes use similar tricks to hide their code, so check where the file comes from.', 'arvaseo-connector' ),
-				__( 'If the file isn’t part of a plugin or theme you installed on purpose, it’s likely malware: restore the plugin or theme from a fresh copy, delete files you don’t recognise, then change your WordPress, hosting and database passwords. If it’s from a product you trust, mark it as expected.', 'arvaseo-connector' ),
+				__( 'If the file isn’t part of a plugin or theme you installed on purpose, it’s likely malware: restore the plugin or theme from a fresh copy, delete files you don’t recognize, then change your WordPress, hosting and database passwords. If it’s from a product you trust, mark it as expected.', 'arvaseo-connector' ),
 			),
 			'deep_malware'          => array(
 				(string) ( $finding['title'] ?? __( 'Known malware', 'arvaseo-connector' ) ),
@@ -110,7 +115,7 @@ final class Findings {
 			'deep_code'             => array(
 				(string) ( $finding['title'] ?? __( 'Suspicious code', 'arvaseo-connector' ) ),
 				__( 'The deep scan found a pattern from hacked websites in this file. A few premium plugins and themes hide their code in similar ways, so check where the file comes from.', 'arvaseo-connector' ),
-				__( 'If the file isn’t part of a plugin or theme you installed on purpose, restore that plugin or theme from a fresh copy, delete files you don’t recognise and change your passwords. If it’s from a product you trust, mark it as expected.', 'arvaseo-connector' ),
+				__( 'If the file isn’t part of a plugin or theme you installed on purpose, restore that plugin or theme from a fresh copy, delete files you don’t recognize and change your passwords. If it’s from a product you trust, mark it as expected.', 'arvaseo-connector' ),
 			),
 			'core_changed'          => array( __( 'A WordPress file was changed', 'arvaseo-connector' ), __( 'WordPress files are the same on every site. A changed one usually means a hack, or a developer edited WordPress itself (which updates undo).', 'arvaseo-connector' ), __( 'Dashboard → Updates → Re-install version puts back WordPress’s own files without touching your content. Then run the scan again.', 'arvaseo-connector' ) ),
 			'core_missing'          => array( __( 'A WordPress file is missing', 'arvaseo-connector' ), __( 'A file that comes with WordPress isn’t there, so parts of the dashboard may fail, and it can be a sign that files were tampered with.', 'arvaseo-connector' ), __( 'Dashboard → Updates → Re-install version puts it back.', 'arvaseo-connector' ) ),

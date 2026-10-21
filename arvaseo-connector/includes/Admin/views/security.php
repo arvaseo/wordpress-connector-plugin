@@ -299,7 +299,7 @@ defined( 'ABSPATH' ) || exit;
 								<p class="arvaseo-hint"><strong><?php echo esc_html( $arvaseo_notice['notice'] ); ?></strong>
 									<?php echo esc_html( $arvaseo_notice['license'] ); ?>
 									<?php if ( '' !== $arvaseo_notice['license_url'] ) : ?>
-										<a href="<?php echo esc_url( $arvaseo_notice['license_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Licence', 'arvaseo-connector' ); ?></a>
+										<a href="<?php echo esc_url( $arvaseo_notice['license_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'License', 'arvaseo-connector' ); ?></a>
 									<?php endif; ?>
 								</p>
 							<?php endforeach; ?>
@@ -344,23 +344,23 @@ defined( 'ABSPATH' ) || exit;
 						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What it means', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_why ); ?></div>
 						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to do', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_fix ); ?></div>
 					</div>
-					<div class="arvaseo-row" style="gap: 6px 20px">
-						<?php if ( null !== $arvaseo_finding['excerpt'] && '' !== $arvaseo_finding['excerpt'] ) : ?>
-							<details class="arvaseo-more">
-								<summary><?php esc_html_e( 'See the code it matched', 'arvaseo-connector' ); ?></summary>
-								<div class="arvaseo-more-in"><pre class="arvaseo-code"><?php echo esc_html( (string) $arvaseo_finding['excerpt'] ); ?></pre></div>
-							</details>
-						<?php endif; ?>
-						<?php
-						$arvaseo_offer = $arvaseo_can_fix ? Repairs::offer( $arvaseo_finding ) : null;
-						if ( null !== $arvaseo_offer ) {
-							$arvaseo_repair( (string) $arvaseo_finding['key'], $arvaseo_offer );
-						}
-						if ( $arvaseo_manage ) {
+					<?php if ( null !== $arvaseo_finding['excerpt'] && '' !== $arvaseo_finding['excerpt'] ) : ?>
+						<details class="arvaseo-more">
+							<summary><?php esc_html_e( 'See the code it matched', 'arvaseo-connector' ); ?></summary>
+							<div class="arvaseo-more-in"><pre class="arvaseo-code"><?php echo esc_html( (string) $arvaseo_finding['excerpt'] ); ?></pre></div>
+						</details>
+					<?php endif; ?>
+					<?php if ( $arvaseo_manage ) : ?>
+						<div class="arvaseo-row arvaseo-finding-actions">
+							<?php
+							$arvaseo_offer = $arvaseo_can_fix ? Repairs::offer( $arvaseo_finding ) : null;
+							if ( null !== $arvaseo_offer ) {
+								$arvaseo_repair( (string) $arvaseo_finding['key'], $arvaseo_offer );
+							}
 							$arvaseo_form( (string) $arvaseo_finding['key'], false, __( 'This is expected', 'arvaseo-connector' ) );
-						}
-						?>
-					</div>
+							?>
+						</div>
+					<?php endif; ?>
 				</article>
 			<?php endforeach; ?>
 		<?php endforeach; ?>
