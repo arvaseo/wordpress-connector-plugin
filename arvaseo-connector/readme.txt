@@ -56,20 +56,15 @@ When the site is connected to Arva SEO, Health also lists known vulnerabilities 
 
 = Deep scan =
 
-Files that aren't official copies, such as your theme and premium plugins, can only be checked by pattern on your server. A deep scan checks them further on Arva SEO's servers, with ClamAV's database of known malware and Arva SEO's own rules. It's part of the Arva SEO service: deep scans are included on its paid plans for each website, and top-ups add them on any plan.
-
-* Off until an administrator allows deep scans on Health, and each one is started by an administrator with "Run a deep scan".
-* Only code files the security scan couldn't match to an official copy are sent (2 MB each and 50 MB in all at most). Never wp-config.php, .env files, logs, database exports, backups or uploaded media.
-* The files are deleted on Arva SEO's servers as soon as the scan finishes; only each file's fingerprint (SHA-256) and what was found are kept. Files checked in the last few days aren't sent again.
-* What it finds joins the security scan's results on Health, with what it means and what to do, and "This is expected" works the same way.
+Your theme and premium plugins can only be checked by pattern on your server. A deep scan, part of the Arva SEO service (included on its paid plans, and top-ups add more on any plan), sends those files to Arva SEO, where ClamAV's database of known malware and Arva SEO's own rules check them; they're deleted as soon as it finishes. It's off until an administrator allows it, and each one is started by an administrator. Secrets, logs, database exports, backups and media are never sent.
 
 = Arva SEO Connector =
 
-* **Secure connection.** Approve the connection on app.arvaseo.com. No Arva SEO password is ever entered in WordPress; the site gets its own revocable, encrypted credentials.
-* **Plugin inventory.** Installed plugins (including must-use and drop-ins) and themes with their versions, active state and update state, from WordPress's own data. Missing or old update data is shown as unknown, never as up to date.
-* **Known vulnerabilities.** Arva SEO checks the plugin list it receives against Wordfence Intelligence's vulnerability data every day, and emails you when a new one affects an installed version. Nothing extra is sent for this.
+* **Secure connection.** Approve it on app.arvaseo.com: no Arva SEO password is entered in WordPress, and the site gets its own revocable, encrypted credentials.
+* **Plugin inventory.** Installed plugins (including must-use and drop-ins) and themes with their versions and update state, from WordPress's own data.
+* **Known vulnerabilities.** Arva SEO checks the plugin list against Wordfence Intelligence's vulnerability data every day, and emails you when one affects an installed version.
 * **Security scan results (optional).** If an administrator also agrees to share them (a separate choice), the scan's results go to Arva SEO: Website Health shows them with what to do, serious ones are emailed, and they can become tasks and appear in reports.
-* **Website Health.** Around 40 checks across core, plugins and themes, runtime, security, reliability, performance and SEO, using WordPress's Site Health tests and APIs. Arva SEO turns them into findings that say what is wrong, why it matters, how to fix it, who should do it, and how to verify and undo the change. Nothing is ever changed on your site automatically.
+* **Website Health.** Around 40 checks across core, plugins and themes, security, performance and SEO, using WordPress's Site Health tests. Arva SEO turns them into findings that say what is wrong, why it matters and how to fix and undo it. Nothing is changed on your site automatically.
 * **Content from Arva SEO.** Drafts written in Arva SEO arrive as drafts, pending review, scheduled or published posts, but never beyond the publishing mode you choose here (Draft only by default).
 * **SEO titles and descriptions.** If an administrator allows it (off by default), the SEO titles and meta descriptions your team approves in Arva SEO are written to Yoast SEO or Rank Math for published posts, pages and products and the homepage, in bulk. Only those two fields change, the page caches are cleared, and every change can be undone from Arva SEO.
 * **IndexNow.** The site serves the IndexNow key Arva SEO gives it (as /your-key.txt), so Arva SEO can tell Bing, Yandex, Seznam, Naver and Yep when you publish a post or change a page's SEO title or description, and they recrawl it sooner. No file to upload.
