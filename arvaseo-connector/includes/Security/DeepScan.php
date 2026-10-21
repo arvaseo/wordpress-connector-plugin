@@ -102,6 +102,52 @@ final class DeepScan {
 	}
 
 	/**
+	 * How far a running deep scan is, for the Health page: the step (1 to 3), what it's doing, the
+	 * percent done when it's known (sending files), and the detail line.
+	 *
+	 * @return array{number: int, label: string, percent: int|null, detail: string}
+	 */
+	public static function progress(): array {
+		$state   = self::state();
+		$step    = (string) ( $state['step'] ?? '' );
+		$files   = count( (array) ( $state['files'] ?? array() ) );
+		$needed  = count( (array) ( $state['needed'] ?? array() ) );
+		$sent    = min( $needed, (int) ( $state['index'] ?? 0 ) );
+		$started = (int) ( $state['started_at'] ?? 0 );
+		/* translators: %s: relative time such as "2 mins". */
+		$since   = $started > 0 ? sprintf( __( 'started %s ago', 'arvaseo-connector' ), human_time_diff( $started ) ) : '';
+		$percent = null;
+		if ( 'local' === $step ) {
+			$number = 1;
+			/* translators: 1: number of files, 2: "started 2 mins ago". */
+			$detail = sprintf( __( '%1$s files checked so far, %2$s', 'arvaseo-connector' ), number_format_i18n( (int) ( Scanner::progress()['files'] ?? 0 ) ), $since );
+		} elseif ( 'manifest' === $step ) {
+			$number = 1;
+			/* translators: 1: number of files, 2: "started 2 mins ago". */
+			$detail = sprintf( __( '%1$s files listed so far, %2$s', 'arvaseo-connector' ), number_format_i18n( $files ), $since );
+		} elseif ( in_array( $step, array( 'register', 'upload', 'finish' ), true ) ) {
+			$number  = 2;
+			$percent = $needed > 0 ? (int) floor( 100 * $sent / $needed ) : ( 'register' === $step ? 0 : 100 );
+			$detail  = 'register' === $step
+				/* translators: 1: number of files, 2: "started 2 mins ago". */
+				? sprintf( __( '%1$s files to check, %2$s', 'arvaseo-connector' ), number_format_i18n( $files ), $since )
+				/* translators: 1: files sent, 2: files to send, 3: files Arva SEO checked recently, 4: "started 2 mins ago". */
+				: sprintf( __( '%1$s of %2$s files sent (%3$s checked recently, so not sent again), %4$s', 'arvaseo-connector' ), number_format_i18n( $sent ), number_format_i18n( $needed ), number_format_i18n( max( 0, $files - $needed ) ), $since );
+		} else {
+			$number = 3;
+			/* translators: 1: number of files, 2: "started 2 mins ago". */
+			$detail = sprintf( __( 'Checking %1$s files, usually a minute or two, %2$s', 'arvaseo-connector' ), number_format_i18n( $files ), $since );
+		}
+		return array(
+			'number'  => $number,
+			/* translators: 1: step number, 2: what the step does. */
+			'label'   => sprintf( __( 'Step %1$d of 3: %2$s', 'arvaseo-connector' ), $number, self::step_label( $step ) ),
+			'percent' => $percent,
+			'detail'  => $detail,
+		);
+	}
+
+	/**
 	 * Whether deep scans can be started here: connected, and an administrator allowed them.
 	 */
 	public static function allowed(): bool {

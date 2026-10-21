@@ -275,6 +275,10 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app .arvaseo-badge-link { text-decoration: none; }
 .arvaseo-app .arvaseo-badge-link:hover .arvaseo-chip { box-shadow: inset 0 0 0 1px var(--a-border-strong); }
 #arvaseo-other-plugins { scroll-margin-top: 48px; }
+.arvaseo-deep-progress { margin-top: 10px; display: grid; gap: 6px; max-width: 520px; }
+.arvaseo-app .arvaseo-deep-progress p { margin: 0; }
+.arvaseo-app .arvaseo-deep-step { font-weight: 600; color: var(--a-ink); }
+.arvaseo-app .arvaseo-deep-progress progress { width: 100%; }
 /* Other plugins' notices printed or added by script outside the notice hooks (AdminController::quiet_notices). */
 body.arvaseo-admin #wpbody-content .notice:not(.arvaseo-own),
 body.arvaseo-admin #wpbody-content div.updated:not(.arvaseo-own),

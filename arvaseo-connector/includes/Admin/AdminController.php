@@ -802,6 +802,7 @@ final class AdminController {
 				'step'      => \ArvaSEO\Connector\Security\Scanner::step_label( (string) ( $progress['step'] ?? '' ) ),
 				'deep'      => \ArvaSEO\Connector\Security\DeepScan::running(),
 				'deep_step' => \ArvaSEO\Connector\Security\DeepScan::step_label( (string) ( $deep['step'] ?? '' ) ),
+				'deep_now'  => \ArvaSEO\Connector\Security\DeepScan::progress(),
 			)
 		);
 	}

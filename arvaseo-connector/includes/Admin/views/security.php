@@ -174,7 +174,12 @@ defined( 'ABSPATH' ) || exit;
 					?>
 				</h2>
 				<?php if ( $arvaseo_deep_on ) : ?>
-					<p class="arvaseo-muted" style="margin-top: 6px" data-arvaseo-deep-running aria-live="polite"><?php echo esc_html( DeepScan::step_label( (string) ( $arvaseo_deep['step'] ?? '' ) ) ); ?></p>
+					<?php $arvaseo_deep_progress = DeepScan::progress(); ?>
+					<div class="arvaseo-deep-progress" data-arvaseo-deep-running aria-live="polite">
+						<p class="arvaseo-deep-step" data-arvaseo-deep-label><?php echo esc_html( $arvaseo_deep_progress['label'] ); ?></p>
+						<progress max="100" data-arvaseo-deep-bar<?php echo null !== $arvaseo_deep_progress['percent'] ? ' value="' . esc_attr( (string) $arvaseo_deep_progress['percent'] ) . '"' : ''; ?>><?php echo null !== $arvaseo_deep_progress['percent'] ? esc_html( $arvaseo_deep_progress['percent'] . '%' ) : ''; ?></progress>
+						<p class="arvaseo-hint" data-arvaseo-deep-detail><?php echo esc_html( $arvaseo_deep_progress['detail'] ); ?></p>
+					</div>
 				<?php elseif ( null !== $arvaseo_deep_res ) : ?>
 					<p class="arvaseo-muted" style="margin-top: 6px">
 						<?php

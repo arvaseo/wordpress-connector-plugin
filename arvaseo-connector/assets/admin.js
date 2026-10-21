@@ -79,6 +79,32 @@
 			}
 		} );
 	}
+	// Health → Deep scan: its step, bar and detail, from the progress check.
+	var deep = document.querySelector( '[data-arvaseo-deep-running]' );
+	var showDeep = function ( now ) {
+		if ( ! deep || ! now ) {
+			return;
+		}
+		var label = deep.querySelector( '[data-arvaseo-deep-label]' );
+		var bar = deep.querySelector( '[data-arvaseo-deep-bar]' );
+		var detail = deep.querySelector( '[data-arvaseo-deep-detail]' );
+		if ( label && now.label ) {
+			label.textContent = now.label;
+		}
+		if ( bar ) {
+			// A known percent while sending; otherwise the bar moves without one.
+			if ( typeof now.percent === 'number' ) {
+				bar.value = now.percent;
+				bar.textContent = now.percent + '%';
+			} else {
+				bar.removeAttribute( 'value' );
+				bar.textContent = '';
+			}
+		}
+		if ( detail && now.detail ) {
+			detail.textContent = now.detail;
+		}
+	};
 	// Health → Security: while a scan runs, show its progress, and reload when it's done.
 	var running = document.querySelector( '[data-arvaseo-security-running]' );
 	if ( running && strings.ajaxUrl && strings.securityNonce ) {
@@ -101,6 +127,7 @@
 					running.textContent = ( strings.securityProgress || '%1$s · %2$s' )
 						.replace( '%1$s', reply.data.step )
 						.replace( '%2$s', Number( reply.data.files ).toLocaleString() );
+					showDeep( reply.data.deep_now );
 					window.setTimeout( check, 5000 );
 				} )
 				.catch( function () {
@@ -110,7 +137,6 @@
 		window.setTimeout( check, 3000 );
 	}
 	// Health → Deep scan: the same check (it also moves the deep scan on), reloading when it's done.
-	var deep = document.querySelector( '[data-arvaseo-deep-running]' );
 	if ( deep && ! running && strings.ajaxUrl && strings.securityNonce ) {
 		var checkDeep = function () {
 			var body = new window.FormData();
@@ -128,7 +154,7 @@
 						window.location.reload();
 						return;
 					}
-					deep.textContent = reply.data.deep_step;
+					showDeep( reply.data.deep_now );
 					window.setTimeout( checkDeep, 5000 );
 				} )
 				.catch( function () {
