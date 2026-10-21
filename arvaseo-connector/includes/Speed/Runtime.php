@@ -75,6 +75,7 @@ final class Runtime {
 		ServerRules::init();
 		LocalFonts::init();
 		WebpLibrary::init();
+		ImageCompression::init();
 		CssOptimizer::init();
 		Cloudflare::init();
 	}

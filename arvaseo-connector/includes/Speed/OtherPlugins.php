@@ -24,10 +24,13 @@ final class OtherPlugins {
 	/** Set on activation: the next dashboard page names any other speed plugins, once. */
 	public const AFTER_ACTIVATION = 'arvaseo_connector_other_plugins_notice';
 
+	/** Hosts' own plugins: they run the host's server cache and clear it when pages change. */
+	private const HOST_CACHE = array( 'sg-cachepress', 'litespeed-cache' );
+
 	/** Plugins that also cache pages, which Arva SEO doesn't do. */
 	private const PAGE_CACHE = array( 'wp-rocket', 'litespeed-cache', 'w3-total-cache', 'wp-fastest-cache', 'sg-cachepress', 'breeze', 'hummingbird-performance', 'wp-optimize', 'swift-performance-lite', 'nitropack', 'flying-press', 'jetpack-boost' );
 
-	/** Plugins that also compress the original images, which Arva SEO doesn't do (it adds WebP copies). */
+	/** Image compression plugins: what they compressed stays compressed after they're deactivated. */
 	private const IMAGES = array( 'wp-smushit', 'ewww-image-optimizer', 'imagify', 'shortpixel-image-optimiser', 'optimole-wp' );
 
 	/**
@@ -65,7 +68,7 @@ final class OtherPlugins {
 					'file'    => (string) $file,
 					'name'    => (string) ( $installed[ $file ]['Name'] ?? Fixes::plugin_names()[ $slug ] ?? $slug ),
 					'fixes'   => array_values( array_unique( $titles ) ),
-					'also'    => in_array( $slug, self::PAGE_CACHE, true ) ? 'page_cache' : ( in_array( $slug, self::IMAGES, true ) ? 'images' : null ),
+					'also'    => in_array( $slug, self::HOST_CACHE, true ) ? 'host_cache' : ( in_array( $slug, self::PAGE_CACHE, true ) ? 'page_cache' : ( in_array( $slug, self::IMAGES, true ) ? 'images' : null ) ),
 					'network' => in_array( $file, $network, true ),
 				);
 				break;
@@ -77,12 +80,13 @@ final class OtherPlugins {
 	/**
 	 * What a plugin does that Arva SEO doesn't, said before anyone deactivates it ('' when nothing).
 	 *
-	 * @param string|null $also page_cache, images or null.
+	 * @param string|null $also host_cache, page_cache, images or null.
 	 */
 	public static function caveat( ?string $also ): string {
 		return match ( $also ) {
+			'host_cache' => __( 'It also runs your web host’s own page cache and clears it when your pages change, which Arva SEO doesn’t do. Keeping it is usually best: without it, visitors can get out-of-date pages, or slower ones.', 'arvaseo-connector' ),
 			'page_cache' => __( 'It also caches your pages, which Arva SEO doesn’t do. Before you deactivate it, check that your host caches pages (many do), or your pages may load slower.', 'arvaseo-connector' ),
-			'images'     => __( 'It also compresses your images, which Arva SEO doesn’t do: Arva SEO adds smaller WebP copies and leaves the originals as they are. Images you upload after deactivating it won’t be compressed.', 'arvaseo-connector' ),
+			'images'     => __( 'Images it already compressed stay that way after you deactivate it. Turn on Compress images here for the ones you upload next, and for the rest of your media library.', 'arvaseo-connector' ),
 			default      => '',
 		};
 	}

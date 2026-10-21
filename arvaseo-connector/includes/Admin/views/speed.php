@@ -10,7 +10,9 @@ use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Health\AssessmentService;
 use ArvaSEO\Connector\Speed\Cloudflare;
 use ArvaSEO\Connector\Speed\Exclusions;
+use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Speed\Fixes;
+use ArvaSEO\Connector\Speed\ImageCompression;
 use ArvaSEO\Connector\Speed\OtherPlugins;
 use ArvaSEO\Connector\Speed\ServerRules;
 
@@ -551,6 +553,119 @@ defined( 'ABSPATH' ) || exit;
 								<?php endif; ?>
 							</div>
 						</div>
+					</details>
+				<?php endif; ?>
+
+				<?php if ( 'compress_images' === $arvaseo_id ) : ?>
+					<?php
+					$arvaseo_cmp       = ImageCompression::state();
+					$arvaseo_cmp_stats = ImageCompression::stats();
+					$arvaseo_cmp_lib   = ImageCompression::library();
+					$arvaseo_cmp_left  = $arvaseo_cmp['allowance'];
+					$arvaseo_cmp_cloud = TokenStore::is_connected() && PrivacyService::allows( 'image_compression' );
+					?>
+					<div class="arvaseo-extra">
+						<p>
+							<?php
+							if ( ! TokenStore::is_connected() ) {
+								esc_html_e( 'On this server. Connect to Arva SEO to have its servers compress images more strongly (100 a month on the Free plan).', 'arvaseo-connector' );
+							} elseif ( ! $arvaseo_cmp_cloud ) {
+								esc_html_e( 'On this server. Arva SEO’s servers compress images more strongly once you allow it below.', 'arvaseo-connector' );
+							} elseif ( 'no_allowance' === $arvaseo_cmp['cloud_reason'] && time() < $arvaseo_cmp['cloud_paused_until'] ) {
+								/* translators: %s: date, such as November 1. */
+								echo esc_html( sprintf( __( 'No image compressions left this month on Arva SEO’s servers, so this server compresses images until %s.', 'arvaseo-connector' ), wp_date( get_option( 'date_format' ), $arvaseo_cmp['cloud_paused_until'] ) ) );
+							} elseif ( '' !== $arvaseo_cmp['cloud_reason'] && time() < $arvaseo_cmp['cloud_paused_until'] ) {
+								esc_html_e( 'Arva SEO’s servers didn’t answer a moment ago, so images wait a few minutes for them.', 'arvaseo-connector' );
+							} elseif ( is_array( $arvaseo_cmp_left ) ) {
+								echo esc_html(
+									$arvaseo_cmp_left['packs'] > 0
+										/* translators: 1: compressions left this month, 2: included a month, 3: compressions in top-ups. */
+										? sprintf( __( 'On Arva SEO’s servers: %1$s of %2$s image compressions left this month, and %3$s in top-ups.', 'arvaseo-connector' ), number_format_i18n( max( 0, $arvaseo_cmp_left['remaining'] - $arvaseo_cmp_left['packs'] ) ), number_format_i18n( $arvaseo_cmp_left['included'] ), number_format_i18n( $arvaseo_cmp_left['packs'] ) )
+										/* translators: 1: compressions left this month, 2: included a month. */
+										: sprintf( __( 'On Arva SEO’s servers: %1$s of %2$s image compressions left this month.', 'arvaseo-connector' ), number_format_i18n( $arvaseo_cmp_left['remaining'] ), number_format_i18n( $arvaseo_cmp_left['included'] ) )
+								);
+							} else {
+								esc_html_e( 'On Arva SEO’s servers. Each image counts once, with all its sizes, and only when it gets at least 5% smaller.', 'arvaseo-connector' );
+							}
+							?>
+							<?php if ( is_array( $arvaseo_cmp_left ) && null !== ( $arvaseo_cmp_left['buy_url'] ?? null ) && $arvaseo_cmp_left['remaining'] < 50 ) : ?>
+								<a href="<?php echo esc_url( (string) $arvaseo_cmp_left['buy_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get more image compressions', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
+							<?php endif; ?>
+						</p>
+						<?php if ( $arvaseo_cmp_stats['images'] > 0 ) : ?>
+							<p class="arvaseo-hint">
+								<?php
+								/* translators: 1: number of images, 2: space saved, such as 12 MB. */
+								echo esc_html( sprintf( _n( '%1$s image compressed so far, %2$s smaller.', '%1$s images compressed so far, %2$s smaller.', $arvaseo_cmp_stats['images'], 'arvaseo-connector' ), number_format_i18n( $arvaseo_cmp_stats['images'] ), (string) size_format( $arvaseo_cmp_stats['saved_bytes'] ) ) );
+								?>
+							</p>
+						<?php endif; ?>
+					</div>
+					<details class="arvaseo-more" <?php echo $arvaseo_cmp['running'] || $arvaseo_cmp['restoring'] ? 'open' : ''; ?>>
+						<summary><?php esc_html_e( 'Compress your existing images too', 'arvaseo-connector' ); ?></summary>
+						<div class="arvaseo-more-in">
+							<p class="arvaseo-hint"><?php esc_html_e( 'Each JPEG and PNG in your media library, with its sizes, is saved smaller in the background, a few images at a time. A file is replaced only when it gets at least 5% smaller, and its original is kept, so Restore puts it back.', 'arvaseo-connector' ); ?></p>
+							<?php if ( $arvaseo_cmp_lib['images'] > 0 ) : ?>
+								<p>
+									<progress max="<?php echo esc_attr( (string) $arvaseo_cmp_lib['images'] ); ?>" value="<?php echo esc_attr( (string) min( $arvaseo_cmp_lib['done'], $arvaseo_cmp_lib['images'] ) ); ?>"></progress>
+									<?php
+									/* translators: 1: images looked at, 2: images in the library. */
+									echo esc_html( sprintf( __( '%1$s of %2$s images done.', 'arvaseo-connector' ), number_format_i18n( min( $arvaseo_cmp_lib['done'], $arvaseo_cmp_lib['images'] ) ), number_format_i18n( $arvaseo_cmp_lib['images'] ) ) );
+									echo $arvaseo_cmp['running'] ? ' ' . esc_html__( 'Compressing…', 'arvaseo-connector' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+									echo $arvaseo_cmp['restoring'] ? ' ' . esc_html__( 'Putting the originals back…', 'arvaseo-connector' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+									?>
+								</p>
+							<?php endif; ?>
+							<div class="arvaseo-row">
+								<?php
+								foreach ( array_filter(
+									array(
+										'start'   => ! $arvaseo_cmp['running'] && ! $arvaseo_cmp['restoring'] && 'on' === $arvaseo_state,
+										'stop'    => $arvaseo_cmp['running'],
+										'restore' => ! $arvaseo_cmp['restoring'] && $arvaseo_cmp_lib['done'] > 0,
+									)
+								) as $arvaseo_do => $arvaseo_show ) :
+									?>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-inline-form"<?php echo 'restore' === $arvaseo_do ? ' data-arvaseo-confirm="confirmCompressRestore"' : ''; ?>>
+										<input type="hidden" name="action" value="arvaseo_connector_compress" />
+										<input type="hidden" name="do" value="<?php echo esc_attr( $arvaseo_do ); ?>" />
+										<?php wp_nonce_field( 'arvaseo_connector_compress' ); ?>
+										<button type="submit" class="arvaseo-btn arvaseo-btn--sm">
+											<?php
+											$arvaseo_labels = array(
+												'start'   => $arvaseo_cmp['done'] > 0 && null === $arvaseo_cmp['finished_at'] ? __( 'Continue', 'arvaseo-connector' ) : ( null !== $arvaseo_cmp['finished_at'] ? __( 'Compress images added since', 'arvaseo-connector' ) : __( 'Compress existing images', 'arvaseo-connector' ) ),
+												'stop'    => __( 'Stop', 'arvaseo-connector' ),
+												'restore' => __( 'Restore the originals', 'arvaseo-connector' ),
+											);
+											echo esc_html( $arvaseo_labels[ $arvaseo_do ] );
+											?>
+										</button>
+									</form>
+								<?php endforeach; ?>
+								<?php if ( 'on' !== $arvaseo_state ) : ?>
+									<span class="arvaseo-hint"><?php esc_html_e( 'Turn on Compress images first.', 'arvaseo-connector' ); ?></span>
+								<?php endif; ?>
+							</div>
+						</div>
+					</details>
+					<details class="arvaseo-more">
+						<summary><?php esc_html_e( 'Where images are compressed, and the originals', 'arvaseo-connector' ); ?></summary>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-more-in">
+							<input type="hidden" name="action" value="arvaseo_connector_compress" />
+							<input type="hidden" name="do" value="options" />
+							<?php wp_nonce_field( 'arvaseo_connector_compress' ); ?>
+							<?php if ( TokenStore::is_connected() && null !== PrivacyService::current() ) : ?>
+								<label class="arvaseo-toggle"><input type="checkbox" name="cloud" value="1" <?php checked( $arvaseo_cmp_cloud ); ?> /><span class="arvaseo-switch" aria-hidden="true"></span>
+									<span><strong><?php esc_html_e( 'Use Arva SEO’s servers', 'arvaseo-connector' ); ?></strong><br /><span class="arvaseo-hint"><?php esc_html_e( 'Each image and its sizes are sent to Arva SEO, compressed more strongly than this server can, sent back and deleted from Arva SEO straight away. Each image counts once against your plan’s monthly image compressions, and only when it gets at least 5% smaller. When none are left, this server carries on.', 'arvaseo-connector' ); ?></span></span>
+								</label>
+							<?php elseif ( TokenStore::is_connected() ) : ?>
+								<p class="arvaseo-hint"><?php esc_html_e( 'To use Arva SEO’s servers, share data with Arva SEO first (Settings → Diagnostics and data sharing).', 'arvaseo-connector' ); ?></p>
+							<?php endif; ?>
+							<label class="arvaseo-toggle" style="margin-top: 10px"><input type="checkbox" name="keep_originals" value="1" <?php checked( $arvaseo_cmp['keep_originals'] ); ?> /><span class="arvaseo-switch" aria-hidden="true"></span>
+								<span><strong><?php esc_html_e( 'Keep the originals', 'arvaseo-connector' ); ?></strong><br /><span class="arvaseo-hint"><?php esc_html_e( 'A copy of each original is kept in wp-content/arvaseo-originals, so Restore can put it back. Turn this off to save disk space: images compressed after that can’t be put back.', 'arvaseo-connector' ); ?></span></span>
+							</label>
+							<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button></div>
+						</form>
 					</details>
 				<?php endif; ?>
 

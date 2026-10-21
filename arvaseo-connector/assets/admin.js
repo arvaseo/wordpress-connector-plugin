@@ -79,15 +79,15 @@
 			}
 		} );
 	}
-	// Health → Deep scan: its step, bar and detail, from the progress check.
+	// Health → Security scan and Deep scan: the step, bar and detail, from the progress check.
 	var deep = document.querySelector( '[data-arvaseo-deep-running]' );
-	var showDeep = function ( now ) {
-		if ( ! deep || ! now ) {
+	var showProgress = function ( box, now ) {
+		if ( ! box || ! now ) {
 			return;
 		}
-		var label = deep.querySelector( '[data-arvaseo-deep-label]' );
-		var bar = deep.querySelector( '[data-arvaseo-deep-bar]' );
-		var detail = deep.querySelector( '[data-arvaseo-deep-detail]' );
+		var label = box.querySelector( '[data-arvaseo-progress-label]' );
+		var bar = box.querySelector( '[data-arvaseo-progress-bar]' );
+		var detail = box.querySelector( '[data-arvaseo-progress-detail]' );
 		if ( label && now.label ) {
 			label.textContent = now.label;
 		}
@@ -104,6 +104,9 @@
 		if ( detail && now.detail ) {
 			detail.textContent = now.detail;
 		}
+	};
+	var showDeep = function ( now ) {
+		showProgress( deep, now );
 	};
 	// Health → Security: while a scan runs, show its progress, and reload when it's done.
 	var running = document.querySelector( '[data-arvaseo-security-running]' );
@@ -124,9 +127,7 @@
 						window.location.reload();
 						return;
 					}
-					running.textContent = ( strings.securityProgress || '%1$s · %2$s' )
-						.replace( '%1$s', reply.data.step )
-						.replace( '%2$s', Number( reply.data.files ).toLocaleString() );
+					showProgress( running, reply.data.scan_now );
 					showDeep( reply.data.deep_now );
 					window.setTimeout( check, 5000 );
 				} )

@@ -28,6 +28,9 @@ final class PrivacyService {
 	/** Sending files for deep scans (2.1.0): agreed to separately again, and only with the security consent. */
 	private const DEEP_SCAN_OPTION = 'arvaseo_connector_consent_deep_scan';
 
+	/** Compressing images on Arva SEO's servers (2.4.0): its own consent, like deep scans. */
+	private const IMAGES_OPTION = 'arvaseo_connector_consent_images';
+
 	/**
 	 * Every field the plugin can send, with its purpose (the field-set hash covers this list).
 	 *
@@ -112,6 +115,24 @@ final class PrivacyService {
 	}
 
 	/**
+	 * What compressing images on Arva SEO's servers sends (its own consent, with its own hash).
+	 *
+	 * @return array<int, array{field: string, purpose: string}>
+	 */
+	public static function images_field_set(): array {
+		return array(
+			array(
+				'field'   => 'Each JPEG and PNG image in the media library that compression works on, with every size WordPress made of it (12 files and 15 MB at most at a time), and their file names',
+				'purpose' => 'Compress them on Arva SEO’s servers and send the smaller files back; the images are deleted from Arva SEO’s servers as soon as they’re sent back',
+			),
+			array(
+				'field'   => 'How many images were compressed this month',
+				'purpose' => 'Count them against the plan’s monthly image compressions',
+			),
+		);
+	}
+
+	/**
 	 * Data that is never sent.
 	 *
 	 * @return string[]
@@ -121,7 +142,7 @@ final class PrivacyService {
 			__( 'Passwords, salts, access or refresh tokens, signing secrets, license keys or API keys', 'arvaseo-connector' ),
 			__( 'Database credentials, configuration files, server or debug logs, and file paths (except the paths of files the security scan flags, if you share its results, and the files a deep scan checks, when an administrator starts one)', 'arvaseo-connector' ),
 			__( 'Usernames, email addresses, visitor data or form submissions', 'arvaseo-connector' ),
-			__( 'Plugin or theme settings, uploaded files, and the content of your existing posts and pages (if you let Arva SEO update SEO titles and descriptions, only the previous title and description of the pages it updates)', 'arvaseo-connector' ),
+			__( 'Plugin or theme settings, uploaded files (except the images compression sends, if an administrator lets Arva SEO’s servers compress them), and the content of your existing posts and pages (if you let Arva SEO update SEO titles and descriptions, only the previous title and description of the pages it updates)', 'arvaseo-connector' ),
 		);
 	}
 
@@ -169,6 +190,7 @@ final class PrivacyService {
 		delete_option( self::OPTION );
 		delete_option( self::SECURITY_OPTION );
 		delete_option( self::DEEP_SCAN_OPTION );
+		delete_option( self::IMAGES_OPTION );
 	}
 
 	/**
@@ -243,6 +265,41 @@ final class PrivacyService {
 	}
 
 	/**
+	 * Agree (or stop agreeing) to compress images on Arva SEO's servers.
+	 *
+	 * @param bool $give Agree.
+	 */
+	public static function consent_images( bool $give ): void {
+		if ( ! $give ) {
+			delete_option( self::IMAGES_OPTION );
+			return;
+		}
+		update_option(
+			self::IMAGES_OPTION,
+			array(
+				'schema_version' => Config::CONSENT_SCHEMA_VERSION,
+				'consented_at'   => Ids::iso(),
+				'user_id'        => get_current_user_id(),
+				'field_set_hash' => Ids::hash( array( 'image_compression' => self::images_field_set() ) ),
+			),
+			false
+		);
+	}
+
+	/**
+	 * The image compression consent, if it still matches this version's field list.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public static function images_consent(): ?array {
+		$consent = get_option( self::IMAGES_OPTION );
+		if ( ! is_array( $consent ) || ( $consent['field_set_hash'] ?? '' ) !== Ids::hash( array( 'image_compression' => self::images_field_set() ) ) ) {
+			return null;
+		}
+		return $consent;
+	}
+
+	/**
 	 * The current consent, if it still matches this version's field set.
 	 *
 	 * @return array<string, mixed>|null
@@ -258,10 +315,13 @@ final class PrivacyService {
 	/**
 	 * Whether a purpose is consented.
 	 *
-	 * @param string $purpose inventory|health|security|deep_scan.
+	 * @param string $purpose inventory|health|security|deep_scan|image_compression.
 	 */
 	public static function allows( string $purpose ): bool {
 		$consent = self::current();
+		if ( 'image_compression' === $purpose ) {
+			return null !== $consent && null !== self::images_consent();
+		}
 		if ( 'security' === $purpose ) {
 			return null !== $consent && null !== self::security_consent();
 		}
@@ -287,6 +347,9 @@ final class PrivacyService {
 			if ( null !== self::deep_scan_consent() ) {
 				$purposes[] = 'deep_scan';
 			}
+		}
+		if ( null !== self::images_consent() ) {
+			$purposes[] = 'image_compression';
 		}
 		return array(
 			'schema_version'       => $consent['schema_version'],

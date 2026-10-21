@@ -87,12 +87,12 @@ defined( 'ABSPATH' ) || exit;
 					?>
 				</h2>
 				<?php if ( $arvaseo_running ) : ?>
-					<p class="arvaseo-muted" style="margin-top: 6px" data-arvaseo-security-running aria-live="polite">
-						<?php
-						/* translators: 1: what the scan is checking, 2: number of files. */
-						echo esc_html( sprintf( __( '%1$s · %2$s files checked so far', 'arvaseo-connector' ), Scanner::step_label( (string) ( $arvaseo_progress['step'] ?? '' ) ), number_format_i18n( (int) ( $arvaseo_progress['files'] ?? 0 ) ) ) );
-						?>
-					</p>
+					<?php $arvaseo_now = Scanner::now(); ?>
+					<div class="arvaseo-deep-progress" data-arvaseo-security-running aria-live="polite">
+						<p class="arvaseo-deep-step" data-arvaseo-progress-label><?php echo esc_html( $arvaseo_now['label'] ); ?></p>
+						<progress max="100" data-arvaseo-progress-bar<?php echo null !== $arvaseo_now['percent'] ? ' value="' . esc_attr( (string) $arvaseo_now['percent'] ) . '"' : ''; ?>><?php echo null !== $arvaseo_now['percent'] ? esc_html( $arvaseo_now['percent'] . '%' ) : ''; ?></progress>
+						<p class="arvaseo-hint" data-arvaseo-progress-detail><?php echo esc_html( $arvaseo_now['detail'] ); ?></p>
+					</div>
 				<?php elseif ( null !== $arvaseo_results ) : ?>
 					<p class="arvaseo-muted" style="margin-top: 6px">
 						<?php
@@ -176,9 +176,9 @@ defined( 'ABSPATH' ) || exit;
 				<?php if ( $arvaseo_deep_on ) : ?>
 					<?php $arvaseo_deep_progress = DeepScan::progress(); ?>
 					<div class="arvaseo-deep-progress" data-arvaseo-deep-running aria-live="polite">
-						<p class="arvaseo-deep-step" data-arvaseo-deep-label><?php echo esc_html( $arvaseo_deep_progress['label'] ); ?></p>
-						<progress max="100" data-arvaseo-deep-bar<?php echo null !== $arvaseo_deep_progress['percent'] ? ' value="' . esc_attr( (string) $arvaseo_deep_progress['percent'] ) . '"' : ''; ?>><?php echo null !== $arvaseo_deep_progress['percent'] ? esc_html( $arvaseo_deep_progress['percent'] . '%' ) : ''; ?></progress>
-						<p class="arvaseo-hint" data-arvaseo-deep-detail><?php echo esc_html( $arvaseo_deep_progress['detail'] ); ?></p>
+						<p class="arvaseo-deep-step" data-arvaseo-progress-label><?php echo esc_html( $arvaseo_deep_progress['label'] ); ?></p>
+						<progress max="100" data-arvaseo-progress-bar<?php echo null !== $arvaseo_deep_progress['percent'] ? ' value="' . esc_attr( (string) $arvaseo_deep_progress['percent'] ) . '"' : ''; ?>><?php echo null !== $arvaseo_deep_progress['percent'] ? esc_html( $arvaseo_deep_progress['percent'] . '%' ) : ''; ?></progress>
+						<p class="arvaseo-hint" data-arvaseo-progress-detail><?php echo esc_html( $arvaseo_deep_progress['detail'] ); ?></p>
 					</div>
 				<?php elseif ( null !== $arvaseo_deep_res ) : ?>
 					<p class="arvaseo-muted" style="margin-top: 6px">
@@ -187,9 +187,9 @@ defined( 'ABSPATH' ) || exit;
 						echo esc_html(
 							0 === $arvaseo_deep_found
 								/* translators: %s: number of files. */
-								? sprintf( __( '%s files checked: no known malware found', 'arvaseo-connector' ), number_format_i18n( (int) $arvaseo_deep_res['scanned'] ) )
+								? sprintf( __( '%s files that aren’t official copies checked: no known malware found', 'arvaseo-connector' ), number_format_i18n( (int) $arvaseo_deep_res['scanned'] ) )
 								/* translators: 1: number of files, 2: number of findings. */
-								: sprintf( _n( '%1$s files checked: %2$d finding, listed below', '%1$s files checked: %2$d findings, listed below', $arvaseo_deep_found, 'arvaseo-connector' ), number_format_i18n( (int) $arvaseo_deep_res['scanned'] ), $arvaseo_deep_found )
+								: sprintf( _n( '%1$s files that aren’t official copies checked: %2$d finding, listed below', '%1$s files that aren’t official copies checked: %2$d findings, listed below', $arvaseo_deep_found, 'arvaseo-connector' ), number_format_i18n( (int) $arvaseo_deep_res['scanned'] ), $arvaseo_deep_found )
 						);
 						?>
 					</p>

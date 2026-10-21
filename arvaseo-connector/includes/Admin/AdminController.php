@@ -73,6 +73,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_speed', array( self::class, 'speed' ) );
 		add_action( 'admin_post_arvaseo_connector_speed_options', array( self::class, 'speed_options' ) );
 		add_action( 'admin_post_arvaseo_connector_webp', array( self::class, 'webp' ) );
+		add_action( 'admin_post_arvaseo_connector_compress', array( self::class, 'compress' ) );
 		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
 		add_action( 'admin_post_arvaseo_connector_cloudflare', array( self::class, 'cloudflare' ) );
 		add_action( 'admin_post_arvaseo_connector_security_scan', array( self::class, 'security_scan' ) );
@@ -538,6 +539,10 @@ final class AdminController {
 			'deep_scan_needs_results'        => array( 'error', __( 'Deep scans send their results the same way as the security scan: share the scan’s results first.', 'arvaseo-connector' ) ),
 			'repair_done'                    => array( 'success', __( 'Done. It can be undone for 30 days under Changes made here.', 'arvaseo-connector' ) ),
 			'repair_failed'                  => array( 'error', __( 'Nothing was changed.', 'arvaseo-connector' ) ),
+			'compress_started'               => array( 'success', __( 'Compressing your media library started. It runs in the background, a few images at a time; you can leave this page.', 'arvaseo-connector' ) ),
+			'compress_stopped'               => array( 'success', __( 'Stopped. Images already compressed stay that way; Continue carries on from here.', 'arvaseo-connector' ) ),
+			'compress_restoring'             => array( 'success', __( 'Putting the original images back in the background. Files changed since they were compressed stay as they are.', 'arvaseo-connector' ) ),
+			'compress_off'                   => array( 'error', __( 'Turn on Compress images first.', 'arvaseo-connector' ) ),
 			'other_deactivated'              => array( 'success', __( 'The plugin was deactivated.', 'arvaseo-connector' ) ),
 			'other_not_deactivated'          => array( 'error', __( 'Nothing was changed.', 'arvaseo-connector' ) ),
 			'others_kept'                    => array( 'success', __( 'Kept. Arva SEO leaves those fixes to them, and asks again if another speed plugin is activated.', 'arvaseo-connector' ) ),
@@ -803,6 +808,7 @@ final class AdminController {
 				'deep'      => \ArvaSEO\Connector\Security\DeepScan::running(),
 				'deep_step' => \ArvaSEO\Connector\Security\DeepScan::step_label( (string) ( $deep['step'] ?? '' ) ),
 				'deep_now'  => \ArvaSEO\Connector\Security\DeepScan::progress(),
+				'scan_now'  => \ArvaSEO\Connector\Security\Scanner::now(),
 			)
 		);
 	}
@@ -978,6 +984,33 @@ final class AdminController {
 	}
 
 	/**
+	 * Compress images: the library (start, stop, put the originals back) and the choices.
+	 */
+	public static function compress(): void {
+		self::guard( 'arvaseo_connector_compress', Capabilities::MANAGE );
+		$do = isset( $_POST['do'] ) ? sanitize_key( wp_unslash( $_POST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+		if ( 'stop' === $do ) {
+			\ArvaSEO\Connector\Speed\ImageCompression::stop();
+			$notice = 'compress_stopped';
+		} elseif ( 'restore' === $do ) {
+			\ArvaSEO\Connector\Speed\ImageCompression::restore_all();
+			$notice = 'compress_restoring';
+		} elseif ( 'options' === $do ) {
+			\ArvaSEO\Connector\Speed\ImageCompression::keep_originals( ! empty( $_POST['keep_originals'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+			$cloud = ! empty( $_POST['cloud'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
+			if ( TokenStore::is_connected() && null !== PrivacyService::current() && PrivacyService::allows( 'image_compression' ) !== $cloud ) {
+				PrivacyService::consent_images( $cloud );
+				AuditLogger::info( $cloud ? 'consent.images_given' : 'consent.images_withdrawn', $cloud ? __( 'Arva SEO’s servers may compress images.', 'arvaseo-connector' ) : __( 'Arva SEO’s servers no longer compress images.', 'arvaseo-connector' ) );
+				SiteRegistrationService::register();
+			}
+			$notice = 'speed_options_saved';
+		} else {
+			$notice = \ArvaSEO\Connector\Speed\ImageCompression::start() ? 'compress_started' : 'compress_off';
+		}
+		self::back_to_fix( 'compress_images', $notice );
+	}
+
+	/**
 	 * Cloudflare: connect with a token, clear its copy, check again, choose, disconnect.
 	 */
 	public static function cloudflare(): void {
@@ -1087,23 +1120,23 @@ final class AdminController {
 			'arvaseo-connector-admin',
 			'arvaseoConnector',
 			array(
-				'copied'               => __( 'Copied.', 'arvaseo-connector' ),
-				'confirmRestore'       => __( 'Replace this file with WordPress.org’s official copy? The current file is kept for 30 days, so you can undo it.', 'arvaseo-connector' ),
-				'confirmDeactivate'    => __( 'Deactivate this plugin? Its settings stay, so you can activate it again from the Plugins page. Clear any page cache afterwards.', 'arvaseo-connector' ),
-				'confirmQuarantine'    => __( 'Move this file to quarantine, where it can’t run? It’s kept for 30 days, so you can undo it. If you’re not sure what it does, back up your site first.', 'arvaseo-connector' ),
-				'confirmDisconnect'    => __( 'Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again.', 'arvaseo-connector' ),
-				'confirmFull'          => __( 'Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?', 'arvaseo-connector' ),
-				'confirmOverwrite'     => __( 'With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?', 'arvaseo-connector' ),
-				'confirmSeoUpdates'    => __( 'With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?', 'arvaseo-connector' ),
-				'confirmDefer'         => __( 'Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?', 'arvaseo-connector' ),
-				'confirmRisky'         => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
-				'confirmCssRegenerate' => __( 'Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance.', 'arvaseo-connector' ),
-				'confirmWebpUndo'      => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
-				'confirmCloudflareOff' => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
-				'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
-				'securityNonce'        => wp_create_nonce( 'arvaseo_connector_security_progress' ),
+				'copied'                 => __( 'Copied.', 'arvaseo-connector' ),
+				'confirmRestore'         => __( 'Replace this file with WordPress.org’s official copy? The current file is kept for 30 days, so you can undo it.', 'arvaseo-connector' ),
+				'confirmDeactivate'      => __( 'Deactivate this plugin? Its settings stay, so you can activate it again from the Plugins page. Clear any page cache afterwards.', 'arvaseo-connector' ),
+				'confirmCompressRestore' => __( 'Put the original images back? Files changed since they were compressed stay as they are.', 'arvaseo-connector' ),
+				'confirmQuarantine'      => __( 'Move this file to quarantine, where it can’t run? It’s kept for 30 days, so you can undo it. If you’re not sure what it does, back up your site first.', 'arvaseo-connector' ),
+				'confirmDisconnect'      => __( 'Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again.', 'arvaseo-connector' ),
+				'confirmFull'            => __( 'Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?', 'arvaseo-connector' ),
+				'confirmOverwrite'       => __( 'With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?', 'arvaseo-connector' ),
+				'confirmSeoUpdates'      => __( 'With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?', 'arvaseo-connector' ),
+				'confirmDefer'           => __( 'Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?', 'arvaseo-connector' ),
+				'confirmRisky'           => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
+				'confirmCssRegenerate'   => __( 'Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance.', 'arvaseo-connector' ),
+				'confirmWebpUndo'        => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
+				'confirmCloudflareOff'   => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
+				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
+				'securityNonce'          => wp_create_nonce( 'arvaseo_connector_security_progress' ),
 				/* translators: 1: what the scan is checking, 2: number of files. */
-				'securityProgress'     => __( '%1$s · %2$s files checked so far', 'arvaseo-connector' ),
 			)
 		);
 	}

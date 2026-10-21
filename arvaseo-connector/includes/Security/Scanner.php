@@ -178,6 +178,57 @@ final class Scanner {
 	}
 
 	/**
+	 * How far a running scan is, for the Health page: the step (1 to 4), what it's doing, the
+	 * percent done when it can be told (plugins by count, files against the last scan's count),
+	 * and the detail line.
+	 *
+	 * @return array{number: int, label: string, percent: int|null, detail: string}
+	 */
+	public static function now(): array {
+		$state   = self::progress();
+		$step    = (string) ( $state['step'] ?? '' );
+		$files   = (int) ( $state['files'] ?? 0 );
+		$last    = (int) ( Findings::latest()['files'] ?? 0 );
+		$started = (int) ( $state['started_at'] ?? 0 );
+		/* translators: %s: relative time such as "2 mins". */
+		$since   = $started > 0 ? sprintf( __( 'started %s ago', 'arvaseo-connector' ), human_time_diff( $started ) ) : '';
+		$percent = null;
+		$number  = array(
+			'core'    => 1,
+			'plugins' => 2,
+			'walk'    => 3,
+		)[ $step ] ?? 4;
+		if ( 'plugins' === $step ) {
+			$queue   = max( 1, count( (array) ( $state['plugin_queue'] ?? array() ) ) );
+			$index   = min( $queue, (int) ( $state['plugin_index'] ?? 0 ) );
+			$percent = (int) floor( 100 * $index / $queue );
+			/* translators: 1: plugin number, 2: number of plugins, 3: "started 2 mins ago". */
+			$detail = sprintf( __( 'Plugin %1$d of %2$d, %3$s', 'arvaseo-connector' ), min( $queue, $index + 1 ), $queue, $since );
+		} elseif ( 'walk' === $step && $last > 0 ) {
+			$percent = min( 99, (int) floor( 100 * $files / $last ) );
+			/* translators: 1: files checked, 2: files the last scan checked, 3: "started 2 mins ago". */
+			$detail = sprintf( __( '%1$s files checked, of about %2$s (the last scan’s count), %3$s', 'arvaseo-connector' ), number_format_i18n( $files ), number_format_i18n( $last ), $since );
+		} elseif ( 'exposure' === $step ) {
+			$percent = 100;
+			/* translators: 1: files checked, 2: "started 2 mins ago". */
+			$detail = sprintf( __( 'Almost done: %1$s files checked, %2$s', 'arvaseo-connector' ), number_format_i18n( $files ), $since );
+		} elseif ( 'core' === $step ) {
+			/* translators: %s: "started 2 mins ago". */
+			$detail = sprintf( __( 'Comparing WordPress’s files with WordPress.org’s copies, %s', 'arvaseo-connector' ), $since );
+		} else {
+			/* translators: 1: files checked, 2: "started 2 mins ago". */
+			$detail = sprintf( __( '%1$s files checked so far, %2$s', 'arvaseo-connector' ), number_format_i18n( $files ), $since );
+		}
+		return array(
+			'number'  => $number,
+			/* translators: 1: step number, 2: what the step does. */
+			'label'   => sprintf( __( 'Step %1$d of 4: %2$s', 'arvaseo-connector' ), $number, self::step_label( $step ) ),
+			'percent' => $percent,
+			'detail'  => $detail,
+		);
+	}
+
+	/**
 	 * Run a batch when the last one was a while ago (the Health page's progress check).
 	 */
 	public static function tick(): void {
