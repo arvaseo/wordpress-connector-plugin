@@ -37,6 +37,7 @@ final class Findings {
 			'vulnerabilities' => array( __( 'Known vulnerabilities', 'arvaseo-connector' ), __( 'Installed versions with a published security hole.', 'arvaseo-connector' ) ),
 			'deep'            => array( __( 'Found by the deep scan', 'arvaseo-connector' ), __( 'Known malware and hacking patterns found on Arva SEO’s servers in files that aren’t official copies.', 'arvaseo-connector' ) ),
 			'code'            => array( __( 'Suspicious code', 'arvaseo-connector' ), __( 'Patterns hackers use, in files that aren’t official copies.', 'arvaseo-connector' ) ),
+			'since'           => array( __( 'Changed since the last scan', 'arvaseo-connector' ), __( 'Theme, must-use plugin and other files that WordPress.org can’t check, new or changed since the scan recorded them.', 'arvaseo-connector' ) ),
 			'changed'         => array( __( 'Changed files', 'arvaseo-connector' ), __( 'WordPress and plugin files that differ from the official copies.', 'arvaseo-connector' ) ),
 			'unexpected'      => array( __( 'Files that shouldn’t be there', 'arvaseo-connector' ), __( 'Code where WordPress never puts it.', 'arvaseo-connector' ) ),
 			'exposed'         => array( __( 'Exposed files', 'arvaseo-connector' ), __( 'Private files anyone on the internet can download.', 'arvaseo-connector' ) ),
@@ -54,6 +55,7 @@ final class Findings {
 			'vulnerability'                                                                         => 'vulnerabilities',
 			'deep_malware', 'deep_code'                                                             => 'deep',
 			'code', 'known_malware'                                                                 => 'code',
+			'file_changed', 'file_added'                                                            => 'since',
 			'core_changed', 'core_missing', 'plugin_changed'                                        => 'changed',
 			'core_unexpected', 'root_unexpected', 'plugin_unexpected', 'uploads_php', 'uploads_disguised' => 'unexpected',
 			'exposed_git', 'exposed_env', 'exposed_config_backup', 'exposed_debug_log', 'exposed_database', 'exposed_backup', 'directory_listing' => 'exposed',
@@ -134,6 +136,16 @@ final class Findings {
 				(string) ( $finding['title'] ?? __( 'Suspicious code', 'arvaseo-connector' ) ),
 				__( 'The deep scan found a pattern from hacked websites in this file. A few premium plugins and themes hide their code in similar ways, so check where the file comes from.', 'arvaseo-connector' ),
 				__( 'If the file isn’t part of a plugin or theme you installed on purpose, restore that plugin or theme from a fresh copy, delete files you don’t recognize and change your passwords. If it’s from a product you trust, mark it as expected.', 'arvaseo-connector' ),
+			),
+			'file_changed'          => array(
+				__( 'Changed since the last scan', 'arvaseo-connector' ),
+				__( 'This file is different from the copy the scan recorded. Themes, premium plugins and must-use plugins can’t be checked against WordPress.org, so a change nobody made on purpose is how injected code shows up: one added line can load a script on every page.', 'arvaseo-connector' ),
+				__( 'Ask whoever looks after the site whether they changed it. If nobody did, remove the added lines (or restore the file from a backup or a fresh copy of the theme or plugin), turn off the file editor, and change the passwords of every administrator. If the change is expected, mark it as expected: the file as it is now becomes the recorded copy.', 'arvaseo-connector' ),
+			),
+			'file_added'            => array(
+				__( 'A new file since the last scan', 'arvaseo-connector' ),
+				__( 'This file wasn’t there when the scan recorded this theme or plugin, and it wasn’t added by an update.', 'arvaseo-connector' ),
+				__( 'If nobody on your team added it, save a copy, delete it, and change the passwords of every administrator. If it’s expected, mark it as expected.', 'arvaseo-connector' ),
 			),
 			'core_changed'          => array( __( 'A WordPress file was changed', 'arvaseo-connector' ), __( 'WordPress files are the same on every site. A changed one usually means a hack, or a developer edited WordPress itself (which updates undo).', 'arvaseo-connector' ), __( 'Dashboard → Updates → Re-install version puts back WordPress’s own files without touching your content. Then run the scan again.', 'arvaseo-connector' ) ),
 			'core_missing'          => array( __( 'A WordPress file is missing', 'arvaseo-connector' ), __( 'A file that comes with WordPress isn’t there, so parts of the dashboard may fail, and it can be a sign that files were tampered with.', 'arvaseo-connector' ), __( 'Dashboard → Updates → Re-install version puts it back.', 'arvaseo-connector' ) ),
@@ -302,6 +314,10 @@ final class Findings {
 				'at'        => time(),
 				'by'        => get_current_user_id(),
 			);
+			// The file as it is now becomes its recorded copy (2.7.0).
+			if ( in_array( $finding['type'], FilePrints::TYPES, true ) && is_string( $finding['path'] ) ) {
+				FilePrints::accept( $finding['path'] );
+			}
 		} else {
 			unset( $ignored[ $key ] );
 		}

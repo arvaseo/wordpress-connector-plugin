@@ -53,11 +53,14 @@ final class Report {
 		if ( null === $results ) {
 			return 'no_results';
 		}
-		$findings = array_map( array( self::class, 'item' ), Findings::open() );
+		// What 2.7.0 adds (changed lines, outside scripts, expected marks) only with the consent to it.
+		$details  = PrivacyService::allows( 'security_details' );
+		$findings = array_map( static fn ( array $f ): array => self::item( $f, $details ), Findings::open() );
 		$hash     = Ids::hash(
 			array(
 				'scanned_at' => $results['scanned_at'],
 				'findings'   => $findings,
+				'expected'   => $details ? array_column( Findings::hidden(), 'key' ) : array(),
 			)
 		);
 		$last     = SyncState::get( 'security' );
@@ -88,6 +91,13 @@ final class Report {
 			'summary'              => $summary,
 			'findings'             => $findings,
 		);
+		if ( $details ) {
+			// What people here marked as expected (2.7.0): fingerprints only, so Arva SEO can learn
+			// what's normal on many sites (a host's own lines, a builder's generated files).
+			$payload['expected'] = array_map( array( self::class, 'expected' ), array_slice( Findings::hidden(), 0, 100 ) );
+			// The scripts the site's pages load from other websites, and where each was found (2.7.0).
+			$payload['scripts'] = array_map( array( self::class, 'script' ), array_slice( (array) ( $results['scripts'] ?? array() ), 0, OutsideScripts::MAX_HOSTS ) );
+		}
 		$response = ApiClient::instance()->site( 'POST', '/security-scans', $payload );
 		if ( ! $response->ok() ) {
 			SyncState::failure( 'security', $response );
@@ -115,9 +125,10 @@ final class Report {
 	 * One finding as Arva SEO receives it.
 	 *
 	 * @param array<string, mixed> $finding Finding.
-	 * @return array{key: string, type: string, severity: string, path: string|null, signature: string|null, title: string|null, line: int|null, excerpt: string|null}
+	 * @param bool                 $details With what 2.7.0 adds (the added lines).
+	 * @return array<string, mixed>
 	 */
-	private static function item( array $finding ): array {
+	private static function item( array $finding, bool $details ): array {
 		$cut = static fn ( $value, int $max ): ?string => is_string( $value ) && '' !== $value ? mb_substr( $value, 0, $max ) : null;
 		return array(
 			'key'       => (string) $finding['key'],
@@ -130,6 +141,55 @@ final class Report {
 			'line'      => isset( $finding['line'] ) ? (int) $finding['line'] : null,
 			'excerpt'   => $cut( $finding['excerpt'] ?? null, 200 ),
 			// The file's fingerprint (2.5.0), which Arva SEO's security feed learns from.
+			'sha256'    => is_string( $finding['sha256'] ?? null ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $finding['sha256'] ) ? $finding['sha256'] : null,
+		) + ( $details && isset( $finding['added_lines'] ) ? array(
+			// A new or changed file (2.7.0): at most 10 of the lines that were added, never the file.
+			'added_lines' => array_values( array_filter( array_map( static fn ( $l ): ?string => $cut( $l, 200 ), array_slice( (array) $finding['added_lines'], 0, FilePrints::MAX_LINES ) ) ) ),
+			'added_count' => (int) ( $finding['added_count'] ?? 0 ),
+		) : array() );
+	}
+
+	/**
+	 * One outside script host, as Arva SEO receives it.
+	 *
+	 * @param array<string, mixed> $script From OutsideScripts::results().
+	 * @return array{host: string, urls: array<int, string>, handles: array<int, string>, pages: array<int, string>, found_in: array<int, array<string, mixed>>}
+	 */
+	private static function script( array $script ): array {
+		$texts = static fn ( $values, int $max ): array => array_values( array_filter( array_map( static fn ( $v ): string => is_string( $v ) ? mb_substr( $v, 0, $max ) : '', array_slice( (array) $values, 0, 3 ) ) ) );
+		$found = array();
+		foreach ( array_slice( (array) ( $script['found_in'] ?? array() ), 0, 3 ) as $place ) {
+			$found[] = array_filter(
+				array(
+					'path'      => isset( $place['path'] ) ? mb_substr( (string) $place['path'], 0, 500 ) : null,
+					'line'      => isset( $place['line'] ) ? (int) $place['line'] : null,
+					'option'    => isset( $place['option'] ) ? mb_substr( (string) $place['option'], 0, 191 ) : null,
+					'post_id'   => isset( $place['post_id'] ) ? (int) $place['post_id'] : null,
+					'post_type' => isset( $place['post_type'] ) ? mb_substr( (string) $place['post_type'], 0, 40 ) : null,
+				),
+				static fn ( $v ): bool => null !== $v
+			);
+		}
+		return array(
+			'host'     => mb_substr( (string) $script['host'], 0, 253 ),
+			'urls'     => $texts( $script['urls'] ?? array(), 300 ),
+			'handles'  => $texts( $script['handles'] ?? array(), 100 ),
+			'pages'    => $texts( $script['pages'] ?? array(), 300 ),
+			'found_in' => $found,
+		);
+	}
+
+	/**
+	 * A finding marked as expected, as Arva SEO receives it: what it is and the file's fingerprint.
+	 *
+	 * @param array<string, mixed> $finding Finding.
+	 * @return array{type: string, signature: string|null, path: string|null, sha256: string|null}
+	 */
+	private static function expected( array $finding ): array {
+		return array(
+			'type'      => (string) $finding['type'],
+			'signature' => is_string( $finding['signature'] ?? null ) ? mb_substr( $finding['signature'], 0, 60 ) : null,
+			'path'      => is_string( $finding['path'] ?? null ) ? mb_substr( $finding['path'], 0, 500 ) : null,
 			'sha256'    => is_string( $finding['sha256'] ?? null ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $finding['sha256'] ) ? $finding['sha256'] : null,
 		);
 	}

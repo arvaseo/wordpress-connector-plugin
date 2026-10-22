@@ -72,7 +72,7 @@ final class Fixes {
 			),
 			'lcp_image'        => array(
 				'title'      => __( 'Show the main image first', 'arvaseo-connector' ),
-				'what'       => __( 'On posts and pages, the featured image loads straight away with a high priority instead of waiting its turn, so the largest thing on the screen appears sooner. On your homepage, so does the image your latest PageSpeed test in Arva SEO found as the largest thing on the screen.', 'arvaseo-connector' ),
+				'what'       => __( 'On posts and pages, the featured image loads straight away with a high priority instead of waiting its turn, so the largest thing on the screen appears sooner. On every page you tested with PageSpeed in Arva SEO, so does the image the test found as the largest thing on the screen, even when a slider or page builder shows it as a background.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'safe',
 				'audits'     => array(

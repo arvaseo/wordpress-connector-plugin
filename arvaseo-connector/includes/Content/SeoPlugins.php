@@ -182,6 +182,13 @@ final class SeoPlugins {
 	 * @param int $post_id Post (0 for the homepage).
 	 */
 	public static function purge_cache( int $post_id ): void {
+		// SiteGround's dynamic cache, through its Speed Optimizer plugin (2.7.0).
+		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+			$link = $post_id > 0 ? get_permalink( $post_id ) : home_url( '/' );
+			if ( is_string( $link ) ) {
+				sg_cachepress_purge_cache( $link );
+			}
+		}
 		if ( $post_id > 0 ) {
 			clean_post_cache( $post_id );
 			do_action( 'litespeed_purge_post', $post_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- LiteSpeed Cache's documented purge API.

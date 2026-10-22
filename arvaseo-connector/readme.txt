@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.6.1
+Stable tag: 2.7.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,8 +51,11 @@ Arva SEO → Health → Security scans this site on your own server: every week,
 * **Suspicious code**: patterns found in hacked websites (web shells, hidden or encoded code that runs, injected scripts and redirects, .htaccess rules that send search visitors elsewhere) in files that aren't official copies, such as themes and premium plugins. The patterns come with the plugin, and connected sites get new ones daily, with malware found on other websites.
 * **Exposed files**: a .env file, the .git folder, the debug log, database exports and backups (including copies of wp-config.php) that anyone could download, and folder listings in uploads.
 * **Settings that make an attack easier**: PHP without its latest security fixes, file editing in the dashboard, an administrator called "admin", XML-RPC, and username lists.
+* **Changed since the last scan**: files WordPress.org can't check (themes, child themes, premium and must-use plugins, drop-ins) are fingerprinted, and new or changed ones are reported, with the lines that were added for a theme's functions.php, header.php and footer.php and must-use plugins. Updates are recorded again quietly.
+* **Scripts from other websites**: the scripts your homepage, latest post and latest page load from other websites, and where each one is added. When the site is connected, Arva SEO checks the unfamiliar ones (a domain registered days ago, a script that hides what it does, Google's list of unsafe sites).
+* **Dashboard file edits**: a file saved with WordPress's theme or plugin file editor is recorded with who saved it, when and from which address; when the site is connected, Arva SEO emails the workspace's owners and admins at once.
 
-Each result says what it means and what to do. A changed WordPress or plugin file can be put back from its official copy on WordPress.org, and PHP that shouldn't be there can be moved to quarantine, where it can't run. "This is expected" hides one you trust, and it's shown again if the file changes. Serious results come first on Overview. A scan finds known signs of trouble; it can't prove a site is clean, so keep WordPress, plugins and themes updated and keep backups.
+Each result says what it means and what to do. A changed WordPress or plugin file can be put back from its official copy on WordPress.org, PHP that shouldn't be there can be moved to quarantine, where it can't run, and the dashboard's file editor can be turned off. "This is expected" hides one you trust, and it's shown again if the file changes. Serious results come first on Overview. A scan finds known signs of trouble; it can't prove a site is clean, so keep WordPress, plugins and themes updated and keep backups.
 
 When the site is connected to Arva SEO, Health also lists known vulnerabilities in your installed plugins, themes and WordPress version, with the fixed version and a link to each record (vulnerability data: Wordfence Intelligence).
 
@@ -102,6 +105,8 @@ It runs in the background in batches of about 20 seconds with pauses in between,
 = What does the security scan send to Arva SEO? =
 
 Nothing, unless the site is connected and an administrator ticks "Also share the security scan's results" when connecting or in Settings → Diagnostics and data sharing. Then it sends each open problem's kind, severity, the file's path inside the site and its SHA-256 fingerprint (for suspicious code, the pattern's name, the line and the start of that line), and how many files the scan checked. The files themselves are never sent.
+
+From 2.7.0, with that consent given again for the new fields (the Health page asks once), it also sends: up to 10 lines added to a file that's new or changed since the last scan; the host names and addresses of scripts your pages load from other websites, with where each is added (a file and line, a setting's name or a post's ID); the kind, path and fingerprint of problems marked as expected; and, when a file is saved with WordPress's file editor, its path, the time, the username and display name of who saved it, the IP address the request came from (and the one a proxy in front of the site reported) and up to 10 added lines. Until then the results are shared as before, without these.
 
 = Can a PageSpeed fix break my site? =
 
@@ -210,6 +215,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.7.0 =
+The security scan reports theme and premium plugin files changed since the last scan, and scripts from new or hiding domains; dashboard file edits are emailed at once. The main image loads first on every tested page, sliders included.
+
 = 2.6.1 =
 Optimized CSS shows its progress and any page types that failed, with why, next to its buttons. Fewer false alarms for Wordfence's firewall.
 
@@ -268,6 +276,18 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.7.0 =
+* Show the main image first now works on every page you tested with PageSpeed in Arva SEO, not only the homepage, and when a slider or page builder shows the main image as a background: it's preloaded at the top of the page. WordPress's own "load first" hint no longer goes to another image, such as the logo.
+* Changes sent from Arva SEO (turning a PageSpeed fix on or off, browser caching, new content and SEO titles) apply within seconds, while Arva SEO waits for the answer, instead of at the next visit that runs WordPress's scheduled tasks. The scheduled task stays as a fallback.
+* Security scan, Changed since the last scan: the scan records a fingerprint of every PHP and JavaScript file in themes, child themes, must-use plugins, drop-ins and plugins that aren't WordPress.org's copies, and reports files that are new or changed since. Updates are recorded again quietly. For a theme's functions.php, header.php and footer.php and must-use plugins, the last copy is kept in your database so the finding shows the lines that were added. A change stays listed until you mark it as expected.
+* A risky file that changes between weekly scans starts a scan the next day.
+* Files saved with WordPress's theme or plugin file editor are recorded as it happens, with who saved them, when, from which address and the lines added, and sent to Arva SEO, which emails the workspace's owners and admins at once.
+* New repair: Turn off the file editor adds DISALLOW_FILE_EDIT to wp-config.php, and can be undone.
+* Scripts from other websites: the scan reads your homepage, latest post and latest page as a phone visitor, lists the scripts they load from other websites, and looks for where unfamiliar ones are added (a file and line, a setting, or a code snippet). Arva SEO checks the hosts (how new the domain is, whether the script hides what it does, Google's list of unsafe sites), free on every plan. A host Arva SEO confirmed as bad is flagged straight away, from the security feed.
+* The security feed also teaches the scan which lines and hosts are safe, so changes many sites share (a host's own line) stop being reported.
+* The new details these checks share with Arva SEO (added lines, script addresses, who edited a file and from where) are sent only after an administrator agrees once more, with Share these too on the Health page. Until then the scan's results are shared as before.
+* Page caching: a change Arva SEO makes to every page also clears your host's cache (SiteGround's Speed Optimizer, LiteSpeed Cache, WP Engine, Breeze), and SEO title updates clear SiteGround's copy of the page. On SiteGround without its Speed Optimizer plugin, the Speed page explains why changes can take hours to show.
 
 = 2.6.1 =
 * Speed, Optimized CSS: the results of Optimize now, Check for results and Regenerate show under the buttons, not at the top of the page. While page types are being optimized, the page checks every 20 seconds and updates when they're ready.

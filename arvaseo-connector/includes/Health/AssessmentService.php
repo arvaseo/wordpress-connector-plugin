@@ -72,6 +72,8 @@ final class AssessmentService {
 				'app_url'            => ApiClient::app_link( $data['app_url'] ?? null ),
 				// The homepage's latest phone test, for the PageSpeed fixes page (1.3.0+).
 				'pagespeed'          => self::clean_pagespeed( $data['pagespeed'] ?? null ),
+				// Every tested page's main image, for Show the main image first (2.7.0+).
+				'main_images'        => self::clean_main_images( $data['main_images'] ?? null ),
 				'stale'              => false,
 			),
 			false
@@ -102,9 +104,9 @@ final class AssessmentService {
 
 	/**
 	 * The homepage's latest phone PageSpeed test, as Arva SEO last reported it (lcp_image is
-	 * missing from tests stored before 1.5.0).
+	 * missing from tests stored before 1.5.0, lcp_element before 2.7.0).
 	 *
-	 * @return array{tested_at: string|null, performance_score: int|null, lcp_image?: string|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
+	 * @return array{tested_at: string|null, performance_score: int|null, lcp_image?: string|null, lcp_element?: string|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
 	 */
 	public static function pagespeed_result(): ?array {
 		$value = self::get();
@@ -112,10 +114,51 @@ final class AssessmentService {
 	}
 
 	/**
+	 * Each tested page's main image and how it's drawn (img or background), keyed by the page's
+	 * path (Exclusions::path_key); null when Arva SEO didn't send them (before 2026-10-23).
+	 *
+	 * @return array<string, array{image: string, element: string}>|null
+	 */
+	public static function main_images(): ?array {
+		$value = get_option( self::OPTION );
+		return is_array( $value ) && is_array( $value['main_images'] ?? null ) ? $value['main_images'] : null;
+	}
+
+	/**
+	 * Addresses only, for pages of this site.
+	 *
+	 * @param mixed $raw The assessment's main_images section.
+	 * @return array<string, array{image: string, element: string}>|null
+	 */
+	private static function clean_main_images( $raw ): ?array {
+		if ( ! is_array( $raw ) ) {
+			return null;
+		}
+		$host   = static fn( string $url ): string => (string) preg_replace( '/^www\./', '', strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) ) );
+		$home   = $host( home_url( '/' ) );
+		$images = array();
+		foreach ( array_slice( $raw, 0, 100 ) as $item ) {
+			$url   = is_array( $item ) && is_string( $item['url'] ?? null ) ? $item['url'] : '';
+			$image = is_array( $item ) && is_string( $item['image'] ?? null ) && strlen( $item['image'] ) <= 2048 ? esc_url_raw( $item['image'], array( 'http', 'https' ) ) : '';
+			if ( '' === $url || '' === $image || $host( $url ) !== $home ) {
+				continue;
+			}
+			$key = \ArvaSEO\Connector\Speed\Exclusions::path_key( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+			if ( ! isset( $images[ $key ] ) ) {
+				$images[ $key ] = array(
+					'image'   => $image,
+					'element' => 'background' === ( $item['element'] ?? '' ) ? 'background' : 'img',
+				);
+			}
+		}
+		return $images;
+	}
+
+	/**
 	 * Only Lighthouse audit IDs, plain-text titles and whole milliseconds.
 	 *
 	 * @param mixed $raw The assessment's pagespeed section.
-	 * @return array{tested_at: string|null, performance_score: int|null, lcp_image: string|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
+	 * @return array{tested_at: string|null, performance_score: int|null, lcp_image: string|null, lcp_element: string|null, audits: array<int, array{id: string, title: string, savings_ms: int|null}>}|null
 	 */
 	private static function clean_pagespeed( $raw ): ?array {
 		if ( ! is_array( $raw ) ) {
@@ -140,6 +183,7 @@ final class AssessmentService {
 			'tested_at'         => is_string( $raw['tested_at'] ?? null ) ? sanitize_text_field( $raw['tested_at'] ) : null,
 			'performance_score' => is_int( $score ) && $score >= 0 && $score <= 100 ? $score : null,
 			'lcp_image'         => '' !== $image ? $image : null,
+			'lcp_element'       => '' === $image ? null : ( 'background' === ( $raw['lcp_element'] ?? '' ) ? 'background' : 'img' ),
 			'audits'            => $audits,
 		);
 	}

@@ -108,7 +108,7 @@ final class Scanner {
 	/**
 	 * Start a scan (a running one carries on).
 	 *
-	 * @param string $trigger manual|weekly.
+	 * @param string $trigger manual|weekly|changed (a risky file changed, FilePrints::daily()).
 	 */
 	public static function start( string $trigger = 'manual' ): bool {
 		if ( self::running() ) {
@@ -139,6 +139,8 @@ final class Scanner {
 				// Files that aren't verified official copies, for a deep scan (DeepScan).
 				'candidates'    => array(),
 				'more_files'    => false,
+				// Each part of the site whose files have fingerprints: watch|quiet (FilePrints).
+				'prints'        => array(),
 			),
 			false
 		);
@@ -261,6 +263,7 @@ final class Scanner {
 					$state['feed_checked'] = true;
 				}
 				$until = microtime( true ) + $seconds;
+				OutsideScripts::begin( $state );
 				do {
 					$state = match ( $state['step'] ) {
 						'core'     => self::core( $state, $until ),
@@ -270,6 +273,7 @@ final class Scanner {
 						default    => self::finish( $state ),
 					};
 				} while ( 'running' === $state['status'] && microtime( true ) < $until );
+				$state                  = OutsideScripts::end( $state );
 				$state['last_batch_at'] = time();
 				update_option( self::OPTION, $state, false );
 				if ( 'running' === $state['status'] && ! wp_next_scheduled( self::HOOK ) ) {
@@ -382,6 +386,10 @@ final class Scanner {
 		}
 		$state['step'] = 'walk';
 		$state['walk'] = self::walk_roots();
+		// The scripts the site's pages load from other websites (2.7.0), so the walk can look for
+		// where the unfamiliar ones come from.
+		$state['scripts']        = OutsideScripts::collect();
+		$state['script_sources'] = array();
 		return $state;
 	}
 
@@ -577,8 +585,12 @@ final class Scanner {
 			}
 		}
 		// Everything else in wp-content: themes, premium and custom plugins, must-use plugins,
-		// drop-ins and caches, by pattern.
-		return str_starts_with( $path, $content ) || str_starts_with( $path, $plugins ) ? self::pattern( $state, $path, $relative, $kind ) : $state;
+		// drop-ins and caches, by pattern, and (2.7.0) what changed since the last scan.
+		if ( ! str_starts_with( $path, $content ) && ! str_starts_with( $path, $plugins ) ) {
+			return $state;
+		}
+		$state = FilePrints::check( $state, $path, $relative, $kind );
+		return self::pattern( $state, $path, $relative, $kind );
 	}
 
 	/**
@@ -588,6 +600,7 @@ final class Scanner {
 	 * @return array<string, mixed>
 	 */
 	private static function exposure( array $state ): array {
+		$state  = OutsideScripts::finish( OutsideScripts::end( $state ) );
 		$result = Exposure::run();
 		foreach ( $result['findings'] as $finding ) {
 			$state = self::add( $state, $finding );
@@ -604,6 +617,7 @@ final class Scanner {
 	 * @return array<string, mixed>
 	 */
 	private static function finish( array $state ): array {
+		FilePrints::finish( $state );
 		$statuses = array_count_values( (array) $state['plugins'] );
 		Findings::save(
 			(array) $state['findings'],
@@ -612,6 +626,7 @@ final class Scanner {
 				'files'    => (int) $state['files'],
 				'partial'  => (bool) $state['partial'],
 				'trigger'  => (string) $state['trigger'],
+				'scripts'  => OutsideScripts::results( $state ),
 				'coverage' => array(
 					'core'            => $state['core_ok'] ? (string) $state['core_version'] : null,
 					'plugins'         => count( (array) $state['plugin_queue'] ),
@@ -635,6 +650,8 @@ final class Scanner {
 		$state['findings']    = array();
 		$state['walk']        = array();
 		$state['candidates']  = array();
+		$state['prints']      = array();
+		$state['scripts']     = array();
 		$counts               = Findings::counts();
 		AuditLogger::info(
 			'security.scan_finished',
@@ -781,6 +798,7 @@ final class Scanner {
 		if ( ! is_string( $contents ) ) {
 			return null;
 		}
+		OutsideScripts::look( $contents, Exposure::relative( $path ) );
 		// The security feed: this exact file is malware found on other websites, or Arva SEO
 		// checked it and it's safe (2.5.0).
 		$sha = hash( 'sha256', $contents );

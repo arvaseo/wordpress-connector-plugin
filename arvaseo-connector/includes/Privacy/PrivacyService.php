@@ -25,6 +25,9 @@ final class PrivacyService {
 	/** The security scan's results: agreed to separately (2.0.0), so the main consent's field set stays the same. */
 	private const SECURITY_OPTION = 'arvaseo_connector_consent_security';
 
+	/** How many of the security fields were agreed to before 2.7.0 (a consent to them still counts). */
+	private const SECURITY_FIELDS_BEFORE_2_7 = 3;
+
 	/** Sending files for deep scans (2.1.0): agreed to separately again, and only with the security consent. */
 	private const DEEP_SCAN_OPTION = 'arvaseo_connector_consent_deep_scan';
 
@@ -92,7 +95,34 @@ final class PrivacyService {
 				'field'   => 'When the scan ran, how many files it checked, and which checks it could run',
 				'purpose' => 'Show what the scan covered',
 			),
+			// 2.7.0: the fields above are the list agreed to before; a consent to that list still
+			// shares them (security_consent), and these need the consent to this whole list.
+			array(
+				'field'   => 'For a theme, plugin or must-use plugin file that is new or changed since the last scan: up to 10 of the lines that were added',
+				'purpose' => 'Show what changed, and learn which changes are malicious, or expected on many sites (Arva SEO’s security feed)',
+			),
+			array(
+				'field'   => 'The host names and addresses of the scripts the site’s pages load from other websites, and where in the site each one is added (a file and line, a setting’s name or a post’s ID)',
+				'purpose' => 'Check whether a script’s domain is new, hides what it does or is listed as unsafe, and say what to remove',
+			),
+			array(
+				'field'   => 'When a file is saved with WordPress’s theme or plugin file editor: its path, when, the username and display name of who saved it, the IP address the request came from (and the one a proxy in front of the site reported), and up to 10 of the lines added',
+				'purpose' => 'Email the workspace’s owners and admins at once: a stolen password and the file editor is a common way in',
+			),
+			array(
+				'field'   => 'For problems marked as expected: their kind, path and fingerprint',
+				'purpose' => 'Learn what is normal on many sites, so it stops being reported',
+			),
 		);
+	}
+
+	/**
+	 * Whether the security scan's consent covers everything 2.7.0 shares (the whole field list),
+	 * not only the list agreed to before.
+	 */
+	public static function security_details_consented(): bool {
+		$consent = self::security_consent();
+		return null !== $consent && ( $consent['field_set_hash'] ?? '' ) === Ids::hash( array( 'security' => self::security_field_set() ) );
 	}
 
 	/**
@@ -223,10 +253,14 @@ final class PrivacyService {
 	 */
 	public static function security_consent(): ?array {
 		$consent = get_option( self::SECURITY_OPTION );
-		if ( ! is_array( $consent ) || ( $consent['field_set_hash'] ?? '' ) !== Ids::hash( array( 'security' => self::security_field_set() ) ) ) {
-			return null;
+		$hash    = is_array( $consent ) ? (string) ( $consent['field_set_hash'] ?? '' ) : '';
+		$lists   = array( self::security_field_set(), array_slice( self::security_field_set(), 0, self::SECURITY_FIELDS_BEFORE_2_7 ) );
+		foreach ( $lists as $list ) {
+			if ( '' !== $hash && Ids::hash( array( 'security' => $list ) ) === $hash ) {
+				return $consent;
+			}
 		}
-		return $consent;
+		return null;
 	}
 
 	/**
@@ -315,7 +349,7 @@ final class PrivacyService {
 	/**
 	 * Whether a purpose is consented.
 	 *
-	 * @param string $purpose inventory|health|security|deep_scan|image_compression.
+	 * @param string $purpose inventory|health|security|security_details (2.7.0's additions)|deep_scan|image_compression.
 	 */
 	public static function allows( string $purpose ): bool {
 		$consent = self::current();
@@ -324,6 +358,9 @@ final class PrivacyService {
 		}
 		if ( 'security' === $purpose ) {
 			return null !== $consent && null !== self::security_consent();
+		}
+		if ( 'security_details' === $purpose ) {
+			return null !== $consent && self::security_details_consented();
 		}
 		if ( 'deep_scan' === $purpose ) {
 			return null !== $consent && null !== self::security_consent() && null !== self::deep_scan_consent();

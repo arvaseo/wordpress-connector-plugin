@@ -74,6 +74,7 @@ final class UninstallService {
 		\ArvaSEO\Connector\Security\Findings::clear();
 		\ArvaSEO\Connector\Security\Feed::clear();
 		\ArvaSEO\Connector\Security\DeepScan::clear();
+		\ArvaSEO\Connector\Security\FileEdits::clear();
 		PrivacyService::withdraw();
 		delete_option( Settings::OPTION );
 		global $wpdb;

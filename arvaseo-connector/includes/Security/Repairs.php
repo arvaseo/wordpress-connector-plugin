@@ -52,14 +52,20 @@ final class Repairs {
 		return 'direct' === get_filesystem_method( array(), WP_CONTENT_DIR, true );
 	}
 
+	/** The line "Turn off the file editor" adds to wp-config.php (2.7.0). */
+	public const EDITOR_LINE = "define( 'DISALLOW_FILE_EDIT', true ); // Added by Arva SEO (security scan). Remove it to edit files in the dashboard again.";
+
 	/**
-	 * The repair a finding offers: restore, quarantine or none.
+	 * The repair a finding offers: restore, quarantine, file_editor or none.
 	 *
 	 * @param array<string, mixed> $finding Finding.
 	 */
 	public static function offer( array $finding ): ?string {
 		$type = (string) ( $finding['type'] ?? '' );
 		$path = (string) ( $finding['path'] ?? '' );
+		if ( 'file_editing' === $type ) {
+			return null !== \ArvaSEO\Connector\Speed\PageCache::config_file() ? 'file_editor' : null;
+		}
 		if ( '' === $path || ! self::inside( $path ) ) {
 			return null;
 		}
@@ -179,6 +185,44 @@ final class Repairs {
 	}
 
 	/**
+	 * Turn off the dashboard's theme and plugin editors: DISALLOW_FILE_EDIT in wp-config.php,
+	 * written the way Page caching writes WP_CACHE (in place of a line that turns it off, or
+	 * right after the opening tag).
+	 *
+	 * @param string $key Finding key.
+	 * @return array{ok: bool, message: string}
+	 */
+	public static function file_editor( string $key ): array {
+		$finding = self::finding( $key );
+		$file    = \ArvaSEO\Connector\Speed\PageCache::config_file();
+		if ( null === $finding || 'file_editor' !== self::offer( $finding ) || null === $file ) {
+			return self::no( __( 'WordPress can’t change your wp-config.php file. Add define( \'DISALLOW_FILE_EDIT\', true ); to it yourself.', 'arvaseo-connector' ) );
+		}
+		$contents = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
+		$original = null;
+		if ( preg_match( '/^[ \t]*define\(\s*[\'"]DISALLOW_FILE_EDIT[\'"]\s*,[^;]*\)\s*;[^\r\n]*/m', $contents, $m ) ) {
+			$original = $m[0];
+			$updated  = str_replace( $original, self::EDITOR_LINE, $contents );
+		} elseif ( preg_match( '/^<\?php[^\r\n]*\R/', $contents, $m ) ) {
+			$updated = $m[0] . self::EDITOR_LINE . "\n" . substr( $contents, strlen( $m[0] ) );
+		} else {
+			return self::no( __( 'wp-config.php doesn’t start the usual way, so it was left alone. Add define( \'DISALLOW_FILE_EDIT\', true ); to it yourself.', 'arvaseo-connector' ) );
+		}
+		if ( false === file_put_contents( $file, $updated, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- wp-config.php, as WordPress's installer writes it.
+			return self::no( __( 'wp-config.php couldn’t be written, so nothing was changed.', 'arvaseo-connector' ) );
+		}
+		\ArvaSEO\Connector\Speed\PageCache::fresh( $file );
+		self::record( 'file_editor', 'wp-config.php', $original, md5( $updated ), 'file_editing' );
+		Findings::forget( $key );
+		Report::send();
+		AuditLogger::info( 'security.file_editor_off', __( 'The dashboard’s theme and plugin editors were turned off (DISALLOW_FILE_EDIT in wp-config.php).', 'arvaseo-connector' ), array( 'status' => 'file_editor' ) );
+		return array(
+			'ok'      => true,
+			'message' => __( 'The file editor is off: nobody can change theme or plugin files from the dashboard now, even with an administrator’s password.', 'arvaseo-connector' ),
+		);
+	}
+
+	/**
 	 * Undo a repair: the previous file goes back, unless the file changed again since.
 	 *
 	 * @param string $id Repair ID.
@@ -187,7 +231,10 @@ final class Repairs {
 	public static function undo( string $id ): array {
 		$repairs = self::all();
 		$repair  = $repairs[ $id ] ?? null;
-		$fs      = self::filesystem();
+		if ( null !== $repair && 'file_editor' === $repair['type'] && empty( $repair['undone_at'] ) ) {
+			return self::undo_file_editor( $id, $repair );
+		}
+		$fs = self::filesystem();
 		if ( null === $repair || ! empty( $repair['undone_at'] ) || null === $fs || ! self::available() ) {
 			return self::no( __( 'This change can’t be undone from here.', 'arvaseo-connector' ) );
 		}
@@ -218,6 +265,37 @@ final class Repairs {
 		return array(
 			'ok'      => true,
 			'message' => __( 'Undone: the previous file is back. Run the scan again to see it in the results.', 'arvaseo-connector' ),
+		);
+	}
+
+	/**
+	 * Turn the file editor back on: the line Arva SEO added comes out (the one it replaced goes
+	 * back). Lines anyone else wrote stay.
+	 *
+	 * @param string                                                                                                 $id     Repair ID.
+	 * @param array{type: string, path: string, backup: string|null, md5: string, finding: string, at: int, by: int} $repair The repair.
+	 * @return array{ok: bool, message: string}
+	 */
+	private static function undo_file_editor( string $id, array $repair ): array {
+		$file     = \ArvaSEO\Connector\Speed\PageCache::config_file();
+		$contents = null !== $file ? (string) file_get_contents( $file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
+		if ( null === $file || ! str_contains( $contents, self::EDITOR_LINE ) ) {
+			return self::no( __( 'The line Arva SEO added isn’t in wp-config.php any more, so nothing was changed.', 'arvaseo-connector' ) );
+		}
+		$updated = null !== $repair['backup']
+			? str_replace( self::EDITOR_LINE, (string) $repair['backup'], $contents )
+			: (string) preg_replace( '/^' . preg_quote( self::EDITOR_LINE, '/' ) . '\R?/m', '', $contents );
+		if ( false === file_put_contents( $file, $updated, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- wp-config.php.
+			return self::no( __( 'wp-config.php couldn’t be written, so nothing was changed.', 'arvaseo-connector' ) );
+		}
+		\ArvaSEO\Connector\Speed\PageCache::fresh( $file );
+		$repairs                     = self::all();
+		$repairs[ $id ]['undone_at'] = time();
+		update_option( self::OPTION, $repairs, false );
+		AuditLogger::info( 'security.repair_undone', __( 'The dashboard’s file editor was turned back on.', 'arvaseo-connector' ), array( 'status' => 'file_editor' ) );
+		return array(
+			'ok'      => true,
+			'message' => __( 'Undone: the file editor is back on.', 'arvaseo-connector' ),
 		);
 	}
 

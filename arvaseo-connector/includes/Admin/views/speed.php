@@ -439,6 +439,16 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 			</div>
 		<?php endif; ?>
+			<?php if ( 'page_cache' === $arvaseo_id && null !== PageCache::uncleared_host_cache() ) : ?>
+			<div class="arvaseo-extra arvaseo-extra--warn">
+				<p>
+					<?php
+					/* translators: %s: the host's cache, such as SiteGround's dynamic cache. */
+					printf( esc_html__( '%s keeps its own copy of your pages, in front of WordPress, and nothing here can clear it when a page changes, so visitors can see an old copy for up to 12 hours. Install SiteGround’s Speed Optimizer plugin (you can turn its caching options off): Arva SEO then clears that copy whenever your pages change. Until then, clear it in Site Tools → Speed → Caching after a change.', 'arvaseo-connector' ), esc_html( (string) PageCache::uncleared_host_cache() ) );
+					?>
+				</p>
+			</div>
+		<?php endif; ?>
 			<?php if ( 'page_cache' === $arvaseo_id && 'on' === $arvaseo_state && ( ! $arvaseo_pc['active'] || ! PageCache::dropin_is_ours() ) ) : ?>
 			<div class="arvaseo-extra arvaseo-extra--warn"><p><?php esc_html_e( 'The page cache isn’t running: its advanced-cache.php file in wp-content was removed or replaced, perhaps by another plugin. Turn this off and on again to set it up again.', 'arvaseo-connector' ); ?></p></div>
 		<?php endif; ?>

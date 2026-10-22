@@ -183,6 +183,16 @@ final class Exclusions {
 	}
 
 	/**
+	 * A page's path as a lookup key: without the folder WordPress lives in, the trailing slash
+	 * or capitals ("" for the homepage).
+	 *
+	 * @param string $path Path, from the address bar or a tested address.
+	 */
+	public static function path_key( string $path ): string {
+		return strtolower( untrailingslashit( self::relative_path( $path ) ) );
+	}
+
+	/**
 	 * A path without the folder WordPress lives in, if it lives in one.
 	 *
 	 * @param string $path Path.

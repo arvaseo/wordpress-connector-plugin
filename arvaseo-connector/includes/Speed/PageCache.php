@@ -77,6 +77,8 @@ final class PageCache {
 		add_action( 'admin_init', array( self::class, 'step_aside' ) );
 		add_action( self::HOOK_PRELOAD, array( self::class, 'run_preload' ) );
 		add_action( self::HOOK_GC, array( self::class, 'gc' ) );
+		// Whoever caches the pages: a change Arva SEO made to every page clears the host's copy too.
+		add_action( 'arvaseo_connector_pages_changed', array( self::class, 'purge_host_cache' ) );
 		if ( ! self::active() ) {
 			return;
 		}
@@ -218,6 +220,42 @@ final class PageCache {
 	}
 
 	/**
+	 * A change here altered every page (2.7.0): clear the host's own cache too, through the API
+	 * its plugin offers (SiteGround's Speed Optimizer, LiteSpeed Cache, WP Engine, Breeze), so
+	 * visitors don't get an old copy for hours.
+	 */
+	public static function purge_host_cache(): void {
+		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+			sg_cachepress_purge_cache();
+		}
+		do_action( 'litespeed_purge_all' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- LiteSpeed Cache's documented purge API.
+		do_action( 'breeze_clear_all_cache' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Breeze's documented purge API.
+		$wp_engine = array( 'WpeCommon', 'purge_varnish_cache' );
+		if ( class_exists( 'WpeCommon', false ) && is_callable( $wp_engine ) ) {
+			call_user_func( $wp_engine );
+		}
+	}
+
+	/**
+	 * A host's cache in front of the site that nothing here can clear, or null: SiteGround's
+	 * dynamic cache is always on, and only its Speed Optimizer plugin clears it when pages change.
+	 * Without the plugin, visitors can get an old copy of a page for up to 12 hours.
+	 */
+	public static function uncleared_host_cache(): ?string {
+		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+			return null;
+		}
+		// SiteGround's accounts live in /home/customer/www/<domain>/public_html.
+		$siteground = str_starts_with( wp_normalize_path( ABSPATH ), '/home/customer/www/' );
+		/**
+		 * Whether this site is behind SiteGround's dynamic cache, for setups the folder doesn't show.
+		 *
+		 * @param bool $siteground True on SiteGround.
+		 */
+		return (bool) apply_filters( 'arvaseo_connector_siteground', $siteground ) ? __( 'SiteGround’s dynamic cache', 'arvaseo-connector' ) : null;
+	}
+
+	/**
 	 * Hosts' caches: their name, and how to turn them off.
 	 *
 	 * @return array<string, array{0: string, 1: string}>
@@ -287,9 +325,10 @@ final class PageCache {
 	}
 
 	/**
-	 * The wp-config.php file, when it can be changed.
+	 * The wp-config.php file, when it can be changed (the security scan's "Turn off the file
+	 * editor" writes to it too).
 	 */
-	private static function config_file(): ?string {
+	public static function config_file(): ?string {
 		$file = self::config_path();
 		return is_file( $file ) && wp_is_writable( $file ) ? $file : null;
 	}
@@ -539,7 +578,7 @@ final class PageCache {
 	 *
 	 * @param string $file File just written.
 	 */
-	private static function fresh( string $file ): void {
+	public static function fresh( string $file ): void {
 		if ( function_exists( 'wp_opcache_invalidate' ) ) {
 			wp_opcache_invalidate( $file, true );
 		} elseif ( function_exists( 'opcache_invalidate' ) ) {

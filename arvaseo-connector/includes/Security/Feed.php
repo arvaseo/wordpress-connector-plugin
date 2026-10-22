@@ -140,6 +140,34 @@ final class Feed {
 	}
 
 	/**
+	 * Hosts of scripts Arva SEO knows as common, safe services (2.7.0): host => true.
+	 *
+	 * @return array<string, true>
+	 */
+	public static function known_hosts(): array {
+		return (array) ( self::stored()['known_hosts'] ?? array() );
+	}
+
+	/**
+	 * Lines Arva SEO's staff found safe in changed files (2.7.0), by the SHA-256 of the trimmed
+	 * line: a change that only adds these isn't reported.
+	 *
+	 * @param string $line The added line.
+	 */
+	public static function is_safe_line( string $line ): bool {
+		return isset( self::stored()['safe_lines'][ hash( 'sha256', trim( $line ) ) ] );
+	}
+
+	/**
+	 * Hosts of scripts Arva SEO's staff confirmed as bad (2.7.0): host => what it is.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function bad_hosts(): array {
+		return (array) ( self::stored()['bad_hosts'] ?? array() );
+	}
+
+	/**
 	 * New patterns, in signatures.json's format.
 	 *
 	 * @return array<int, array<string, mixed>>
@@ -203,7 +231,7 @@ final class Feed {
 	 * What's kept from a download, or null when it isn't a feed.
 	 *
 	 * @param array<string, mixed> $data Downloaded.
-	 * @return array{version: string, php: array<string, mixed>|null, patterns: array<int, array<string, mixed>>, malware: array<string, string>, safe: array<string, true>}|null
+	 * @return array{version: string, php: array<string, mixed>|null, patterns: array<int, array<string, mixed>>, malware: array<string, string>, safe: array<string, true>, safe_lines: array<string, true>, known_hosts: array<string, true>, bad_hosts: array<string, string>}|null
 	 */
 	public static function clean( array $data ): ?array {
 		$version = $data['version'] ?? null;
@@ -231,12 +259,36 @@ final class Feed {
 				$patterns[] = $pattern;
 			}
 		}
+		$host  = static fn ( $value ): ?string => is_string( $value ) && 1 === preg_match( '/^(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/', $value ) ? $value : null;
+		$known = array();
+		foreach ( array_slice( (array) ( $data['known_hosts'] ?? array() ), 0, self::MAX_FILES ) as $value ) {
+			if ( null !== $host( $value ) ) {
+				$known[ $value ] = true;
+			}
+		}
+		$bad = array();
+		foreach ( array_slice( (array) ( $data['bad_hosts'] ?? array() ), 0, self::MAX_FILES ) as $entry ) {
+			$name = is_array( $entry ) ? $host( $entry['host'] ?? null ) : null;
+			if ( null !== $name ) {
+				$what         = trim( wp_strip_all_tags( (string) ( $entry['name'] ?? '' ) ) );
+				$bad[ $name ] = '' !== $what ? mb_substr( $what, 0, 100 ) : __( 'confirmed as bad by Arva SEO', 'arvaseo-connector' );
+			}
+		}
+		$safe_lines = array();
+		foreach ( array_slice( (array) ( $data['safe_lines'] ?? array() ), 0, self::MAX_FILES ) as $sha ) {
+			if ( is_string( $sha ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $sha ) ) {
+				$safe_lines[ $sha ] = true;
+			}
+		}
 		return array(
-			'version'  => $version,
-			'php'      => self::clean_php( is_array( $data['php'] ?? null ) ? $data['php'] : null ),
-			'patterns' => $patterns,
-			'malware'  => $malware,
-			'safe'     => $safe,
+			'version'     => $version,
+			'safe_lines'  => $safe_lines,
+			'php'         => self::clean_php( is_array( $data['php'] ?? null ) ? $data['php'] : null ),
+			'patterns'    => $patterns,
+			'malware'     => $malware,
+			'safe'        => $safe,
+			'known_hosts' => $known,
+			'bad_hosts'   => $bad,
 		);
 	}
 

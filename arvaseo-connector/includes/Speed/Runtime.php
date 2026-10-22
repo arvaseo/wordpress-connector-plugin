@@ -49,12 +49,20 @@ final class Runtime {
 	private static bool $main_image_done = false;
 
 	/**
-	 * On the homepage: the folder and name of the image the latest PageSpeed test found as the
-	 * largest content, without size or extension (/wp-content/uploads/2026/10/hero), or null.
+	 * On a page Arva SEO tested: the folder and name of the image the latest PageSpeed test found
+	 * as the largest content, without size or extension (/wp-content/uploads/2026/10/hero), or null.
 	 *
 	 * @var string|null
 	 */
 	private static ?string $report_image = null;
+
+	/**
+	 * That image's address when a slider or page builder draws it as a background: preloaded in
+	 * the head, since no <img> tag carries it.
+	 *
+	 * @var string|null
+	 */
+	private static ?string $preload = null;
 
 	/**
 	 * Scripts deferred on this page, shown to administrators trying the fix.
@@ -151,10 +159,19 @@ final class Runtime {
 		self::$main_image_done = false;
 		self::$deferred        = array();
 		self::$eager           = Fixes::stored()['eager_images'];
-		self::$report_image    = Fixes::applies( 'lcp_image' ) ? self::report_image() : null;
+		$main                  = Fixes::applies( 'lcp_image' ) ? self::report_main() : null;
+		self::$report_image    = null !== $main ? self::image_stem( $main['image'] ) : null;
+		self::$preload         = null !== $main && 'background' === $main['element'] ? $main['image'] : null;
 
 		if ( Fixes::applies( 'lcp_image' ) ) {
 			add_filter( 'wp_get_attachment_image_attributes', array( self::class, 'main_image' ), 20, 2 );
+		}
+		if ( null !== $main && function_exists( 'wp_high_priority_element_flag' ) ) {
+			// Only the test's main image gets the "load first" hint, not the image WordPress guesses (often the logo).
+			wp_high_priority_element_flag( false );
+		}
+		if ( null !== self::$preload ) {
+			add_action( 'wp_head', array( self::class, 'preload_main_image' ), 1 );
 		}
 		if ( Fixes::applies( 'image_dimensions' ) || Fixes::applies( 'lazy_media' ) || Fixes::applies( 'video_facades' ) ) {
 			// A block whose class is in the list leaves everything inside it alone.
@@ -263,7 +280,7 @@ final class Runtime {
 				++self::$images_seen;
 				$attrs = Exclusions::attributes( $tags );
 				if ( ! self::$main_image_done && self::is_report_image( (string) $tags->get_attribute( 'src' ), (string) $tags->get_attribute( 'srcset' ) ) ) {
-					// The image the latest PageSpeed test found as the homepage's largest content.
+					// The image the latest PageSpeed test found as this page's largest content.
 					self::$main_image_done = true;
 					if ( 'lazy' === $tags->get_attribute( 'loading' ) ) {
 						$tags->remove_attribute( 'loading' );
@@ -284,14 +301,35 @@ final class Runtime {
 	}
 
 	/**
-	 * The latest PageSpeed test's largest-content image, for the homepage it tested.
+	 * The image the latest PageSpeed test of this page found as its largest content, and how it's
+	 * drawn: img, or background (a slider's or page builder's). Arva SEO before 2026-10-23 only
+	 * named the homepage's.
+	 *
+	 * @return array{image: string, element: string}|null
 	 */
-	private static function report_image(): ?string {
+	private static function report_main(): ?array {
+		$images = \ArvaSEO\Connector\Health\AssessmentService::main_images();
+		if ( null !== $images ) {
+			return $images[ Exclusions::path_key( Exclusions::current_path() ) ] ?? null;
+		}
 		if ( ! is_front_page() ) {
 			return null;
 		}
-		$image = \ArvaSEO\Connector\Health\AssessmentService::pagespeed_result()['lcp_image'] ?? null;
-		return is_string( $image ) ? self::image_stem( $image ) : null;
+		$result = \ArvaSEO\Connector\Health\AssessmentService::pagespeed_result();
+		$image  = $result['lcp_image'] ?? null;
+		return is_string( $image ) ? array(
+			'image'   => $image,
+			'element' => 'background' === ( $result['lcp_element'] ?? '' ) ? 'background' : 'img',
+		) : null;
+	}
+
+	/**
+	 * A background main image, fetched first: printed at the top of the head.
+	 */
+	public static function preload_main_image(): void {
+		if ( null !== self::$preload ) {
+			printf( '<link rel="preload" as="image" href="%s" fetchpriority="high">' . "\n", esc_url( self::$preload ) );
+		}
 	}
 
 	/**

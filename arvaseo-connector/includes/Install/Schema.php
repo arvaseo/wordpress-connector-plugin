@@ -21,10 +21,13 @@ defined( 'ABSPATH' ) || exit;
  * - arvaseo_audit_log: redacted activity history.
  * - arvaseo_seo_updates: each SEO title and description update from Arva SEO, what was there
  *   before (so it can be undone), and the result still to be sent back (its outbox). Since 1.1.0.
+ * - arvaseo_file_prints: the security scan's fingerprint (SHA-256, size, modified time) of each
+ *   theme, must-use plugin, drop-in and non-WordPress.org plugin file, and the last copy of the
+ *   riskiest ones (a theme's functions.php, header.php, footer.php; must-use plugins). Since 2.7.0.
  */
 final class Schema {
 
-	public const VERSION = '2';
+	public const VERSION = '3';
 
 	public const OPTION = 'arvaseo_connector_db_version';
 
@@ -53,6 +56,7 @@ final class Schema {
 		$events  = self::table( 'events' );
 		$log     = self::table( 'audit_log' );
 		$seo     = self::table( 'seo_updates' );
+		$prints  = self::table( 'file_prints' );
 
 		dbDelta(
 			"CREATE TABLE {$map} (
@@ -142,6 +146,20 @@ CREATE TABLE {$seo} (
   UNIQUE KEY update_id (update_id),
   KEY result_outbox (result_sent,next_result_at),
   KEY received_at (received_at)
+) {$charset};
+CREATE TABLE {$prints} (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  path_hash char(32) NOT NULL,
+  path varchar(1000) NOT NULL,
+  component varchar(200) NOT NULL,
+  sha256 char(64) NOT NULL,
+  size bigint(20) unsigned NOT NULL DEFAULT 0,
+  mtime bigint(20) unsigned NOT NULL DEFAULT 0,
+  copy mediumtext DEFAULT NULL,
+  recorded_at datetime NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY path_hash (path_hash),
+  KEY component (component(191))
 ) {$charset};"
 		);
 		update_option( self::OPTION, self::VERSION, true ); // Autoloaded: read on every request.
@@ -152,7 +170,7 @@ CREATE TABLE {$seo} (
 	 */
 	public static function drop(): void {
 		global $wpdb;
-		foreach ( array( 'content_map', 'deliveries', 'events', 'audit_log', 'seo_updates' ) as $name ) {
+		foreach ( array( 'content_map', 'deliveries', 'events', 'audit_log', 'seo_updates', 'file_prints' ) as $name ) {
 			$table = self::table( $name );
 			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- table name built from $wpdb->prefix and a fixed list.
 		}

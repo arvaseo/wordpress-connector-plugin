@@ -11,6 +11,7 @@ use ArvaSEO\Connector\Health\AssessmentService;
 use ArvaSEO\Connector\Install\Capabilities;
 use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Security\DeepScan;
+use ArvaSEO\Connector\Security\FilePrints;
 use ArvaSEO\Connector\Security\Findings;
 use ArvaSEO\Connector\Security\Repairs;
 use ArvaSEO\Connector\Security\Scanner;
@@ -35,6 +36,8 @@ defined( 'ABSPATH' ) || exit;
 		)
 	);
 	$arvaseo_ask      = $arvaseo_manage && TokenStore::is_connected() && null !== PrivacyService::current() && null === PrivacyService::security_consent();
+	// Shared under the list agreed to before 2.7.0: what the new version adds needs one more yes.
+	$arvaseo_ask_more = $arvaseo_manage && TokenStore::is_connected() && null !== PrivacyService::security_consent() && ! PrivacyService::security_details_consented();
 	$arvaseo_deep     = DeepScan::state();
 	$arvaseo_deep_on  = DeepScan::running();
 	$arvaseo_deep_res = DeepScan::results();
@@ -43,13 +46,20 @@ defined( 'ABSPATH' ) || exit;
 	$arvaseo_can_fix  = $arvaseo_manage && Repairs::available();
 	$arvaseo_repairs  = Repairs::all();
 	$arvaseo_repair   = static function ( string $key, string $kind ): void {
-		$confirm = 'restore' === $kind ? 'confirmRestore' : 'confirmQuarantine';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form" data-arvaseo-confirm="' . esc_attr( $confirm ) . '">';
+		$confirm = array(
+			'restore'    => 'confirmRestore',
+			'quarantine' => 'confirmQuarantine',
+		)[ $kind ] ?? null;
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form"' . ( null !== $confirm ? ' data-arvaseo-confirm="' . esc_attr( $confirm ) . '"' : '' ) . '>';
 		echo '<input type="hidden" name="action" value="arvaseo_connector_security_repair" />';
 		echo '<input type="hidden" name="finding" value="' . esc_attr( $key ) . '" />';
 		echo '<input type="hidden" name="do" value="' . esc_attr( $kind ) . '" />';
 		wp_nonce_field( 'arvaseo_connector_security_repair' );
-		echo '<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark">' . esc_html( 'restore' === $kind ? __( 'Restore the official copy', 'arvaseo-connector' ) : __( 'Move to quarantine', 'arvaseo-connector' ) ) . '</button>';
+		$label = array(
+			'restore'     => __( 'Restore the official copy', 'arvaseo-connector' ),
+			'file_editor' => __( 'Turn off the file editor', 'arvaseo-connector' ),
+		)[ $kind ] ?? __( 'Move to quarantine', 'arvaseo-connector' );
+		echo '<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark">' . esc_html( $label ) . '</button>';
 		echo '</form>';
 	};
 	// A Details button (admin.js shows it and hides the panel until asked; without it panels stay open).
@@ -284,6 +294,26 @@ defined( 'ABSPATH' ) || exit;
 		</section>
 	<?php endif; ?>
 
+	<?php if ( $arvaseo_ask_more ) : ?>
+		<section class="arvaseo-card" aria-labelledby="arvaseo-sec-share-more">
+			<h2 class="arvaseo-h3" id="arvaseo-sec-share-more"><?php esc_html_e( 'Share what the scan now checks', 'arvaseo-connector' ); ?></h2>
+			<p class="arvaseo-hint" style="margin-top: 6px"><?php esc_html_e( 'This version also watches files that changed since the last scan, scripts your pages load from other websites, and edits made with WordPress’s file editor. To check those on Arva SEO’s servers and email your team when a file is edited in the dashboard, Arva SEO needs a few more details: up to 10 added lines of a changed file, the scripts’ addresses, and for a dashboard edit who saved it and from which IP address. Until you agree, the scan’s results are shared as before, without these.', 'arvaseo-connector' ); ?></p>
+			<ul class="arvaseo-bullets">
+				<?php foreach ( array_slice( PrivacyService::security_field_set(), 3 ) as $arvaseo_field ) : ?>
+					<li><?php echo esc_html( $arvaseo_field['field'] ); ?></li>
+				<?php endforeach; ?>
+			</ul>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-row" style="margin-top: 12px">
+				<input type="hidden" name="action" value="arvaseo_connector_consent_security" />
+				<input type="hidden" name="consent" value="1" />
+				<input type="hidden" name="back" value="health" />
+				<?php wp_nonce_field( 'arvaseo_connector_consent_security' ); ?>
+				<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark"><?php esc_html_e( 'Share these too', 'arvaseo-connector' ); ?></button>
+				<a class="arvaseo-hint" href="<?php echo esc_url( admin_url( 'admin.php?page=arvaseo-diagnostics#arvaseo-privacy-heading' ) ); ?>"><?php esc_html_e( 'Every field that’s sent', 'arvaseo-connector' ); ?></a>
+			</form>
+		</section>
+	<?php endif; ?>
+
 	<?php if ( array() !== $arvaseo_vulns ) : ?>
 		<div class="arvaseo-grp-title"><h2><?php echo esc_html( Findings::groups()['vulnerabilities'][0] ); ?></h2>
 			<?php
@@ -381,7 +411,23 @@ defined( 'ABSPATH' ) || exit;
 							<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What it means', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_why ); ?></div>
 							<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to do', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_fix ); ?></div>
 						</div>
-						<?php if ( null !== $arvaseo_finding['excerpt'] && '' !== $arvaseo_finding['excerpt'] ) : ?>
+						<?php if ( ! empty( $arvaseo_finding['added_lines'] ) ) : ?>
+							<div class="arvaseo-fix-sub">
+								<h4>
+									<?php
+									echo esc_html(
+										'file_added' === $arvaseo_finding['type']
+											? __( 'What the file starts with', 'arvaseo-connector' )
+											/* translators: %d: number of lines. */
+											: sprintf( _n( '%d line added since the scan recorded it', '%d lines added since the scan recorded it', (int) ( $arvaseo_finding['added_count'] ?? 0 ), 'arvaseo-connector' ), (int) ( $arvaseo_finding['added_count'] ?? 0 ) )
+									);
+									?>
+								</h4>
+								<pre class="arvaseo-code"><?php echo esc_html( implode( "\n", array_map( 'strval', (array) $arvaseo_finding['added_lines'] ) ) ); ?></pre>
+							</div>
+						<?php elseif ( in_array( $arvaseo_finding['type'], FilePrints::TYPES, true ) ) : ?>
+							<p class="arvaseo-hint"><?php esc_html_e( 'The scan keeps copies of themes’ functions.php, header.php and footer.php and of must-use plugins only, so it can’t show what changed in this file.', 'arvaseo-connector' ); ?></p>
+						<?php elseif ( null !== $arvaseo_finding['excerpt'] && '' !== $arvaseo_finding['excerpt'] ) : ?>
 							<div class="arvaseo-fix-sub">
 								<h4><?php esc_html_e( 'The code it matched', 'arvaseo-connector' ); ?></h4>
 								<pre class="arvaseo-code"><?php echo esc_html( (string) $arvaseo_finding['excerpt'] ); ?></pre>
@@ -410,7 +456,10 @@ defined( 'ABSPATH' ) || exit;
 								sprintf(
 									/* translators: 1: what was done, 2: relative time such as "2 hours". */
 									__( '%1$s, %2$s ago', 'arvaseo-connector' ),
-									'restore' === $arvaseo_change['type'] ? __( 'Official copy restored', 'arvaseo-connector' ) : __( 'Moved to quarantine', 'arvaseo-connector' ),
+									array(
+										'restore'     => __( 'Official copy restored', 'arvaseo-connector' ),
+										'file_editor' => __( 'File editor turned off', 'arvaseo-connector' ),
+									)[ $arvaseo_change['type'] ] ?? __( 'Moved to quarantine', 'arvaseo-connector' ),
 									human_time_diff( (int) $arvaseo_change['at'] )
 								)
 							);

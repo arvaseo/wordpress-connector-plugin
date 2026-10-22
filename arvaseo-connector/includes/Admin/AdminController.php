@@ -746,7 +746,11 @@ final class AdminController {
 		self::guard( 'arvaseo_connector_security_repair', Capabilities::MANAGE );
 		$key    = isset( $_POST['finding'] ) ? sanitize_key( wp_unslash( $_POST['finding'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		$do     = isset( $_POST['do'] ) ? sanitize_key( wp_unslash( $_POST['do'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
-		$result = 'restore' === $do ? \ArvaSEO\Connector\Security\Repairs::restore( $key ) : \ArvaSEO\Connector\Security\Repairs::quarantine( $key );
+		$result = match ( $do ) {
+			'restore'     => \ArvaSEO\Connector\Security\Repairs::restore( $key ),
+			'file_editor' => \ArvaSEO\Connector\Security\Repairs::file_editor( $key ),
+			default       => \ArvaSEO\Connector\Security\Repairs::quarantine( $key ),
+		};
 		self::repair_notice( $result );
 	}
 
@@ -913,6 +917,7 @@ final class AdminController {
 		SiteRegistrationService::register();
 		if ( $give ) {
 			\ArvaSEO\Connector\Security\Report::send();
+			\ArvaSEO\Connector\Security\FileEdits::flush();
 		}
 		self::back( $back, 'consent_saved' );
 	}

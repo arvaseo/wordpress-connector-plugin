@@ -10,6 +10,7 @@ namespace ArvaSEO\Connector\Rest;
 use ArvaSEO\Connector\Auth\AuthService;
 use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Cron\CronManager;
+use ArvaSEO\Connector\Cron\PollingService;
 use ArvaSEO\Connector\Install\Schema;
 use ArvaSEO\Connector\Logging\AuditLogger;
 use ArvaSEO\Connector\Support\Ids;
@@ -22,9 +23,10 @@ defined( 'ABSPATH' ) || exit;
  * GET  /wp-json/arvaseo/v1/connection-health  signed; connection state for Arva SEO's diagnostics
  * GET  /wp-json/arvaseo/v1/auth-header-probe  the health check's own loopback, with a one-time token
  *
- * Every route has a real permission check. Events only enqueue work and return 202; slow work
- * never runs inside the request. Content is never accepted here: it is collected over the
- * plugin's authenticated connection.
+ * Every route has a real permission check. Events only start work and return 202: waiting content,
+ * SEO updates and fix switches are collected once the answer has gone back (2.7.0), with cron as the
+ * fallback. Content is never accepted here: it is collected over the plugin's authenticated
+ * connection.
  */
 final class WebhookController {
 
@@ -124,7 +126,10 @@ final class WebhookController {
 			case 'content.available':
 			case 'seo.updates_available':
 			case 'speed.fixes_requested':
-				CronManager::run_soon( 'arvaseo_connector_poll', 0 );
+				// Applied in seconds, not on the next visit that runs WordPress's cron. The cron
+				// job still runs in two minutes, for anything this request doesn't finish.
+				CronManager::run_soon( 'arvaseo_connector_poll', 2 * MINUTE_IN_SECONDS );
+				self::poll_when_done();
 				return self::accepted( $event );
 
 			case 'inventory.refresh_requested':
@@ -138,6 +143,29 @@ final class WebhookController {
 				}
 				return self::accepted( $event, ! $recent );
 		}
+	}
+
+	/**
+	 * Collect from Arva SEO at the end of this request.
+	 */
+	private static function poll_when_done(): void {
+		if ( false === has_action( 'shutdown', array( self::class, 'poll_now' ) ) ) {
+			add_action( 'shutdown', array( self::class, 'poll_now' ), 1000 );
+		}
+	}
+
+	/**
+	 * After the answer: sent and the connection closed first where the server allows (PHP-FPM,
+	 * LiteSpeed), since Arva SEO only waits a few seconds for it. Same lock and backoff as cron.
+	 */
+	public static function poll_now(): void {
+		ignore_user_abort( true );
+		if ( function_exists( 'fastcgi_finish_request' ) ) {
+			fastcgi_finish_request();
+		} elseif ( function_exists( 'litespeed_finish_request' ) ) {
+			litespeed_finish_request();
+		}
+		PollingService::poll();
 	}
 
 	/**
