@@ -14,6 +14,7 @@ use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Speed\Fixes;
 use ArvaSEO\Connector\Speed\ImageCompression;
 use ArvaSEO\Connector\Speed\OtherPlugins;
+use ArvaSEO\Connector\Speed\PageCache;
 use ArvaSEO\Connector\Speed\ServerRules;
 
 defined( 'ABSPATH' ) || exit;
@@ -81,6 +82,68 @@ defined( 'ABSPATH' ) || exit;
 	$arvaseo_cmp_lib   = ImageCompression::library();
 	$arvaseo_cmp_left  = $arvaseo_cmp['allowance'];
 	$arvaseo_cmp_cloud = TokenStore::is_connected() && PrivacyService::allows( 'image_compression' );
+	$arvaseo_pc        = PageCache::settings();
+	$arvaseo_pc_host   = PageCache::host_cache();
+	$arvaseo_backups   = ServerRules::backups();
+
+	/**
+	 * One Page caching button (clear, choose the host's cache or Arva SEO's).
+	 *
+	 * @param string $what    What it does.
+	 * @param string $label   Button label.
+	 * @param string $classes Button classes.
+	 */
+	$arvaseo_pc_button = static function ( string $what, string $label, string $classes = 'arvaseo-btn arvaseo-btn--sm' ): void {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form">';
+		echo '<input type="hidden" name="action" value="arvaseo_connector_page_cache" />';
+		echo '<input type="hidden" name="do" value="' . esc_attr( $what ) . '" />';
+		wp_nonce_field( 'arvaseo_connector_page_cache' );
+		echo '<button type="submit" class="' . esc_attr( $classes ) . '">' . esc_html( $label ) . '</button>';
+		echo '</form>';
+	};
+
+	/**
+	 * Links to download the .htaccess copies kept before Arva SEO changed it.
+	 */
+	$arvaseo_backup_links = static function () use ( $arvaseo_backups ): void {
+		if ( array() === $arvaseo_backups ) {
+			return;
+		}
+		$date   = static fn ( string $at ): string => wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) strtotime( $at ) );
+		$latest = isset( $arvaseo_backups['latest'] ) && ( $arvaseo_backups['original']['at'] ?? '' ) !== $arvaseo_backups['latest']['at'];
+		echo '<div class="arvaseo-fix-sub"><h4>' . esc_html__( 'Your .htaccess backup', 'arvaseo-connector' ) . '</h4>';
+		echo '<p class="arvaseo-hint">';
+		echo esc_html(
+			$latest
+				/* translators: 1: date and time of the original copy, 2: date and time of the latest copy. */
+				? sprintf( __( 'Arva SEO keeps a copy of your .htaccess file from before it first changed it (%1$s), and from before its latest change (%2$s).', 'arvaseo-connector' ), $date( $arvaseo_backups['original']['at'] ?? '' ), $date( $arvaseo_backups['latest']['at'] ) )
+				/* translators: %s: date and time. */
+				: sprintf( __( 'Arva SEO keeps a copy of your .htaccess file from before it first changed it (%s).', 'arvaseo-connector' ), $date( (string) ( $arvaseo_backups['original']['at'] ?? $arvaseo_backups['latest']['at'] ?? '' ) ) )
+		);
+		echo '</p><div class="arvaseo-row" style="margin-top: 10px">';
+		$labels = array(
+			'original' => __( 'Download the original', 'arvaseo-connector' ),
+			'latest'   => __( 'Download the latest copy', 'arvaseo-connector' ),
+		);
+		foreach ( $labels as $which => $label ) {
+			if ( ! isset( $arvaseo_backups[ $which ] ) || ( 'latest' === $which && ! $latest ) ) {
+				continue;
+			}
+			$url = wp_nonce_url(
+				add_query_arg(
+					array(
+						'action' => 'arvaseo_connector_page_cache',
+						'do'     => 'backup',
+						'which'  => $which,
+					),
+					admin_url( 'admin-post.php' )
+				),
+				'arvaseo_connector_page_cache'
+			);
+			echo '<a class="arvaseo-btn arvaseo-btn--sm" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		}
+		echo '</div></div>';
+	};
 
 	/**
 	 * One state-change button.
@@ -305,6 +368,8 @@ defined( 'ABSPATH' ) || exit;
 			<?php
 			if ( 'on' === $arvaseo_state || 'trying' === $arvaseo_state ) {
 				echo '<span class="arvaseo-chip arvaseo-chip--' . esc_attr( $arvaseo_tones[ $arvaseo_state ] ) . '"><span class="arvaseo-dot"></span>' . esc_html( Fixes::state_label( $arvaseo_state ) ) . '</span>';
+			} elseif ( 'page_cache' === $arvaseo_id && 'handled' === $arvaseo_state && null !== $arvaseo_pc_host && $arvaseo_handled === $arvaseo_pc_host['name'] ) {
+				echo AdminController::badge( 'neutral', __( 'Done by your host', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
 			} else {
 				echo AdminController::badge( $arvaseo_tones[ $arvaseo_state ] ?? 'neutral', Fixes::state_label( $arvaseo_state ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
 			}
@@ -325,7 +390,17 @@ defined( 'ABSPATH' ) || exit;
 			<?php if ( in_array( $arvaseo_id, array( 'defer_scripts', 'delay_scripts' ), true ) && 'on' === Cloudflare::details()['rocket_loader'] ) : ?>
 			<div class="arvaseo-risk arvaseo-risk--check"><?php echo AdminController::icon( 'cloud', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Rocket Loader is on in Cloudflare and also changes how scripts load. Use one or the other.', 'arvaseo-connector' ); ?> <a href="#arvaseo-cloudflare"><?php esc_html_e( 'See Cloudflare', 'arvaseo-connector' ); ?></a></span></div>
 		<?php endif; ?>
-			<?php if ( 'handled' === $arvaseo_state ) : ?>
+			<?php if ( 'handled' === $arvaseo_state && 'page_cache' === $arvaseo_id && null !== $arvaseo_pc_host && $arvaseo_handled === $arvaseo_pc_host['name'] ) : ?>
+			<div class="arvaseo-extra">
+				<p>
+					<?php
+					/* translators: %s: the host's cache, such as SiteGround's dynamic cache. */
+					printf( esc_html__( '%s already caches your pages on your host’s servers, so Arva SEO leaves page caching to it and pages aren’t cached twice. Keeping it is usually best.', 'arvaseo-connector' ), esc_html( $arvaseo_pc_host['name'] ) );
+					?>
+				</p>
+				<div class="arvaseo-row"><?php $arvaseo_pc_button( 'ours', __( 'Use Arva SEO’s page cache instead', 'arvaseo-connector' ) ); ?></div>
+			</div>
+			<?php elseif ( 'handled' === $arvaseo_state ) : ?>
 			<div class="arvaseo-extra">
 				<p>
 					<?php
@@ -348,6 +423,25 @@ defined( 'ABSPATH' ) || exit;
 				</p>
 			</div>
 		<?php endif; ?>
+			<?php if ( 'page_cache' === $arvaseo_id && 'handled' !== $arvaseo_state && $arvaseo_pc['over_host'] && null !== $arvaseo_pc_host ) : ?>
+			<div class="arvaseo-extra arvaseo-extra--warn">
+				<p>
+					<?php
+					/* translators: 1: the host's cache, 2: how to turn it off. */
+					printf( esc_html__( 'You chose Arva SEO’s page cache over %1$s. Turn the host’s cache off so pages aren’t cached twice. %2$s', 'arvaseo-connector' ), esc_html( $arvaseo_pc_host['name'] ), esc_html( $arvaseo_pc_host['off'] ) );
+					?>
+				</p>
+				<div class="arvaseo-row">
+					<?php
+					/* translators: %s: the host's cache. */
+					$arvaseo_pc_button( 'host', sprintf( __( 'Leave it to %s', 'arvaseo-connector' ), $arvaseo_pc_host['name'] ) );
+					?>
+				</div>
+			</div>
+		<?php endif; ?>
+			<?php if ( 'page_cache' === $arvaseo_id && 'on' === $arvaseo_state && ( ! $arvaseo_pc['active'] || ! PageCache::dropin_is_ours() ) ) : ?>
+			<div class="arvaseo-extra arvaseo-extra--warn"><p><?php esc_html_e( 'The page cache isn’t running: its advanced-cache.php file in wp-content was removed or replaced, perhaps by another plugin. Turn this off and on again to set it up again.', 'arvaseo-connector' ); ?></p></div>
+		<?php endif; ?>
 			<?php if ( 'browser_caching' === $arvaseo_id && 'on' === $arvaseo_state && ! ServerRules::present() ) : ?>
 			<div class="arvaseo-extra arvaseo-extra--warn"><p><?php esc_html_e( 'The rules aren’t in your .htaccess file any more: another plugin or your host may have rewritten it. Turn this off and on again to add them back.', 'arvaseo-connector' ); ?></p></div>
 		<?php endif; ?>
@@ -366,7 +460,7 @@ defined( 'ABSPATH' ) || exit;
 
 			<?php
 			// Details: closed unless something in it is running or being tried.
-			$arvaseo_options = in_array( $arvaseo_id, array( 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts' ), true ) && 'handled' !== $arvaseo_state;
+			$arvaseo_options = in_array( $arvaseo_id, array( 'page_cache', 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts' ), true ) && 'handled' !== $arvaseo_state;
 			$arvaseo_open    = false;
 			if ( 'webp_uploads' === $arvaseo_id ) {
 				$arvaseo_open = $arvaseo_webp['running'];
@@ -377,6 +471,7 @@ defined( 'ABSPATH' ) || exit;
 			if ( 'defer_scripts' === $arvaseo_id && 'trying' === $arvaseo_state ) {
 				$arvaseo_open = true;
 			}
+			$arvaseo_preload = 'page_cache' === $arvaseo_id ? PageCache::preload_state() : null;
 			?>
 		<div class="arvaseo-fix-acts">
 			<?php
@@ -452,6 +547,14 @@ defined( 'ABSPATH' ) || exit;
 					<div class="arvaseo-risk arvaseo-risk--safe"><?php echo AdminController::icon( 'check', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Safe: it only changes how things load, not what visitors see.', 'arvaseo-connector' ); ?></span></div>
 				<?php endif; ?>
 
+				<?php if ( 'unavailable' === $arvaseo_state && 'page_cache' === $arvaseo_id && ! ( defined( 'WP_CACHE' ) && WP_CACHE ) && ! is_multisite() ) : ?>
+					<div class="arvaseo-fix-sub">
+						<h4><?php esc_html_e( 'The line for wp-config.php', 'arvaseo-connector' ); ?></h4>
+						<p class="arvaseo-hint"><?php esc_html_e( 'Above the line that says “That’s all, stop editing!”:', 'arvaseo-connector' ); ?></p>
+						<pre class="arvaseo-code">define( 'WP_CACHE', true );</pre>
+					</div>
+				<?php endif; ?>
+
 				<?php if ( 'unavailable' === $arvaseo_state && 'browser_caching' === $arvaseo_id ) : ?>
 					<div class="arvaseo-fix-sub">
 						<h4><?php esc_html_e( 'The rules for your host', 'arvaseo-connector' ); ?></h4>
@@ -463,6 +566,66 @@ defined( 'ABSPATH' ) || exit;
 				<?php endif; ?>
 
 				<?php if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) : ?>
+					<?php if ( 'page_cache' === $arvaseo_id ) : ?>
+						<?php if ( 'on' === $arvaseo_state && $arvaseo_pc['active'] ) : ?>
+							<?php $arvaseo_pc_stats = PageCache::stats(); ?>
+							<ul class="arvaseo-bullets arvaseo-fix-sub">
+								<?php if ( null !== $arvaseo_pc['check'] && null !== $arvaseo_pc['check']['before'] && null !== $arvaseo_pc['check']['after'] ) : ?>
+									<li>
+										<?php
+										$arvaseo_secs = static fn ( float $s ): string => $s < 1
+											/* translators: %s: milliseconds. */
+											? sprintf( __( '%s ms', 'arvaseo-connector' ), number_format_i18n( max( 1, round( $s * 1000 ) ) ) )
+											/* translators: %s: seconds. */
+											: sprintf( __( '%s s', 'arvaseo-connector' ), number_format_i18n( $s, 1 ) );
+										/* translators: 1: time to make the homepage, such as 640 ms, 2: time from the cache. */
+										echo esc_html( sprintf( __( 'Checked: your homepage took %1$s to make, and %2$s from the cache (asked for from your server).', 'arvaseo-connector' ), $arvaseo_secs( $arvaseo_pc['check']['before'] ), $arvaseo_secs( $arvaseo_pc['check']['after'] ) ) );
+										?>
+									</li>
+								<?php endif; ?>
+								<li><?php echo esc_html( 'htaccess' === $arvaseo_pc['served_by'] ? __( 'Your server sends saved pages itself, through rules in .htaccess, without starting PHP.', 'arvaseo-connector' ) : __( 'Saved pages are sent before WordPress loads (advanced-cache.php in wp-content).', 'arvaseo-connector' ) ); ?></li>
+								<li>
+									<?php
+									echo esc_html(
+										sprintf(
+											/* translators: 1: number of pages, 2: their size, such as 4 MB. */
+											_n( '%1$s page in the cache (%2$s). Each is made again after 10 hours, or when it changes.', '%1$s pages in the cache (%2$s). Each is made again after 10 hours, or when it changes.', $arvaseo_pc_stats['pages'], 'arvaseo-connector' ),
+											number_format_i18n( $arvaseo_pc_stats['pages'] ) . ( $arvaseo_pc_stats['capped'] ? '+' : '' ),
+											size_format( $arvaseo_pc_stats['bytes'] )
+										)
+									);
+									?>
+								</li>
+								<?php if ( null !== $arvaseo_preload && array() !== $arvaseo_preload['queue'] ) : ?>
+									<li>
+										<?php
+										/* translators: 1: pages refilled so far, 2: pages to refill. */
+										echo esc_html( sprintf( __( 'Refilling the cache in the background: %1$s of %2$s pages, a few a minute.', 'arvaseo-connector' ), number_format_i18n( $arvaseo_preload['done'] ), number_format_i18n( $arvaseo_preload['total'] ) ) );
+										?>
+									</li>
+								<?php endif; ?>
+							</ul>
+							<div class="arvaseo-row arvaseo-fix-sub"><?php $arvaseo_pc_button( 'clear', __( 'Clear the cache', 'arvaseo-connector' ) ); ?><span class="arvaseo-hint"><?php esc_html_e( 'Also in the toolbar on your site’s pages. Cloudflare’s copy is cleared too, when it’s connected.', 'arvaseo-connector' ); ?></span></div>
+						<?php endif; ?>
+						<div class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Never cached', 'arvaseo-connector' ); ?></h4>
+							<p><?php esc_html_e( 'Signed-in users, visitors with a comment, a password or items in their cart, carts, checkouts and account pages, searches and addresses with a query (tracking ones like utm_source are fine), and any page that sets a cookie or asks not to be cached. Pages you leave alone below aren’t cached either.', 'arvaseo-connector' ); ?></p>
+						</div>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Choices', 'arvaseo-connector' ); ?></h4>
+							<input type="hidden" name="action" value="arvaseo_connector_page_cache" />
+							<input type="hidden" name="do" value="options" />
+							<?php wp_nonce_field( 'arvaseo_connector_page_cache' ); ?>
+							<fieldset class="arvaseo-checks" style="flex-direction: column; margin: 0 0 12px">
+								<legend class="screen-reader-text"><?php esc_html_e( 'Page caching choices', 'arvaseo-connector' ); ?></legend>
+								<label><input type="checkbox" name="preload" value="1" <?php checked( $arvaseo_pc['preload'] ); ?> /> <span><?php esc_html_e( 'Refill the cache in the background', 'arvaseo-connector' ); ?><br /><span class="arvaseo-hint"><?php esc_html_e( 'After it’s cleared, your homepage, latest posts and pages, and main categories are visited a few a minute, so the first visitor gets a fast page too.', 'arvaseo-connector' ); ?></span></span></label>
+								<label><input type="checkbox" name="phones" value="1" <?php checked( $arvaseo_pc['phones'] ); ?> /> <span><?php esc_html_e( 'A separate copy for phones', 'arvaseo-connector' ); ?><br /><span class="arvaseo-hint"><?php esc_html_e( 'Only for themes or plugins that send phones different HTML (a separate mobile menu or layout). Most themes send the same page and let the screen size decide, so one copy is right and fills twice as fast.', 'arvaseo-connector' ); ?></span></span></label>
+							</fieldset>
+							<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save choices', 'arvaseo-connector' ); ?></button>
+						</form>
+						<?php $arvaseo_backup_links(); ?>
+					<?php endif; ?>
+
 					<?php if ( 'browser_caching' === $arvaseo_id ) : ?>
 						<?php $arvaseo_check = $arvaseo_stored['server_check']; ?>
 						<?php if ( 'on' === $arvaseo_state && ServerRules::present() && null !== $arvaseo_check ) : ?>
@@ -485,6 +648,7 @@ defined( 'ABSPATH' ) || exit;
 							<p><?php esc_html_e( 'If you edit your theme’s files by hand, visitors may see the old version for a while; WordPress and plugins add a version to their files, so their updates show straight away.', 'arvaseo-connector' ); ?></p>
 							<pre class="arvaseo-code"><?php echo esc_html( implode( "\n", ServerRules::lines() ) ); ?></pre>
 						</div>
+						<?php $arvaseo_backup_links(); ?>
 					<?php endif; ?>
 
 					<?php if ( 'wp_extras' === $arvaseo_id ) : ?>

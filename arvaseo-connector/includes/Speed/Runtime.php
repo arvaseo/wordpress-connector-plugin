@@ -78,6 +78,7 @@ final class Runtime {
 		ImageCompression::init();
 		CssOptimizer::init();
 		Cloudflare::init();
+		PageCache::init();
 	}
 
 	/**
@@ -109,6 +110,25 @@ final class Runtime {
 				'meta'  => array( 'title' => $trying > 0 ? __( 'Only you see the fixes you’re trying while signed in. Visitors see your site as before.', 'arvaseo-connector' ) : __( 'PageSpeed fixes are on for your visitors.', 'arvaseo-connector' ) ),
 			)
 		);
+		if ( PageCache::active() ) {
+			$bar->add_node(
+				array(
+					'parent' => 'arvaseo-speed-trying',
+					'id'     => 'arvaseo-page-cache-clear',
+					'title'  => esc_html__( 'Clear the page cache', 'arvaseo-connector' ),
+					'href'   => wp_nonce_url(
+						add_query_arg(
+							array(
+								'action' => 'arvaseo_connector_page_cache',
+								'do'     => 'clear',
+							),
+							admin_url( 'admin-post.php' )
+						),
+						'arvaseo_connector_page_cache'
+					),
+				)
+			);
+		}
 		Exclusions::toolbar_items( $bar, 'arvaseo-speed-trying' );
 	}
 

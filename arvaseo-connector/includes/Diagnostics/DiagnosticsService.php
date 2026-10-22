@@ -99,6 +99,7 @@ final class DiagnosticsService {
 			'speed_fixes'     => array(
 				'fixes'       => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
 				'kill_switch' => defined( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ) && (bool) constant( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ),
+				'page_cache'  => \ArvaSEO\Connector\Speed\PageCache::diagnostics(),
 				'remote'      => \ArvaSEO\Connector\Speed\Fixes::stored()['remote'],
 				// What's left alone, as counts (no addresses or class names).
 				'left_alone'  => array(

@@ -25,10 +25,10 @@ final class OtherPlugins {
 	public const AFTER_ACTIVATION = 'arvaseo_connector_other_plugins_notice';
 
 	/** Hosts' own plugins: they run the host's server cache and clear it when pages change. */
-	private const HOST_CACHE = array( 'sg-cachepress', 'litespeed-cache' );
+	private const HOST_CACHE = PageCache::HOST_PLUGINS;
 
-	/** Plugins that also cache pages, which Arva SEO doesn't do. */
-	private const PAGE_CACHE = array( 'wp-rocket', 'litespeed-cache', 'w3-total-cache', 'wp-fastest-cache', 'sg-cachepress', 'breeze', 'hummingbird-performance', 'wp-optimize', 'swift-performance-lite', 'nitropack', 'flying-press', 'jetpack-boost' );
+	/** Plugins that also cache pages: Arva SEO's Page caching can do it instead (2.6.0). */
+	private const PAGE_CACHE = PageCache::CACHE_PLUGINS;
 
 	/** Image compression plugins: what they compressed stays compressed after they're deactivated. */
 	private const IMAGES = array( 'wp-smushit', 'ewww-image-optimizer', 'imagify', 'shortpixel-image-optimiser', 'optimole-wp' );
@@ -84,8 +84,8 @@ final class OtherPlugins {
 	 */
 	public static function caveat( ?string $also ): string {
 		return match ( $also ) {
-			'host_cache' => __( 'It also runs your web host’s own page cache and clears it when your pages change, which Arva SEO doesn’t do. Keeping it is usually best: without it, visitors can get out-of-date pages, or slower ones.', 'arvaseo-connector' ),
-			'page_cache' => __( 'It also caches your pages, which Arva SEO doesn’t do. Before you deactivate it, check that your host caches pages (many do), or your pages may load slower.', 'arvaseo-connector' ),
+			'host_cache' => __( 'It also runs your web host’s own page cache and clears it when your pages change. Keeping it is usually best: without it, visitors can get out-of-date pages. To use Arva SEO’s page cache instead, choose it under Page caching and turn the host’s cache off as it says.', 'arvaseo-connector' ),
+			'page_cache' => __( 'It also caches your pages. Arva SEO’s Page caching can do that instead: deactivate this plugin, then turn Page caching on below.', 'arvaseo-connector' ),
 			'images'     => __( 'Images it already compressed stay that way after you deactivate it. Turn on Compress images here for the ones you upload next, and for the rest of your media library.', 'arvaseo-connector' ),
 			default      => '',
 		};

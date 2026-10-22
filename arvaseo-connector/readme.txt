@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.5.1
+Stable tag: 2.6.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,6 +18,7 @@ Fix the speed problems Google's PageSpeed test finds, one switch at a time, scan
 
 Arva SEO → Speed lists each fix with the PageSpeed (Lighthouse) problem it addresses, worded as the report shows it. Every fix is off until you turn it on. You can try it first: while you try a fix, only you see the change when you're signed in, and visitors see your site as before. Turning a fix off puts your pages back as they were. Your theme files and content are never changed. The few fixes that add files say so on their cards and take them away again. The fixes work without an Arva SEO account.
 
+* **Page caching**: pages saved as ready-made HTML and sent without running WordPress, through .htaccess (backed up first) or PHP, checked straight away (Reduce initial server response time)
 * **Show the main image first**: the featured image on posts and pages, and on the homepage the image your latest PageSpeed test in Arva SEO named (Largest Contentful Paint image was lazily loaded; LCP request discovery)
 * **Lazy-load images, videos and maps** below the first few images (Defer offscreen images)
 * **Load styles faster** (critical CSS) and **Remove unused CSS**, worked out on Arva SEO's servers once for each type of page: the first screen's styles go straight into the page and stylesheets stop holding it up, or each page gets only the styles it uses with the full files loading on the first interaction. They need the connection and use the page optimizations of your Arva SEO plan (Eliminate render-blocking resources; Reduce unused CSS)
@@ -104,7 +105,7 @@ Nothing, unless the site is connected and an administrator ticks "Also share the
 
 = Can a PageSpeed fix break my site? =
 
-Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Delay chat widgets and trackers, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. Browser caching and compression changes your server's settings, so it can't be tried first; it checks your site straight away instead (see below). If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. If you use a page cache, clear it after changing a fix.
+Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Delay chat widgets and trackers, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. Page caching and Browser caching and compression change your server's settings, so they can't be tried first; they check your site straight away instead (see below). If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. Arva SEO's own page cache clears itself when a fix changes; if you use another page cache, clear it after changing a fix.
 
 = Does it work with Cloudflare? =
 
@@ -130,6 +131,14 @@ Yes, from 1.6.0, when the site is connected: Load styles faster and Remove unuse
 = Can my agency switch the fixes from Arva SEO? =
 
 Yes, from 1.7.0, once an administrator ticks "Let Arva SEO switch these fixes" on the Speed page. Arva SEO's PageSpeed results then show Try it, Turn on and Turn off next to each fix for people who manage the website's integrations there. Switches are picked up within a minute or two; the rules are the same as in WordPress, and each change is logged with the name of the person who asked. Untick the box to stop it at any time.
+
+= Does it cache pages? =
+
+Yes, from 2.6.0, with Page caching (off until you turn it on). Each page is saved as ready-made HTML the first time a visitor opens it, and the next visitors get that copy without WordPress running. On Apache and LiteSpeed, rules at the top of .htaccess let the server send it without PHP; the plugin keeps a copy of your .htaccess from before it changed it, which you can download from the Speed page. Elsewhere (nginx, for example) a small advanced-cache.php file sends it before WordPress loads, and the plugin adds `define( 'WP_CACHE', true );` to wp-config.php, or tells you the line to add when it can't.
+
+Turning it on checks your homepage from the server: made once, then served from the cache. If it isn't, everything is taken out again. Signed-in users, visitors with a comment, password or cart, carts, checkouts and account pages, searches, addresses with a query (tracking ones like utm_source are fine) and pages that set a cookie are never cached, nor pages you leave alone. Saved pages are made again after 10 hours; a post's pages are cleared when it changes, and every page when your theme, menus, widgets or a fix change, or when you press Clear the cache (also in the toolbar). Cloudflare's copy is cleared too when it's connected. After clearing, your main pages are refilled in the background, a few a minute. Turn on "A separate copy for phones" only if your theme sends phones different HTML.
+
+If WP Rocket, W3 Total Cache or another cache plugin is active, Arva SEO leaves page caching to it. If your host caches pages itself (SiteGround, LiteSpeed Cache, WP Engine, Kinsta, Cloudways), that's kept by default, and you can choose Arva SEO's instead; the card says how to turn the host's cache off. Turning it off, deactivating or deleting the plugin removes the rules, the file, the line it added and the saved pages.
 
 = Is Browser caching and compression safe? =
 
@@ -201,6 +210,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.6.0 =
+New: Page caching, off until you turn it on. Pages are saved as ready-made HTML and sent without running WordPress, cleared when they change and refilled in the background.
+
 = 2.5.1 =
 Calmer Speed and Health pages: details open when you need them. A connection problem now says why, such as your host's DNS.
 
@@ -253,6 +265,15 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.6.0 =
+* New PageSpeed fix, Page caching: pages are saved as ready-made HTML and sent to visitors without running WordPress. On Apache and LiteSpeed the server sends them through rules at the top of .htaccess; elsewhere advanced-cache.php sends them before WordPress loads, with WP_CACHE added to wp-config.php.
+* Turning it on checks your homepage is made once and then served from the cache; if it isn't (a cookie for every visitor, a no-cache header, the host's cache answering first), everything is taken out again and the card says why.
+* Never cached: signed-in users, comment authors, password-protected posts, carts and checkouts, searches, addresses with a query other than tracking parameters, and pages that set cookies or ask not to be cached. Pages left alone on the Speed page aren't cached either.
+* Pages are cleared when a post, comment, product stock, menu, widget, theme or a fix changes, or from Clear the cache (also in the toolbar), with Cloudflare's copy; the main pages are refilled in the background, a few a minute, and pages past 10 hours are made again.
+* A copy of .htaccess is kept from before the plugin first changed it, and before its latest change; both can be downloaded from the Speed page (Browser caching and compression too).
+* Other cache plugins keep the job, and Arva SEO's page cache turns itself off if one becomes active. On hosts with their own cache (SiteGround, LiteSpeed Cache, WP Engine, Kinsta, Cloudways), the host's cache is kept by default and you can choose Arva SEO's instead.
+* A separate copy for phones, for themes that send phones different HTML (off by default).
 
 = 2.5.1 =
 * Speed: each fix shows its name, state, what it does and its buttons underneath; the PageSpeed problems it fixes, numbers and options open from Details. Leave things alone and Cloudflare's setup open when you need them.

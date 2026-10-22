@@ -57,6 +57,19 @@ final class Fixes {
 	public static function all(): array {
 		$speed_plugins = array( 'wp-rocket', 'litespeed-cache', 'perfmatters', 'flying-press', 'nitropack' );
 		return array(
+			'page_cache'       => array(
+				'title'      => __( 'Page caching', 'arvaseo-connector' ),
+				'what'       => __( 'Each page is saved as ready-made HTML and sent to visitors without running WordPress, so it starts arriving in milliseconds instead of a second or more. Signed-in users, carts and checkouts, and pages that change for each visitor are never cached, and pages are cleared when you change them. Turning it on checks your homepage straight away: if it isn’t served from the cache, it’s turned off again.', 'arvaseo-connector' ),
+				'group'      => 'sooner',
+				'risk'       => 'check',
+				'audits'     => array(
+					'server-response-time'     => 'Reduce initial server response time',
+					'document-latency-insight' => 'Document request latency',
+				),
+				'handled_by' => array_merge( PageCache::CACHE_PLUGINS, PageCache::HOST_PLUGINS ),
+				// Signed-in users are never cached, so there's nothing to try first.
+				'states'     => array( 'off', 'on' ),
+			),
 			'lcp_image'        => array(
 				'title'      => __( 'Show the main image first', 'arvaseo-connector' ),
 				'what'       => __( 'On posts and pages, the featured image loads straight away with a high priority instead of waiting its turn, so the largest thing on the screen appears sooner. On your homepage, so does the image your latest PageSpeed test in Arva SEO found as the largest thing on the screen.', 'arvaseo-connector' ),
@@ -294,6 +307,12 @@ final class Fixes {
 			'tiny-compress-images'        => 'TinyPNG',
 			'resmushit-image-optimizer'   => 'reSmush.it',
 			'wp-compress-image-optimizer' => 'WP Compress',
+			'wp-super-cache'              => 'WP Super Cache',
+			'cache-enabler'               => 'Cache Enabler',
+			'comet-cache'                 => 'Comet Cache',
+			'powered-cache'               => 'Powered Cache',
+			'borlabs-cache'               => 'Borlabs Cache',
+			'wp-cloudflare-page-cache'    => 'Super Page Cache',
 		);
 	}
 
@@ -368,6 +387,10 @@ final class Fixes {
 	 * @param string $id Fix ID.
 	 */
 	public static function handled_by( string $id ): ?string {
+		if ( 'page_cache' === $id ) {
+			// A cache plugin, or the host's own cache unless Arva SEO's was chosen instead.
+			return PageCache::handled_by();
+		}
 		$fix = self::all()[ $id ] ?? null;
 		if ( null === $fix || array() === $fix['handled_by'] ) {
 			return null;
@@ -405,6 +428,9 @@ final class Fixes {
 		}
 		if ( 'browser_caching' === $id && 'on' !== ( self::stored()['fixes'][ $id ]['state'] ?? 'off' ) ) {
 			return ServerRules::unavailable();
+		}
+		if ( 'page_cache' === $id && 'on' !== ( self::stored()['fixes'][ $id ]['state'] ?? 'off' ) ) {
+			return PageCache::unavailable();
 		}
 		if ( in_array( $id, array( 'critical_css', 'unused_css' ), true ) && 'off' === ( self::stored()['fixes'][ $id ]['state'] ?? 'off' ) && ! \ArvaSEO\Connector\Auth\TokenStore::is_connected() ) {
 			return __( 'Connect to Arva SEO first: these styles are worked out on Arva SEO’s servers, using the page optimizations in your plan.', 'arvaseo-connector' );
@@ -457,8 +483,9 @@ final class Fixes {
 	 * @param string $state off|trying|on.
 	 * @param bool   $checked Defer scripts: the checklist was ticked.
 	 * @return string|null Why it didn't change (invalid, handled, unavailable, try_first,
-	 *                     check_pages, and for Browser caching not_written, unchecked or
-	 *                     server_error), or null when it did.
+	 *                     check_pages; for Browser caching not_written, unchecked or
+	 *                     server_error; for Page caching dropin_not_written or cache_*), or null
+	 *                     when it did.
 	 */
 	public static function set( string $id, string $state, bool $checked = false ): ?string {
 		$fix = self::all()[ $id ] ?? null;
@@ -484,6 +511,21 @@ final class Fixes {
 		}
 		if ( 'defer_scripts' === $id && 'on' !== $state ) {
 			$data['defer_on_at'] = null;
+		}
+		if ( 'page_cache' === $id ) {
+			if ( 'on' === $state ) {
+				$error = PageCache::enable();
+				if ( null !== $error ) {
+					AuditLogger::warning(
+						'speed.page_cache_refused',
+						__( 'PageSpeed fix “Page caching” wasn’t turned on: your homepage wasn’t served from the cache when checked, so everything was taken out again.', 'arvaseo-connector' ),
+						array( 'reason' => $error )
+					);
+					return $error;
+				}
+			} else {
+				PageCache::disable();
+			}
 		}
 		if ( 'browser_caching' === $id ) {
 			if ( 'on' === $state ) {

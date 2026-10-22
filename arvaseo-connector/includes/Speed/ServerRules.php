@@ -7,6 +7,8 @@
 
 namespace ArvaSEO\Connector\Speed;
 
+use ArvaSEO\Connector\Support\Ids;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -19,6 +21,9 @@ defined( 'ABSPATH' ) || exit;
 final class ServerRules {
 
 	public const MARKER = 'Arva SEO Connector';
+
+	/** Copies of .htaccess from before Arva SEO changed it (not autoloaded). */
+	public const BACKUP = 'arvaseo_connector_htaccess_backup';
 
 	/** Types that get a year-long browser cache. WordPress and plugins version their files. */
 	private const CACHE_TYPES = array(
@@ -216,7 +221,52 @@ final class ServerRules {
 		if ( ! function_exists( 'insert_with_markers' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/misc.php';
 		}
+		self::backup();
 		return (bool) insert_with_markers( self::file(), self::MARKER, $lines );
+	}
+
+	/**
+	 * Keep a copy of .htaccess before Arva SEO changes it (Browser caching, Page caching): the file
+	 * as it was before Arva SEO's first change, and as it was before the latest one. Both can be
+	 * downloaded from the Speed page.
+	 */
+	public static function backup(): void {
+		$file = self::file();
+		if ( ! is_readable( $file ) ) {
+			return;
+		}
+		$copy  = array(
+			'at'       => Ids::iso(),
+			'contents' => (string) file_get_contents( $file ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
+		);
+		$saved = self::backups();
+		update_option(
+			self::BACKUP,
+			array(
+				'original' => $saved['original'] ?? $copy,
+				'latest'   => $copy,
+			),
+			false
+		);
+	}
+
+	/**
+	 * The copies of .htaccess kept by backup().
+	 *
+	 * @return array{original?: array{at: string, contents: string}, latest?: array{at: string, contents: string}}
+	 */
+	public static function backups(): array {
+		$saved = get_option( self::BACKUP, array() );
+		$out   = array();
+		foreach ( array( 'original', 'latest' ) as $key ) {
+			if ( is_array( $saved ) && is_string( $saved[ $key ]['at'] ?? null ) && is_string( $saved[ $key ]['contents'] ?? null ) ) {
+				$out[ $key ] = array(
+					'at'       => $saved[ $key ]['at'],
+					'contents' => $saved[ $key ]['contents'],
+				);
+			}
+		}
+		return $out;
 	}
 
 	/**
