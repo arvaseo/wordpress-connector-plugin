@@ -71,6 +71,17 @@ defined( 'ABSPATH' ) || exit;
 	}
 	$arvaseo_trying = array_keys( $arvaseo_states, 'trying', true );
 
+	// What the CSS, WebP and image compression rows show, once for the page.
+	$arvaseo_css       = \ArvaSEO\Connector\Speed\CssOptimizer::counts();
+	$arvaseo_allowance = get_option( 'arvaseo_connector_css_allowance', array() );
+	$arvaseo_allowance = is_array( $arvaseo_allowance ) ? $arvaseo_allowance : array();
+	$arvaseo_webp      = \ArvaSEO\Connector\Speed\WebpLibrary::progress();
+	$arvaseo_cmp       = ImageCompression::state();
+	$arvaseo_cmp_stats = ImageCompression::stats();
+	$arvaseo_cmp_lib   = ImageCompression::library();
+	$arvaseo_cmp_left  = $arvaseo_cmp['allowance'];
+	$arvaseo_cmp_cloud = TokenStore::is_connected() && PrivacyService::allows( 'image_compression' );
+
 	/**
 	 * One state-change button.
 	 *
@@ -340,13 +351,6 @@ defined( 'ABSPATH' ) || exit;
 			<?php if ( 'browser_caching' === $arvaseo_id && 'on' === $arvaseo_state && ! ServerRules::present() ) : ?>
 			<div class="arvaseo-extra arvaseo-extra--warn"><p><?php esc_html_e( 'The rules aren’t in your .htaccess file any more: another plugin or your host may have rewritten it. Turn this off and on again to add them back.', 'arvaseo-connector' ); ?></p></div>
 		<?php endif; ?>
-			<?php
-			if ( in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) ) {
-				$arvaseo_css       = \ArvaSEO\Connector\Speed\CssOptimizer::counts();
-				$arvaseo_allowance = get_option( 'arvaseo_connector_css_allowance', array() );
-				$arvaseo_allowance = is_array( $arvaseo_allowance ) ? $arvaseo_allowance : array();
-			}
-			?>
 			<?php if ( in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) && $arvaseo_css['no_allowance'] > 0 ) : ?>
 			<p class="arvaseo-risk arvaseo-risk--check">
 				<?php
@@ -365,16 +369,10 @@ defined( 'ABSPATH' ) || exit;
 			$arvaseo_options = in_array( $arvaseo_id, array( 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts' ), true ) && 'handled' !== $arvaseo_state;
 			$arvaseo_open    = false;
 			if ( 'webp_uploads' === $arvaseo_id ) {
-				$arvaseo_webp = \ArvaSEO\Connector\Speed\WebpLibrary::progress();
 				$arvaseo_open = $arvaseo_webp['running'];
 			}
 			if ( 'compress_images' === $arvaseo_id ) {
-				$arvaseo_cmp       = ImageCompression::state();
-				$arvaseo_cmp_stats = ImageCompression::stats();
-				$arvaseo_cmp_lib   = ImageCompression::library();
-				$arvaseo_cmp_left  = $arvaseo_cmp['allowance'];
-				$arvaseo_cmp_cloud = TokenStore::is_connected() && PrivacyService::allows( 'image_compression' );
-				$arvaseo_open      = $arvaseo_cmp['running'] || $arvaseo_cmp['restoring'];
+				$arvaseo_open = $arvaseo_cmp['running'] || $arvaseo_cmp['restoring'];
 			}
 			if ( 'defer_scripts' === $arvaseo_id && 'trying' === $arvaseo_state ) {
 				$arvaseo_open = true;

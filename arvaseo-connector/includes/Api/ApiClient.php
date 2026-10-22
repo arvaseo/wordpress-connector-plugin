@@ -86,6 +86,36 @@ final class ApiClient {
 	}
 
 	/**
+	 * Why a request didn't get an answer: dns (this server couldn't look up Arva SEO's address),
+	 * timeout, tls (no secure connection) or other.
+	 *
+	 * @param \WP_Error $error The transport's error.
+	 */
+	public static function network_reason( \WP_Error $error ): string {
+		$message = strtolower( $error->get_error_message() );
+		return match ( true ) {
+			str_contains( $message, 'curl error 6:' ) || str_contains( $message, 'resolve host' ) || str_contains( $message, 'getaddrinfo' ) || str_contains( $message, 'name or service not known' ) => 'dns',
+			str_contains( $message, 'curl error 28:' ) || str_contains( $message, 'timed out' ) || str_contains( $message, 'timeout' ) => 'timeout',
+			1 === preg_match( '/curl error (35|51|53|54|58|59|60|64|66|77|80|82|83|90|91):/', $message ) || str_contains( $message, 'ssl' ) || str_contains( $message, 'certificate' ) => 'tls',
+			default => 'other',
+		};
+	}
+
+	/**
+	 * What to tell an administrator when Arva SEO couldn't be reached.
+	 *
+	 * @param string $reason dns, timeout, tls or other.
+	 */
+	public static function network_message( string $reason ): string {
+		return match ( $reason ) {
+			'dns'     => __( 'This server couldn’t look up Arva SEO’s address (a DNS problem on your host). After an address change, a host can keep old records for up to a day or two: try again later, or ask your host to refresh its DNS cache for api.arvaseo.com.', 'arvaseo-connector' ),
+			'timeout' => __( 'Arva SEO didn’t answer in time. Try again in a few minutes; if it keeps happening, ask your host whether it blocks outgoing connections to api.arvaseo.com.', 'arvaseo-connector' ),
+			'tls'     => __( 'This server couldn’t make a secure connection to Arva SEO. Ask your host to update its list of trusted certificates (CA bundle) and OpenSSL.', 'arvaseo-connector' ),
+			default   => __( 'Couldn’t reach Arva SEO. Check the server’s internet connection and try again.', 'arvaseo-connector' ),
+		};
+	}
+
+	/**
 	 * A call without a token (the code exchange, revocation).
 	 *
 	 * @param string               $path Path.
@@ -291,15 +321,19 @@ final class ApiClient {
 		$started = microtime( true );
 		$result  = $this->http->request( Config::api_url() . $path, $args );
 		if ( is_wp_error( $result ) ) {
+			$reason = self::network_reason( $result );
 			AuditLogger::warning(
 				'api.network_error',
 				__( 'Couldn’t reach Arva SEO.', 'arvaseo-connector' ),
 				array(
 					'code'        => $result->get_error_code(),
+					// What the server said (2.5.1), such as "cURL error 6: Could not resolve host".
+					'reason'      => $reason,
+					'error'       => mb_substr( wp_strip_all_tags( $result->get_error_message() ), 0, 200 ),
 					'duration_ms' => (int) ( ( microtime( true ) - $started ) * 1000 ),
 				)
 			);
-			return new ApiResponse( 0, array(), 'network_error', __( 'Couldn’t reach Arva SEO. Check the server’s internet connection and try again.', 'arvaseo-connector' ) );
+			return new ApiResponse( 0, array( 'reason' => $reason ), 'network_error', self::network_message( $reason ) );
 		}
 		$status  = (int) wp_remote_retrieve_response_code( $result );
 		$decoded = json_decode( (string) wp_remote_retrieve_body( $result ), true );

@@ -74,7 +74,7 @@ defined( 'ABSPATH' ) || exit;
 	<?php require __DIR__ . '/security.php'; ?>
 
 	<section class="arvaseo-card" aria-labelledby="arvaseo-hs-heading">
-		<div class="arvaseo-between">
+		<div>
 			<div>
 				<p class="arvaseo-eyebrow"><?php esc_html_e( 'Last check', 'arvaseo-connector' ); ?></p>
 				<h2 class="arvaseo-h3" id="arvaseo-hs-heading">
@@ -101,16 +101,6 @@ defined( 'ABSPATH' ) || exit;
 					<?php endif; ?>
 				</div>
 			</div>
-			<div class="arvaseo-row">
-				<?php
-				if ( current_user_can( Capabilities::SYNC_HEALTH ) ) {
-					AdminController::button( 'arvaseo_connector_recheck', __( 'Check again now', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
-				}
-				if ( ! empty( $arvaseo_assessment['app_url'] ) ) {
-					printf( '<a class="arvaseo-btn arvaseo-btn--sm" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="screen-reader-text"> %3$s</span></a>', esc_url( $arvaseo_assessment['app_url'] ), esc_html__( 'Open in Arva SEO', 'arvaseo-connector' ), esc_html__( '(opens in a new tab)', 'arvaseo-connector' ) );
-				}
-				?>
-			</div>
 		</div>
 		<?php if ( null !== $arvaseo_latest ) : ?>
 			<ul class="arvaseo-counts" aria-label="<?php esc_attr_e( 'Check results', 'arvaseo-connector' ); ?>">
@@ -120,6 +110,16 @@ defined( 'ABSPATH' ) || exit;
 			</ul>
 			<p class="arvaseo-hint" style="margin-top: 14px"><?php esc_html_e( '“Couldn’t check” never counts as passed, and there’s no overall score.', 'arvaseo-connector' ); ?></p>
 		<?php endif; ?>
+		<div class="arvaseo-fix-acts">
+			<?php
+			if ( current_user_can( Capabilities::SYNC_HEALTH ) ) {
+				AdminController::button( 'arvaseo_connector_recheck', __( 'Check again now', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
+			}
+			if ( ! empty( $arvaseo_assessment['app_url'] ) ) {
+				printf( '<a class="arvaseo-btn arvaseo-btn--sm" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="screen-reader-text"> %3$s</span></a>', esc_url( $arvaseo_assessment['app_url'] ), esc_html__( 'Open in Arva SEO', 'arvaseo-connector' ), esc_html__( '(opens in a new tab)', 'arvaseo-connector' ) );
+			}
+			?>
+		</div>
 	</section>
 
 	<?php if ( ! empty( $arvaseo_assessment['vulnerability'] ) ) : ?>
@@ -169,16 +169,19 @@ defined( 'ABSPATH' ) || exit;
 				echo AdminController::badge( 'neutral', sprintf( _n( '%d finding', '%d findings', count( $arvaseo_items ), 'arvaseo-connector' ), count( $arvaseo_items ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
 				?>
 			</div>
-			<?php foreach ( $arvaseo_items as $arvaseo_finding ) : ?>
-				<?php $arvaseo_serious = in_array( $arvaseo_finding['assessed_severity'], array( 'critical', 'high' ), true ); ?>
+			<?php foreach ( $arvaseo_items as $arvaseo_i => $arvaseo_finding ) : ?>
+				<?php
+				$arvaseo_serious = in_array( $arvaseo_finding['assessed_severity'], array( 'critical', 'high' ), true );
+				$arvaseo_panel   = 'arvaseo-hf-' . $arvaseo_category . '-' . $arvaseo_i;
+				?>
 				<article class="arvaseo-finding">
 					<div class="arvaseo-row">
 						<?php
 						/* translators: %s: severity. */
 						echo AdminController::badge( $arvaseo_serious ? 'bad' : 'warn', sprintf( __( 'Severity: %s', 'arvaseo-connector' ), $arvaseo_finding['assessed_severity'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
-						/* translators: %s: confidence. */
-						echo AdminController::badge( 'neutral', sprintf( __( 'Confidence: %s', 'arvaseo-connector' ), $arvaseo_finding['confidence'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
-						echo AdminController::badge( 'neutral', $arvaseo_lifecycle[ $arvaseo_finding['finding_status'] ] ?? $arvaseo_finding['finding_status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+						if ( 'open' !== $arvaseo_finding['finding_status'] ) {
+							echo AdminController::badge( 'neutral', $arvaseo_lifecycle[ $arvaseo_finding['finding_status'] ] ?? $arvaseo_finding['finding_status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+						}
 						if ( 'current' !== $arvaseo_finding['freshness_status'] ) {
 							echo AdminController::badge( 'warn', $arvaseo_fresh_ui[ $arvaseo_finding['freshness_status'] ][1] ?? $arvaseo_finding['freshness_status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
 						}
@@ -188,27 +191,16 @@ defined( 'ABSPATH' ) || exit;
 						?>
 					</div>
 					<h3><?php echo esc_html( $arvaseo_finding['title'] ); ?></h3>
-					<div class="arvaseo-two">
-						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What’s wrong', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_finding['what_is_wrong'] ); ?></div>
-						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to fix', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_finding['what_to_fix'] ); ?></div>
+					<div class="arvaseo-fix-acts">
+						<button type="button" class="arvaseo-fix-toggle" data-arvaseo-toggle aria-expanded="false" aria-controls="<?php echo esc_attr( $arvaseo_panel ); ?>" hidden><?php esc_html_e( 'What’s wrong and how to fix it', 'arvaseo-connector' ); ?><span class="screen-reader-text">: <?php echo esc_html( $arvaseo_finding['title'] ); ?></span></button>
 					</div>
-					<div>
-						<details class="arvaseo-more">
-							<summary><?php esc_html_e( 'See the evidence', 'arvaseo-connector' ); ?></summary>
-							<div class="arvaseo-more-in">
-								<p><?php echo esc_html( $arvaseo_source[ $arvaseo_finding['source_type'] ] ?? '' ); ?>: <?php echo esc_html( $arvaseo_finding['source_reference'] ); ?></p>
-								<ul class="arvaseo-bullets">
-									<?php foreach ( $arvaseo_finding['evidence'] as $arvaseo_ev ) : ?>
-										<li><code><?php echo esc_html( $arvaseo_ev['check_id'] . ( '' !== $arvaseo_ev['subject'] ? ' · ' . $arvaseo_ev['subject'] : '' ) ); ?></code>
-											<?php echo esc_html( $arvaseo_ev['observed_value'] ); ?>
-											<span class="arvaseo-hint">(<?php echo esc_html( $arvaseo_ev['evidence_source'] . ', ' . AdminController::when( $arvaseo_ev['observed_at'] ) ); ?>)</span></li>
-									<?php endforeach; ?>
-								</ul>
-							</div>
-						</details>
-						<details class="arvaseo-more">
-							<summary><?php esc_html_e( 'How to fix it, step by step', 'arvaseo-connector' ); ?></summary>
-							<div class="arvaseo-more-in">
+					<div class="arvaseo-fix-more" id="<?php echo esc_attr( $arvaseo_panel ); ?>" data-arvaseo-more="closed">
+						<div class="arvaseo-two">
+							<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What’s wrong', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_finding['what_is_wrong'] ); ?></div>
+							<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to fix', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_finding['what_to_fix'] ); ?></div>
+						</div>
+						<div class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'How to fix it, step by step', 'arvaseo-connector' ); ?></h4>
 								<p><strong><?php esc_html_e( 'Why it matters:', 'arvaseo-connector' ); ?></strong> <?php echo esc_html( $arvaseo_finding['why_it_matters'] ); ?></p>
 								<p><strong><?php esc_html_e( 'Who should do it:', 'arvaseo-connector' ); ?></strong> <?php echo esc_html( $arvaseo_party[ $arvaseo_finding['responsible_party'] ] ?? '—' ); ?>
 									· <strong><?php esc_html_e( 'Risk:', 'arvaseo-connector' ); ?></strong> <?php echo esc_html( (string) $arvaseo_finding['risk_level'] ); ?>
@@ -242,8 +234,24 @@ defined( 'ABSPATH' ) || exit;
 								<?php if ( '' !== $arvaseo_finding['client_notes'] ) : ?>
 									<p><strong><?php esc_html_e( 'Note from your SEO team:', 'arvaseo-connector' ); ?></strong> <?php echo esc_html( $arvaseo_finding['client_notes'] ); ?></p>
 								<?php endif; ?>
-							</div>
-						</details>
+						</div>
+						<div class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'The evidence', 'arvaseo-connector' ); ?></h4>
+							<p><?php echo esc_html( $arvaseo_source[ $arvaseo_finding['source_type'] ] ?? '' ); ?>: <?php echo esc_html( $arvaseo_finding['source_reference'] ); ?></p>
+							<p class="arvaseo-hint">
+								<?php
+								/* translators: %s: confidence. */
+								echo esc_html( sprintf( __( 'Confidence: %s', 'arvaseo-connector' ), $arvaseo_finding['confidence'] ) );
+								?>
+							</p>
+								<ul class="arvaseo-bullets">
+									<?php foreach ( $arvaseo_finding['evidence'] as $arvaseo_ev ) : ?>
+										<li><code><?php echo esc_html( $arvaseo_ev['check_id'] . ( '' !== $arvaseo_ev['subject'] ? ' · ' . $arvaseo_ev['subject'] : '' ) ); ?></code>
+											<?php echo esc_html( $arvaseo_ev['observed_value'] ); ?>
+											<span class="arvaseo-hint">(<?php echo esc_html( $arvaseo_ev['evidence_source'] . ', ' . AdminController::when( $arvaseo_ev['observed_at'] ) ); ?>)</span></li>
+									<?php endforeach; ?>
+								</ul>
+						</div>
 					</div>
 				</article>
 			<?php endforeach; ?>

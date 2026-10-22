@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.5.0
+Stable tag: 2.5.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -201,6 +201,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.5.1 =
+Calmer Speed and Health pages: details open when you need them. A connection problem now says why, such as your host's DNS.
+
 = 2.5.0 =
 The security scan learns from Arva SEO every day: malware found on other websites, files found safe, new patterns, and whether your server's PHP has its latest security fixes.
 
@@ -250,6 +253,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.5.1 =
+* Speed: each fix shows its name, state, what it does and its buttons underneath; the PageSpeed problems it fixes, numbers and options open from Details. Leave things alone and Cloudflare's setup open when you need them.
+* Health: each finding shows its severity, title and file with its buttons; what it means and how to fix it open from one link.
+* When this server can't reach Arva SEO, connecting says why (DNS, a timeout or a secure connection) instead of blaming the code, and Activity keeps the server's own error.
 
 = 2.5.0 =
 * New: while the site is connected, the security scan downloads Arva SEO's security feed once a day. A file that a deep scan found to be malware on another website is reported as Known malware here too, without a deep scan of your own; a file Arva SEO checked and found safe (such as a premium plugin that hides its code) is no longer reported; and new patterns arrive between plugin updates. Files are recognized by their SHA-256 fingerprint.

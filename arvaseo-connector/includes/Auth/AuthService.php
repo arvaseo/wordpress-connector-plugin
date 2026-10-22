@@ -140,7 +140,8 @@ final class AuthService {
 			);
 			return array(
 				'ok'     => false,
-				'notice' => 'exchange_failed',
+				// No answer at all isn't a refused code: say why the server couldn't reach Arva SEO.
+				'notice' => 0 === $response->status ? 'unreachable_' . ( (string) ( $response->body['reason'] ?? 'other' ) ) : 'exchange_failed',
 			);
 		}
 

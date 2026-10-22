@@ -52,6 +52,14 @@ defined( 'ABSPATH' ) || exit;
 		echo '<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark">' . esc_html( 'restore' === $kind ? __( 'Restore the official copy', 'arvaseo-connector' ) : __( 'Move to quarantine', 'arvaseo-connector' ) ) . '</button>';
 		echo '</form>';
 	};
+	// A Details button (admin.js shows it and hides the panel until asked; without it panels stay open).
+	$arvaseo_toggle   = static function ( string $panel, string $label, string $name = '' ): void {
+		echo '<button type="button" class="arvaseo-fix-toggle" data-arvaseo-toggle aria-expanded="false" aria-controls="' . esc_attr( $panel ) . '" hidden>' . esc_html( $label );
+		if ( '' !== $name ) {
+			echo '<span class="screen-reader-text">: ' . esc_html( $name ) . '</span>';
+		}
+		echo '</button>';
+	};
 	$arvaseo_severity = array(
 		'critical' => array( 'bad', __( 'Critical', 'arvaseo-connector' ) ),
 		'high'     => array( 'bad', __( 'High', 'arvaseo-connector' ) ),
@@ -71,7 +79,7 @@ defined( 'ABSPATH' ) || exit;
 	};
 	?>
 	<section class="arvaseo-card" id="arvaseo-security" aria-labelledby="arvaseo-sec-heading">
-		<div class="arvaseo-between">
+		<div>
 			<div>
 				<p class="arvaseo-eyebrow"><?php esc_html_e( 'Security scan', 'arvaseo-connector' ); ?></p>
 				<h2 class="arvaseo-h3" id="arvaseo-sec-heading">
@@ -102,17 +110,6 @@ defined( 'ABSPATH' ) || exit;
 					</p>
 				<?php endif; ?>
 			</div>
-			<?php if ( $arvaseo_manage ) : ?>
-				<div class="arvaseo-row">
-					<?php
-					if ( $arvaseo_running ) {
-						AdminController::button( 'arvaseo_connector_security_stop', __( 'Stop', 'arvaseo-connector' ) );
-					} else {
-						AdminController::button( 'arvaseo_connector_security_scan', null === $arvaseo_results ? __( 'Scan now', 'arvaseo-connector' ) : __( 'Scan again', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
-					}
-					?>
-				</div>
-			<?php endif; ?>
 		</div>
 
 		<?php if ( null === $arvaseo_results && ! $arvaseo_running ) : ?>
@@ -123,7 +120,21 @@ defined( 'ABSPATH' ) || exit;
 					<li class="arvaseo-count"><b><?php echo esc_html( (string) $arvaseo_counts[ $arvaseo_key ] ); ?></b><?php echo AdminController::badge( $arvaseo_ui[0], $arvaseo_ui[1] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?></li>
 				<?php endforeach; ?>
 			</ul>
-			<p class="arvaseo-hint" style="margin-top: 14px">
+		<?php endif; ?>
+		<div class="arvaseo-fix-acts">
+			<?php
+			if ( $arvaseo_manage && $arvaseo_running ) {
+				AdminController::button( 'arvaseo_connector_security_stop', __( 'Stop', 'arvaseo-connector' ) );
+			} elseif ( $arvaseo_manage ) {
+				AdminController::button( 'arvaseo_connector_security_scan', null === $arvaseo_results ? __( 'Scan now', 'arvaseo-connector' ) : __( 'Scan again', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
+			}
+			if ( null !== $arvaseo_results ) {
+				$arvaseo_toggle( 'arvaseo-sec-coverage', __( 'What it checked', 'arvaseo-connector' ) );
+			}
+			?>
+		</div>
+		<?php if ( null !== $arvaseo_results ) : ?>
+			<p class="arvaseo-hint arvaseo-fix-more" id="arvaseo-sec-coverage" data-arvaseo-more="closed" style="margin-top: 12px">
 				<?php
 				$arvaseo_lines = array();
 				if ( null !== ( $arvaseo_coverage['core'] ?? null ) ) {
@@ -158,7 +169,7 @@ defined( 'ABSPATH' ) || exit;
 	</section>
 
 	<section class="arvaseo-card" id="arvaseo-deep-scan" aria-labelledby="arvaseo-deep-heading">
-		<div class="arvaseo-between">
+		<div>
 			<div>
 				<p class="arvaseo-eyebrow"><?php esc_html_e( 'Deep scan', 'arvaseo-connector' ); ?></p>
 				<h2 class="arvaseo-h3" id="arvaseo-deep-heading">
@@ -195,23 +206,7 @@ defined( 'ABSPATH' ) || exit;
 					</p>
 				<?php endif; ?>
 			</div>
-			<?php if ( $arvaseo_manage && $arvaseo_deep_ok ) : ?>
-				<div class="arvaseo-row">
-					<?php
-					if ( $arvaseo_deep_on ) {
-						AdminController::button( 'arvaseo_connector_deep_scan_stop', __( 'Stop', 'arvaseo-connector' ) );
-					} elseif ( null === $arvaseo_left || $arvaseo_left['remaining'] > 0 ) {
-						AdminController::button( 'arvaseo_connector_deep_scan', __( 'Run a deep scan', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
-					} elseif ( null !== $arvaseo_left['buy_url'] ) {
-						printf( '<a class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="screen-reader-text"> %3$s</span></a>', esc_url( $arvaseo_left['buy_url'] ), esc_html__( 'Get more deep scans', 'arvaseo-connector' ), esc_html__( '(opens in a new tab)', 'arvaseo-connector' ) );
-					}
-					?>
-				</div>
-			<?php endif; ?>
 		</div>
-		<?php if ( ! $arvaseo_deep_on ) : ?>
-			<p class="arvaseo-hint" style="margin-top: 14px"><?php esc_html_e( 'A deep scan sends the files the security scan couldn’t match to an official copy (your theme, premium plugins and anything unexpected) to Arva SEO, where ClamAV’s database of known malware and Arva SEO’s own rules check them. They’re deleted as soon as the scan finishes. Configuration files, logs, database exports, backups and media are never sent.', 'arvaseo-connector' ); ?></p>
-		<?php endif; ?>
 		<?php if ( 'ended' === ( $arvaseo_deep['step'] ?? '' ) && '' !== (string) ( $arvaseo_deep['message'] ?? '' ) && (int) ( $arvaseo_deep['finished_at'] ?? 0 ) > (int) strtotime( (string) ( $arvaseo_deep_res['finished_at'] ?? '' ) ) ) : ?>
 			<p class="arvaseo-row" style="margin-top: 10px"><?php echo AdminController::badge( 'warn', __( 'Last attempt', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?> <?php echo esc_html( (string) $arvaseo_deep['message'] ); ?></p>
 		<?php endif; ?>
@@ -242,15 +237,35 @@ defined( 'ABSPATH' ) || exit;
 				?>
 			</p>
 		<?php endif; ?>
-		<?php if ( $arvaseo_manage && TokenStore::is_connected() && null !== PrivacyService::security_consent() && ! $arvaseo_deep_ok ) : ?>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-row" style="margin-top: 12px">
-				<input type="hidden" name="action" value="arvaseo_connector_consent_deep_scan" />
-				<input type="hidden" name="consent" value="1" />
-				<input type="hidden" name="back" value="health" />
-				<?php wp_nonce_field( 'arvaseo_connector_consent_deep_scan' ); ?>
-				<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark"><?php esc_html_e( 'Allow deep scans', 'arvaseo-connector' ); ?></button>
+		<div class="arvaseo-fix-acts">
+			<?php if ( $arvaseo_manage && $arvaseo_deep_ok ) : ?>
+				<?php
+				if ( $arvaseo_deep_on ) {
+					AdminController::button( 'arvaseo_connector_deep_scan_stop', __( 'Stop', 'arvaseo-connector' ) );
+				} elseif ( null === $arvaseo_left || $arvaseo_left['remaining'] > 0 ) {
+					AdminController::button( 'arvaseo_connector_deep_scan', __( 'Run a deep scan', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
+				} elseif ( null !== $arvaseo_left['buy_url'] ) {
+					printf( '<a class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="screen-reader-text"> %3$s</span></a>', esc_url( $arvaseo_left['buy_url'] ), esc_html__( 'Get more deep scans', 'arvaseo-connector' ), esc_html__( '(opens in a new tab)', 'arvaseo-connector' ) );
+				}
+				?>
+			<?php elseif ( $arvaseo_manage && TokenStore::is_connected() && null !== PrivacyService::security_consent() ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-inline-form">
+					<input type="hidden" name="action" value="arvaseo_connector_consent_deep_scan" />
+					<input type="hidden" name="consent" value="1" />
+					<input type="hidden" name="back" value="health" />
+					<?php wp_nonce_field( 'arvaseo_connector_consent_deep_scan' ); ?>
+					<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark"><?php esc_html_e( 'Allow deep scans', 'arvaseo-connector' ); ?></button>
+				</form>
 				<a class="arvaseo-hint" href="<?php echo esc_url( admin_url( 'admin.php?page=arvaseo-diagnostics#arvaseo-privacy-heading' ) ); ?>"><?php esc_html_e( 'Every field that’s sent', 'arvaseo-connector' ); ?></a>
-			</form>
+			<?php endif; ?>
+			<?php
+			if ( ! $arvaseo_deep_on ) {
+				$arvaseo_toggle( 'arvaseo-deep-how', __( 'How deep scans work', 'arvaseo-connector' ) );
+			}
+			?>
+		</div>
+		<?php if ( ! $arvaseo_deep_on ) : ?>
+			<p class="arvaseo-hint arvaseo-fix-more" id="arvaseo-deep-how" data-arvaseo-more="closed" style="margin-top: 12px"><?php esc_html_e( 'A deep scan sends the files the security scan couldn’t match to an official copy (your theme, premium plugins and anything unexpected) to Arva SEO, where ClamAV’s database of known malware and Arva SEO’s own rules check them. They’re deleted as soon as the scan finishes. Configuration files, logs, database exports, backups and media are never sent.', 'arvaseo-connector' ); ?></p>
 		<?php endif; ?>
 	</section>
 
@@ -277,12 +292,14 @@ defined( 'ABSPATH' ) || exit;
 			?>
 		</div>
 		<p class="arvaseo-hint" style="margin: -6px 0 4px"><?php echo esc_html( Findings::groups()['vulnerabilities'][1] ); ?></p>
-		<?php foreach ( $arvaseo_vulns as $arvaseo_vuln ) : ?>
+		<?php foreach ( $arvaseo_vulns as $arvaseo_i => $arvaseo_vuln ) : ?>
 			<article class="arvaseo-finding">
 				<div class="arvaseo-row">
 					<?php echo AdminController::badge( $arvaseo_severity[ $arvaseo_vuln['assessed_severity'] ][0] ?? 'warn', $arvaseo_severity[ $arvaseo_vuln['assessed_severity'] ][1] ?? $arvaseo_vuln['assessed_severity'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?>
 				</div>
 				<h3><?php echo esc_html( $arvaseo_vuln['title'] ); ?></h3>
+				<div class="arvaseo-fix-acts"><?php $arvaseo_toggle( 'arvaseo-vf-' . $arvaseo_i, __( 'What it means and what to do', 'arvaseo-connector' ), (string) $arvaseo_vuln['title'] ); ?></div>
+				<div class="arvaseo-fix-more" id="<?php echo esc_attr( 'arvaseo-vf-' . $arvaseo_i ); ?>" data-arvaseo-more="closed">
 				<div class="arvaseo-two">
 					<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What it means', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_vuln['what_is_wrong'] ); ?></div>
 					<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to do', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_vuln['what_to_fix'] ); ?></div>
@@ -311,6 +328,7 @@ defined( 'ABSPATH' ) || exit;
 						</div>
 					</details>
 				<?php endif; ?>
+				</div>
 			</article>
 		<?php endforeach; ?>
 	<?php endif; ?>
@@ -345,27 +363,31 @@ defined( 'ABSPATH' ) || exit;
 					<?php if ( null !== $arvaseo_finding['path'] ) : ?>
 						<p style="margin: 6px 0 0"><code class="arvaseo-value"><?php echo esc_html( (string) $arvaseo_finding['path'] . ( null !== $arvaseo_finding['line'] ? ':' . $arvaseo_finding['line'] : '' ) ); ?></code></p>
 					<?php endif; ?>
-					<div class="arvaseo-two">
-						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What it means', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_why ); ?></div>
-						<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to do', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_fix ); ?></div>
-					</div>
-					<?php if ( null !== $arvaseo_finding['excerpt'] && '' !== $arvaseo_finding['excerpt'] ) : ?>
-						<details class="arvaseo-more">
-							<summary><?php esc_html_e( 'See the code it matched', 'arvaseo-connector' ); ?></summary>
-							<div class="arvaseo-more-in"><pre class="arvaseo-code"><?php echo esc_html( (string) $arvaseo_finding['excerpt'] ); ?></pre></div>
-						</details>
-					<?php endif; ?>
-					<?php if ( $arvaseo_manage ) : ?>
-						<div class="arvaseo-row arvaseo-finding-actions">
-							<?php
+					<?php $arvaseo_panel = 'arvaseo-sf-' . (string) $arvaseo_finding['key']; ?>
+					<div class="arvaseo-fix-acts">
+						<?php
+						if ( $arvaseo_manage ) {
 							$arvaseo_offer = $arvaseo_can_fix ? Repairs::offer( $arvaseo_finding ) : null;
 							if ( null !== $arvaseo_offer ) {
 								$arvaseo_repair( (string) $arvaseo_finding['key'], $arvaseo_offer );
 							}
 							$arvaseo_form( (string) $arvaseo_finding['key'], false, __( 'This is expected', 'arvaseo-connector' ) );
-							?>
+						}
+						$arvaseo_toggle( $arvaseo_panel, __( 'What it means and what to do', 'arvaseo-connector' ), $arvaseo_name );
+						?>
+					</div>
+					<div class="arvaseo-fix-more" id="<?php echo esc_attr( $arvaseo_panel ); ?>" data-arvaseo-more="closed">
+						<div class="arvaseo-two">
+							<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What it means', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_why ); ?></div>
+							<div class="arvaseo-box"><span class="arvaseo-box-lbl"><?php esc_html_e( 'What to do', 'arvaseo-connector' ); ?></span><?php echo esc_html( $arvaseo_fix ); ?></div>
 						</div>
-					<?php endif; ?>
+						<?php if ( null !== $arvaseo_finding['excerpt'] && '' !== $arvaseo_finding['excerpt'] ) : ?>
+							<div class="arvaseo-fix-sub">
+								<h4><?php esc_html_e( 'The code it matched', 'arvaseo-connector' ); ?></h4>
+								<pre class="arvaseo-code"><?php echo esc_html( (string) $arvaseo_finding['excerpt'] ); ?></pre>
+							</div>
+						<?php endif; ?>
+					</div>
 				</article>
 			<?php endforeach; ?>
 		<?php endforeach; ?>
