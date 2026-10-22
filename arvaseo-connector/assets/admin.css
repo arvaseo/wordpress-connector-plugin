@@ -94,6 +94,7 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app .arvaseo-btn--dark { background: var(--a-ink); border-color: var(--a-ink); color: #fff; }
 .arvaseo-app .arvaseo-btn--dark:hover { background: #26271f; border-color: #26271f; color: #fff; }
 .arvaseo-app .arvaseo-btn--sm { height: 34px; min-height: 34px; padding: 0 14px; font-size: 13px; }
+.arvaseo-app .arvaseo-btn[hidden] { display: none; }
 .arvaseo-app .arvaseo-btn--ghost { border-color: transparent; background: transparent; color: var(--a-muted); }
 .arvaseo-app .arvaseo-btn--ghost:hover { color: var(--a-ink); background: transparent; border-color: transparent; }
 .arvaseo-app .arvaseo-btn--danger { color: var(--a-bad); border-color: #f0c4be; }
@@ -203,11 +204,18 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-rows { background: var(--a-raised); border: 1px solid var(--a-border); border-radius: 16px; box-shadow: 0 1px 2px rgb(40 36 24 / 0.04); overflow: hidden; }
 .arvaseo-rows[hidden] { display: none; }
 .arvaseo-rows-in { margin-top: -1px; }
-.arvaseo-fix { display: flex; flex-wrap: wrap; gap: 14px 24px; padding: 20px 24px; border-top: 1px solid var(--a-border); scroll-margin-top: 48px; }
+.arvaseo-fix { display: block; padding: 20px 24px; border-top: 1px solid var(--a-border); scroll-margin-top: 48px; }
 .arvaseo-fix[hidden] { display: none; }
-.arvaseo-fix-body { flex: 999 1 520px; min-width: 0; }
+.arvaseo-fix-body { min-width: 0; }
+/* A fix's row: its name and state, what it does at full width, then its buttons. Everything else
+   (the PageSpeed problems it fixes, numbers and options) waits under Details. */
+.arvaseo-fix-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .arvaseo-app .arvaseo-fix h3 { margin: 0; padding: 0; font-size: 15.5px; font-weight: 600; color: var(--a-ink); }
-.arvaseo-app .arvaseo-fix-desc { margin: 6px 0 0; color: var(--a-muted); max-width: 680px; }
+.arvaseo-app .arvaseo-fix-desc { margin: 6px 0 0; color: var(--a-muted); }
+.arvaseo-fix-risk { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 500; }
+.arvaseo-fix-risk svg { flex: 0 0 14px; }
+.arvaseo-fix-risk--safe { color: var(--a-good); }
+.arvaseo-fix-risk--check { color: var(--a-warn); }
 .arvaseo-warns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
 .arvaseo-warns-lbl { font-size: 12px; color: var(--a-subtle); margin-inline-end: 2px; }
 .arvaseo-warn-item { font-size: 12px; color: var(--a-ink); background: var(--a-sunken); border-radius: 6px; padding: 2px 8px; }
@@ -220,8 +228,24 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app .arvaseo-extra p:last-child { margin-bottom: 0; }
 .arvaseo-extra .arvaseo-row { margin-top: 10px; }
 .arvaseo-extra--warn { background: var(--a-warn-soft); color: #4d3800; }
-.arvaseo-fix-acts { flex: 1 0 220px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-.arvaseo-fix-acts-note { max-width: 200px; text-align: end; }
+.arvaseo-fix-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 14px; }
+.arvaseo-fix-acts-note { font-size: 13px; }
+.arvaseo-app .arvaseo-fix-toggle { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 2px; margin-inline-start: 4px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; font: 600 13px/1 var(--a-sans); color: var(--a-accent-text); }
+.arvaseo-app .arvaseo-fix-toggle[hidden] { display: none; }
+.arvaseo-app .arvaseo-fix-toggle:hover { text-decoration: underline; text-underline-offset: 3px; }
+.arvaseo-app .arvaseo-fix-toggle:focus-visible { outline: 2px solid var(--a-accent-text); outline-offset: 2px; }
+.arvaseo-app .arvaseo-fix-toggle::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform 0.15s ease; }
+.arvaseo-app .arvaseo-fix-toggle[aria-expanded="true"]::after { transform: translateY(1px) rotate(-135deg); }
+.arvaseo-fix-more[hidden] { display: none; }
+.arvaseo-collapse-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 4px; }
+.arvaseo-collapse-head + .arvaseo-fix-more { margin-top: 12px; }
+.arvaseo-fix-more-in { margin-top: 14px; padding: 16px; border-radius: 12px; background: var(--a-sunken); }
+.arvaseo-fix-more-in > .arvaseo-warns:first-child { margin-top: 0; }
+.arvaseo-fix-more-in .arvaseo-warn-item { background: var(--a-raised); }
+.arvaseo-fix-sub { margin: 16px 0 0; padding-top: 16px; border-top: 1px solid var(--a-border); }
+.arvaseo-app .arvaseo-fix-sub h4 { margin: 0 0 6px; padding: 0; font-size: 13.5px; font-weight: 600; color: var(--a-ink); }
+.arvaseo-app .arvaseo-fix-more-in p { font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .arvaseo-app .arvaseo-fix-toggle::after { transition: none; } }
 .arvaseo-fix-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; font-size: 13px; }
 .arvaseo-app details.arvaseo-more { margin-top: 12px; }
 .arvaseo-app details.arvaseo-more > summary { cursor: pointer; color: var(--a-accent-text); font-weight: 600; font-size: 13px; }
@@ -314,8 +338,7 @@ body.arvaseo-admin #wpbody-content .update-nag { display: none !important; }
 	.arvaseo-app .arvaseo-hero h1 { font-size: 34px; }
 	.arvaseo-ladder { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.arvaseo-act { grid-template-columns: minmax(0, 1fr); }
-	.arvaseo-fix-acts { align-items: flex-start; }
-	.arvaseo-fix-acts-note { text-align: start; }
+	.arvaseo-fix { padding: 18px 16px; }
 	.arvaseo-side { max-width: none; flex-direction: row; flex-wrap: wrap; }
 	.arvaseo-prod { display: none; }
 }

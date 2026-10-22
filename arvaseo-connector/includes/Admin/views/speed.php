@@ -289,96 +289,186 @@ defined( 'ABSPATH' ) || exit;
 			$arvaseo_tryable = in_array( 'trying', $arvaseo_fix['states'], true );
 			?>
 	<section id="<?php echo esc_attr( Fixes::anchor( $arvaseo_id ) ); ?>" class="arvaseo-fix" data-state="<?php echo esc_attr( $arvaseo_state ); ?>" data-asked="<?php echo isset( $arvaseo_needed[ $arvaseo_id ] ) ? '1' : '0'; ?>" aria-labelledby="<?php echo esc_attr( $arvaseo_heading ); ?>">
-		<div class="arvaseo-fix-body">
-			<div class="arvaseo-row">
-				<h3 id="<?php echo esc_attr( $arvaseo_heading ); ?>"><?php echo esc_html( $arvaseo_fix['title'] ); ?></h3>
-				<?php
-				if ( 'on' === $arvaseo_state || 'trying' === $arvaseo_state ) {
-					echo '<span class="arvaseo-chip arvaseo-chip--' . esc_attr( $arvaseo_tones[ $arvaseo_state ] ) . '"><span class="arvaseo-dot"></span>' . esc_html( Fixes::state_label( $arvaseo_state ) ) . '</span>';
-				} else {
-					echo AdminController::badge( $arvaseo_tones[ $arvaseo_state ] ?? 'neutral', Fixes::state_label( $arvaseo_state ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
-				}
-				if ( isset( $arvaseo_needed[ $arvaseo_id ] ) ) {
-					echo AdminController::badge( 'acc', __( 'Asked for by your latest test', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
-				}
-				?>
-			</div>
-			<p class="arvaseo-fix-desc"><?php echo esc_html( $arvaseo_fix['what'] ); ?></p>
-			<div class="arvaseo-warns">
-				<span class="arvaseo-warns-lbl"><?php esc_html_e( 'Fixes in PageSpeed:', 'arvaseo-connector' ); ?></span>
-				<?php foreach ( array_values( $arvaseo_fix['audits'] ) as $arvaseo_audit_title ) : ?>
-					<span class="arvaseo-warn-item"><?php echo esc_html( $arvaseo_audit_title ); ?></span>
-				<?php endforeach; ?>
-			</div>
-			<?php if ( 'check' === $arvaseo_fix['risk'] ) : ?>
-				<div class="arvaseo-risk arvaseo-risk--check"><?php echo AdminController::icon( 'alert', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?>
-					<span>
-					<?php
-					echo esc_html(
-						$arvaseo_tryable
-							? __( 'Check your pages: it can affect how parts of your site work. Try it first.', 'arvaseo-connector' )
-							: __( 'Changes your server’s settings for every visitor at once. Check your important pages after turning it on.', 'arvaseo-connector' )
-					);
-					?>
-					</span>
-				</div>
-			<?php else : ?>
-				<div class="arvaseo-risk arvaseo-risk--safe"><?php echo AdminController::icon( 'check', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Safe: it only changes how things load, not what visitors see.', 'arvaseo-connector' ); ?></span></div>
+		<div class="arvaseo-fix-head">
+			<h3 id="<?php echo esc_attr( $arvaseo_heading ); ?>"><?php echo esc_html( $arvaseo_fix['title'] ); ?></h3>
+			<?php
+			if ( 'on' === $arvaseo_state || 'trying' === $arvaseo_state ) {
+				echo '<span class="arvaseo-chip arvaseo-chip--' . esc_attr( $arvaseo_tones[ $arvaseo_state ] ) . '"><span class="arvaseo-dot"></span>' . esc_html( Fixes::state_label( $arvaseo_state ) ) . '</span>';
+			} else {
+				echo AdminController::badge( $arvaseo_tones[ $arvaseo_state ] ?? 'neutral', Fixes::state_label( $arvaseo_state ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+			}
+			if ( isset( $arvaseo_needed[ $arvaseo_id ] ) ) {
+				echo AdminController::badge( 'acc', __( 'Asked for by your latest test', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+			}
+			?>
+			<?php if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) : ?>
+				<span class="arvaseo-fix-risk arvaseo-fix-risk--<?php echo esc_attr( $arvaseo_fix['risk'] ); ?>">
+					<?php echo AdminController::icon( 'check' === $arvaseo_fix['risk'] ? 'alert' : 'check', 14 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?>
+					<?php echo 'check' === $arvaseo_fix['risk'] ? esc_html__( 'Check your pages', 'arvaseo-connector' ) : esc_html__( 'Safe', 'arvaseo-connector' ); ?>
+				</span>
 			<?php endif; ?>
-			<?php if ( in_array( $arvaseo_id, array( 'defer_scripts', 'delay_scripts' ), true ) && 'on' === Cloudflare::details()['rocket_loader'] ) : ?>
-				<div class="arvaseo-risk arvaseo-risk--check"><?php echo AdminController::icon( 'cloud', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Rocket Loader is on in Cloudflare and also changes how scripts load. Use one or the other.', 'arvaseo-connector' ); ?> <a href="#arvaseo-cloudflare"><?php esc_html_e( 'See Cloudflare', 'arvaseo-connector' ); ?></a></span></div>
-			<?php endif; ?>
+		</div>
+		<p class="arvaseo-fix-desc"><?php echo esc_html( $arvaseo_fix['what'] ); ?></p>
 
+			<?php // What needs attention stays in view; the rest waits under Details. ?>
+			<?php if ( in_array( $arvaseo_id, array( 'defer_scripts', 'delay_scripts' ), true ) && 'on' === Cloudflare::details()['rocket_loader'] ) : ?>
+			<div class="arvaseo-risk arvaseo-risk--check"><?php echo AdminController::icon( 'cloud', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Rocket Loader is on in Cloudflare and also changes how scripts load. Use one or the other.', 'arvaseo-connector' ); ?> <a href="#arvaseo-cloudflare"><?php esc_html_e( 'See Cloudflare', 'arvaseo-connector' ); ?></a></span></div>
+		<?php endif; ?>
 			<?php if ( 'handled' === $arvaseo_state ) : ?>
-				<div class="arvaseo-extra">
-					<p>
+			<div class="arvaseo-extra">
+				<p>
+					<?php
+					/* translators: %s: plugin name. */
+					printf( esc_html__( '%s can do this, so Arva SEO leaves it to that plugin and your pages aren’t processed twice.', 'arvaseo-connector' ), esc_html( (string) $arvaseo_handled ) );
+					?>
+					<a href="#arvaseo-other-plugins"><?php esc_html_e( 'Use Arva SEO’s instead', 'arvaseo-connector' ); ?></a>
+				</p>
+				<?php if ( 'browser_caching' === $arvaseo_id && ServerRules::present() ) : ?>
+					<div class="arvaseo-row"><?php $arvaseo_button( $arvaseo_id, 'off', __( 'Remove Arva SEO’s rules', 'arvaseo-connector' ) ); ?></div>
+				<?php endif; ?>
+			</div>
+		<?php elseif ( 'unavailable' === $arvaseo_state ) : ?>
+			<div class="arvaseo-extra"><p><?php echo esc_html( (string) Fixes::unavailable( $arvaseo_id ) ); ?></p></div>
+		<?php elseif ( 'trying' === $arvaseo_state ) : ?>
+			<div class="arvaseo-extra arvaseo-extra--warn">
+				<p>
+					<?php esc_html_e( 'Trying it: only you see the change while you’re signed in. Visitors see your site as before.', 'arvaseo-connector' ); ?>
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open your homepage', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
+				</p>
+			</div>
+		<?php endif; ?>
+			<?php if ( 'browser_caching' === $arvaseo_id && 'on' === $arvaseo_state && ! ServerRules::present() ) : ?>
+			<div class="arvaseo-extra arvaseo-extra--warn"><p><?php esc_html_e( 'The rules aren’t in your .htaccess file any more: another plugin or your host may have rewritten it. Turn this off and on again to add them back.', 'arvaseo-connector' ); ?></p></div>
+		<?php endif; ?>
+			<?php
+			if ( in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) ) {
+				$arvaseo_css       = \ArvaSEO\Connector\Speed\CssOptimizer::counts();
+				$arvaseo_allowance = get_option( 'arvaseo_connector_css_allowance', array() );
+				$arvaseo_allowance = is_array( $arvaseo_allowance ) ? $arvaseo_allowance : array();
+			}
+			?>
+			<?php if ( in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) && $arvaseo_css['no_allowance'] > 0 ) : ?>
+			<p class="arvaseo-risk arvaseo-risk--check">
+				<?php
+				printf(
+					/* translators: %d: page types waiting for next month's page optimizations. */
+					esc_html( _n( '%d page type waits for next month’s page optimizations; it loads its normal styles until then.', '%d page types wait for next month’s page optimizations; they load their normal styles until then.', $arvaseo_css['no_allowance'], 'arvaseo-connector' ) ),
+					(int) $arvaseo_css['no_allowance']
+				);
+				?>
+				<a href="https://app.arvaseo.com/billing" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'More page optimizations', 'arvaseo-connector' ); ?></a>
+			</p>
+		<?php endif; ?>
+
+			<?php
+			// Details: closed unless something in it is running or being tried.
+			$arvaseo_options = in_array( $arvaseo_id, array( 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts' ), true ) && 'handled' !== $arvaseo_state;
+			$arvaseo_open    = false;
+			if ( 'webp_uploads' === $arvaseo_id ) {
+				$arvaseo_webp = \ArvaSEO\Connector\Speed\WebpLibrary::progress();
+				$arvaseo_open = $arvaseo_webp['running'];
+			}
+			if ( 'compress_images' === $arvaseo_id ) {
+				$arvaseo_cmp       = ImageCompression::state();
+				$arvaseo_cmp_stats = ImageCompression::stats();
+				$arvaseo_cmp_lib   = ImageCompression::library();
+				$arvaseo_cmp_left  = $arvaseo_cmp['allowance'];
+				$arvaseo_cmp_cloud = TokenStore::is_connected() && PrivacyService::allows( 'image_compression' );
+				$arvaseo_open      = $arvaseo_cmp['running'] || $arvaseo_cmp['restoring'];
+			}
+			if ( 'defer_scripts' === $arvaseo_id && 'trying' === $arvaseo_state ) {
+				$arvaseo_open = true;
+			}
+			?>
+		<div class="arvaseo-fix-acts">
+			<?php
+			if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) {
+				if ( 'off' === $arvaseo_state && $arvaseo_tryable ) {
+					$arvaseo_button( $arvaseo_id, 'trying', __( 'Try it', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
+				}
+				if ( 'defer_scripts' === $arvaseo_id && 'trying' === $arvaseo_state ) {
+					echo '<span class="arvaseo-hint arvaseo-fix-acts-note">' . esc_html__( 'Turn it on after the checks below.', 'arvaseo-connector' ) . '</span>';
+				} elseif ( 'on' !== $arvaseo_state ) {
+					$arvaseo_button(
+						$arvaseo_id,
+						'on',
+						'trying' === $arvaseo_state || ! $arvaseo_tryable ? __( 'Turn on for everyone', 'arvaseo-connector' ) : __( 'Turn on', 'arvaseo-connector' ),
+						'trying' === $arvaseo_state ? 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--pri' : ( $arvaseo_tryable ? 'arvaseo-btn arvaseo-btn--sm' : 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' ),
+						'check' === $arvaseo_fix['risk'] ? 'confirmRisky' : ''
+					);
+				}
+				if ( 'off' !== $arvaseo_state ) {
+					$arvaseo_button( $arvaseo_id, 'off', 'trying' === $arvaseo_state ? __( 'Stop trying', 'arvaseo-connector' ) : __( 'Turn off', 'arvaseo-connector' ), 'trying' === $arvaseo_state ? 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--ghost' : 'arvaseo-btn arvaseo-btn--sm' );
+				}
+			}
+			?>
+			<?php // Shown by admin.js, which hides the details until asked; without it they stay open. ?>
+			<button type="button" class="arvaseo-fix-toggle" data-arvaseo-toggle aria-expanded="<?php echo $arvaseo_open ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( 'arvaseo-fix-more-' . $arvaseo_id ); ?>" hidden>
+				<?php echo $arvaseo_options ? esc_html__( 'Details and options', 'arvaseo-connector' ) : esc_html__( 'Details', 'arvaseo-connector' ); ?><span class="screen-reader-text">: <?php echo esc_html( $arvaseo_fix['title'] ); ?></span>
+			</button>
+			<?php
+			if ( 'on' === $arvaseo_state && $arvaseo_since ) {
+				/* translators: %s: date and time. */
+				echo '<span class="arvaseo-hint arvaseo-fix-acts-note">' . esc_html( sprintf( __( 'On since %s.', 'arvaseo-connector' ), AdminController::when( $arvaseo_since ) ) ) . '</span>';
+			}
+			?>
+		</div>
+
+			<?php if ( 'defer_scripts' === $arvaseo_id && 'trying' === $arvaseo_state ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-checklist" data-arvaseo-confirm="confirmDefer">
+				<input type="hidden" name="action" value="arvaseo_connector_speed" />
+				<input type="hidden" name="fix" value="defer_scripts" />
+				<input type="hidden" name="to" value="on" />
+				<?php wp_nonce_field( 'arvaseo_connector_speed' ); ?>
+				<fieldset>
+					<legend><?php esc_html_e( 'Before turning it on for everyone, check these while trying it:', 'arvaseo-connector' ); ?></legend>
+					<label class="arvaseo-check"><input type="checkbox" name="checked[]" value="home" required /> <span><?php esc_html_e( 'My homepage looks and works as before', 'arvaseo-connector' ); ?></span></label>
+					<label class="arvaseo-check"><input type="checkbox" name="checked[]" value="forms" required /> <span><?php esc_html_e( 'Contact or booking forms, and the checkout if I sell online, still work', 'arvaseo-connector' ); ?></span></label>
+					<label class="arvaseo-check"><input type="checkbox" name="checked[]" value="menus" required /> <span><?php esc_html_e( 'Menus, sliders, pop-ups and chat still work, on a phone too', 'arvaseo-connector' ); ?></span></label>
+				</fieldset>
+				<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--pri"><?php esc_html_e( 'Turn on for everyone', 'arvaseo-connector' ); ?></button>
+			</form>
+		<?php endif; ?>
+
+		<div class="arvaseo-fix-more" id="<?php echo esc_attr( 'arvaseo-fix-more-' . $arvaseo_id ); ?>" data-arvaseo-more="<?php echo $arvaseo_open ? 'open' : 'closed'; ?>">
+			<div class="arvaseo-fix-more-in">
+				<div class="arvaseo-warns">
+					<span class="arvaseo-warns-lbl"><?php esc_html_e( 'Fixes in PageSpeed:', 'arvaseo-connector' ); ?></span>
+					<?php foreach ( array_values( $arvaseo_fix['audits'] ) as $arvaseo_audit_title ) : ?>
+						<span class="arvaseo-warn-item"><?php echo esc_html( $arvaseo_audit_title ); ?></span>
+					<?php endforeach; ?>
+				</div>
+				<?php if ( 'check' === $arvaseo_fix['risk'] ) : ?>
+					<div class="arvaseo-risk arvaseo-risk--check"><?php echo AdminController::icon( 'alert', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?>
+						<span>
 						<?php
-						/* translators: %s: plugin name. */
-						printf( esc_html__( '%s can do this, so Arva SEO leaves it to that plugin and your pages aren’t processed twice.', 'arvaseo-connector' ), esc_html( (string) $arvaseo_handled ) );
+						echo esc_html(
+							$arvaseo_tryable
+								? __( 'Check your pages: it can affect how parts of your site work. Try it first.', 'arvaseo-connector' )
+								: __( 'Changes your server’s settings for every visitor at once. Check your important pages after turning it on.', 'arvaseo-connector' )
+						);
 						?>
-						<a href="#arvaseo-other-plugins"><?php esc_html_e( 'Use Arva SEO’s instead', 'arvaseo-connector' ); ?></a>
-					</p>
-					<?php if ( 'browser_caching' === $arvaseo_id && ServerRules::present() ) : ?>
-						<div class="arvaseo-row"><?php $arvaseo_button( $arvaseo_id, 'off', __( 'Remove Arva SEO’s rules', 'arvaseo-connector' ) ); ?></div>
-					<?php endif; ?>
-				</div>
-			<?php elseif ( 'unavailable' === $arvaseo_state ) : ?>
-				<div class="arvaseo-extra">
-					<p><?php echo esc_html( (string) Fixes::unavailable( $arvaseo_id ) ); ?></p>
-					<?php if ( 'browser_caching' === $arvaseo_id ) : ?>
-						<details class="arvaseo-more">
-							<summary><?php esc_html_e( 'The rules for your host', 'arvaseo-connector' ); ?></summary>
-							<p class="arvaseo-hint"><?php esc_html_e( 'nginx:', 'arvaseo-connector' ); ?></p>
-							<pre class="arvaseo-code"><?php echo esc_html( ServerRules::nginx() ); ?></pre>
-							<p class="arvaseo-hint"><?php esc_html_e( 'Apache or LiteSpeed (.htaccess):', 'arvaseo-connector' ); ?></p>
-							<pre class="arvaseo-code"><?php echo esc_html( implode( "\n", ServerRules::lines() ) ); ?></pre>
-						</details>
-					<?php endif; ?>
-				</div>
-			<?php else : ?>
-				<?php if ( 'trying' === $arvaseo_state ) : ?>
-					<div class="arvaseo-extra arvaseo-extra--warn">
-						<p>
-							<?php esc_html_e( 'Trying it: only you see the change while you’re signed in. Visitors see your site as before.', 'arvaseo-connector' ); ?>
-							<a href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open your homepage', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
-						</p>
+						</span>
 					</div>
-				<?php elseif ( 'on' === $arvaseo_state && $arvaseo_since && ! in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) ) : ?>
-					<p class="arvaseo-hint" style="margin-top: 10px">
-						<?php
-						/* translators: %s: date and time. */
-						printf( esc_html__( 'On since %s.', 'arvaseo-connector' ), esc_html( AdminController::when( $arvaseo_since ) ) );
-						?>
-					</p>
+				<?php else : ?>
+					<div class="arvaseo-risk arvaseo-risk--safe"><?php echo AdminController::icon( 'check', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?><span><?php esc_html_e( 'Safe: it only changes how things load, not what visitors see.', 'arvaseo-connector' ); ?></span></div>
 				<?php endif; ?>
 
-				<?php if ( 'browser_caching' === $arvaseo_id && 'on' === $arvaseo_state ) : ?>
-					<?php $arvaseo_check = $arvaseo_stored['server_check']; ?>
-					<?php if ( ! ServerRules::present() ) : ?>
-						<div class="arvaseo-extra arvaseo-extra--warn"><p><?php esc_html_e( 'The rules aren’t in your .htaccess file any more: another plugin or your host may have rewritten it. Turn this off and on again to add them back.', 'arvaseo-connector' ); ?></p></div>
-					<?php elseif ( null !== $arvaseo_check ) : ?>
-						<div class="arvaseo-extra">
-							<ul class="arvaseo-bullets" style="margin: 0">
+				<?php if ( 'unavailable' === $arvaseo_state && 'browser_caching' === $arvaseo_id ) : ?>
+					<div class="arvaseo-fix-sub">
+						<h4><?php esc_html_e( 'The rules for your host', 'arvaseo-connector' ); ?></h4>
+						<p class="arvaseo-hint"><?php esc_html_e( 'nginx:', 'arvaseo-connector' ); ?></p>
+						<pre class="arvaseo-code"><?php echo esc_html( ServerRules::nginx() ); ?></pre>
+						<p class="arvaseo-hint"><?php esc_html_e( 'Apache or LiteSpeed (.htaccess):', 'arvaseo-connector' ); ?></p>
+						<pre class="arvaseo-code"><?php echo esc_html( implode( "\n", ServerRules::lines() ) ); ?></pre>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) : ?>
+					<?php if ( 'browser_caching' === $arvaseo_id ) : ?>
+						<?php $arvaseo_check = $arvaseo_stored['server_check']; ?>
+						<?php if ( 'on' === $arvaseo_state && ServerRules::present() && null !== $arvaseo_check ) : ?>
+							<ul class="arvaseo-bullets arvaseo-fix-sub">
 								<li><?php echo esc_html( $arvaseo_check['cache'] ? __( 'Checked: images, fonts, styles and scripts now stay in browsers for a year.', 'arvaseo-connector' ) : __( 'Your server didn’t add the cache lifetimes. Ask your host to turn on mod_expires.', 'arvaseo-connector' ) ); ?></li>
 								<li>
 									<?php
@@ -391,23 +481,17 @@ defined( 'ABSPATH' ) || exit;
 									?>
 								</li>
 							</ul>
-						</div>
-					<?php endif; ?>
-				<?php endif; ?>
-				<?php if ( 'browser_caching' === $arvaseo_id ) : ?>
-					<details class="arvaseo-more">
-						<summary><?php esc_html_e( 'The rules it adds', 'arvaseo-connector' ); ?></summary>
-						<div class="arvaseo-more-in">
+						<?php endif; ?>
+						<div class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'The rules it adds', 'arvaseo-connector' ); ?></h4>
 							<p><?php esc_html_e( 'If you edit your theme’s files by hand, visitors may see the old version for a while; WordPress and plugins add a version to their files, so their updates show straight away.', 'arvaseo-connector' ); ?></p>
 							<pre class="arvaseo-code"><?php echo esc_html( implode( "\n", ServerRules::lines() ) ); ?></pre>
 						</div>
-					</details>
-				<?php endif; ?>
+					<?php endif; ?>
 
-				<?php if ( 'wp_extras' === $arvaseo_id ) : ?>
-					<details class="arvaseo-more">
-						<summary><?php esc_html_e( 'Choose what to remove', 'arvaseo-connector' ); ?></summary>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-more-in">
+					<?php if ( 'wp_extras' === $arvaseo_id ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Choose what to remove', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="wp_extras" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
@@ -419,23 +503,11 @@ defined( 'ABSPATH' ) || exit;
 							</fieldset>
 							<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save choices', 'arvaseo-connector' ); ?></button>
 						</form>
-					</details>
-				<?php endif; ?>
+					<?php endif; ?>
 
-				<?php if ( in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) ) : ?>
-					<?php
-					$arvaseo_css       = \ArvaSEO\Connector\Speed\CssOptimizer::counts();
-					$arvaseo_allowance = get_option( 'arvaseo_connector_css_allowance', array() );
-					$arvaseo_allowance = is_array( $arvaseo_allowance ) ? $arvaseo_allowance : array();
-					?>
-					<div class="arvaseo-extra">
-						<p>
+					<?php if ( in_array( $arvaseo_id, array( 'critical_css', 'unused_css' ), true ) ) : ?>
+						<p class="arvaseo-fix-sub">
 							<?php
-							if ( 'on' === $arvaseo_state && $arvaseo_since ) {
-								/* translators: %s: date and time. */
-								printf( esc_html__( 'On since %s.', 'arvaseo-connector' ), esc_html( AdminController::when( $arvaseo_since ) ) );
-								echo ' ';
-							}
 							printf(
 								/* translators: 1: page types with optimized CSS, 2: page types waiting. */
 								esc_html__( 'Optimized CSS for %1$d page types; %2$d waiting.', 'arvaseo-connector' ),
@@ -453,22 +525,8 @@ defined( 'ABSPATH' ) || exit;
 							}
 							?>
 						</p>
-						<?php if ( $arvaseo_css['no_allowance'] > 0 ) : ?>
-							<p class="arvaseo-risk arvaseo-risk--check">
-								<?php
-								printf(
-									/* translators: %d: page types waiting for next month's page optimizations. */
-									esc_html( _n( '%d page type waits for next month’s page optimizations; it loads its normal styles until then.', '%d page types wait for next month’s page optimizations; they load their normal styles until then.', $arvaseo_css['no_allowance'], 'arvaseo-connector' ) ),
-									(int) $arvaseo_css['no_allowance']
-								);
-								?>
-								<a href="https://app.arvaseo.com/billing" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'More page optimizations', 'arvaseo-connector' ); ?></a>
-							</p>
-						<?php endif; ?>
-					</div>
-					<details class="arvaseo-more">
-						<summary><?php esc_html_e( 'Optimized CSS: work it out again, or leave stylesheets alone', 'arvaseo-connector' ); ?></summary>
-						<div class="arvaseo-more-in">
+						<div class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Optimized CSS: work it out again, or leave stylesheets alone', 'arvaseo-connector' ); ?></h4>
 							<p class="arvaseo-hint"><?php esc_html_e( 'Pages are grouped by type (homepage, page, post, product, category…) and by their stylesheets; each group uses one page optimization. A stylesheet that changes, after a theme or plugin update, makes a new group; clearing your cache costs nothing.', 'arvaseo-connector' ); ?></p>
 							<div class="arvaseo-row" style="margin: 12px 0">
 								<?php
@@ -498,14 +556,11 @@ defined( 'ABSPATH' ) || exit;
 							</form>
 							<p class="arvaseo-hint" style="margin-top: 10px"><?php esc_html_e( 'Arva SEO loads your public pages like a visitor, as a phone and as a computer, to see which styles they use. Only page addresses are sent, never content or visitor data.', 'arvaseo-connector' ); ?></p>
 						</div>
-					</details>
-				<?php endif; ?>
+					<?php endif; ?>
 
-				<?php if ( 'webp_uploads' === $arvaseo_id ) : ?>
-					<?php $arvaseo_webp = \ArvaSEO\Connector\Speed\WebpLibrary::progress(); ?>
-					<details class="arvaseo-more" <?php echo $arvaseo_webp['running'] ? 'open' : ''; ?>>
-						<summary><?php esc_html_e( 'Convert your existing images too', 'arvaseo-connector' ); ?></summary>
-						<div class="arvaseo-more-in">
+					<?php if ( 'webp_uploads' === $arvaseo_id ) : ?>
+						<div class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Convert your existing images too', 'arvaseo-connector' ); ?></h4>
 							<p class="arvaseo-hint"><?php esc_html_e( 'Each JPEG and PNG in your media library, and each of its sizes, gets a WebP copy beside it, kept only when it’s smaller. Your originals stay as they are, and Undo removes every copy. It runs in the background, a few images at a time.', 'arvaseo-connector' ); ?></p>
 							<?php if ( $arvaseo_webp['total'] > 0 ) : ?>
 								<p>
@@ -553,57 +608,48 @@ defined( 'ABSPATH' ) || exit;
 								<?php endif; ?>
 							</div>
 						</div>
-					</details>
-				<?php endif; ?>
+					<?php endif; ?>
 
-				<?php if ( 'compress_images' === $arvaseo_id ) : ?>
-					<?php
-					$arvaseo_cmp       = ImageCompression::state();
-					$arvaseo_cmp_stats = ImageCompression::stats();
-					$arvaseo_cmp_lib   = ImageCompression::library();
-					$arvaseo_cmp_left  = $arvaseo_cmp['allowance'];
-					$arvaseo_cmp_cloud = TokenStore::is_connected() && PrivacyService::allows( 'image_compression' );
-					?>
-					<div class="arvaseo-extra">
-						<p>
-							<?php
-							if ( ! TokenStore::is_connected() ) {
-								esc_html_e( 'On this server. Connect to Arva SEO to have its servers compress images more strongly (100 a month on the Free plan).', 'arvaseo-connector' );
-							} elseif ( ! $arvaseo_cmp_cloud ) {
-								esc_html_e( 'On this server. Arva SEO’s servers compress images more strongly once you allow it below.', 'arvaseo-connector' );
-							} elseif ( 'no_allowance' === $arvaseo_cmp['cloud_reason'] && time() < $arvaseo_cmp['cloud_paused_until'] ) {
-								/* translators: %s: date, such as November 1. */
-								echo esc_html( sprintf( __( 'No image compressions left this month on Arva SEO’s servers, so this server compresses images until %s.', 'arvaseo-connector' ), wp_date( get_option( 'date_format' ), $arvaseo_cmp['cloud_paused_until'] ) ) );
-							} elseif ( '' !== $arvaseo_cmp['cloud_reason'] && time() < $arvaseo_cmp['cloud_paused_until'] ) {
-								esc_html_e( 'Arva SEO’s servers didn’t answer a moment ago, so images wait a few minutes for them.', 'arvaseo-connector' );
-							} elseif ( is_array( $arvaseo_cmp_left ) ) {
-								echo esc_html(
-									$arvaseo_cmp_left['packs'] > 0
-										/* translators: 1: compressions left this month, 2: included a month, 3: compressions in top-ups. */
-										? sprintf( __( 'On Arva SEO’s servers: %1$s of %2$s image compressions left this month, and %3$s in top-ups.', 'arvaseo-connector' ), number_format_i18n( max( 0, $arvaseo_cmp_left['remaining'] - $arvaseo_cmp_left['packs'] ) ), number_format_i18n( $arvaseo_cmp_left['included'] ), number_format_i18n( $arvaseo_cmp_left['packs'] ) )
-										/* translators: 1: compressions left this month, 2: included a month. */
-										: sprintf( __( 'On Arva SEO’s servers: %1$s of %2$s image compressions left this month.', 'arvaseo-connector' ), number_format_i18n( $arvaseo_cmp_left['remaining'] ), number_format_i18n( $arvaseo_cmp_left['included'] ) )
-								);
-							} else {
-								esc_html_e( 'On Arva SEO’s servers. Each image counts once, with all its sizes, and only when it gets at least 5% smaller.', 'arvaseo-connector' );
-							}
-							?>
-							<?php if ( is_array( $arvaseo_cmp_left ) && null !== ( $arvaseo_cmp_left['buy_url'] ?? null ) && $arvaseo_cmp_left['remaining'] < 50 ) : ?>
-								<a href="<?php echo esc_url( (string) $arvaseo_cmp_left['buy_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get more image compressions', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
-							<?php endif; ?>
-						</p>
-						<?php if ( $arvaseo_cmp_stats['images'] > 0 ) : ?>
-							<p class="arvaseo-hint">
+					<?php if ( 'compress_images' === $arvaseo_id ) : ?>
+						<div class="arvaseo-fix-sub">
+							<p>
 								<?php
-								/* translators: 1: number of images, 2: space saved, such as 12 MB. */
-								echo esc_html( sprintf( _n( '%1$s image compressed so far, %2$s smaller.', '%1$s images compressed so far, %2$s smaller.', $arvaseo_cmp_stats['images'], 'arvaseo-connector' ), number_format_i18n( $arvaseo_cmp_stats['images'] ), (string) size_format( $arvaseo_cmp_stats['saved_bytes'] ) ) );
+								if ( ! TokenStore::is_connected() ) {
+									esc_html_e( 'On this server. Connect to Arva SEO to have its servers compress images more strongly (100 a month on the Free plan).', 'arvaseo-connector' );
+								} elseif ( ! $arvaseo_cmp_cloud ) {
+									esc_html_e( 'On this server. Arva SEO’s servers compress images more strongly once you allow it below.', 'arvaseo-connector' );
+								} elseif ( 'no_allowance' === $arvaseo_cmp['cloud_reason'] && time() < $arvaseo_cmp['cloud_paused_until'] ) {
+									/* translators: %s: date, such as November 1. */
+									echo esc_html( sprintf( __( 'No image compressions left this month on Arva SEO’s servers, so this server compresses images until %s.', 'arvaseo-connector' ), wp_date( get_option( 'date_format' ), $arvaseo_cmp['cloud_paused_until'] ) ) );
+								} elseif ( '' !== $arvaseo_cmp['cloud_reason'] && time() < $arvaseo_cmp['cloud_paused_until'] ) {
+									esc_html_e( 'Arva SEO’s servers didn’t answer a moment ago, so images wait a few minutes for them.', 'arvaseo-connector' );
+								} elseif ( is_array( $arvaseo_cmp_left ) ) {
+									echo esc_html(
+										$arvaseo_cmp_left['packs'] > 0
+											/* translators: 1: compressions left this month, 2: included a month, 3: compressions in top-ups. */
+											? sprintf( __( 'On Arva SEO’s servers: %1$s of %2$s image compressions left this month, and %3$s in top-ups.', 'arvaseo-connector' ), number_format_i18n( max( 0, $arvaseo_cmp_left['remaining'] - $arvaseo_cmp_left['packs'] ) ), number_format_i18n( $arvaseo_cmp_left['included'] ), number_format_i18n( $arvaseo_cmp_left['packs'] ) )
+											/* translators: 1: compressions left this month, 2: included a month. */
+											: sprintf( __( 'On Arva SEO’s servers: %1$s of %2$s image compressions left this month.', 'arvaseo-connector' ), number_format_i18n( $arvaseo_cmp_left['remaining'] ), number_format_i18n( $arvaseo_cmp_left['included'] ) )
+									);
+								} else {
+									esc_html_e( 'On Arva SEO’s servers. Each image counts once, with all its sizes, and only when it gets at least 5% smaller.', 'arvaseo-connector' );
+								}
 								?>
+								<?php if ( is_array( $arvaseo_cmp_left ) && null !== ( $arvaseo_cmp_left['buy_url'] ?? null ) && $arvaseo_cmp_left['remaining'] < 50 ) : ?>
+									<a href="<?php echo esc_url( (string) $arvaseo_cmp_left['buy_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get more image compressions', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
+								<?php endif; ?>
 							</p>
-						<?php endif; ?>
-					</div>
-					<details class="arvaseo-more" <?php echo $arvaseo_cmp['running'] || $arvaseo_cmp['restoring'] ? 'open' : ''; ?>>
-						<summary><?php esc_html_e( 'Compress your existing images too', 'arvaseo-connector' ); ?></summary>
-						<div class="arvaseo-more-in">
+							<?php if ( $arvaseo_cmp_stats['images'] > 0 ) : ?>
+								<p class="arvaseo-hint">
+									<?php
+									/* translators: 1: number of images, 2: space saved, such as 12 MB. */
+									echo esc_html( sprintf( _n( '%1$s image compressed so far, %2$s smaller.', '%1$s images compressed so far, %2$s smaller.', $arvaseo_cmp_stats['images'], 'arvaseo-connector' ), number_format_i18n( $arvaseo_cmp_stats['images'] ), (string) size_format( $arvaseo_cmp_stats['saved_bytes'] ) ) );
+									?>
+								</p>
+							<?php endif; ?>
+						</div>
+						<div class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Compress your existing images too', 'arvaseo-connector' ); ?></h4>
 							<p class="arvaseo-hint"><?php esc_html_e( 'Each JPEG and PNG in your media library, with its sizes, is saved smaller in the background, a few images at a time. A file is replaced only when it gets at least 5% smaller, and its original is kept, so Restore puts it back.', 'arvaseo-connector' ); ?></p>
 							<?php if ( $arvaseo_cmp_lib['images'] > 0 ) : ?>
 								<p>
@@ -647,10 +693,8 @@ defined( 'ABSPATH' ) || exit;
 								<?php endif; ?>
 							</div>
 						</div>
-					</details>
-					<details class="arvaseo-more">
-						<summary><?php esc_html_e( 'Where images are compressed, and the originals', 'arvaseo-connector' ); ?></summary>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-more-in">
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Where images are compressed, and the originals', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_compress" />
 							<input type="hidden" name="do" value="options" />
 							<?php wp_nonce_field( 'arvaseo_connector_compress' ); ?>
@@ -666,13 +710,11 @@ defined( 'ABSPATH' ) || exit;
 							</label>
 							<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button></div>
 						</form>
-					</details>
-				<?php endif; ?>
+					<?php endif; ?>
 
-				<?php if ( 'delay_scripts' === $arvaseo_id ) : ?>
-					<details class="arvaseo-more">
-						<summary><?php esc_html_e( 'The widgets it delays, and others to delay', 'arvaseo-connector' ); ?></summary>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-more-in">
+					<?php if ( 'delay_scripts' === $arvaseo_id ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'The widgets it delays, and others to delay', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="delay_scripts" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
@@ -682,13 +724,11 @@ defined( 'ABSPATH' ) || exit;
 							<textarea id="arvaseo-delay-scripts" name="delay_scripts" rows="3" placeholder="reviews-widget&#10;widget.example.com"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['delay_scripts'] ) ); ?></textarea>
 							<div class="arvaseo-row" style="margin-top: 10px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button></div>
 						</form>
-					</details>
-				<?php endif; ?>
+					<?php endif; ?>
 
-				<?php if ( 'google_fonts' === $arvaseo_id ) : ?>
-					<details class="arvaseo-more" <?php echo $arvaseo_stored['fonts_local'] ? 'open' : ''; ?>>
-						<summary><?php esc_html_e( 'Serve them from your site', 'arvaseo-connector' ); ?></summary>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-more-in">
+					<?php if ( 'google_fonts' === $arvaseo_id ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Serve them from your site', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="google_fonts" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
@@ -707,13 +747,11 @@ defined( 'ABSPATH' ) || exit;
 							</label>
 							<div class="arvaseo-row" style="margin-top: 12px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button></div>
 						</form>
-					</details>
-				<?php endif; ?>
+					<?php endif; ?>
 
-				<?php if ( 'defer_scripts' === $arvaseo_id ) : ?>
-					<details class="arvaseo-more" <?php echo 'trying' === $arvaseo_state ? 'open' : ''; ?>>
-						<summary><?php esc_html_e( 'Leave scripts alone', 'arvaseo-connector' ); ?></summary>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-more-in">
+					<?php if ( 'defer_scripts' === $arvaseo_id ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'Leave scripts alone', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="defer_scripts" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
@@ -761,55 +799,16 @@ defined( 'ABSPATH' ) || exit;
 							<?php endif; ?>
 							<div class="arvaseo-row" style="margin-top: 10px"><button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save', 'arvaseo-connector' ); ?></button></div>
 						</form>
-					</details>
-					<?php if ( 'trying' === $arvaseo_state ) : ?>
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-checklist" data-arvaseo-confirm="confirmDefer">
-							<input type="hidden" name="action" value="arvaseo_connector_speed" />
-							<input type="hidden" name="fix" value="defer_scripts" />
-							<input type="hidden" name="to" value="on" />
-							<?php wp_nonce_field( 'arvaseo_connector_speed' ); ?>
-							<fieldset>
-								<legend><?php esc_html_e( 'Before turning it on for everyone, check these while trying it:', 'arvaseo-connector' ); ?></legend>
-								<label class="arvaseo-check"><input type="checkbox" name="checked[]" value="home" required /> <span><?php esc_html_e( 'My homepage looks and works as before', 'arvaseo-connector' ); ?></span></label>
-								<label class="arvaseo-check"><input type="checkbox" name="checked[]" value="forms" required /> <span><?php esc_html_e( 'Contact or booking forms, and the checkout if I sell online, still work', 'arvaseo-connector' ); ?></span></label>
-								<label class="arvaseo-check"><input type="checkbox" name="checked[]" value="menus" required /> <span><?php esc_html_e( 'Menus, sliders, pop-ups and chat still work, on a phone too', 'arvaseo-connector' ); ?></span></label>
-							</fieldset>
-							<button type="submit" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--pri"><?php esc_html_e( 'Turn on for everyone', 'arvaseo-connector' ); ?></button>
-						</form>
 					<?php endif; ?>
 				<?php endif; ?>
-			<?php endif; ?>
 
-			<?php if ( ! in_array( $arvaseo_id, array( 'webp_uploads', 'browser_caching' ), true ) ) : ?>
-				<div class="arvaseo-fix-links">
-					<a href="#arvaseo-speed-exclusions"><?php echo in_array( $arvaseo_id, Exclusions::ELEMENT_FIXES, true ) ? esc_html__( 'Leave a page, image or video alone', 'arvaseo-connector' ) : esc_html__( 'Leave a page alone', 'arvaseo-connector' ); ?></a>
-				</div>
-			<?php endif; ?>
-		</div>
-
-			<?php if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) : ?>
-			<div class="arvaseo-fix-acts">
-				<?php
-				if ( 'off' === $arvaseo_state && $arvaseo_tryable ) {
-					$arvaseo_button( $arvaseo_id, 'trying', __( 'Try it', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
-				}
-				if ( 'defer_scripts' === $arvaseo_id && 'trying' === $arvaseo_state ) {
-					echo '<span class="arvaseo-hint arvaseo-fix-acts-note">' . esc_html__( 'Turn it on after the checks below.', 'arvaseo-connector' ) . '</span>';
-				} elseif ( 'on' !== $arvaseo_state ) {
-					$arvaseo_button(
-						$arvaseo_id,
-						'on',
-						'trying' === $arvaseo_state || ! $arvaseo_tryable ? __( 'Turn on for everyone', 'arvaseo-connector' ) : __( 'Turn on', 'arvaseo-connector' ),
-						'trying' === $arvaseo_state ? 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--pri' : ( $arvaseo_tryable ? 'arvaseo-btn arvaseo-btn--sm' : 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' ),
-						'check' === $arvaseo_fix['risk'] ? 'confirmRisky' : ''
-					);
-				}
-				if ( 'off' !== $arvaseo_state ) {
-					$arvaseo_button( $arvaseo_id, 'off', 'trying' === $arvaseo_state ? __( 'Stop trying', 'arvaseo-connector' ) : __( 'Turn off', 'arvaseo-connector' ), 'trying' === $arvaseo_state ? 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--ghost' : 'arvaseo-btn arvaseo-btn--sm' );
-				}
-				?>
+				<?php if ( ! in_array( $arvaseo_id, array( 'webp_uploads', 'browser_caching' ), true ) ) : ?>
+					<div class="arvaseo-fix-links">
+						<a href="#arvaseo-speed-exclusions"><?php echo in_array( $arvaseo_id, Exclusions::ELEMENT_FIXES, true ) ? esc_html__( 'Leave a page, image or video alone', 'arvaseo-connector' ) : esc_html__( 'Leave a page alone', 'arvaseo-connector' ); ?></a>
+					</div>
+				<?php endif; ?>
 			</div>
-		<?php endif; ?>
+		</div>
 	</section>
 		<?php endforeach; ?>
 </div></div>
@@ -901,8 +900,11 @@ defined( 'ABSPATH' ) || exit;
 	<?php else : ?>
 		<p class="arvaseo-eyebrow"><?php echo Cloudflare::seen() ? esc_html__( 'Seen in front of this website', 'arvaseo-connector' ) : esc_html__( 'Optional', 'arvaseo-connector' ); ?></p>
 		<h2 class="arvaseo-h2" id="arvaseo-cf-heading"><?php echo Cloudflare::seen() ? esc_html__( 'This website is behind Cloudflare', 'arvaseo-connector' ) : esc_html__( 'Using Cloudflare?', 'arvaseo-connector' ); ?></h2>
-		<p class="arvaseo-hint" style="max-width: 720px"><?php esc_html_e( 'Cloudflare can keep copies of your pages. Connect it here and those copies are cleared whenever a change here affects what visitors get, so visitors and your next PageSpeed test see a fix as soon as you turn it on. It works without an Arva SEO account. Only page addresses are sent, to Cloudflare.', 'arvaseo-connector' ); ?></p>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 16px">
+		<p class="arvaseo-hint"><?php esc_html_e( 'Cloudflare can keep copies of your pages. Connect it here and those copies are cleared whenever a change here affects what visitors get, so visitors and your next PageSpeed test see a fix as soon as you turn it on. It works without an Arva SEO account. Only page addresses are sent, to Cloudflare.', 'arvaseo-connector' ); ?></p>
+		<div class="arvaseo-row" style="margin-top: 14px">
+			<button type="button" class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark" data-arvaseo-toggle="once" aria-expanded="false" aria-controls="arvaseo-cf-connect" hidden><?php esc_html_e( 'Connect Cloudflare', 'arvaseo-connector' ); ?></button>
+		</div>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-more" id="arvaseo-cf-connect" data-arvaseo-more="closed" data-arvaseo-hash="arvaseo-cloudflare" style="margin-top: 16px">
 			<input type="hidden" name="action" value="arvaseo_connector_cloudflare" />
 			<input type="hidden" name="do" value="connect" />
 			<?php wp_nonce_field( 'arvaseo_connector_cloudflare' ); ?>
@@ -928,7 +930,33 @@ defined( 'ABSPATH' ) || exit;
 	<span class="arvaseo-grp-n" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', $arvaseo_n + 2 ) ); ?></span>
 	<div><h2><?php esc_html_e( 'Leave things alone', 'arvaseo-connector' ); ?></h2><p><?php esc_html_e( 'If a fix stops something working on part of your site, leave that part alone instead of turning the fix off everywhere.', 'arvaseo-connector' ); ?></p></div>
 </div>
-<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+	<?php
+	$arvaseo_skipped = Exclusions::skipped_posts();
+	$arvaseo_left    = array_filter(
+		array(
+			/* translators: %d: number of page addresses. */
+			array() !== $arvaseo_stored['exclude_pages'] ? sprintf( _n( '%d page address', '%d page addresses', count( $arvaseo_stored['exclude_pages'] ), 'arvaseo-connector' ), count( $arvaseo_stored['exclude_pages'] ) ) : '',
+			/* translators: %d: number of posts and pages. */
+			$arvaseo_skipped > 0 ? sprintf( _n( '%d post or page by its tick box', '%d posts and pages by their tick box', $arvaseo_skipped, 'arvaseo-connector' ), $arvaseo_skipped ) : '',
+			/* translators: %d: number of images, videos and maps. */
+			array() !== $arvaseo_stored['exclude_elements'] ? sprintf( _n( '%d image, video or map', '%d images, videos or maps', count( $arvaseo_stored['exclude_elements'] ), 'arvaseo-connector' ), count( $arvaseo_stored['exclude_elements'] ) ) : '',
+		)
+	);
+	?>
+<div class="arvaseo-collapse-head">
+	<span class="arvaseo-hint">
+		<?php
+		echo esc_html(
+			array() === $arvaseo_left
+				? __( 'Nothing is left alone: every fix that’s on runs on every page.', 'arvaseo-connector' )
+				/* translators: %s: what is left alone, such as "2 page addresses and 3 images, videos or maps". */
+				: sprintf( __( 'Left alone: %s.', 'arvaseo-connector' ), wp_sprintf_l( '%l', array_values( $arvaseo_left ) ) )
+		);
+		?>
+	</span>
+	<button type="button" class="arvaseo-fix-toggle" data-arvaseo-toggle aria-expanded="false" aria-controls="arvaseo-exclusions-form" hidden><?php esc_html_e( 'Choose what to leave alone', 'arvaseo-connector' ); ?></button>
+</div>
+<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-more" id="arvaseo-exclusions-form" data-arvaseo-more="closed" data-arvaseo-hash="arvaseo-speed-exclusions">
 	<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 	<input type="hidden" name="fix" value="exclusions" />
 	<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
@@ -937,7 +965,6 @@ defined( 'ABSPATH' ) || exit;
 			<label class="arvaseo-label" for="arvaseo-exclude-pages"><?php esc_html_e( 'Pages', 'arvaseo-connector' ); ?></label>
 			<p class="arvaseo-hint"><?php esc_html_e( 'No fix runs on these. One address per line, the part after your domain, such as /contact/. A * matches anything: /shop/* is every page under /shop/. You can also tick “Leave this page alone” when you edit a post or page, or use Arva SEO in the toolbar while you view any page.', 'arvaseo-connector' ); ?></p>
 			<textarea id="arvaseo-exclude-pages" name="exclude_pages" rows="4" placeholder="/checkout/&#10;/book-now/*"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['exclude_pages'] ) ); ?></textarea>
-			<?php $arvaseo_skipped = Exclusions::skipped_posts(); ?>
 			<?php if ( $arvaseo_skipped > 0 ) : ?>
 				<p class="arvaseo-hint" style="margin-top: 8px">
 					<?php

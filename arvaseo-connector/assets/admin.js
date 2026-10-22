@@ -79,6 +79,74 @@
 			}
 		} );
 	}
+	// Speed: each fix's details and options stay closed until asked for, except while something in
+	// them runs. Open ones stay open after a save reloads the page. Without JavaScript they're open.
+	var openKey = 'arvaseoOpenFixes';
+	var remembered = [];
+	try {
+		remembered = JSON.parse( window.sessionStorage.getItem( openKey ) || '[]' );
+	} catch ( e ) {
+		remembered = [];
+	}
+	var remember = function ( id, open ) {
+		remembered = remembered.filter( function ( one ) {
+			return one !== id;
+		} );
+		if ( open ) {
+			remembered.push( id );
+		}
+		try {
+			window.sessionStorage.setItem( openKey, JSON.stringify( remembered ) );
+		} catch ( e ) {}
+	};
+	var openers = {};
+	document.querySelectorAll( '[data-arvaseo-toggle][aria-controls]' ).forEach( function ( toggle ) {
+		var id = toggle.getAttribute( 'aria-controls' );
+		var panel = document.getElementById( id );
+		if ( ! panel ) {
+			return;
+		}
+		// A toggle marked "once" (Connect Cloudflare) goes away when its form opens.
+		var once = 'once' === toggle.getAttribute( 'data-arvaseo-toggle' );
+		var set = function ( open ) {
+			toggle.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+			panel.hidden = ! open;
+			toggle.hidden = once && open;
+		};
+		set( 'open' === panel.getAttribute( 'data-arvaseo-more' ) || remembered.indexOf( id ) !== -1 );
+		toggle.addEventListener( 'click', function () {
+			set( panel.hidden );
+			remember( id, ! panel.hidden );
+			if ( once && ! panel.hidden ) {
+				var first = panel.querySelector( 'input:not([type="hidden"]), textarea, select' );
+				if ( first ) {
+					first.focus();
+				}
+			}
+		} );
+		if ( panel.getAttribute( 'data-arvaseo-hash' ) ) {
+			openers[ panel.getAttribute( 'data-arvaseo-hash' ) ] = function () {
+				set( true );
+			};
+		}
+	} );
+	// A link to a section (Leave a page alone, Connect Cloudflare on Overview) opens its form.
+	var openFromHash = function ( hash ) {
+		var open = openers[ ( hash || '' ).replace( /^#/, '' ) ];
+		if ( open ) {
+			open();
+		}
+	};
+	openFromHash( window.location.hash );
+	window.addEventListener( 'hashchange', function () {
+		openFromHash( window.location.hash );
+	} );
+	document.querySelectorAll( 'a[href^="#"]' ).forEach( function ( link ) {
+		link.addEventListener( 'click', function () {
+			openFromHash( link.getAttribute( 'href' ) );
+		} );
+	} );
+
 	// Health → Security scan and Deep scan: the step, bar and detail, from the progress check.
 	var deep = document.querySelector( '[data-arvaseo-deep-running]' );
 	var showProgress = function ( box, now ) {
