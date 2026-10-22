@@ -38,6 +38,9 @@ final class Scanner {
 	/** Files larger than this are listed but not read for patterns. */
 	public const MAX_READ = 2000000;
 
+	/** The signature ID of a file the security feed knows as malware. */
+	public const KNOWN_MALWARE = 'feed.known_malware';
+
 	/** A scan stops walking after this many files and says it covered part of the site. */
 	private const MAX_FILES = 150000;
 
@@ -251,6 +254,11 @@ final class Scanner {
 				$state = self::progress();
 				if ( 'running' !== ( $state['status'] ?? '' ) ) {
 					return;
+				}
+				// The latest security feed first, when the daily download hasn't happened lately.
+				if ( empty( $state['feed_checked'] ) ) {
+					Feed::before_scan();
+					$state['feed_checked'] = true;
 				}
 				$until = microtime( true ) + $seconds;
 				do {
@@ -730,7 +738,8 @@ final class Scanner {
 		if ( null === $match ) {
 			return $state;
 		}
-		return self::add( $state, Findings::make( 'code', $match['severity'], self::details( $relative, $path, $match ) ) );
+		$type = self::KNOWN_MALWARE === $match['id'] ? 'known_malware' : 'code';
+		return self::add( $state, Findings::make( $type, $match['severity'], self::details( $relative, $path, $match ) ) );
 	}
 
 	/**
@@ -743,6 +752,7 @@ final class Scanner {
 	 */
 	private static function details( string $relative, string $file, ?array $found ): array {
 		$md5 = @md5_file( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a file deleted meanwhile has no hash.
+		$sha = @hash_file( 'sha256', $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- see above.
 		return array(
 			'path'      => $relative,
 			'signature' => $found['id'] ?? null,
@@ -750,6 +760,8 @@ final class Scanner {
 			'line'      => $found['line'] ?? null,
 			'excerpt'   => $found['excerpt'] ?? null,
 			'file_hash' => false !== $md5 ? $md5 : null,
+			// Shared with Arva SEO, so the security feed can learn which files turn up on several sites.
+			'sha256'    => false !== $sha ? $sha : null,
 		);
 	}
 
@@ -758,7 +770,7 @@ final class Scanner {
 	 *
 	 * @param string $path Absolute path.
 	 * @param string $kind php|js|htaccess|svg.
-	 * @return array{id: string, severity: string, title: string, line: int, excerpt: string}|null
+	 * @return array{id: string, severity: string, title: string, line: int|null, excerpt: string|null}|null
 	 */
 	private static function read_and_match( string $path, string $kind ): ?array {
 		$size = @filesize( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unreadable files are skipped.
@@ -766,9 +778,29 @@ final class Scanner {
 			return null;
 		}
 		$contents = @file_get_contents( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file read for patterns; unreadable files are skipped.
+		if ( ! is_string( $contents ) ) {
+			return null;
+		}
+		// The security feed: this exact file is malware found on other websites, or Arva SEO
+		// checked it and it's safe (2.5.0).
+		$sha = hash( 'sha256', $contents );
+		if ( Feed::is_safe( $sha ) ) {
+			return null;
+		}
+		$malware = Feed::malware( $sha );
+		if ( null !== $malware ) {
+			return array(
+				'id'       => self::KNOWN_MALWARE,
+				'severity' => 'critical',
+				/* translators: %s: the malware's name, such as "Known malware (Php.Webshell-123)". */
+				'title'    => sprintf( __( '%s, found on other websites', 'arvaseo-connector' ), $malware ),
+				'line'     => null,
+				'excerpt'  => null,
+			);
+		}
 		// A security plugin's firewall loads through auto_prepend_file: those lines are expected.
 		$expected = 'htaccess' === $kind ? static fn ( string $id, string $line ): bool => 'htaccess.auto_prepend' === $id && KnownFiles::firewall_prepend( $line ) : null;
-		return is_string( $contents ) ? Signatures::match( $contents, $kind, $expected ) : null;
+		return Signatures::match( $contents, $kind, $expected );
 	}
 
 	/**

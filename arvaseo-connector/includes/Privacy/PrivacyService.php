@@ -85,8 +85,8 @@ final class PrivacyService {
 				'purpose' => 'Show the problem in Arva SEO with what to do, and alert you to serious ones',
 			),
 			array(
-				'field'   => 'For a problem in a file: the file’s path inside the site (such as wp-content/uploads/2026/10/x.php), and for suspicious code the pattern’s name, the line and the start of that line',
-				'purpose' => 'Say exactly where the problem is, so it can be checked and fixed',
+				'field'   => 'For a problem in a file: the file’s path inside the site (such as wp-content/uploads/2026/10/x.php), its SHA-256 fingerprint (a code that identifies the file without containing it), and for suspicious code the pattern’s name, the line and the start of that line',
+				'purpose' => 'Say exactly where the problem is, so it can be checked and fixed, and recognize the same file on other websites (Arva SEO’s security feed)',
 			),
 			array(
 				'field'   => 'When the scan ran, how many files it checked, and which checks it could run',

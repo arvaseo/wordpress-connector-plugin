@@ -50,6 +50,7 @@ final class Plugin {
 		\ArvaSEO\Connector\Security\Scanner::init();
 		\ArvaSEO\Connector\Security\Report::init();
 		\ArvaSEO\Connector\Security\DeepScan::init();
+		\ArvaSEO\Connector\Security\Feed::init();
 		if ( is_admin() ) {
 			AdminController::init();
 		}

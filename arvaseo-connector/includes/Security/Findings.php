@@ -53,7 +53,7 @@ final class Findings {
 		return match ( $type ) {
 			'vulnerability'                                                                         => 'vulnerabilities',
 			'deep_malware', 'deep_code'                                                             => 'deep',
-			'code'                                                                                  => 'code',
+			'code', 'known_malware'                                                                 => 'code',
 			'core_changed', 'core_missing', 'plugin_changed'                                        => 'changed',
 			'core_unexpected', 'root_unexpected', 'plugin_unexpected', 'uploads_php', 'uploads_disguised' => 'unexpected',
 			'exposed_git', 'exposed_env', 'exposed_config_backup', 'exposed_debug_log', 'exposed_database', 'exposed_backup', 'directory_listing' => 'exposed',
@@ -66,7 +66,7 @@ final class Findings {
 	 *
 	 * @param string               $type     Type.
 	 * @param string               $severity critical|high|medium|low.
-	 * @param array<string, mixed> $details  path, signature, line, excerpt, file_hash, detail.
+	 * @param array<string, mixed> $details  path, signature, line, excerpt, file_hash, sha256, detail.
 	 * @return array<string, mixed>
 	 */
 	public static function make( string $type, string $severity, array $details = array() ): array {
@@ -83,6 +83,7 @@ final class Findings {
 			'line'      => isset( $details['line'] ) ? (int) $details['line'] : null,
 			'excerpt'   => isset( $details['excerpt'] ) ? (string) $details['excerpt'] : null,
 			'file_hash' => isset( $details['file_hash'] ) ? (string) $details['file_hash'] : null,
+			'sha256'    => isset( $details['sha256'] ) ? (string) $details['sha256'] : null,
 			'detail'    => isset( $details['detail'] ) ? (string) $details['detail'] : null,
 		);
 	}
@@ -111,6 +112,23 @@ final class Findings {
 				(string) ( $finding['title'] ?? __( 'Known malware', 'arvaseo-connector' ) ),
 				__( 'ClamAV’s database of known malware matched this file: it’s code from a known hacking campaign or tool, not just a suspicious pattern, so the site has very likely been hacked.', 'arvaseo-connector' ),
 				__( 'Restore the plugin or theme the file belongs to from a fresh copy, or delete the file if nothing you installed needs it. Then change your WordPress, hosting and database passwords, and look for how it got in (an outdated plugin, a nulled theme or a stolen password). Ask your host or a security specialist if more files are affected.', 'arvaseo-connector' ),
+			),
+			'known_malware'         => array(
+				(string) ( $finding['title'] ?? __( 'Known malware', 'arvaseo-connector' ) ),
+				__( 'This exact file was found to be malware by a deep scan on another website Arva SEO checks: it’s code from a known hacking campaign or tool, not just a suspicious pattern, so the site has very likely been hacked.', 'arvaseo-connector' ),
+				__( 'Restore the plugin or theme the file belongs to from a fresh copy, or delete the file if nothing you installed needs it. Then change your WordPress, hosting and database passwords, and look for how it got in (an outdated plugin, a nulled theme or a stolen password). Ask your host or a security specialist if more files are affected.', 'arvaseo-connector' ),
+			),
+			'php_outdated'          => array(
+				(string) ( $finding['title'] ?? __( 'PHP needs a security update', 'arvaseo-connector' ) ),
+				/* translators: %s: the PHP version with the fixes, such as 8.3.36. */
+				sprintf( __( 'PHP, which runs every page of your site, has released fixes for security holes since this version. The fixes are in PHP %s and later, and attackers look for servers that haven’t installed them.', 'arvaseo-connector' ), $detail ),
+				/* translators: %s: the PHP version with the fixes, such as 8.3.36. */
+				sprintf( __( 'In your hosting panel, choose the newest PHP version it offers (at least %s), or ask your host to update PHP. Some hosts build PHP with the fixes added under an older number: if yours does, ask them to confirm, then mark this as expected. Check the site afterwards.', 'arvaseo-connector' ), $detail ),
+			),
+			'php_unsupported'       => array(
+				(string) ( $finding['title'] ?? __( 'PHP no longer gets security fixes', 'arvaseo-connector' ) ),
+				__( 'Each PHP version gets security fixes for a few years. This one no longer does, so holes found in it from now on are never fixed, and newer plugins stop supporting it.', 'arvaseo-connector' ),
+				__( 'Move to PHP 8.3 or newer in your hosting panel, or ask your host. Update your plugins and theme first, take a backup, and check the site afterwards.', 'arvaseo-connector' ),
 			),
 			'deep_code'             => array(
 				(string) ( $finding['title'] ?? __( 'Suspicious code', 'arvaseo-connector' ) ),

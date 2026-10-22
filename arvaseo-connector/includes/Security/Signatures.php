@@ -1,7 +1,8 @@
 <?php
 /**
  * The security scan's patterns: data shipped with the plugin (data/signatures.json), updated with
- * plugin releases. Each one is matched with preg_match; nothing in the file is ever run.
+ * plugin releases, plus new ones from Arva SEO's security feed between releases (Feed, 2.5.0). Each
+ * one is matched with preg_match; nothing in either is ever run.
  *
  * @package ArvaSEO\Connector
  */
@@ -27,11 +28,32 @@ final class Signatures {
 	private static ?array $compiled = null;
 
 	/**
-	 * The data file's version (shown as "patterns from 2026.10.21").
+	 * The patterns' version: the security feed's once it's downloaded, else the data file's.
 	 */
 	public static function version(): string {
+		$feed = Feed::version();
+		if ( '' !== $feed ) {
+			return $feed;
+		}
 		$data = self::data();
 		return is_string( $data['version'] ?? null ) ? $data['version'] : '';
+	}
+
+	/**
+	 * Compile the patterns again on next use (after the security feed changes).
+	 */
+	public static function forget(): void {
+		self::$compiled = null;
+	}
+
+	/**
+	 * The PHP versions with the latest security fixes, from the data file (the feed's are newer).
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public static function php(): ?array {
+		$php = self::data()['php'] ?? null;
+		return is_array( $php ) ? $php : null;
 	}
 
 	/**
@@ -138,8 +160,15 @@ final class Signatures {
 			'low'      => 3,
 		);
 		$list  = array();
-		foreach ( (array) ( self::data()['signatures'] ?? array() ) as $raw ) {
-			if ( ! is_array( $raw ) || ! is_string( $raw['pattern'] ?? null ) || ! isset( $order[ $raw['severity'] ?? '' ] ) ) {
+		// The feed's patterns replace the plugin's own with the same ID.
+		$all = array();
+		foreach ( array_merge( (array) ( self::data()['signatures'] ?? array() ), Feed::patterns() ) as $raw ) {
+			if ( is_array( $raw ) ) {
+				$all[ (string) ( $raw['id'] ?? count( $all ) ) ] = $raw;
+			}
+		}
+		foreach ( $all as $raw ) {
+			if ( ! is_string( $raw['pattern'] ?? null ) || ! isset( $order[ $raw['severity'] ?? '' ] ) ) {
 				continue;
 			}
 			$flags  = preg_replace( '/[^imsxu]/', '', (string) ( $raw['flags'] ?? 'i' ) );

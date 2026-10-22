@@ -129,6 +129,8 @@ final class Report {
 			'title'     => null !== ( $finding['title'] ?? null ) ? $cut( str_replace( array( '<', '>' ), '', (string) $finding['title'] ), 200 ) : null,
 			'line'      => isset( $finding['line'] ) ? (int) $finding['line'] : null,
 			'excerpt'   => $cut( $finding['excerpt'] ?? null, 200 ),
+			// The file's fingerprint (2.5.0), which Arva SEO's security feed learns from.
+			'sha256'    => is_string( $finding['sha256'] ?? null ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $finding['sha256'] ) ? $finding['sha256'] : null,
 		);
 	}
 }

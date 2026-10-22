@@ -78,6 +78,10 @@ final class Exposure {
 		}
 
 		// Settings.
+		$php = self::php();
+		if ( null !== $php ) {
+			$findings[] = $php;
+		}
 		if ( ( ! defined( 'DISALLOW_FILE_EDIT' ) || ! DISALLOW_FILE_EDIT ) && wp_is_file_mod_allowed( 'capability_edit_themes' ) ) {
 			$findings[] = Findings::make( 'file_editing', 'medium' );
 		}
@@ -101,6 +105,50 @@ final class Exposure {
 		return array(
 			'findings' => $findings,
 			'checked'  => $checked,
+		);
+	}
+
+	/**
+	 * PHP without its branch's latest security fixes, or a branch that no longer gets them (2.5.0),
+	 * from the security feed's list (else the plugin's own). Linux distributions (Ubuntu, Debian,
+	 * Red Hat) add fixes to an older version number, so there it's only Medium: the host can tell.
+	 *
+	 * @param string $version PHP_VERSION.
+	 * @param string $extra   PHP_EXTRA_VERSION, e.g. "-1ubuntu1.2".
+	 * @return array<string, mixed>|null
+	 */
+	public static function php( string $version = PHP_VERSION, string $extra = PHP_EXTRA_VERSION ): ?array {
+		$data = Feed::php( Signatures::php() );
+		if ( null === $data || 1 !== preg_match( '/^(\d+)\.(\d+)\.(\d+)/', $version, $m ) ) {
+			return null;
+		}
+		$branch  = $m[1] . '.' . $m[2];
+		$release = $branch . '.' . $m[3];
+		if ( version_compare( $branch, $data['oldest_supported'], '<' ) ) {
+			return Findings::make(
+				'php_unsupported',
+				'high',
+				array(
+					'subject' => $branch,
+					/* translators: %s: PHP version, such as 8.1. */
+					'title'   => sprintf( __( 'PHP %s no longer gets security fixes', 'arvaseo-connector' ), $branch ),
+				)
+			);
+		}
+		$needed = $data['branches'][ $branch ] ?? null;
+		if ( null === $needed || version_compare( $release, $needed, '>=' ) ) {
+			return null; // Up to date, or a newer branch than the list knows.
+		}
+		$distro = '' !== $extra && 1 === preg_match( '/ubuntu|deb|\.el\d|amzn|fc\d|suse/i', $extra ) && false === stripos( $extra, 'sury' );
+		return Findings::make(
+			'php_outdated',
+			$distro ? 'medium' : 'high',
+			array(
+				'subject' => $release,
+				/* translators: 1: PHP version, such as 8.3.30, 2: the date PHP released the fixes. */
+				'title'   => sprintf( __( 'PHP %1$s is missing security fixes from %2$s', 'arvaseo-connector' ), $release, date_i18n( (string) get_option( 'date_format' ), (int) strtotime( $data['released'] . ' 12:00:00' ) ) ),
+				'detail'  => $needed,
+			)
 		);
 	}
 

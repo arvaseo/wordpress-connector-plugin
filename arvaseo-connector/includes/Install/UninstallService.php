@@ -71,6 +71,7 @@ final class UninstallService {
 		HealthSnapshotService::clear();
 		\ArvaSEO\Connector\Security\Scanner::clear();
 		\ArvaSEO\Connector\Security\Findings::clear();
+		\ArvaSEO\Connector\Security\Feed::clear();
 		\ArvaSEO\Connector\Security\DeepScan::clear();
 		PrivacyService::withdraw();
 		delete_option( Settings::OPTION );
