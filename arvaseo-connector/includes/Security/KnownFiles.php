@@ -53,6 +53,8 @@ final class KnownFiles {
 	/**
 	 * Whether a PHP file does nothing but load a security plugin's firewall: comments, constants,
 	 * file checks and includes of that plugin's own files (whose official copies the scan checks).
+	 * A path may be written out, or start from the loader's own folder (__DIR__ . '/wp-content/…'),
+	 * as Wordfence's newer loaders do.
 	 *
 	 * @param string $path Absolute path.
 	 */
@@ -68,13 +70,13 @@ final class KnownFiles {
 		for ( $i = 0; $i < $count; $i++ ) {
 			$token = $tokens[ $i ];
 			if ( is_string( $token ) ) {
-				if ( ! in_array( $token, array( '(', ')', ';', '{', '}', ',', '!' ), true ) ) {
+				if ( ! in_array( $token, array( '(', ')', ';', '{', '}', ',', '!', '.' ), true ) ) {
 					return false;
 				}
 				continue;
 			}
 			list( $id, $text ) = $token;
-			if ( in_array( $id, array( T_OPEN_TAG, T_CLOSE_TAG, T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_CONSTANT_ENCAPSED_STRING, T_LNUMBER, T_IF, T_ELSE, T_BOOLEAN_AND, T_BOOLEAN_OR, T_IS_EQUAL, T_IS_IDENTICAL, T_IS_NOT_EQUAL, T_IS_NOT_IDENTICAL ), true ) ) {
+			if ( in_array( $id, array( T_OPEN_TAG, T_CLOSE_TAG, T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_CONSTANT_ENCAPSED_STRING, T_LNUMBER, T_DIR, T_IF, T_ELSE, T_BOOLEAN_AND, T_BOOLEAN_OR, T_IS_EQUAL, T_IS_IDENTICAL, T_IS_NOT_EQUAL, T_IS_NOT_IDENTICAL ), true ) ) {
 				continue;
 			}
 			if ( T_INLINE_HTML === $id && '' === trim( $text ) ) {
@@ -86,12 +88,22 @@ final class KnownFiles {
 			if ( ! in_array( $id, array( T_INCLUDE, T_INCLUDE_ONCE, T_REQUIRE, T_REQUIRE_ONCE ), true ) ) {
 				return false;
 			}
-			// What's loaded must be one literal path, inside a firewall plugin.
+			// What's loaded must be one literal path, or __DIR__ and one literal, inside a firewall plugin.
 			$next = self::next( $tokens, $i + 1 );
 			if ( '(' === ( $tokens[ $next ] ?? null ) ) {
 				$next = self::next( $tokens, $next + 1 );
 			}
 			$path_token = $tokens[ $next ] ?? null;
+			$folder     = '';
+			if ( is_array( $path_token ) && T_DIR === $path_token[0] ) {
+				$dot = self::next( $tokens, $next + 1 );
+				if ( '.' !== ( $tokens[ $dot ] ?? null ) ) {
+					return false;
+				}
+				$next       = self::next( $tokens, $dot + 1 );
+				$path_token = $tokens[ $next ] ?? null;
+				$folder     = dirname( $path );
+			}
 			if ( ! is_array( $path_token ) || T_CONSTANT_ENCAPSED_STRING !== $path_token[0] ) {
 				return false;
 			}
@@ -99,7 +111,7 @@ final class KnownFiles {
 			if ( ! in_array( $after, array( ';', ')' ), true ) && ! ( is_array( $after ) && T_CLOSE_TAG === $after[0] ) ) {
 				return false;
 			}
-			$loaded = realpath( substr( $path_token[1], 1, -1 ) );
+			$loaded = realpath( $folder . substr( $path_token[1], 1, -1 ) );
 			if ( false === $loaded || null === self::firewall_plugin( $loaded ) ) {
 				return false;
 			}

@@ -205,6 +205,40 @@
 		};
 		window.setTimeout( check, 3000 );
 	}
+	// Speed → Optimized CSS: while page types wait, check every 20 seconds, and reload when one is ready or none wait.
+	var cssWaiting = document.querySelector( '[data-arvaseo-css-waiting]' );
+	if ( cssWaiting && strings.ajaxUrl && strings.cssNonce ) {
+		var readyBefore = parseInt( cssWaiting.getAttribute( 'data-arvaseo-css-ready' ), 10 ) || 0;
+		var checks = 0;
+		var checkCss = function () {
+			if ( ++checks > 45 ) {
+				return; // 15 minutes: Check for results is still there.
+			}
+			var body = new window.FormData();
+			body.append( 'action', 'arvaseo_connector_css_progress' );
+			body.append( '_ajax_nonce', strings.cssNonce );
+			window.fetch( strings.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' } )
+				.then( function ( response ) {
+					return response.json();
+				} )
+				.then( function ( reply ) {
+					if ( ! reply || ! reply.success ) {
+						return;
+					}
+					if ( reply.data.ready > readyBefore || 0 === reply.data.waiting ) {
+						var url = new window.URL( window.location.href );
+						url.searchParams.delete( 'arvaseo_notice' );
+						window.location.replace( url.toString() );
+						return;
+					}
+					window.setTimeout( checkCss, 20000 );
+				} )
+				.catch( function () {
+					window.setTimeout( checkCss, 30000 );
+				} );
+		};
+		window.setTimeout( checkCss, 20000 );
+	}
 	// Health → Deep scan: the same check (it also moves the deep scan on), reloading when it's done.
 	if ( deep && ! running && strings.ajaxUrl && strings.securityNonce ) {
 		var checkDeep = function () {

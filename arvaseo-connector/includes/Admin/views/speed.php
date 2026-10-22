@@ -676,6 +676,11 @@ defined( 'ABSPATH' ) || exit;
 								(int) $arvaseo_css['ready'],
 								(int) $arvaseo_css['waiting']
 							);
+							if ( $arvaseo_css['failed'] > 0 ) {
+								echo ' ';
+								/* translators: %d: page types that couldn't be optimized. */
+								printf( esc_html( _n( '%d couldn’t be optimized.', '%d couldn’t be optimized.', (int) $arvaseo_css['failed'], 'arvaseo-connector' ) ), (int) $arvaseo_css['failed'] );
+							}
 							if ( isset( $arvaseo_allowance['used'], $arvaseo_allowance['limit'] ) ) {
 								echo ' ';
 								printf(
@@ -707,6 +712,36 @@ defined( 'ABSPATH' ) || exit;
 									</form>
 								<?php endforeach; ?>
 							</div>
+							<?php
+							$arvaseo_css_said = \ArvaSEO\Connector\Admin\AdminController::css_notice();
+							if ( null !== $arvaseo_css_said ) :
+								?>
+								<p class="arvaseo-fix-note" role="status"><?php echo esc_html( $arvaseo_css_said ); ?></p>
+							<?php endif; ?>
+							<?php if ( $arvaseo_css['waiting'] > 0 ) : ?>
+								<p class="arvaseo-hint" data-arvaseo-css-waiting="<?php echo esc_attr( (string) $arvaseo_css['waiting'] ); ?>" data-arvaseo-css-ready="<?php echo esc_attr( (string) $arvaseo_css['ready'] ); ?>">
+									<?php
+									/* translators: %d: page types being optimized. */
+									printf( esc_html( _n( 'Being optimized: %d page type. This page checks every 20 seconds and updates when it’s done.', 'Being optimized: %d page types. This page checks every 20 seconds and updates when they’re done.', (int) $arvaseo_css['waiting'], 'arvaseo-connector' ) ), (int) $arvaseo_css['waiting'] );
+									?>
+								</p>
+							<?php endif; ?>
+							<?php $arvaseo_css_failed = \ArvaSEO\Connector\Speed\CssOptimizer::failures(); ?>
+							<?php if ( array() !== $arvaseo_css_failed ) : ?>
+								<div class="arvaseo-css-failed">
+									<h5><?php esc_html_e( 'Couldn’t be optimized', 'arvaseo-connector' ); ?></h5>
+									<ul>
+										<?php foreach ( array_slice( $arvaseo_css_failed, 0, 10 ) as $arvaseo_failure ) : ?>
+											<li>
+												<strong><?php echo esc_html( $arvaseo_failure['label'] ); ?></strong>
+												<a href="<?php echo esc_url( $arvaseo_failure['url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( (string) wp_parse_url( $arvaseo_failure['url'], PHP_URL_PATH ) ); ?></a>
+												<span class="arvaseo-hint"><?php echo esc_html( $arvaseo_failure['reason'] ); ?></span>
+											</li>
+										<?php endforeach; ?>
+									</ul>
+									<p class="arvaseo-hint"><?php esc_html_e( 'Optimize now tries these again. They load as before in the meantime.', 'arvaseo-connector' ); ?></p>
+								</div>
+							<?php endif; ?>
 							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 								<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 								<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />
@@ -1116,9 +1151,8 @@ defined( 'ABSPATH' ) || exit;
 		);
 		?>
 	</span>
-	<button type="button" class="arvaseo-fix-toggle" data-arvaseo-toggle aria-expanded="false" aria-controls="arvaseo-exclusions-form" hidden><?php esc_html_e( 'Choose what to leave alone', 'arvaseo-connector' ); ?></button>
 </div>
-<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-more" id="arvaseo-exclusions-form" data-arvaseo-more="closed" data-arvaseo-hash="arvaseo-speed-exclusions">
+<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-more" id="arvaseo-exclusions-form">
 	<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 	<input type="hidden" name="fix" value="exclusions" />
 	<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>

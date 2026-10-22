@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -210,6 +210,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.6.1 =
+Optimized CSS shows its progress and any page types that failed, with why, next to its buttons. Fewer false alarms for Wordfence's firewall.
+
 = 2.6.0 =
 New: Page caching, off until you turn it on. Pages are saved as ready-made HTML and sent without running WordPress, cleared when they change and refilled in the background.
 
@@ -265,6 +268,13 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.6.1 =
+* Speed, Optimized CSS: the results of Optimize now, Check for results and Regenerate show under the buttons, not at the top of the page. While page types are being optimized, the page checks every 20 seconds and updates when they're ready.
+* Page types that couldn't be optimized are listed with the reason in plain words (for example, a host's bot protection blocking Arva SEO's page renderer). Optimize now tries them again.
+* Missing files that reach your site's not-found page (a stylesheet, a script, manifest.json) are no longer treated as page types to optimize.
+* Leave things alone is always open on the Speed page.
+* Security scan: Wordfence's firewall loader no longer shows as an unexpected file or an .htaccess rule found in hacked websites when it builds its paths from its own folder, as Wordfence's newer loaders do. A loader of anything outside a security plugin is still reported.
 
 = 2.6.0 =
 * New PageSpeed fix, Page caching: pages are saved as ready-made HTML and sent to visitors without running WordPress. On Apache and LiteSpeed the server sends them through rules at the top of .htaccess; elsewhere advanced-cache.php sends them before WordPress loads, with WP_CACHE added to wp-config.php.

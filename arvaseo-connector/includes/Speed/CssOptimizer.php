@@ -28,6 +28,9 @@ final class CssOptimizer {
 
 	public const INDEX = 'arvaseo_connector_css_index';
 
+	/** Files that can reach the 404 template when they're missing; never page types. */
+	private const NOT_PAGES = '/\.(?:css|m?js|map|json|webmanifest|xml|txt|ico|png|jpe?g|gif|webp|avif|svg|woff2?|ttf|otf|eot|mp4|webm|mp3|pdf|zip|gz)$/i';
+
 	public const HOOK = 'arvaseo_connector_css_sync';
 
 	public const FOLDER = 'arvaseo-css';
@@ -346,7 +349,7 @@ JS;
 	/**
 	 * The page types known, by signature.
 	 *
-	 * @return array<string, array{template: string, url: string, status: string, at: int, error?: string, retry_at?: int}>
+	 * @return array<string, array{template: string, url: string, status: string, at: int, error?: string, error_status?: int, retry_at?: int}>
 	 */
 	public static function index(): array {
 		$index = get_option( self::INDEX, array() );
@@ -376,6 +379,9 @@ JS;
 		if ( is_user_logged_in() && ! current_user_can( Capabilities::MANAGE ) ) {
 			return; // Signed-in visitors' pages differ (account menus).
 		}
+		if ( '404' === $template && self::is_file_address( self::current_url() ) ) {
+			return; // A missing stylesheet, script or manifest reaches the 404 template too: only pages count.
+		}
 		$index = self::index();
 		if ( isset( $index[ $signature ] ) ) {
 			return;
@@ -390,6 +396,16 @@ JS;
 		if ( ! wp_next_scheduled( self::HOOK ) ) {
 			wp_schedule_single_event( time() + 30, self::HOOK );
 		}
+	}
+
+	/**
+	 * Whether an address is a file rather than a page (it ends in .css, .js, .json, an image…).
+	 *
+	 * @param string $url Address.
+	 */
+	public static function is_file_address( string $url ): bool {
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		return 1 === preg_match( self::NOT_PAGES, $path );
 	}
 
 	/**
@@ -435,7 +451,7 @@ JS;
 
 		$send = array();
 		foreach ( $index as $signature => $entry ) {
-			if ( 'needed' === $entry['status'] || ( 'no_allowance' === $entry['status'] && ( $entry['retry_at'] ?? 0 ) <= time() ) ) {
+			if ( 'needed' === $entry['status'] || ( in_array( $entry['status'], array( 'no_allowance', 'daily_cap' ), true ) && ( $entry['retry_at'] ?? 0 ) <= time() ) ) {
 				$send[] = array(
 					'signature' => (string) $signature,
 					'url'       => $entry['url'],
@@ -479,8 +495,9 @@ JS;
 					$index[ $signature ]['status'] = 'ready';
 					++$out['ready'];
 				} elseif ( 'failed' === ( $row['status'] ?? '' ) ) {
-					$index[ $signature ]['status'] = 'failed';
-					$index[ $signature ]['error']  = substr( (string) ( $row['error_code'] ?? '' ), 0, 40 );
+					$index[ $signature ]['status']       = 'failed';
+					$index[ $signature ]['error']        = substr( (string) ( $row['error_code'] ?? '' ), 0, 40 );
+					$index[ $signature ]['error_status'] = (int) ( $row['error_status'] ?? 0 );
 				}
 			}
 		}
@@ -618,9 +635,12 @@ JS;
 		);
 		foreach ( self::index() as $entry ) {
 			$status = $entry['status'];
+			if ( 'not_a_page' === $status ) {
+				continue;
+			}
 			if ( 'ready' === $status ) {
 				++$counts['ready'];
-			} elseif ( in_array( $status, array( 'needed', 'requested' ), true ) ) {
+			} elseif ( in_array( $status, array( 'needed', 'requested', 'daily_cap' ), true ) ) {
 				++$counts['waiting'];
 			} elseif ( 'no_allowance' === $status ) {
 				++$counts['no_allowance'];
@@ -629,6 +649,104 @@ JS;
 			}
 		}
 		return $counts;
+	}
+
+	/**
+	 * The page types that couldn't be optimized, with why in plain words.
+	 *
+	 * @return list<array{label: string, url: string, reason: string}>
+	 */
+	public static function failures(): array {
+		$out = array();
+		foreach ( self::index() as $entry ) {
+			if ( in_array( $entry['status'], array( 'failed', 'not_this_site' ), true ) ) {
+				$out[] = array(
+					'label'  => self::template_label( (string) $entry['template'] ),
+					'url'    => (string) $entry['url'],
+					'reason' => 'not_this_site' === $entry['status'] ? __( 'This address isn’t on the website connected to Arva SEO.', 'arvaseo-connector' ) : self::reason( (string) ( $entry['error'] ?? '' ), (int) ( $entry['error_status'] ?? 0 ) ),
+				);
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Ask again for the page types that failed (Optimize now).
+	 */
+	public static function retry_failed(): int {
+		$index = self::index();
+		$count = 0;
+		foreach ( $index as $signature => $entry ) {
+			if ( 'failed' === $entry['status'] ) {
+				$index[ $signature ]['status'] = 'needed';
+				unset( $index[ $signature ]['error'], $index[ $signature ]['error_status'] );
+				++$count;
+			}
+		}
+		if ( $count > 0 ) {
+			self::save_index( $index );
+		}
+		return $count;
+	}
+
+	/**
+	 * Why a page type couldn't be optimized, from Arva SEO's error code and the page's status.
+	 *
+	 * @param string $code   Error code.
+	 * @param int    $status The page's HTTP status, 0 when unknown.
+	 */
+	public static function reason( string $code, int $status ): string {
+		if ( 'page_error' === $code ) {
+			if ( in_array( $status, array( 401, 403, 429 ), true ) ) {
+				return __( 'Your host’s bot protection blocked Arva SEO from loading the page. Arva SEO now tries again under its own name, ArvaSEO-Bot; if it still fails, ask your host to allow ArvaSEO-Bot.', 'arvaseo-connector' );
+			}
+			if ( $status >= 500 ) {
+				/* translators: %d: HTTP status, such as 503. */
+				return sprintf( __( 'The page answered with a server error (%d).', 'arvaseo-connector' ), $status );
+			}
+			return $status > 0
+				/* translators: %d: HTTP status, such as 410. */
+				? sprintf( __( 'The page answered with an error (%d).', 'arvaseo-connector' ), $status )
+				: __( 'The page didn’t load.', 'arvaseo-connector' );
+		}
+		return match ( $code ) {
+			'timeout'      => __( 'The page took too long to load.', 'arvaseo-connector' ),
+			'too_large'    => __( 'The page’s styles are too large to optimize.', 'arvaseo-connector' ),
+			'not_allowed'  => __( 'The page loads from an address Arva SEO doesn’t load (a private network).', 'arvaseo-connector' ),
+			default        => __( 'Arva SEO couldn’t work this page out.', 'arvaseo-connector' ),
+		};
+	}
+
+	/**
+	 * A page type's name for people: Homepage, Pages, Posts, Not found page…
+	 *
+	 * @param string $template Page type.
+	 */
+	public static function template_label( string $template ): string {
+		$fixed = array(
+			'front'    => __( 'Homepage', 'arvaseo-connector' ),
+			'blog'     => __( 'Blog page', 'arvaseo-connector' ),
+			'404'      => __( 'Not found page', 'arvaseo-connector' ),
+			'search'   => __( 'Search results', 'arvaseo-connector' ),
+			'category' => __( 'Categories', 'arvaseo-connector' ),
+			'tag'      => __( 'Tags', 'arvaseo-connector' ),
+			'author'   => __( 'Author pages', 'arvaseo-connector' ),
+			'date'     => __( 'Date archives', 'arvaseo-connector' ),
+		);
+		if ( isset( $fixed[ $template ] ) ) {
+			return $fixed[ $template ];
+		}
+		if ( 1 === preg_match( '/^(single|archive)-(.+)$/', $template, $m ) ) {
+			$type = get_post_type_object( $m[2] );
+			$name = null !== $type ? (string) $type->labels->name : $m[2];
+			/* translators: %s: a post type's name, such as Products. */
+			return 'single' === $m[1] ? $name : sprintf( __( '%s list', 'arvaseo-connector' ), $name );
+		}
+		if ( 1 === preg_match( '/^tax-(.+)$/', $template, $m ) ) {
+			$tax = get_taxonomy( $m[1] );
+			return false !== $tax ? (string) $tax->labels->name : $m[1];
+		}
+		return __( 'Other pages', 'arvaseo-connector' );
 	}
 
 	/**

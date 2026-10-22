@@ -237,6 +237,12 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app .arvaseo-fix-toggle::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform 0.15s ease; }
 .arvaseo-app .arvaseo-fix-toggle[aria-expanded="true"]::after { transform: translateY(1px) rotate(-135deg); }
 .arvaseo-fix-more[hidden] { display: none; }
+.arvaseo-fix-note { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--a-sunken); font-weight: 500; }
+.arvaseo-css-failed { margin: 0 0 14px; padding: 12px 14px; border-radius: 10px; background: var(--a-sunken); }
+.arvaseo-css-failed h5 { margin: 0 0 8px; font-size: 13px; }
+.arvaseo-css-failed ul { margin: 0 0 8px; padding: 0; list-style: none; }
+.arvaseo-css-failed li { display: flex; flex-wrap: wrap; gap: 2px 8px; margin: 0 0 8px; }
+.arvaseo-css-failed li .arvaseo-hint { flex-basis: 100%; }
 .arvaseo-collapse-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 4px; }
 .arvaseo-collapse-head + .arvaseo-fix-more { margin-top: 12px; }
 .arvaseo-fix-more-in { margin-top: 14px; padding: 16px; border-radius: 12px; background: var(--a-sunken); }

@@ -86,6 +86,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_security_repair', array( self::class, 'security_repair' ) );
 		add_action( 'admin_post_arvaseo_connector_security_undo', array( self::class, 'security_undo' ) );
 		add_action( 'wp_ajax_arvaseo_connector_security_progress', array( self::class, 'security_progress' ) );
+		add_action( 'wp_ajax_arvaseo_connector_css_progress', array( self::class, 'css_progress' ) );
 		add_action( 'admin_post_arvaseo_connector_deactivate_other', array( self::class, 'deactivate_other' ) );
 		add_action( 'admin_post_arvaseo_connector_keep_others', array( self::class, 'keep_others' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
@@ -480,6 +481,23 @@ final class AdminController {
 	}
 
 	/**
+	 * The optimized CSS buttons' results, shown under the buttons instead of at the top of the page
+	 * (codes only in the URL, never data).
+	 *
+	 * @return string|null
+	 */
+	public static function css_notice(): ?string {
+		$code    = isset( $_GET['arvaseo_notice'] ) ? sanitize_key( wp_unslash( $_GET['arvaseo_notice'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
+		$notices = array(
+			'speed_css_queued'     => __( 'Sent to Arva SEO: your homepage, your main page types and any that failed before. Optimized CSS is usually ready within a few minutes; this page checks by itself while it’s open.', 'arvaseo-connector' ),
+			'speed_css_regenerate' => __( 'The optimized CSS will be worked out again, each page type using a page optimization. This page checks by itself while it’s open.', 'arvaseo-connector' ),
+			'speed_css_ready'      => __( 'New optimized CSS is ready.', 'arvaseo-connector' ),
+			'speed_css_waiting'    => __( 'Nothing new yet. Arva SEO is still working on it; this page checks by itself while it’s open.', 'arvaseo-connector' ),
+		);
+		return $notices[ $code ] ?? null;
+	}
+
+	/**
 	 * Result notices after actions (codes only in the URL, never data).
 	 */
 	private static function notice(): void {
@@ -512,10 +530,6 @@ final class AdminController {
 			'speed_unavailable'              => array( 'error', __( 'This fix isn’t available on this server.', 'arvaseo-connector' ) ),
 			'speed_try_first'                => array( 'error', __( 'Try Defer scripts first, check your important pages, then turn it on.', 'arvaseo-connector' ) ),
 			'speed_check_pages'              => array( 'error', __( 'Tick each page you checked while trying Defer scripts before you turn it on.', 'arvaseo-connector' ) ),
-			'speed_css_queued'               => array( 'success', __( 'Your homepage and main page types were sent to Arva SEO. Their optimized CSS is usually ready within a few minutes; other page types follow as they’re visited.', 'arvaseo-connector' ) ),
-			'speed_css_regenerate'           => array( 'success', __( 'The optimized CSS will be worked out again, each page type using a page optimization.', 'arvaseo-connector' ) ),
-			'speed_css_ready'                => array( 'success', __( 'New optimized CSS is ready.', 'arvaseo-connector' ) ),
-			'speed_css_waiting'              => array( 'success', __( 'Nothing new yet. Arva SEO is still working on it; check again in a minute.', 'arvaseo-connector' ) ),
 			'speed_webp_started'             => array( 'success', __( 'Converting your existing images in the background. You can leave this page; come back to see how far it got.', 'arvaseo-connector' ) ),
 			'speed_webp_stopped'             => array( 'success', __( 'Stopped. Images converted so far keep their WebP copies; Continue picks up where it stopped.', 'arvaseo-connector' ) ),
 			'speed_webp_undone'              => array( 'success', __( 'The WebP copies of your existing images were removed. Pages show the originals again.', 'arvaseo-connector' ) ),
@@ -833,6 +847,22 @@ final class AdminController {
 	}
 
 	/**
+	 * The Speed page's optimized CSS, while page types are waiting: fetches what's ready (at most
+	 * every 15 seconds, however many tabs are open) and says how many are ready, waiting and failed.
+	 */
+	public static function css_progress(): void {
+		check_ajax_referer( 'arvaseo_connector_css_progress' );
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
+			wp_send_json_error( null, 403 );
+		}
+		if ( false === get_transient( 'arvaseo_connector_css_polled' ) ) {
+			set_transient( 'arvaseo_connector_css_polled', 1, 15 );
+			\ArvaSEO\Connector\Speed\CssOptimizer::sync();
+		}
+		wp_send_json_success( \ArvaSEO\Connector\Speed\CssOptimizer::counts() );
+	}
+
+	/**
 	 * Recheck the website (runs in the background).
 	 */
 	public static function recheck(): void {
@@ -980,6 +1010,7 @@ final class AdminController {
 			$ready  = \ArvaSEO\Connector\Speed\CssOptimizer::sync()['ready'];
 			$notice = $ready > 0 ? 'speed_css_ready' : 'speed_css_waiting';
 		} else {
+			\ArvaSEO\Connector\Speed\CssOptimizer::retry_failed();
 			\ArvaSEO\Connector\Speed\CssOptimizer::queue_samples();
 			\ArvaSEO\Connector\Speed\CssOptimizer::sync();
 			$notice = 'speed_css_queued';
@@ -1203,6 +1234,7 @@ final class AdminController {
 				'confirmCloudflareOff'   => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
 				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
 				'securityNonce'          => wp_create_nonce( 'arvaseo_connector_security_progress' ),
+				'cssNonce'               => wp_create_nonce( 'arvaseo_connector_css_progress' ),
 				/* translators: 1: what the scan is checking, 2: number of files. */
 			)
 		);
