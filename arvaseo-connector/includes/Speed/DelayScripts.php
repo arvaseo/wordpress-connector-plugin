@@ -70,11 +70,24 @@ final class DelayScripts {
 	public static function choose(): void {
 		$scripts = wp_scripts();
 		$listed  = Fixes::stored()['delay_scripts'];
+		$broad   = Fixes::applies( 'defer_scripts' ) && 'delayed' === Fixes::stored()['js_loading_mode'];
 		$needed  = array();
-		foreach ( $scripts->queue as $handle ) {
+		$pending = $scripts->queue;
+		$visited = array();
+		while ( $pending ) {
+			$handle = array_pop( $pending );
+			if ( isset( $visited[ $handle ] ) ) {
+				continue;
+			}
+			$visited[ $handle ] = true;
+			if ( count( $visited ) > 2000 ) {
+				$needed = array_fill_keys( $scripts->queue, true );
+				break;
+			}
 			$queued = $scripts->registered[ $handle ] ?? null;
 			foreach ( null !== $queued ? $queued->deps : array() as $dep ) {
 				$needed[ (string) $dep ] = true;
+				$pending[]               = (string) $dep;
 			}
 		}
 		foreach ( $scripts->queue as $handle ) {
@@ -82,7 +95,12 @@ final class DelayScripts {
 			if ( null === $script || ! is_string( $script->src ) || '' === $script->src || isset( $needed[ $handle ] ) ) {
 				continue;
 			}
-			if ( self::delays( (string) $handle, $script->src, $listed ) ) {
+			// The broader mode still leaves dependencies, consent, measurement and listed exclusions alone.
+			$eligible  = $broad && ! Exclusions::leaves_script( (string) $handle, $script->src )
+				&& ! in_array( $handle, array( 'admin-bar', 'wp-auth-check' ), true )
+				&& ! preg_match( self::NEVER_PATTERN, $handle . ' ' . $script->src );
+			$selective = Fixes::applies( 'delay_scripts' ) || ! $broad;
+			if ( self::delays( (string) $handle, $script->src, $selective ? $listed : array(), $eligible, $selective ) ) {
 				self::$delayed[ (string) $handle ] = true;
 			}
 		}
@@ -95,16 +113,18 @@ final class DelayScripts {
 	 * @param string   $handle Script handle.
 	 * @param string   $src    Script address.
 	 * @param string[] $listed The administrator's list.
+	 * @param bool     $eligible_default Eligible in broader delayed loading mode.
+	 * @param bool     $allow_known Also apply the selective widget list.
 	 */
-	public static function delays( string $handle, string $src, array $listed ): bool {
-		$delay = false;
+	public static function delays( string $handle, string $src, array $listed, bool $eligible_default = false, bool $allow_known = true ): bool {
+		$delay = $eligible_default;
 		foreach ( $listed as $entry ) {
 			if ( $entry === $handle || ( ( str_contains( $entry, '/' ) || str_contains( $entry, '.' ) ) && false !== stripos( $src, $entry ) ) ) {
 				$delay = true;
 				break;
 			}
 		}
-		if ( ! $delay && ! preg_match( self::NEVER_PATTERN, $handle . ' ' . $src ) ) {
+		if ( ! $delay && $allow_known && ! preg_match( self::NEVER_PATTERN, $handle . ' ' . $src ) ) {
 			foreach ( self::KNOWN as $known ) {
 				if ( false !== stripos( $src, $known ) ) {
 					$delay = true;
@@ -130,13 +150,24 @@ final class DelayScripts {
 	 * @return mixed
 	 */
 	public static function tag( $tag, $handle ) {
-		if ( ! is_string( $tag ) || ! isset( self::$delayed[ (string) $handle ] ) || str_contains( $tag, 'type="module"' ) ) {
+		if ( ! is_string( $tag ) || ! isset( self::$delayed[ (string) $handle ] ) ) {
 			return $tag;
+		}
+		// If any printed part is protected or unsupported, preserve the complete handle and its inline parts.
+		$preflight = new \WP_HTML_Tag_Processor( $tag );
+		while ( $preflight->next_tag( array( 'tag_name' => 'script' ) ) ) {
+			$type = strtolower( trim( (string) $preflight->get_attribute( 'type' ) ) );
+			if ( ! in_array( $type, array( '', 'text/javascript', 'application/javascript' ), true ) || null !== $preflight->get_attribute( Exclusions::SKIP_ATTRIBUTE ) || null !== $preflight->get_attribute( 'nomodule' ) ) {
+				return $tag;
+			}
+			foreach ( $preflight->get_attribute_names_with_prefix( 'on' ) ?? array() as $event ) {
+				return $tag; // Moving a script must not replace its own load/error callbacks.
+			}
 		}
 		$tags = new \WP_HTML_Tag_Processor( $tag );
 		while ( $tags->next_tag( array( 'tag_name' => 'script' ) ) ) {
-			$type = $tags->get_attribute( 'type' );
-			if ( is_string( $type ) && '' !== $type && ! in_array( strtolower( $type ), array( 'text/javascript', 'application/javascript' ), true ) ) {
+			$type = trim( (string) $tags->get_attribute( 'type' ) );
+			if ( '' !== $type && ! in_array( strtolower( $type ), array( 'text/javascript', 'application/javascript' ), true ) ) {
 				continue; // JSON data, templates and the like stay as they are.
 			}
 			$tags->set_attribute( 'type', self::TYPE );
@@ -163,6 +194,7 @@ var list=[].slice.call(document.querySelectorAll('script[type="arvaseo/delay"]')
 (function next(){var old=list.shift();if(!old)return;var s=document.createElement('script');
 [].slice.call(old.attributes).forEach(function(a){if(a.name!=='type'&&a.name!=='data-arvaseo-src')s.setAttribute(a.name,a.value);});
 var src=old.getAttribute('data-arvaseo-src');if(src){s.src=src;s.async=false;s.onload=s.onerror=next;}else{s.text=old.text;}
+if(old.nonce)s.nonce=old.nonce;
 old.parentNode.replaceChild(s,old);if(!src)next();})();}
 ev.forEach(function(e){addEventListener(e,go,{passive:true});});})();
 JS;

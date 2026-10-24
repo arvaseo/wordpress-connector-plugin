@@ -142,6 +142,7 @@ final class CronManager {
 		self::clear_sync();
 		wp_clear_scheduled_hook( 'arvaseo_connector_maintenance' );
 		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\Cloudflare::HOOK );
+		wp_unschedule_hook( \ArvaSEO\Connector\Speed\ExternalAssets::HOOK );
 		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::HOOK );
 		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::WEEKLY );
 	}

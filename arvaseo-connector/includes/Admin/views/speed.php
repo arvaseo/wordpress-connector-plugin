@@ -470,7 +470,7 @@ defined( 'ABSPATH' ) || exit;
 
 			<?php
 			// Details: closed unless something in it is running or being tried.
-			$arvaseo_options = in_array( $arvaseo_id, array( 'page_cache', 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts', 'combine_css', 'combine_js' ), true ) && 'handled' !== $arvaseo_state;
+			$arvaseo_options = in_array( $arvaseo_id, array( 'page_cache', 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts', 'combine_css', 'combine_js', 'combine_inline_css', 'combine_inline_js', 'combine_external_css', 'combine_external_js' ), true ) && 'handled' !== $arvaseo_state;
 			$arvaseo_open    = false;
 			if ( 'webp_uploads' === $arvaseo_id ) {
 				$arvaseo_open = $arvaseo_webp['running'];
@@ -516,6 +516,18 @@ defined( 'ABSPATH' ) || exit;
 			}
 			?>
 		</div>
+
+
+			<?php if ( 'compress_images' === $arvaseo_id && ! in_array( $arvaseo_state, array( 'handled', 'unavailable' ), true ) ) : ?>
+				<?php
+				$arvaseo_render_library = include __DIR__ . '/speed-image-library.php';
+				$arvaseo_render_library( $arvaseo_cmp, $arvaseo_cmp_lib, $arvaseo_state );
+				?>
+			<p class="arvaseo-hint"><a href="<?php echo esc_url( admin_url( 'upload.php?mode=list' ) ); ?>"><?php esc_html_e( 'Choose specific images in the Media Library', 'arvaseo-connector' ); ?></a> · <?php esc_html_e( 'Local compression uses no credits. Consented cloud compression uses your image allowance only when it makes an image smaller.', 'arvaseo-connector' ); ?></p>
+				<?php if ( ! $arvaseo_cmp['keep_originals'] ) : ?>
+				<p class="arvaseo-hint"><?php esc_html_e( 'Original backups are currently disabled. Enable Keep the originals below before compressing if you want to restore these images later.', 'arvaseo-connector' ); ?></p>
+			<?php endif; ?>
+		<?php endif; ?>
 
 			<?php if ( 'defer_scripts' === $arvaseo_id && 'trying' === $arvaseo_state ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-checklist" data-arvaseo-confirm="confirmDefer">
@@ -576,6 +588,10 @@ defined( 'ABSPATH' ) || exit;
 				<?php endif; ?>
 
 				<?php if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) : ?>
+					<?php
+					$arvaseo_render_advanced = include __DIR__ . '/speed-advanced.php';
+					$arvaseo_render_advanced( $arvaseo_id, $arvaseo_stored );
+					?>
 					<?php if ( 'page_cache' === $arvaseo_id ) : ?>
 						<?php if ( 'on' === $arvaseo_state && $arvaseo_pc['active'] ) : ?>
 							<?php $arvaseo_pc_stats = PageCache::stats(); ?>
@@ -734,7 +750,15 @@ defined( 'ABSPATH' ) || exit;
 						</p>
 						<div class="arvaseo-fix-sub">
 							<h4><?php esc_html_e( 'Optimized CSS: work it out again, or leave stylesheets alone', 'arvaseo-connector' ); ?></h4>
-							<p class="arvaseo-hint"><?php esc_html_e( 'Pages are grouped by type (homepage, page, post, product, category…) and by their stylesheets; each group uses one page optimization. A stylesheet that changes, after a theme or plugin update, makes a new group; clearing your cache costs nothing.', 'arvaseo-connector' ); ?></p>
+							<p class="arvaseo-hint">
+							<?php
+							if ( $arvaseo_stored['ccss_per_url'] ) {
+								esc_html_e( 'Each public page address and its stylesheets get separate critical and used CSS. New page results use page optimizations; clearing the page cache does not regenerate CSS.', 'arvaseo-connector' );
+							} else {
+								esc_html_e( 'Pages are grouped by type (homepage, page, post, product, category…) and by their stylesheets; each group uses one page optimization. A stylesheet that changes, after a theme or plugin update, makes a new group; clearing your cache costs nothing.', 'arvaseo-connector' );
+							}
+							?>
+							</p>
 							<div class="arvaseo-row" style="margin: 12px 0">
 								<?php
 								foreach ( array(
@@ -885,51 +909,7 @@ defined( 'ABSPATH' ) || exit;
 								</p>
 							<?php endif; ?>
 						</div>
-						<div class="arvaseo-fix-sub">
-							<h4><?php esc_html_e( 'Compress your existing images too', 'arvaseo-connector' ); ?></h4>
-							<p class="arvaseo-hint"><?php esc_html_e( 'Each JPEG and PNG in your media library, with its sizes, is saved smaller in the background, a few images at a time. A file is replaced only when it gets at least 5% smaller, and its original is kept, so Restore puts it back.', 'arvaseo-connector' ); ?></p>
-							<?php if ( $arvaseo_cmp_lib['images'] > 0 ) : ?>
-								<p>
-									<progress max="<?php echo esc_attr( (string) $arvaseo_cmp_lib['images'] ); ?>" value="<?php echo esc_attr( (string) min( $arvaseo_cmp_lib['done'], $arvaseo_cmp_lib['images'] ) ); ?>"></progress>
-									<?php
-									/* translators: 1: images looked at, 2: images in the library. */
-									echo esc_html( sprintf( __( '%1$s of %2$s images done.', 'arvaseo-connector' ), number_format_i18n( min( $arvaseo_cmp_lib['done'], $arvaseo_cmp_lib['images'] ) ), number_format_i18n( $arvaseo_cmp_lib['images'] ) ) );
-									echo $arvaseo_cmp['running'] ? ' ' . esc_html__( 'Compressing…', 'arvaseo-connector' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
-									echo $arvaseo_cmp['restoring'] ? ' ' . esc_html__( 'Putting the originals back…', 'arvaseo-connector' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
-									?>
-								</p>
-							<?php endif; ?>
-							<div class="arvaseo-row">
-								<?php
-								foreach ( array_filter(
-									array(
-										'start'   => ! $arvaseo_cmp['running'] && ! $arvaseo_cmp['restoring'] && 'on' === $arvaseo_state,
-										'stop'    => $arvaseo_cmp['running'],
-										'restore' => ! $arvaseo_cmp['restoring'] && $arvaseo_cmp_lib['done'] > 0,
-									)
-								) as $arvaseo_do => $arvaseo_show ) :
-									?>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-inline-form"<?php echo 'restore' === $arvaseo_do ? ' data-arvaseo-confirm="confirmCompressRestore"' : ''; ?>>
-										<input type="hidden" name="action" value="arvaseo_connector_compress" />
-										<input type="hidden" name="do" value="<?php echo esc_attr( $arvaseo_do ); ?>" />
-										<?php wp_nonce_field( 'arvaseo_connector_compress' ); ?>
-										<button type="submit" class="arvaseo-btn arvaseo-btn--sm">
-											<?php
-											$arvaseo_labels = array(
-												'start'   => $arvaseo_cmp['done'] > 0 && null === $arvaseo_cmp['finished_at'] ? __( 'Continue', 'arvaseo-connector' ) : ( null !== $arvaseo_cmp['finished_at'] ? __( 'Compress images added since', 'arvaseo-connector' ) : __( 'Compress existing images', 'arvaseo-connector' ) ),
-												'stop'    => __( 'Stop', 'arvaseo-connector' ),
-												'restore' => __( 'Restore the originals', 'arvaseo-connector' ),
-											);
-											echo esc_html( $arvaseo_labels[ $arvaseo_do ] );
-											?>
-										</button>
-									</form>
-								<?php endforeach; ?>
-								<?php if ( 'on' !== $arvaseo_state ) : ?>
-									<span class="arvaseo-hint"><?php esc_html_e( 'Turn on Compress images first.', 'arvaseo-connector' ); ?></span>
-								<?php endif; ?>
-							</div>
-						</div>
+
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
 							<h4><?php esc_html_e( 'Where images are compressed, and the originals', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_compress" />
@@ -988,6 +968,13 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php if ( 'defer_scripts' === $arvaseo_id ) : ?>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<h4><?php esc_html_e( 'JavaScript loading mode', 'arvaseo-connector' ); ?></h4>
+							<p class="arvaseo-hint"><?php esc_html_e( 'Deferred runs supported scripts after HTML is parsed. Delayed waits for the first interaction. Dependencies, consent tools, measurement scripts and your exclusions load as before. Changing a public mode returns this fix to preview until you check your pages again.', 'arvaseo-connector' ); ?></p>
+							<fieldset class="arvaseo-checks">
+								<legend class="screen-reader-text"><?php esc_html_e( 'When JavaScript loads', 'arvaseo-connector' ); ?></legend>
+								<label><input type="radio" name="js_loading_mode" value="deferred" <?php checked( $arvaseo_stored['js_loading_mode'], 'deferred' ); ?> /> <?php esc_html_e( 'Deferred', 'arvaseo-connector' ); ?></label>
+								<label><input type="radio" name="js_loading_mode" value="delayed" <?php checked( $arvaseo_stored['js_loading_mode'], 'delayed' ); ?> /> <?php esc_html_e( 'Delayed', 'arvaseo-connector' ); ?></label>
+							</fieldset>
 							<h4><?php esc_html_e( 'Leave scripts alone', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="defer_scripts" />

@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.9.0
+Stable tag: 2.10.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,7 +31,10 @@ Arva SEO → Speed lists each fix with the PageSpeed (Lighthouse) problem it add
 * **Browser caching and compression** on Apache and LiteSpeed: year-long browser caching for images, fonts, styles and scripts, and compressed pages, as rules in .htaccess that are checked straight away and taken out again if your site doesn't answer normally (Serve static assets with an efficient cache policy; Enable text compression)
 * **Remove unused WordPress extras** you choose: the emoji script, embed discovery, Dashicons for visitors, jQuery Migrate, block styles on pages without blocks
 * **New uploads as WebP**, and convert the images already in your media library in the background, keeping the originals (Serve images in next-gen formats)
-* **Compress images**, new uploads and the media library, on your server or Arva SEO's, keeping the originals (Efficiently encode images)
+* **Compress images**, new uploads and existing Media Library JPEG/PNG/WebP images, with background batches, saved-byte status, selected-image bulk actions and original restoration. WebP compression is local; optional consented cloud compression uses the site's image allowance for JPEG/PNG only (Efficiently encode images)
+* **Inline CSS and JavaScript minification** without moving the original tags; **inline and external combining** with explicit static snippet and public HTTPS URL approvals, background asset caching and original delivery when unsupported
+* **CSS delivery options**: inline or cached-file used CSS (UCSS), generation per URL or page type, inline or external asynchronous CSS library, and font-display swap for supported styles
+* **JavaScript loading mode**: deferred or delayed until interaction for supported independent classic scripts, retaining dependencies, consent/measurement tools and exclusions
 
 If you allow it on the Speed page ("Let Arva SEO switch these fixes", off by default), the people who manage this website in Arva SEO can try, turn on and turn off the fixes from its PageSpeed results, by the same rules as the page: a fix that can be tried goes on for everyone only after it's been tried, Defer scripts goes on only in WordPress, and turning a fix off always works. Every change is in Arva SEO → Activity with who asked.
 
@@ -180,7 +183,7 @@ Credentials are always revoked and removed. Settings, logs and delivery records 
 
 == External services ==
 
-This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service, and only after an administrator connects it. Nothing is sent before then.
+Connecting to Arva SEO (https://arvaseo.com) is optional and starts only when an administrator connects the site. Local fixes work without an account. The optional features below contact their listed services only when you enable or use them.
 
 * **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, and your data-sharing choice.
 * **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
@@ -191,6 +194,7 @@ This plugin connects your site to Arva SEO (https://arvaseo.com), an SEO service
 * **Switching fixes from Arva SEO (off by default):** when allowed, the plugin asks api.arvaseo.com every 5 minutes (and when Arva SEO signals it) for fixes switched there, and reports back what it did and each fix's state.
 * **Signed requests from Arva SEO:** api.arvaseo.com may call this site's /wp-json/arvaseo/v1/events endpoint to ask it to check for content or run a recheck sooner.
 * **Featured images (off by default):** only from image hosts you approve.
+* **Combine external CSS/JavaScript (off by default):** only exact public HTTPS asset URLs the administrator approves. The site's server requests those public files in the background, without visitor cookies, account credentials or page content, and keeps bounded six-hour copies for combining. The selected asset host receives the requested address and the server's IP address. Personal, signed, redirected and unsupported responses are not cached. No new files are requested merely because a URL is approved; a page must already use that resource.
 * **Load styles faster and Remove unused CSS (PageSpeed fixes, off by default, only when connected):** the plugin sends api.arvaseo.com the address of one public page of each type, and Arva SEO's renderer loads it like a visitor to work out its styles; the critical and used CSS come back to this site. Only page addresses are sent. While Arva SEO loads a page, the address carries a short-lived signed parameter so the page is served with its original styles.
 * **Faster Google Fonts, "Serve them from your site" (off by default):** the plugin downloads the Google Fonts stylesheets and font files your pages already use from fonts.googleapis.com and fonts.gstatic.com, once, into your uploads folder, so visitors' browsers no longer connect to Google for them. Google's privacy policy: https://policies.google.com/privacy
 * **Cloudflare (off until you connect it on the Speed page):** with the API token you enter, the plugin asks api.cloudflare.com which zone your site's domain is in, reads the Rocket Loader setting, and asks Cloudflare to clear its cached copy of your pages when they change. Only page addresses and the token are sent. Cloudflare's terms: https://www.cloudflare.com/website-terms/ · Privacy policy: https://www.cloudflare.com/privacypolicy/
@@ -219,6 +223,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.10.0 =
+Adds advanced inline/external CSS and JS controls, CSS delivery choices, delayed loading mode, font-display swap, and Media Library compression actions. New switches start Off; existing delivery defaults are retained. Review approved public resources and preview changes before turning them on.
 
 = 2.9.0 =
 New optional Combine CSS and Combine JavaScript controls in Arva SEO → Speed. Both start off. Existing minification, Critical CSS and script-loading settings are preserved.
@@ -291,6 +298,13 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.0 =
+* New: inline CSS/JavaScript minification and explicitly approved static inline/external sources in compatible ordered bundles; external files are cached in bounded pinned background requests, never fetched while rendering pages.
+* New: inline or cached-file UCSS, per-URL CSS generation, inline/external asynchronous CSS loader and supported font-display swap.
+* New: deferred/delayed JavaScript loading choice under the existing script control; changing the public mode returns it to preview.
+* Improved: existing-image compression is visible directly on the Speed card and available as a native Media Library bulk action, with queue/compression/savings status. Added lossless local WebP compression while retaining originals and cloud consent/allowances.
+* Kept: default-off new switches, existing settings, exclusions, optimized-CSS delivery, source files and unsupported-resource fallback.
 
 = 2.9.0 =
 * New: separate opt-in Combine CSS and Combine JavaScript controls with administrator-only Try mode and existing file/page exclusions.

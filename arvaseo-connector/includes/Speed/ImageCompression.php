@@ -1,8 +1,8 @@
 <?php
 /**
- * Compress images: the media library's JPEG and PNG files saved smaller. On Arva SEO's servers
+ * Compress images: the media library's JPEG, PNG and WebP files saved smaller. On Arva SEO's servers
  * when the site is connected and an administrator allowed it (counted against the plan's monthly
- * image compressions), otherwise on this server.
+ * image compressions), otherwise on this server. WebP files stay on this server.
  *
  * @package ArvaSEO\Connector
  */
@@ -67,7 +67,7 @@ final class ImageCompression {
 
 	private const QUEUE_MAX = 1000;
 
-	private const MIMES = array( 'image/jpeg', 'image/png' );
+	private const MIMES = array( 'image/jpeg', 'image/png', 'image/webp' );
 
 	/**
 	 * Hooks: the batches, new uploads, and deleted images.
@@ -113,6 +113,33 @@ final class ImageCompression {
 			'saved_bytes' => max( 0, (int) ( $saved['saved_bytes'] ?? 0 ) ),
 			'cloud'       => max( 0, (int) ( $saved['cloud'] ?? 0 ) ),
 		);
+	}
+
+	/**
+	 * Current files checked and measured bytes saved, for native Media Library feedback.
+	 * A file changed since compression is not reported as done or included in its savings.
+	 *
+	 * @param int $id Attachment ID.
+	 * @return array{files: int, done: int, saved_bytes: int}
+	 */
+	public static function attachment_status( int $id ): array {
+		$files  = self::files( $id );
+		$record = self::record( $id );
+		$status = array(
+			'files'       => count( $files ),
+			'done'        => 0,
+			'saved_bytes' => 0,
+		);
+		foreach ( $files as $name => $file ) {
+			$done = $record[ $name ] ?? null;
+			clearstatcache( true, $file['path'] );
+			if ( ! is_array( $done ) || ! isset( $done[0], $done[1] ) || (int) @filesize( $file['path'] ) !== (int) $done[1] ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a missing file is not done.
+				continue;
+			}
+			++$status['done'];
+			$status['saved_bytes'] += max( 0, (int) $done[0] - (int) $done[1] );
+		}
+		return $status;
 	}
 
 	/**
@@ -183,7 +210,7 @@ final class ImageCompression {
 	public static function library(): array {
 		global $wpdb;
 		return array(
-			'images' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type IN ('image/jpeg', 'image/png')" ), // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- a count for the Speed page.
+			'images' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type IN ('image/jpeg', 'image/png', 'image/webp')" ), // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- a count for the Speed page.
 			'done'   => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s", self::META ) ), // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- see above.
 		);
 	}
@@ -292,7 +319,7 @@ final class ImageCompression {
 	private static function library_batch( float $until ): ?int {
 		global $wpdb;
 		$state = self::state();
-		$ids   = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type IN ('image/jpeg', 'image/png') AND ID > %d ORDER BY ID ASC LIMIT 10", $state['last_id'] ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- a batch.
+		$ids   = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type IN ('image/jpeg', 'image/png', 'image/webp') AND ID > %d ORDER BY ID ASC LIMIT 10", $state['last_id'] ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- a batch.
 		foreach ( $ids as $id ) {
 			if ( microtime( true ) >= $until ) {
 				return 5;
@@ -386,8 +413,10 @@ final class ImageCompression {
 
 		$results = array(); // name => [temporary file, where].
 		$sent    = array(); // Names Arva SEO's servers looked at: not tried again here.
-		if ( self::cloud_ready() ) {
-			$cloud = self::cloud( $id, $todo );
+		// The cloud endpoint accepts JPEG/PNG; WebP stays on this server.
+		$cloud_files = array_filter( $todo, static fn ( $file ) => 'image/webp' !== $file['mime'] );
+		if ( array() !== $cloud_files && self::cloud_ready() ) {
+			$cloud = self::cloud( $id, $cloud_files );
 			if ( 'later' === $cloud ) {
 				return null;
 			}
@@ -399,7 +428,7 @@ final class ImageCompression {
 			}
 		}
 		foreach ( $todo as $name => $file ) {
-			if ( ! isset( $results[ $name ] ) && ! in_array( $name, $sent, true ) && ( 'full' === $file['size'] || 'image/png' === $file['mime'] ) ) {
+			if ( ! isset( $results[ $name ] ) && ! in_array( $name, $sent, true ) && ( 'full' === $file['size'] || 'image/jpeg' !== $file['mime'] ) ) {
 				$tmp = self::local( $file['path'], $file['mime'] );
 				if ( null !== $tmp ) {
 					$results[ $name ] = array( $tmp, 'local' );
@@ -493,7 +522,7 @@ final class ImageCompression {
 	 * Save a file smaller here. Returns a temporary file at least 5% smaller, or null.
 	 *
 	 * @param string $path Absolute path.
-	 * @param string $mime image/jpeg or image/png.
+	 * @param string $mime image/jpeg, image/png or image/webp.
 	 */
 	public static function local( string $path, string $mime ): ?string {
 		$size = (int) @filesize( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unreadable files are skipped.
@@ -502,7 +531,7 @@ final class ImageCompression {
 			return null;
 		}
 		$tmp = $path . '.arvaseo-tmp';
-		if ( extension_loaded( 'imagick' ) && class_exists( '\Imagick' ) ) {
+		if ( self::imagick_supports( $mime ) ) {
 			$made = self::with_imagick( $path, $tmp, $mime );
 		} elseif ( 'image/jpeg' === $mime ) {
 			$made = self::with_editor( $path, $tmp );
@@ -521,7 +550,29 @@ final class ImageCompression {
 	}
 
 	/**
-	 * With Imagick: metadata out (the colour profile stays), JPEG at quality 82, PNG without loss.
+	 * The extension can be present while its JPEG/PNG/WebP decoder is unavailable.
+	 * A working Imagick decoder still owns its quality, orientation and animation safeguards.
+	 *
+	 * @param string $mime Image MIME type.
+	 */
+	private static function imagick_supports( string $mime ): bool {
+		if ( ! extension_loaded( 'imagick' ) || ! class_exists( '\\Imagick' ) ) {
+			return false;
+		}
+		$formats = array(
+			'image/jpeg' => 'JPEG',
+			'image/png'  => 'PNG',
+			'image/webp' => 'WEBP',
+		);
+		try {
+			return isset( $formats[ $mime ] ) && array() !== \Imagick::queryFormats( $formats[ $mime ] );
+		} catch ( \Throwable $error ) {
+			return false;
+		}
+	}
+
+	/**
+	 * With Imagick: metadata out (the colour profile stays), JPEG at quality 82, PNG/WebP without loss.
 	 *
 	 * @param string $path Source.
 	 * @param string $tmp  Target.
@@ -546,6 +597,11 @@ final class ImageCompression {
 				$image->setImageCompressionQuality( self::QUALITY );
 				$image->setInterlaceScheme( \Imagick::INTERLACE_PLANE );
 				$written = $image->writeImage( 'jpeg:' . $tmp );
+			} elseif ( 'image/webp' === $mime ) {
+				// Lossless rewriting preserves the existing WebP pixels and transparency.
+				$image->setOption( 'webp:lossless', 'true' );
+				$image->setOption( 'webp:method', '6' );
+				$written = $image->writeImage( 'webp:' . $tmp );
 			} else {
 				$image->setOption( 'png:compression-level', '9' );
 				$image->setOption( 'png:compression-filter', '5' );
@@ -581,11 +637,25 @@ final class ImageCompression {
 			return false;
 		}
 		$editor->set_quality( self::QUALITY );
-		$saved = $editor->save( $tmp . '.jpg', 'image/jpeg' );
-		if ( is_wp_error( $saved ) || ! is_file( (string) ( $saved['path'] ?? '' ) ) ) {
+		// Upload-format conversion must not put WebP bytes inside an existing JPEG filename.
+		$keep_jpeg = static function ( array $formats ): array {
+			$formats['image/jpeg'] = 'image/jpeg';
+			return $formats;
+		};
+		add_filter( 'image_editor_output_format', $keep_jpeg, PHP_INT_MAX );
+		try {
+			$saved = $editor->save( $tmp . '.jpg', 'image/jpeg' );
+		} finally {
+			remove_filter( 'image_editor_output_format', $keep_jpeg, PHP_INT_MAX );
+		}
+		if ( is_wp_error( $saved ) || ( $saved['path'] ?? '' ) !== $tmp . '.jpg' || ! is_file( $tmp . '.jpg' ) ) {
 			return false;
 		}
-		return @rename( (string) $saved['path'], $tmp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- the editor's file, renamed to the temporary name.
+		if ( 'image/jpeg' !== ( $saved['mime-type'] ?? '' ) || 'image/jpeg' !== wp_get_image_mime( $tmp . '.jpg' ) ) {
+			wp_delete_file( $tmp . '.jpg' );
+			return false;
+		}
+		return @rename( $tmp . '.jpg', $tmp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- the editor's file, renamed to the temporary name.
 	}
 
 	// ----- On Arva SEO's servers ---------------------------------------------------------------
@@ -734,7 +804,7 @@ final class ImageCompression {
 	// ----- Files -------------------------------------------------------------------------------
 
 	/**
-	 * An image's JPEG and PNG files, by name: the full size first, then the sizes WordPress made.
+	 * An image's JPEG, PNG and WebP files, by name: the full size first, then the sizes WordPress made.
 	 *
 	 * @param int $id Attachment ID.
 	 * @return array<string, array{path: string, mime: string, size: string}>

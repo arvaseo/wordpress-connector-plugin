@@ -40,7 +40,7 @@ final class Exclusions {
 	public const ELEMENT_FIXES = array( 'lazy_media', 'image_dimensions', 'video_facades', 'webp_uploads' );
 
 	/** The fixes shop pages are left alone by. */
-	public const SHOP_FIXES = array( 'defer_scripts', 'delay_scripts', 'critical_css', 'unused_css', 'combine_css', 'combine_js' );
+	public const SHOP_FIXES = array( 'defer_scripts', 'delay_scripts', 'critical_css', 'unused_css', 'combine_css', 'combine_js', 'minify_inline_css', 'minify_inline_js', 'combine_inline_css', 'combine_inline_js', 'combine_external_css', 'combine_external_js', 'font_display_swap' );
 
 	/**
 	 * Whether this page is left alone, by request: the request and the queried object.

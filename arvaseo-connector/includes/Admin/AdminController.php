@@ -974,6 +974,21 @@ final class AdminController {
 				'defer_exclude' => $exclude,
 				'defer_plugins' => $list( 'defer_plugins' ),
 			);
+			if ( isset( $_POST['js_loading_mode'] ) ) {
+				$choices['js_loading_mode'] = sanitize_key( wp_unslash( $_POST['js_loading_mode'] ) );
+			}
+		} elseif ( 'css_delivery' === $fix ) {
+			$fix     = 'critical_css';
+			$choices = array(
+				'ucss_inline'      => ! empty( $_POST['ucss_inline'] ),
+				'ccss_per_url'     => ! empty( $_POST['ccss_per_url'] ),
+				'css_async_inline' => ! empty( $_POST['css_async_inline'] ),
+			);
+		} elseif ( in_array( $fix, array( 'combine_inline_css', 'combine_inline_js' ), true ) ) {
+			$field   = $fix . '_ids';
+			$choices = array( $field => isset( $_POST[ $field ] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST[ $field ] ) ) : array() );
+		} elseif ( in_array( $fix, array( 'combine_external_css', 'combine_external_js' ), true ) ) {
+			$choices = array( 'external_asset_urls' => $text( 'external_asset_urls' ) );
 		} elseif ( 'remote' === $fix ) {
 			$choices = array( 'remote' => ! empty( $_POST['remote'] ) );
 		} elseif ( in_array( $fix, array( 'critical_css', 'unused_css', 'minify_css', 'combine_css' ), true ) ) {

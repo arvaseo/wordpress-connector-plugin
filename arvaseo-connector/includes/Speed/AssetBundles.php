@@ -14,7 +14,7 @@ final class AssetBundles {
 
 	public const FOLDER = 'arvaseo-combined';
 
-	private const FORMAT      = '1';
+	private const FORMAT      = '2';
 	private const MAX_BYTES   = 1048576;
 	private const PAGE_BYTES  = 4194304;
 	private const MAX_FILES   = 250;
@@ -55,20 +55,46 @@ final class AssetBundles {
 	 * @param string   $kind    css or js.
 	 */
 	public static function create( array $sources, string $kind ): ?string {
+		$parts = array();
+		foreach ( $sources as $source ) {
+			if ( ! is_string( $source ) ) {
+				return null;
+			}
+			$parts[] = array(
+				'source' => 'local',
+				'url'    => $source,
+			);
+		}
+		return self::create_parts( $parts, $kind );
+	}
+
+	/**
+	 * Ordered local files, explicitly approved static inline bodies and cached public external files.
+	 * ExternalAssets only reads a previously validated cache entry during this request.
+	 *
+	 * @param array<int, array{source:string,url:string,text?:string,id?:string}> $sources Parts.
+	 * @param string                                                              $kind css or js.
+	 */
+	public static function create_parts( array $sources, string $kind ): ?string {
 		if ( ! in_array( $kind, array( 'css', 'js' ), true ) || count( $sources ) < 2 || count( $sources ) > 80 ) {
 			return null;
 		}
 		$assets = array();
 		foreach ( $sources as $source ) {
-			$asset = is_string( $source ) ? self::read( $source, $kind ) : null;
+			if ( ! is_array( $source ) || ! is_string( $source['source'] ?? null ) || ! is_string( $source['url'] ?? null ) || ( isset( $source['text'] ) && ! is_string( $source['text'] ) ) || ( isset( $source['id'] ) && ! is_string( $source['id'] ) ) ) {
+				return null;
+			}
+			$asset = self::part( $source, $kind );
 			if ( null === $asset ) {
 				return null;
 			}
 			$assets[] = $asset;
 		}
-		$name = hash( 'sha256', self::FORMAT . '|' . $kind . '|' . wp_json_encode( $assets ) ) . '.' . $kind;
-		$file = self::dir() . '/' . $name;
-		$url  = self::url() . '/' . $name;
+		$swap          = 'css' === $kind && Fixes::applies( 'font_display_swap' );
+		$inline_minify = Fixes::applies( 'minify_inline_' . $kind ) && in_array( 'inline', array_column( $assets, 'source' ), true );
+		$name          = hash( 'sha256', self::FORMAT . '|' . $kind . '|' . (int) $swap . '|' . (int) $inline_minify . '|' . wp_json_encode( $assets ) ) . '.' . $kind;
+		$file          = self::dir() . '/' . $name;
+		$url           = self::url() . '/' . $name;
 		if ( ! AssetMinifier::same_origin( $url, home_url( '/' ) ) || is_link( $file ) || ( file_exists( self::dir() ) && ! self::safe_folder() ) ) {
 			return null;
 		}
@@ -80,9 +106,23 @@ final class AssetBundles {
 		}
 		$parts = array();
 		foreach ( $assets as $asset ) {
-			$text = 'css' === $kind ? self::css( $asset['text'], $asset['url'] ) : $asset['text'];
+			$text = 'css' === $kind ? self::css( $asset['text'], $asset['url'], $asset['source'] ) : $asset['text'];
 			if ( null === $text ) {
 				return null;
+			}
+			if ( $swap ) {
+				$text = FontDisplay::swap( $text );
+			}
+			if ( 'inline' === $asset['source'] && Fixes::applies( 'minify_inline_' . $kind ) ) {
+				try {
+					$minifier = 'css' === $kind ? new InlineCssMinifier( $text, $url ) : new InlineJsMinifier( $text );
+					$smaller  = $minifier->execute();
+					if ( is_string( $smaller ) && '' !== $smaller && strlen( $smaller ) < strlen( $text ) ) {
+						$text = $smaller;
+					}
+				} catch ( \Throwable $error ) {
+					return null;
+				}
 			}
 			$parts[] = $text;
 		}
@@ -99,6 +139,81 @@ final class AssetBundles {
 		}
 		++self::$generated;
 		return $url;
+	}
+
+	/**
+	 * A validated text part. Local URL resolution never gains an HTTP fallback.
+	 *
+	 * @param array{source:string,url:string,text?:string,id?:string} $part Part.
+	 * @param string                                                  $kind Expected type.
+	 * @return array{text:string,url:string,source:string}|null
+	 */
+	private static function part( array $part, string $kind ): ?array {
+		$source = $part['source'] ?? '';
+		$url    = $part['url'] ?? '';
+		if ( 'local' === $source ) {
+			$asset = self::read( $url, $kind );
+			return null === $asset ? null : $asset + array( 'source' => 'local' );
+		}
+		if ( 'inline' === $source ) {
+			$text = $part['text'] ?? '';
+			if ( ! InlineAssets::approved( $part['id'] ?? '', $text, $kind ) || InlineAssets::document_url() !== $url ) {
+				return null;
+			}
+		} elseif ( 'external' === $source && Fixes::applies( 'combine_external_' . $kind ) ) {
+			$asset = ExternalAssets::cached( $url, $kind );
+			if ( null === $asset ) {
+				return null;
+			}
+			$text = $asset['text'];
+			$url  = $asset['url'];
+		} else {
+			return null;
+		}
+		$key = $kind . '|' . $source . '|' . $url . '|' . hash( 'sha256', $text );
+		if ( array_key_exists( $key, self::$sources ) ) {
+			return null === self::$sources[ $key ] ? null : self::$sources[ $key ] + array( 'source' => $source );
+		}
+		self::$sources[ $key ] = null;
+		if ( count( self::$sources ) > 80 || strlen( $text ) < 1 || strlen( $text ) > self::MAX_BYTES || self::$bytes + strlen( $text ) > self::PAGE_BYTES || ! self::safe_text( $text, $kind ) ) {
+			return null;
+		}
+		self::$bytes          += strlen( $text );
+		$text                  = str_starts_with( $text, "\xEF\xBB\xBF" ) ? substr( $text, 3 ) : $text;
+		self::$sources[ $key ] = array(
+			'text' => $text,
+			'url'  => $url,
+		);
+		return self::$sources[ $key ] + array( 'source' => $source );
+	}
+
+	/**
+	 * Syntax depending on a script's separate URL or directive scope is never concatenated.
+	 *
+	 * @param string $text Source text.
+	 * @param string $kind css or js.
+	 */
+	private static function safe_text( string $text, string $kind ): bool {
+		if ( str_contains( $text, "\0" ) || 1 !== preg_match( '//u', $text ) ) {
+			return false;
+		}
+		if ( 'js' !== $kind ) {
+			return true;
+		}
+		$text   = str_starts_with( $text, "\xEF\xBB\xBF" ) ? substr( $text, 3 ) : $text;
+		$unsafe = preg_match( '/\b(?:import|export|importScripts|currentScript)\b|\bnew\s+(?:URL|Worker|SharedWorker)\b|\bdocument\s*(?:\.\s*(?:currentScript|scripts|write|writeln)|\[\s*[\'\"](?:currentScript|scripts|write|writeln))|\bdocument\s*\[|\bdefine\s*\(/', $text );
+		$start  = preg_replace( '~\A(?:\s+|/\*.*?\*/|//[^\r\n]*(?:\r?\n|\z))*~s', '', $text );
+		return 0 === $unsafe && null !== $start && ! preg_match( '/\A[\'\"]/', $start );
+	}
+
+	/**
+	 * Relocate a supported local stylesheet while preserving its formatting.
+	 *
+	 * @param string $text Source CSS.
+	 * @param string $source Original stylesheet URL.
+	 */
+	public static function relocate_css( string $text, string $source ): ?string {
+		return self::css( $text, $source );
 	}
 
 	/**
@@ -127,18 +242,10 @@ final class AssetBundles {
 		}
 		self::$bytes += $size;
 		$text         = file_get_contents( $asset['path'], false, null, 0, self::MAX_BYTES + 1 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bounded canonical static asset, never a URL.
-		if ( false === $text || strlen( $text ) > self::MAX_BYTES || str_contains( $text, "\0" ) || 1 !== preg_match( '//u', $text ) ) {
+		if ( false === $text || strlen( $text ) > self::MAX_BYTES || ! self::safe_text( $text, $kind ) ) {
 			return null;
 		}
-		$text = str_starts_with( $text, "\xEF\xBB\xBF" ) ? substr( $text, 3 ) : $text;
-		if ( 'js' === $kind ) {
-			// These features depend on the original script URL or its separate execution scope.
-			$unsafe = preg_match( '/\b(?:import|export|importScripts|currentScript)\b|\bnew\s+(?:URL|Worker|SharedWorker)\b|\bdocument\s*(?:\.\s*(?:currentScript|scripts|write|writeln)|\[\s*[\'\"](?:currentScript|scripts|write|writeln))|\bdocument\s*\[|\bdefine\s*\(/', $text );
-			$start  = preg_replace( '~\A(?:\s+|/\*.*?\*/|//[^\r\n]*(?:\r?\n|\z))*~s', '', $text );
-			if ( 0 !== $unsafe || null === $start || preg_match( '/\A[\'\"]/', $start ) ) {
-				return null; // Leading string directives, including use strict, cannot change scope.
-			}
-		}
+		$text                  = str_starts_with( $text, "\xEF\xBB\xBF" ) ? substr( $text, 3 ) : $text;
 		self::$sources[ $key ] = array(
 			'text' => $text,
 			'url'  => $asset['url'],
@@ -152,8 +259,9 @@ final class AssetBundles {
 	 *
 	 * @param string $text   Original CSS.
 	 * @param string $source Original public address.
+	 * @param string $source_kind local, inline or external.
 	 */
-	private static function css( string $text, string $source ): ?string {
+	private static function css( string $text, string $source, string $source_kind = 'local' ): ?string {
 		$out    = '';
 		$length = strlen( $text );
 		for ( $i = 0; $i < $length; ) {
@@ -221,10 +329,19 @@ final class AssetBundles {
 			if ( str_contains( $value, '\\' ) ) {
 				return null;
 			}
-			if ( '' === $value || preg_match( '/^(?:#|\/|[a-z][a-z0-9+.-]*:)/i', $value ) ) {
+			if ( 'inline' === $source_kind && str_starts_with( $value, '#' ) ) {
+				return null; // A document-local SVG reference must not become a stylesheet fragment.
+			}
+			if ( '' === $value || preg_match( '/^[a-z][a-z0-9+.-]*:/i', $value ) || ( 'external' !== $source_kind && preg_match( '/^[#\/]/', $value ) ) ) {
 				$out .= substr( $text, $start, $i + 1 - $start );
 			} else {
-				$url  = \WP_Http::make_absolute_url( $value, $source );
+				if ( str_starts_with( $value, '#' ) ) {
+					$url = (string) preg_replace( '/#.*$/', '', $source ) . $value;
+				} elseif ( str_starts_with( $value, '?' ) ) {
+					$url = (string) preg_replace( '/[?#].*$/', '', $source ) . $value;
+				} else {
+					$url = \WP_Http::make_absolute_url( $value, $source );
+				}
 				$out .= 'url("' . str_replace( array( '\\', '"', "\r", "\n", "\f" ), array( '\\\\', '\\"', '\\D ', '\\A ', '\\C ' ), $url ) . '")';
 			}
 			++$i;

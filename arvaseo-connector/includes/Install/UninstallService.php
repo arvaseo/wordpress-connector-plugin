@@ -61,6 +61,7 @@ final class UninstallService {
 		\ArvaSEO\Connector\Speed\PageCache::remove_on_exit();
 		\ArvaSEO\Connector\Speed\ServerRules::remove_on_exit();
 		\ArvaSEO\Connector\Speed\Cloudflare::remove_on_exit();
+		\ArvaSEO\Connector\Speed\ExternalAssets::delete_all();
 
 		if ( ! Settings::get( 'delete_data_on_uninstall' ) ) {
 			return;

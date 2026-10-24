@@ -84,6 +84,8 @@ final class Runtime {
 		LocalFonts::init();
 		WebpLibrary::init();
 		ImageCompression::init();
+		MediaLibraryCompression::init();
+		ExternalAssets::init();
 		CssOptimizer::init();
 		Cloudflare::init();
 		PageCache::init();
@@ -215,10 +217,12 @@ final class Runtime {
 		if ( Fixes::applies( 'google_fonts' ) ) {
 			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
 			add_filter( 'wp_resource_hints', array( self::class, 'font_preconnect' ), 20, 2 );
+		} elseif ( Fixes::applies( 'font_display_swap' ) ) {
+			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
 		}
 		// Keep tag attributes, dependencies and order: filter only the selected asset address.
 		// Source: https://developer.wordpress.org/reference/hooks/style_loader_tag/.
-		if ( Fixes::applies( 'minify_css' ) ) {
+		if ( Fixes::applies( 'minify_css' ) || Fixes::applies( 'font_display_swap' ) ) {
 			add_filter( 'style_loader_tag', array( AssetMinifier::class, 'style_tag' ), 30, 4 );
 		}
 		if ( Fixes::applies( 'minify_js' ) ) {
@@ -227,19 +231,17 @@ final class Runtime {
 		if ( Fixes::applies( 'dns_prefetch' ) || Fixes::applies( 'preconnect' ) ) {
 			add_filter( 'wp_resource_hints', array( ResourceHints::class, 'filter' ), 99, 2 );
 		}
-		if ( Fixes::applies( 'defer_scripts' ) ) {
+		if ( Fixes::applies( 'defer_scripts' ) && 'deferred' === Fixes::stored()['js_loading_mode'] ) {
 			add_action( 'wp_enqueue_scripts', array( self::class, 'defer_scripts' ), PHP_INT_MAX );
 			add_action( 'wp_footer', array( self::class, 'remember_deferred' ), PHP_INT_MAX );
 		}
-		if ( Fixes::applies( 'delay_scripts' ) ) {
+		if ( Fixes::applies( 'delay_scripts' ) || ( Fixes::applies( 'defer_scripts' ) && 'delayed' === Fixes::stored()['js_loading_mode'] ) ) {
 			DelayScripts::on_page();
 		}
 		if ( CssOptimizer::wanted() && null === Exclusions::page_reason( 'critical_css' ) ) {
 			CssOptimizer::on_page();
 		}
-		if ( Fixes::applies( 'combine_css' ) || Fixes::applies( 'combine_js' ) ) {
-			AssetCombiner::on_page();
-		}
+		AssetCombiner::on_page();
 		if ( Fixes::applies( 'webp_uploads' ) ) {
 			WebpLibrary::on_page();
 		}
@@ -554,11 +556,14 @@ final class Runtime {
 			return $src;
 		}
 		// Served from the site once its copy is ready; Google's address until then.
-		$local = Fixes::stored()['fonts_local'] && LocalFonts::is_google_css( $src ) ? LocalFonts::local_url( $src ) : null;
+		$local = Fixes::applies( 'google_fonts' ) && Fixes::stored()['fonts_local'] && LocalFonts::is_google_css( $src ) ? LocalFonts::local_url( $src ) : null;
 		if ( null !== $local ) {
 			return $local;
 		}
 		// Added as is: add_query_arg() would keep only the last of several family= parameters.
+		if ( Fixes::applies( 'font_display_swap' ) && preg_match( '/([?&])display=[^&#]*/i', $src ) ) {
+			return preg_replace( '/([?&])display=[^&#]*/i', '$1display=swap', $src );
+		}
 		return str_contains( $src, 'display=' ) ? $src : $src . ( str_contains( $src, '?' ) ? '&' : '?' ) . 'display=swap';
 	}
 

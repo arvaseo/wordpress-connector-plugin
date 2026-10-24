@@ -24,11 +24,21 @@ final class AssetCombiner {
 
 	/** Start inside the page-cache buffer so it receives the final combined HTML. */
 	public static function on_page(): void {
-		if ( self::$buffer_started || ( ! Fixes::applies( 'combine_css' ) && ! Fixes::applies( 'combine_js' ) ) ) {
+		if ( self::$buffer_started || ! self::wanted() ) {
 			return;
 		}
 		AssetBundles::reset();
 		self::$buffer_started = ob_start( array( self::class, 'capture' ) );
+	}
+
+	/** Inline changes use this same complete-response buffer, including when combining is off. */
+	private static function wanted(): bool {
+		foreach ( array( 'combine_css', 'combine_js', 'minify_inline_css', 'minify_inline_js', 'combine_inline_css', 'combine_inline_js', 'font_display_swap' ) as $fix ) {
+			if ( Fixes::applies( $fix ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -60,20 +70,30 @@ final class AssetCombiner {
 	public static function filter( string $html ): string {
 		$css = Fixes::applies( 'combine_css' );
 		$js  = Fixes::applies( 'combine_js' );
-		if ( ( ! $css && ! $js ) || strlen( $html ) > self::MAX_HTML || ! preg_match( '~\A(?:\xEF\xBB\xBF)?\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b~i', $html ) || false === stripos( $html, '</html>' ) || self::restricted_html( $html ) ) {
+		if ( ! self::wanted() || strlen( $html ) > self::MAX_HTML || ! preg_match( '~\A(?:\xEF\xBB\xBF)?\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b~i', $html ) || false === stripos( $html, '</html>' ) || self::restricted_html( $html ) ) {
 			return $html;
 		}
-		$position = 0;
-		$visited  = 0;
-		$run      = array();
-		$edits    = array();
+		InlineAssets::prepare( $html );
+		$position     = 0;
+		$visited      = 0;
+		$run          = array();
+		$edits        = array();
+		$inline_edits = array();
 		for ( $start = strpos( $html, '<', $position ); false !== $start; $start = strpos( $html, '<', $position ) ) {
 			$token = self::token( $html, $start );
 			if ( null === $token || ++$visited > 10000 ) {
 				return $html;
 			}
-			$asset = self::asset( $token, $css, $js );
-			$last  = $run ? $run[ count( $run ) - 1 ] : null;
+			$asset    = self::asset( $token, $css, $js );
+			$minified = InlineAssets::minify( $token );
+			if ( null !== $minified ) {
+				$inline_edits[] = array(
+					'start'  => $token['start'],
+					'length' => $token['end'] - $token['start'],
+					'html'   => $minified,
+				);
+			}
+			$last = $run ? $run[ count( $run ) - 1 ] : null;
 			if ( $last && ( null === $asset || $asset['key'] !== $last['key'] || '' !== trim( substr( $html, $last['end'], $start - $last['end'] ) ) ) ) {
 				self::finish( $run, $edits );
 				$run = array();
@@ -84,6 +104,18 @@ final class AssetCombiner {
 			$position = $token['end'];
 		}
 		self::finish( $run, $edits );
+		// A published bundle owns its whole range; in-place edits only apply outside those ranges.
+		$bundles = $edits;
+		$cursor  = 0;
+		foreach ( $inline_edits as $inline_edit ) {
+			while ( isset( $bundles[ $cursor ] ) && $inline_edit['start'] >= $bundles[ $cursor ]['start'] + $bundles[ $cursor ]['length'] ) {
+				++$cursor;
+			}
+			if ( ! isset( $bundles[ $cursor ] ) || $inline_edit['start'] < $bundles[ $cursor ]['start'] ) {
+				$edits[] = $inline_edit;
+			}
+		}
+		usort( $edits, static fn ( array $a, array $b ): int => $a['start'] <=> $b['start'] );
 		foreach ( array_reverse( $edits ) as $edit ) {
 			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
 		}
@@ -119,7 +151,7 @@ final class AssetCombiner {
 	 * @param int    $depth Inert-container nesting.
 	 * @return array{start: int, end: int, open: string, tag: string, close: bool, body: string}|null
 	 */
-	private static function token( string $html, int $start, int $depth = 0 ): ?array {
+	public static function token( string $html, int $start, int $depth = 0 ): ?array {
 		if ( $depth > 20 ) {
 			return null;
 		}
@@ -213,6 +245,27 @@ final class AssetCombiner {
 	 * @return array{start: int, end: int, open: string, source: string, kind: string, key: string}|null
 	 */
 	private static function asset( array $token, bool $css, bool $js ): ?array {
+		$inline = InlineAssets::inspect( $token );
+		if ( null !== $inline && ( 'css' === $inline['kind'] ? $css : $js ) && InlineAssets::approved( $inline['id'], $inline['text'], $inline['kind'] ) ) {
+			$tags = new \WP_HTML_Tag_Processor( $token['open'] );
+			$tags->next_tag();
+			$key = array( $inline['kind'], strtolower( (string) $tags->get_attribute( 'type' ) ), (string) $tags->get_attribute( 'nonce' ) );
+			$key = 'css' === $inline['kind'] ? array_merge( $key, array( strtolower( (string) ( $tags->get_attribute( 'media' ) ?? 'all' ) ) ) ) : array_merge( $key, array( false, '' ) );
+			return array(
+				'start'  => $token['start'],
+				'end'    => $token['end'],
+				'open'   => $token['open'],
+				'source' => InlineAssets::document_url(),
+				'kind'   => $inline['kind'],
+				'key'    => (string) wp_json_encode( $key ),
+				'part'   => array(
+					'source' => 'inline',
+					'url'    => InlineAssets::document_url(),
+					'text'   => $inline['text'],
+					'id'     => $inline['id'],
+				),
+			);
+		}
 		$kind = 'link' === $token['tag'] ? 'css' : ( 'script' === $token['tag'] ? 'js' : '' );
 		if ( '' === $kind || $token['close'] || ( 'css' === $kind && ! $css ) || ( 'js' === $kind && ( ! $js || '' !== trim( $token['body'] ) ) ) ) {
 			return null;
@@ -221,7 +274,7 @@ final class AssetCombiner {
 		if ( ! $tags->next_tag() ) {
 			return null;
 		}
-		$allowed = 'css' === $kind ? array( 'id', 'href', 'rel', 'media', 'type', 'nonce', 'data-arvaseo-minified' ) : array( 'id', 'src', 'type', 'defer', 'nonce', 'data-wp-strategy', 'data-arvaseo-minified' );
+		$allowed = 'css' === $kind ? array( 'id', 'href', 'rel', 'media', 'type', 'nonce', 'data-arvaseo-minified', 'data-arvaseo-font-display' ) : array( 'id', 'src', 'type', 'defer', 'nonce', 'data-wp-strategy', 'data-arvaseo-minified' );
 		if ( array_diff( $tags->get_attribute_names_with_prefix( '' ) ?? array(), $allowed ) ) {
 			return null;
 		}
@@ -237,13 +290,15 @@ final class AssetCombiner {
 		if ( null === $item || ! is_string( $item->src ) || '' === $item->src ) {
 			return null;
 		}
-		foreach ( array( 'conditional', 'before', 'after', 'data' ) as $extra ) {
-			if ( $registry->get_data( $handle, $extra ) ) {
-				return null;
-			}
+		if ( ! InlineAssets::registered_safe( $handle, $kind, $registry ) ) {
+			return null;
 		}
-		$minified = $kind === $tags->get_attribute( 'data-arvaseo-minified' ) && str_contains( $source, '/' . AssetMinifier::FOLDER . '/' );
-		if ( ! $minified && self::source_key( $source, $registry->base_url ) !== self::source_key( $item->src, $registry->base_url ) ) {
+		$external = ! AssetMinifier::same_origin( \WP_Http::make_absolute_url( $source, trailingslashit( $registry->base_url ) ), home_url( '/' ) );
+		if ( $external && ! Fixes::applies( 'combine_external_' . $kind ) ) {
+			return null;
+		}
+		$minified = ( $kind === $tags->get_attribute( 'data-arvaseo-minified' ) || ( 'css' === $kind && 'css' === $tags->get_attribute( 'data-arvaseo-font-display' ) ) ) && str_contains( $source, '/' . AssetMinifier::FOLDER . '/' );
+		if ( ! $minified && self::source_key( $source, $registry->base_url, $external ) !== self::source_key( $item->src, $registry->base_url, $external ) ) {
 			return null;
 		}
 		$type  = strtolower( (string) $tags->get_attribute( 'type' ) );
@@ -271,6 +326,10 @@ final class AssetCombiner {
 			'source' => $source,
 			'kind'   => $kind,
 			'key'    => $key,
+			'part'   => array(
+				'source' => $external ? 'external' : 'local',
+				'url'    => $source,
+			),
 		);
 	}
 
@@ -279,11 +338,12 @@ final class AssetCombiner {
 	 *
 	 * @param string $source Printed or registered URL.
 	 * @param string $base WordPress asset base.
+	 * @param bool   $external Whether the full query must match the external registration.
 	 */
-	private static function source_key( string $source, string $base ): string {
+	private static function source_key( string $source, string $base, bool $external = false ): string {
 		$source = \WP_Http::make_absolute_url( $source, trailingslashit( $base ) );
 		$parts  = wp_parse_url( $source );
-		return is_array( $parts ) ? strtolower( (string) ( $parts['scheme'] ?? '' ) . '://' . (string) ( $parts['host'] ?? '' ) ) . ':' . ( $parts['port'] ?? '' ) . ( $parts['path'] ?? '' ) : '';
+		return is_array( $parts ) ? strtolower( (string) ( $parts['scheme'] ?? '' ) . '://' . (string) ( $parts['host'] ?? '' ) ) . ':' . ( $parts['port'] ?? '' ) . ( $parts['path'] ?? '' ) . ( $external && isset( $parts['query'] ) ? '?' . $parts['query'] : '' ) : '';
 	}
 
 	/**
@@ -296,11 +356,12 @@ final class AssetCombiner {
 		if ( count( $run ) < 2 ) {
 			return;
 		}
-		$url = AssetBundles::create( array_column( $run, 'source' ), $run[0]['kind'] );
+		$url = AssetBundles::create_parts( array_column( $run, 'part' ), $run[0]['kind'] );
 		if ( null === $url ) {
 			return;
 		}
-		$tags = new \WP_HTML_Tag_Processor( $run[0]['open'] . ( 'js' === $run[0]['kind'] ? '</script>' : '' ) );
+		$open = 'css' === $run[0]['kind'] ? (string) preg_replace( '/\A<style\b/i', '<link rel="stylesheet"', $run[0]['open'] ) : $run[0]['open']; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- replaces the original approved styles in place.
+		$tags = new \WP_HTML_Tag_Processor( $open . ( 'js' === $run[0]['kind'] ? '</script>' : '' ) );
 		if ( ! $tags->next_tag() ) {
 			return;
 		}

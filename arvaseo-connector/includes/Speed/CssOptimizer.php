@@ -38,6 +38,11 @@ final class CssOptimizer {
 	/** At most this many page types are kept track of. */
 	private const MAX_ENTRIES = 300;
 
+	/** External used-CSS copies stay bounded and disposable, like their JSON source results. */
+	private const MAX_USED_BYTES = 500000;
+
+	private const USED_CACHE_BYTES = 33554432;
+
 	/** Sent to Arva SEO at most per sync. */
 	private const BATCH = 20;
 
@@ -83,6 +88,13 @@ final class CssOptimizer {
 	private static ?array $page = null;
 
 	/**
+	 * Print one loader even if the theme invokes its footer more than once.
+	 *
+	 * @var bool
+	 */
+	private static bool $loader_printed = false;
+
+	/**
 	 * Hooks.
 	 */
 	public static function init(): void {
@@ -100,8 +112,9 @@ final class CssOptimizer {
 	 * A new page.
 	 */
 	public static function reset(): void {
-		self::$page      = null;
-		self::$rendering = null;
+		self::$page           = null;
+		self::$rendering      = null;
+		self::$loader_printed = false;
 	}
 
 	// ----- Arva SEO's renderer -----------------------------------------------------------------
@@ -184,7 +197,8 @@ final class CssOptimizer {
 			return;
 		}
 		$template  = self::template();
-		$signature = sha1( $template . '|' . (string) wp_json_encode( $sheets ) );
+		$scope     = ( Fixes::stored()['ccss_per_url'] ?? false ) ? 'url-v1|' . self::current_url() . '|' : '';
+		$signature = sha1( $scope . $template . '|' . (string) wp_json_encode( $sheets ) );
 		$stored    = self::load( $signature );
 		if ( null === $stored ) {
 			self::note( $signature, $template );
@@ -208,6 +222,7 @@ final class CssOptimizer {
 		);
 		if ( ! Fixes::applies( 'unused_css' ) && array() !== $usable ) {
 			$critical = implode( "\n", array_filter( array_column( $usable, 'critical' ) ) );
+			$critical = self::font_css( $critical );
 			if ( '' !== $critical ) {
 				printf( "<style id=\"arvaseo-critical-css\">%s</style>\n", self::safe_css( $critical ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS made safe for a style element.
 			}
@@ -232,13 +247,18 @@ final class CssOptimizer {
 		$media    = is_string( $media ) && '' !== $media ? $media : 'all';
 		$fallback = '<noscript>' . trim( $tag ) . '</noscript>';
 		if ( Fixes::applies( 'unused_css' ) ) {
-			$late = sprintf(
+			$used   = self::font_css( (string) $sheet['used'] );
+			$url    = ! ( Fixes::stored()['ucss_inline'] ?? true ) ? self::used_url( $used ) : null;
+			$styles = null !== $url
+				? sprintf( '<link rel="stylesheet" id="%1$s-ucss" href="%2$s" media="%3$s" />', esc_attr( (string) $handle ), esc_url( $url ), esc_attr( $media ) ) // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- replaces the registered stylesheet with its generated used-CSS copy.
+				: sprintf( '<style id="%1$s-ucss"%2$s>%3$s</style>', esc_attr( (string) $handle ), 'all' === $media ? '' : ' media="' . esc_attr( $media ) . '"', self::safe_css( $used ) );
+			$late   = sprintf(
 				'<link rel="stylesheet" id="%1$s-css" data-arvaseo-href="%2$s" data-arvaseo-media="%3$s" media="print" />', // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- the enqueued stylesheet's own tag, loaded later.
 				esc_attr( (string) $handle ),
 				esc_url( (string) $href ),
 				esc_attr( $media )
 			);
-			return sprintf( "<style id=\"%s-ucss\">%s</style>\n%s\n%s\n", esc_attr( (string) $handle ), self::safe_css( (string) $sheet['used'] ), $late, $fallback );
+			return $styles . "\n" . $late . "\n" . $fallback . "\n";
 		}
 		$tags = new \WP_HTML_Tag_Processor( $tag );
 		if ( ! $tags->next_tag( array( 'tag_name' => 'link' ) ) ) {
@@ -246,24 +266,92 @@ final class CssOptimizer {
 		}
 		$tags->set_attribute( 'media', 'print' );
 		$tags->set_attribute( 'data-arvaseo-media', $media );
-		$tags->set_attribute( 'onload', 'this.media=this.dataset.arvaseoMedia;this.onload=null' );
+		$tags->set_attribute( 'data-arvaseo-async', 'css' );
+		$tags->remove_attribute( 'onload' );
 		return $tags->get_updated_html() . $fallback . "\n";
 	}
 
 	/**
-	 * Remove unused CSS: the full stylesheets load on the first scroll, tap, click or key press.
+	 * One inline or external library handles asynchronous sheets and interaction-delayed originals.
 	 */
 	public static function loader(): void {
-		if ( null === self::$page || array() === self::$page['sheets'] || ! Fixes::applies( 'unused_css' ) ) {
+		if ( self::$loader_printed || null === self::$page || array() === self::$page['sheets'] || ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) ) {
 			return;
 		}
-		$js = <<<'JS'
-(function(){var done=false,ev=['pointerdown','keydown','touchstart','scroll','wheel','mousemove'];
-function go(){if(done)return;done=true;ev.forEach(function(e){removeEventListener(e,go,{passive:true});});
-document.querySelectorAll('link[data-arvaseo-href]').forEach(function(l){l.href=l.getAttribute('data-arvaseo-href');l.media=l.getAttribute('data-arvaseo-media')||'all';});}
-ev.forEach(function(e){addEventListener(e,go,{passive:true});});})();
-JS;
-		wp_print_inline_script_tag( $js, array( 'id' => 'arvaseo-ucss-loader' ) );
+		$file = ARVASEO_CONNECTOR_DIR . '/assets/js/css-loader.js';
+		$js   = is_readable( $file ) ? file_get_contents( $file ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- this plugin's bounded, bundled static library.
+		if ( ! is_string( $js ) || '' === $js ) {
+			return;
+		}
+		self::$loader_printed = true;
+		if ( Fixes::stored()['css_async_inline'] ?? true ) {
+			wp_print_inline_script_tag( $js, array( 'id' => Fixes::applies( 'unused_css' ) ? 'arvaseo-ucss-loader' : 'arvaseo-css-loader' ) );
+		} else {
+			wp_print_script_tag(
+				array(
+					'src'   => plugins_url( 'assets/js/css-loader.js', ARVASEO_CONNECTOR_FILE ) . '?ver=' . rawurlencode( ARVASEO_CONNECTOR_VERSION ),
+					'id'    => 'arvaseo-css-loader',
+					'defer' => true,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Apply the font choice at delivery time, leaving fetched results reusable when it is switched.
+	 *
+	 * @param string $css Generated CSS.
+	 */
+	private static function font_css( string $css ): string {
+		return Fixes::applies( 'font_display_swap' ) ? FontDisplay::swap( $css ) : $css;
+	}
+
+	/**
+	 * Atomic immutable used-CSS copy, or null so the existing inline delivery remains available.
+	 *
+	 * @param string $css Generated used CSS, whose resource addresses are already absolute.
+	 */
+	private static function used_url( string $css ): ?string {
+		if ( '' === $css || strlen( $css ) > self::MAX_USED_BYTES ) {
+			return null;
+		}
+		$fs      = self::filesystem();
+		$uploads = wp_get_upload_dir();
+		$base    = realpath( (string) $uploads['basedir'] );
+		$dir     = self::dir() . '/used';
+		if ( null === $fs || false === $base || is_link( self::dir() ) || is_link( $dir ) || ! wp_mkdir_p( $dir ) ) {
+			return null;
+		}
+		$real = realpath( $dir );
+		if ( false === $real || ! str_starts_with( $real, $base . DIRECTORY_SEPARATOR ) ) {
+			return null;
+		}
+		$name = hash( 'sha256', 'used-css-v1|' . $css ) . '.css';
+		$file = $dir . '/' . $name;
+		$url  = untrailingslashit( (string) $uploads['baseurl'] ) . '/' . self::FOLDER . '/used/' . $name;
+		if ( is_link( $file ) ) {
+			return null;
+		}
+		if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) === strlen( $css ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated local static copy.
+			return $url;
+		}
+		$files = glob( $dir . '/*.css' );
+		if ( false === $files || count( $files ) >= self::MAX_ENTRIES ) {
+			return null;
+		}
+		$bytes = strlen( $css );
+		foreach ( $files as $existing ) {
+			$bytes += (int) filesize( $existing ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- bounded generated cache.
+			if ( $bytes > self::USED_CACHE_BYTES ) {
+				return null;
+			}
+		}
+		$temp = $dir . '/.' . $name . '.' . wp_generate_password( 12, false, false ) . '.tmp';
+		if ( ! $fs->put_contents( $temp, $css, FS_CHMOD_FILE ) || ! $fs->move( $temp, $file, true ) ) {
+			$fs->delete( $temp );
+			return null;
+		}
+		return $url;
 	}
 
 	/**

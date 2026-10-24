@@ -56,7 +56,7 @@ final class Fixes {
 	 */
 	public static function all(): array {
 		$speed_plugins = array( 'wp-rocket', 'litespeed-cache', 'perfmatters', 'flying-press', 'nitropack' );
-		return array(
+		$fixes         = array(
 			'page_cache'       => array(
 				'title'      => __( 'Page caching', 'arvaseo-connector' ),
 				'what'       => __( 'Each page is saved as ready-made HTML and sent to visitors without running WordPress, so it starts arriving in milliseconds instead of a second or more. Signed-in users, carts and checkouts, and pages that change for each visitor are never cached, and pages are cleared when you change them. Turning it on checks your homepage straight away: if it isn’t served from the cache, it’s turned off again.', 'arvaseo-connector' ),
@@ -308,6 +308,56 @@ final class Fixes {
 				'states'     => array( 'off', 'on' ),
 			),
 		);
+		$advanced = array(
+			'minify_inline_css'    => array(
+				__( 'Minify inline CSS', 'arvaseo-connector' ),
+				__( 'Removes unnecessary spacing from supported style blocks in the page. Their position and attributes stay intact; original theme files are unchanged.', 'arvaseo-connector' ),
+			),
+			'minify_inline_js'     => array(
+				__( 'Minify inline JavaScript', 'arvaseo-connector' ),
+				__( 'Makes supported classic inline scripts smaller in their original tags. JSON data, modules, excluded scripts and unsupported code are left alone.', 'arvaseo-connector' ),
+			),
+			'combine_inline_css'   => array(
+				__( 'Combine inline CSS', 'arvaseo-connector' ),
+				__( 'Includes the public static style blocks you approve in adjacent CSS bundles. Turn on Combine CSS too. Critical and used CSS stay separate; changed or unapproved snippets keep their original delivery.', 'arvaseo-connector' ),
+			),
+			'combine_inline_js'    => array(
+				__( 'Combine inline JavaScript', 'arvaseo-connector' ),
+				__( 'Includes approved public static inline scripts in adjacent synchronous JavaScript bundles. Turn on Combine JavaScript too. Personal configuration, modules and scripts with incompatible timing stay separate.', 'arvaseo-connector' ),
+			),
+			'combine_external_css' => array(
+				__( 'Combine external CSS', 'arvaseo-connector' ),
+				__( 'Includes approved public HTTPS stylesheets in CSS bundles once their background download is ready. Turn on Combine CSS too. Until then, or if a resource cannot be safely copied, its original delivery is kept.', 'arvaseo-connector' ),
+			),
+			'combine_external_js'  => array(
+				__( 'Combine external JavaScript', 'arvaseo-connector' ),
+				__( 'Includes approved public HTTPS classic scripts in compatible JavaScript bundles after background caching. Turn on Combine JavaScript too. Integrity-protected, personalized and unsupported scripts stay at their original addresses.', 'arvaseo-connector' ),
+			),
+			'font_display_swap'    => array(
+				__( 'Font display: swap', 'arvaseo-connector' ),
+				__( 'Text uses a fallback font while supported webfonts download. Adds font-display: swap to supported local, inline and generated CSS; approved external CSS is covered when combined. Theme files are unchanged.', 'arvaseo-connector' ),
+			),
+		);
+		foreach ( $advanced as $id => $description ) {
+			$kind         = str_ends_with( $id, '_js' ) ? 'js' : 'css';
+			$owner        = str_starts_with( $id, 'combine_' ) ? 'combine_' . $kind : 'minify_' . $kind;
+			$fixes[ $id ] = array(
+				'title'      => $description[0],
+				'what'       => $description[1],
+				'group'      => 'smaller',
+				'risk'       => 'check',
+				'audits'     => array(),
+				'handled_by' => $fixes[ $owner ]['handled_by'],
+				'states'     => self::STATES,
+			);
+			if ( 'font_display_swap' === $id ) {
+				$fixes[ $id ]['audits'] = array(
+					'font-display'         => 'Font display',
+					'font-display-insight' => 'Font display',
+				);
+			}
+		}
+		return $fixes;
 	}
 
 	/**
@@ -373,7 +423,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool}
+	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[]}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -392,24 +442,31 @@ final class Fixes {
 			$extras[ $key ] = (bool) ( $saved['extras'][ $key ] ?? $default );
 		}
 		return array(
-			'fixes'                => $fixes,
-			'extras'               => $extras,
-			'defer_exclude'        => self::strings( $saved['defer_exclude'] ?? array() ),
-			'defer_plugins'        => self::strings( $saved['defer_plugins'] ?? array() ),
-			'exclude_pages'        => self::strings( $saved['exclude_pages'] ?? array() ),
-			'exclude_elements'     => self::strings( $saved['exclude_elements'] ?? array() ),
-			'shop_pages'           => (bool) ( $saved['shop_pages'] ?? true ),
-			'eager_images'         => is_int( $saved['eager_images'] ?? null ) ? max( 0, min( self::MAX_EAGER_IMAGES, $saved['eager_images'] ) ) : self::EAGER_IMAGES,
-			'defer_checked_at'     => is_string( $saved['defer_checked_at'] ?? null ) ? $saved['defer_checked_at'] : null,
-			'defer_on_at'          => is_int( $saved['defer_on_at'] ?? null ) ? $saved['defer_on_at'] : null,
-			'fonts_local'          => (bool) ( $saved['fonts_local'] ?? false ),
-			'delay_scripts'        => self::strings( $saved['delay_scripts'] ?? array() ),
-			'css_exclude'          => self::strings( $saved['css_exclude'] ?? array() ),
-			'dns_prefetch_origins' => ResourceHints::normalize( $saved['dns_prefetch_origins'] ?? array(), 10 ),
-			'preconnect_origins'   => ResourceHints::normalize( $saved['preconnect_origins'] ?? array(), 4 ),
-			'preconnect_anonymous' => (bool) ( $saved['preconnect_anonymous'] ?? false ),
-			'remote'               => (bool) ( $saved['remote'] ?? false ),
-			'server_check'         => is_array( $saved['server_check'] ?? null ) && is_string( $saved['server_check']['at'] ?? null ) ? array(
+			'fixes'                  => $fixes,
+			'extras'                 => $extras,
+			'defer_exclude'          => self::strings( $saved['defer_exclude'] ?? array() ),
+			'defer_plugins'          => self::strings( $saved['defer_plugins'] ?? array() ),
+			'exclude_pages'          => self::strings( $saved['exclude_pages'] ?? array() ),
+			'exclude_elements'       => self::strings( $saved['exclude_elements'] ?? array() ),
+			'shop_pages'             => (bool) ( $saved['shop_pages'] ?? true ),
+			'eager_images'           => is_int( $saved['eager_images'] ?? null ) ? max( 0, min( self::MAX_EAGER_IMAGES, $saved['eager_images'] ) ) : self::EAGER_IMAGES,
+			'defer_checked_at'       => is_string( $saved['defer_checked_at'] ?? null ) ? $saved['defer_checked_at'] : null,
+			'defer_on_at'            => is_int( $saved['defer_on_at'] ?? null ) ? $saved['defer_on_at'] : null,
+			'fonts_local'            => (bool) ( $saved['fonts_local'] ?? false ),
+			'ucss_inline'            => (bool) ( $saved['ucss_inline'] ?? true ),
+			'ccss_per_url'           => (bool) ( $saved['ccss_per_url'] ?? false ),
+			'css_async_inline'       => (bool) ( $saved['css_async_inline'] ?? true ),
+			'js_loading_mode'        => 'delayed' === ( $saved['js_loading_mode'] ?? '' ) ? 'delayed' : 'deferred',
+			'combine_inline_css_ids' => self::inline_approvals( $saved['combine_inline_css_ids'] ?? array() ),
+			'combine_inline_js_ids'  => self::inline_approvals( $saved['combine_inline_js_ids'] ?? array() ),
+			'external_asset_urls'    => ExternalAssets::normalize_urls( $saved['external_asset_urls'] ?? array() ),
+			'delay_scripts'          => self::strings( $saved['delay_scripts'] ?? array() ),
+			'css_exclude'            => self::strings( $saved['css_exclude'] ?? array() ),
+			'dns_prefetch_origins'   => ResourceHints::normalize( $saved['dns_prefetch_origins'] ?? array(), 10 ),
+			'preconnect_origins'     => ResourceHints::normalize( $saved['preconnect_origins'] ?? array(), 4 ),
+			'preconnect_anonymous'   => (bool) ( $saved['preconnect_anonymous'] ?? false ),
+			'remote'                 => (bool) ( $saved['remote'] ?? false ),
+			'server_check'           => is_array( $saved['server_check'] ?? null ) && is_string( $saved['server_check']['at'] ?? null ) ? array(
 				'at'          => $saved['server_check']['at'],
 				'cache'       => (bool) ( $saved['server_check']['cache'] ?? false ),
 				'compression' => is_string( $saved['server_check']['compression'] ?? null ) ? $saved['server_check']['compression'] : null,
@@ -425,6 +482,23 @@ final class Fixes {
 	 */
 	private static function strings( $stored ): array {
 		return array_values( array_filter( (array) $stored, 'is_string' ) );
+	}
+
+	/**
+	 * Public static inline approvals bind an element ID to its exact content hash.
+	 *
+	 * @param mixed $value Stored list or textarea.
+	 * @return string[]
+	 */
+	private static function inline_approvals( $value ): array {
+		$lines = is_string( $value ) ? preg_split( '/\r?\n/', $value ) : (array) $value;
+		$valid = array();
+		foreach ( $lines ?: array() as $line ) {
+			if ( is_string( $line ) && preg_match( '/\A[A-Za-z][A-Za-z0-9_:.-]{0,127}\|[a-f0-9]{64}\z/D', trim( $line ) ) ) {
+				$valid[] = trim( $line );
+			}
+		}
+		return array_slice( array_values( array_unique( $valid ) ), 0, 40 );
 	}
 
 	/**
@@ -518,6 +592,15 @@ final class Fixes {
 	 */
 	public static function applies( string $id ): bool {
 		if ( defined( self::KILL_SWITCH ) && constant( self::KILL_SWITCH ) ) {
+			return false;
+		}
+		$parents = array(
+			'combine_inline_css'   => 'combine_css',
+			'combine_external_css' => 'combine_css',
+			'combine_inline_js'    => 'combine_js',
+			'combine_external_js'  => 'combine_js',
+		);
+		if ( isset( $parents[ $id ] ) && ! self::applies( $parents[ $id ] ) ) {
 			return false;
 		}
 		$state   = self::state( $id );
@@ -643,6 +726,31 @@ final class Fixes {
 	 */
 	public static function save_choices( array $choices ): void {
 		$data = self::stored();
+		foreach ( array( 'ucss_inline', 'ccss_per_url', 'css_async_inline' ) as $field ) {
+			if ( array_key_exists( $field, $choices ) ) {
+				$data[ $field ] = (bool) $choices[ $field ];
+			}
+		}
+		if ( array_key_exists( 'js_loading_mode', $choices ) ) {
+			$mode = 'delayed' === $choices['js_loading_mode'] ? 'delayed' : 'deferred';
+			if ( $mode !== $data['js_loading_mode'] && 'on' === $data['fixes']['defer_scripts']['state'] ) {
+				$data['fixes']['defer_scripts'] = array(
+					'state' => 'trying',
+					'since' => gmdate( 'c' ),
+				);
+				$data['defer_checked_at']       = null;
+				$data['defer_on_at']            = null;
+			}
+			$data['js_loading_mode'] = $mode;
+		}
+		foreach ( array( 'combine_inline_css_ids', 'combine_inline_js_ids' ) as $field ) {
+			if ( array_key_exists( $field, $choices ) ) {
+				$data[ $field ] = self::inline_approvals( $choices[ $field ] );
+			}
+		}
+		if ( array_key_exists( 'external_asset_urls', $choices ) ) {
+			$data['external_asset_urls'] = ExternalAssets::normalize_urls( $choices['external_asset_urls'] );
+		}
 		if ( array_key_exists( 'extras', $choices ) ) {
 			foreach ( array_keys( self::EXTRAS ) as $key ) {
 				$data['extras'][ $key ] = ! empty( ( (array) $choices['extras'] )[ $key ] );

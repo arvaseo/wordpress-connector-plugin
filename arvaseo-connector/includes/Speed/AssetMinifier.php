@@ -70,7 +70,7 @@ final class AssetMinifier {
 	 * @return mixed
 	 */
 	public static function style_tag( $tag, $handle, $href = '', $media = 'all' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- WordPress filter contract; actual attributes may have changed in earlier filters.
-		if ( ! is_string( $tag ) || ! Fixes::applies( 'minify_css' ) || in_array( (string) $handle, Fixes::stored()['css_exclude'], true ) ) {
+		if ( ! is_string( $tag ) || ( ! Fixes::applies( 'minify_css' ) && ! Fixes::applies( 'font_display_swap' ) ) || in_array( (string) $handle, Fixes::stored()['css_exclude'], true ) ) {
 			return $tag;
 		}
 		$tags = new \WP_HTML_Tag_Processor( $tag );
@@ -83,7 +83,7 @@ final class AssetMinifier {
 			$url       = is_string( $source ) ? self::local_url( $source, 'css' ) : null;
 			if ( null !== $url ) {
 				$tags->set_attribute( $attribute, $url );
-				$tags->set_attribute( 'data-arvaseo-minified', 'css' );
+				$tags->set_attribute( Fixes::applies( 'minify_css' ) ? 'data-arvaseo-minified' : 'data-arvaseo-font-display', 'css' );
 			}
 		}
 		return $tags->get_updated_html();
@@ -129,12 +129,14 @@ final class AssetMinifier {
 	 * @param string $kind   css or js.
 	 */
 	private static function local_url( string $source, string $kind ): ?string {
-		$key = $kind . '|' . $source;
+		$swap   = 'css' === $kind && Fixes::applies( 'font_display_swap' );
+		$minify = Fixes::applies( 'minify_' . $kind );
+		$key    = $kind . '|' . (int) $swap . '|' . (int) $minify . '|' . $source;
 		if ( array_key_exists( $key, self::$seen ) ) {
 			return self::$seen[ $key ];
 		}
 		self::$seen[ $key ] = null;
-		$asset              = self::source( $source, $kind );
+		$asset              = self::source( $source, $kind, $swap );
 		if ( null === $asset || count( self::$seen ) > 80 ) {
 			return null;
 		}
@@ -156,7 +158,7 @@ final class AssetMinifier {
 		if ( 'css' === $kind && preg_match( '/@import\b/i', $text ) && preg_match( '/@layer\b/i', $text ) ) {
 			return null;
 		}
-		$name = hash( 'sha256', self::FORMAT . '|' . $asset['url'] . '|' . $text ) . '.' . $kind;
+		$name = hash( 'sha256', self::FORMAT . '|' . (int) $swap . '|' . (int) $minify . '|' . $asset['url'] . '|' . $text ) . '.' . $kind;
 		$file = self::dir() . '/' . $name;
 		$url  = self::url() . '/' . $name;
 		if ( ! self::same_origin( $url, $asset['url'] ) || is_link( $file ) || ( file_exists( self::dir() ) && ! self::safe_folder() ) ) {
@@ -170,12 +172,17 @@ final class AssetMinifier {
 			return null;
 		}
 		try {
-			$minifier = 'css' === $kind ? new InlineCssMinifier( $text, $asset['url'] ) : new InlineJsMinifier( $text );
-			$minified = $minifier->execute( 'css' === $kind ? $url : null );
+			$input = $swap ? FontDisplay::swap( $text ) : $text;
+			if ( $minify ) {
+				$minifier = 'css' === $kind ? new InlineCssMinifier( $input, $asset['url'] ) : new InlineJsMinifier( $input );
+				$minified = $minifier->execute( 'css' === $kind ? $url : null );
+			} else {
+				$minified = $input !== $text ? AssetBundles::relocate_css( $input, $asset['url'] ) : null;
+			}
 		} catch ( \Throwable $error ) {
 			return null;
 		}
-		if ( ! is_string( $minified ) || '' === $minified || strlen( $minified ) >= strlen( $text ) || ! self::room( strlen( $minified ) ) ) {
+		if ( ! is_string( $minified ) || '' === $minified || $minified === $text || ( ! $swap && strlen( $minified ) >= strlen( $text ) ) || ! self::room( strlen( $minified ) ) ) {
 			return null;
 		}
 		$fs = self::filesystem();
