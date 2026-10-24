@@ -41,6 +41,12 @@ final class CssOptimizer {
 	/** Sent to Arva SEO at most per sync. */
 	private const BATCH = 20;
 
+	/** Fetch CSS one result at a time, with bounded work per scheduled sync. */
+	private const RESULTS_PER_SYNC = 10;
+
+	/** Leave longer backlogs to the next scheduled sync instead of holding an admin page open. */
+	private const FETCH_SECONDS = 10;
+
 	/** Handles the toolbar adds for signed-in people: never part of a signature, never changed. */
 	private const SIGNED_IN_HANDLES = array( 'admin-bar', 'dashicons', 'arvaseo-speed-facade' );
 
@@ -279,6 +285,13 @@ JS;
 	 * @param string|bool|null $version Version.
 	 */
 	public static function content_key( string $src, $version ): string {
+		// Google Fonts CSS is selected by family/text/subset/display, not a theme's cache-buster.
+		// Some themes pass time() as v/ver on every request, otherwise making a fresh paid
+		// optimization each visit and preventing previously generated CSS from being used.
+		if ( 'fonts.googleapis.com' === strtolower( (string) wp_parse_url( $src, PHP_URL_HOST ) )
+			&& in_array( wp_parse_url( $src, PHP_URL_PATH ), array( '/css', '/css2' ), true ) ) {
+			return remove_query_arg( array( 'v', 'ver' ), $src );
+		}
 		$path = self::local_path( $src );
 		if ( null === $path ) {
 			return $src . '?' . ( is_string( $version ) ? $version : '' );
@@ -479,9 +492,21 @@ JS;
 			}
 		}
 
-		$waiting = array_keys( array_filter( $index, static fn ( $entry ) => 'requested' === $entry['status'] ) );
-		foreach ( array_chunk( $waiting, 10 ) as $chunk ) {
-			$response = $client->site( 'GET', '/css-optimizations?signatures=' . implode( ',', $chunk ) );
+		$waiting = array_reverse( array_filter( $index, static fn ( $entry ) => 'requested' === $entry['status'] ), true );
+		uasort( $waiting, static fn ( $a, $b ) => ( $b['at'] ?? 0 ) <=> ( $a['at'] ?? 0 ) );
+		$waiting = array_keys( $waiting );
+		$started = microtime( true );
+		$fetched = 0;
+		// A single result may contain hundreds of KB of CSS. Combining ten can exceed
+		// the API client's response limit and leave already-generated results waiting forever.
+		foreach ( array_slice( $waiting, 0, self::RESULTS_PER_SYNC ) as $signature ) {
+			if ( $fetched > 0 && microtime( true ) - $started >= self::FETCH_SECONDS ) {
+				break;
+			}
+			// The renderer accepts up to 2 MB of CSS per result; JSON escaping can enlarge it.
+			// Only this single-result download opts into the larger bounded response allowance.
+			$response = $client->site( 'GET', '/css-optimizations?signatures=' . $signature, null, self::FETCH_SECONDS, ApiClient::MAX_RESPONSE_LIMIT );
+			++$fetched;
 			if ( ! $response->ok() ) {
 				break;
 			}

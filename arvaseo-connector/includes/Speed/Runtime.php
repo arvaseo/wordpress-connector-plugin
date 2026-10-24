@@ -90,6 +90,28 @@ final class Runtime {
 	}
 
 	/**
+	 * A new plugin version must not keep serving HTML produced by the old speed code.
+	 * Settings and generated CSS are preserved; only cached pages are invalidated once.
+	 */
+	public static function upgrade(): void {
+		$option = 'arvaseo_connector_speed_version';
+		if ( ARVASEO_CONNECTOR_VERSION === get_option( $option ) ) {
+			return;
+		}
+		update_option( $option, ARVASEO_CONNECTOR_VERSION, false );
+		// Report new capabilities promptly so Arva SEO does not keep showing an older plugin.
+		if ( ! wp_next_scheduled( 'arvaseo_connector_register' ) ) {
+			wp_schedule_single_event( time(), 'arvaseo_connector_register' );
+		}
+		foreach ( Fixes::stored()['fixes'] as $fix ) {
+			if ( 'on' === $fix['state'] ) {
+				Fixes::pages_changed( 'upgrade' );
+				break;
+			}
+		}
+	}
+
+	/**
 	 * For administrators while fixes are on or being tried: an Arva SEO item in the toolbar (a
 	 * reminder that visitors don't see the fixes being tried), with "Leave this page alone" on
 	 * the pages of the site.
@@ -148,6 +170,7 @@ final class Runtime {
 			return;
 		}
 		CssOptimizer::reset();
+		AssetMinifier::reset();
 		// Arva SEO's renderer: the page with its original styles, uncached, and none of the fixes.
 		if ( CssOptimizer::is_render_request() ) {
 			CssOptimizer::serve_original();
@@ -192,6 +215,17 @@ final class Runtime {
 		if ( Fixes::applies( 'google_fonts' ) ) {
 			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
 			add_filter( 'wp_resource_hints', array( self::class, 'font_preconnect' ), 20, 2 );
+		}
+		// Keep tag attributes, dependencies and order: filter only the selected asset address.
+		// Source: https://developer.wordpress.org/reference/hooks/style_loader_tag/.
+		if ( Fixes::applies( 'minify_css' ) ) {
+			add_filter( 'style_loader_tag', array( AssetMinifier::class, 'style_tag' ), 30, 4 );
+		}
+		if ( Fixes::applies( 'minify_js' ) ) {
+			add_filter( 'script_loader_tag', array( AssetMinifier::class, 'script_tag' ), 30, 3 );
+		}
+		if ( Fixes::applies( 'dns_prefetch' ) || Fixes::applies( 'preconnect' ) ) {
+			add_filter( 'wp_resource_hints', array( ResourceHints::class, 'filter' ), 99, 2 );
 		}
 		if ( Fixes::applies( 'defer_scripts' ) ) {
 			add_action( 'wp_enqueue_scripts', array( self::class, 'defer_scripts' ), PHP_INT_MAX );

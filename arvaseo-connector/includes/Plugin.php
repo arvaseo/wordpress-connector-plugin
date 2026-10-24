@@ -63,5 +63,6 @@ final class Plugin {
 	 */
 	public static function init(): void {
 		Schema::migrate();
+		\ArvaSEO\Connector\Speed\Runtime::upgrade();
 	}
 }

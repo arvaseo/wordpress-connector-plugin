@@ -23,6 +23,12 @@ defined( 'ABSPATH' ) || exit;
  */
 final class ApiClient {
 
+	/** Ordinary API responses stay bounded at 2 MiB. */
+	public const RESPONSE_LIMIT = 2097152;
+
+	/** The largest opt-in response; CSS can expand up to sixfold when JSON-escaped. */
+	public const MAX_RESPONSE_LIMIT = 16777216;
+
 	/**
 	 * Transport.
 	 *
@@ -59,8 +65,9 @@ final class ApiClient {
 	 * @param string                    $path   Path under the site, e.g. "/inventory" ("" for the site itself).
 	 * @param array<string, mixed>|null $body    JSON body.
 	 * @param int                       $timeout Seconds (deep scans send files with longer ones).
+	 * @param int                       $response_limit Maximum response bytes (bounded to 16 MiB).
 	 */
-	public function site( string $method, string $path, ?array $body = null, int $timeout = 15 ): ApiResponse {
+	public function site( string $method, string $path, ?array $body = null, int $timeout = 15, int $response_limit = self::RESPONSE_LIMIT ): ApiResponse {
 		$site_id = TokenStore::site_id();
 		if ( null === $site_id || ! TokenStore::is_connected() ) {
 			return new ApiResponse( 0, array(), 'not_connected', __( 'This site isn’t connected to Arva SEO.', 'arvaseo-connector' ) );
@@ -71,11 +78,11 @@ final class ApiClient {
 		if ( null === $token ) {
 			return new ApiResponse( 401, array(), 'reauth_required', __( 'Reconnect this site to Arva SEO.', 'arvaseo-connector' ) );
 		}
-		$response = $this->send( $method, $url, $body, $token, $timeout );
+		$response = $this->send( $method, $url, $body, $token, $timeout, $response_limit );
 		if ( 401 === $response->status && 'invalid_token' === $response->error_code ) {
 			$token = $this->access_token( true );
 			if ( null !== $token ) {
-				$response = $this->send( $method, $url, $body, $token, $timeout );
+				$response = $this->send( $method, $url, $body, $token, $timeout, $response_limit );
 			}
 		}
 		if ( 401 === $response->status ) {
@@ -294,8 +301,9 @@ final class ApiClient {
 	 * @param array<string, mixed>|null $body    JSON body.
 	 * @param string|null               $token   Bearer token.
 	 * @param int                       $timeout Seconds.
+	 * @param int                       $response_limit Maximum response bytes.
 	 */
-	private function send( string $method, string $path, ?array $body, ?string $token, int $timeout = 15 ): ApiResponse {
+	private function send( string $method, string $path, ?array $body, ?string $token, int $timeout = 15, int $response_limit = self::RESPONSE_LIMIT ): ApiResponse {
 		$headers = array(
 			'Accept'       => 'application/json',
 			'User-Agent'   => 'ArvaSEO-Connector/' . ARVASEO_CONNECTOR_VERSION . '; WordPress/' . get_bloginfo( 'version' ),
@@ -310,7 +318,7 @@ final class ApiClient {
 			'timeout'             => $timeout,
 			'redirection'         => 0,
 			'sslverify'           => true,
-			'limit_response_size' => 2097152,
+			'limit_response_size' => max( 1024, min( self::MAX_RESPONSE_LIMIT, $response_limit ) ),
 			'cookies'             => array(),
 		);
 		if ( null !== $body ) {

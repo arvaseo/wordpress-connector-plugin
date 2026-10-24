@@ -661,6 +661,36 @@ defined( 'ABSPATH' ) || exit;
 						<?php $arvaseo_backup_links(); ?>
 					<?php endif; ?>
 
+					<?php if ( in_array( $arvaseo_id, array( 'dns_prefetch', 'preconnect' ), true ) ) : ?>
+						<?php $arvaseo_origins_key = 'preconnect' === $arvaseo_id ? 'preconnect_origins' : 'dns_prefetch_origins'; ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
+							<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />
+							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+							<label for="<?php echo esc_attr( $arvaseo_origins_key ); ?>"><strong><?php esc_html_e( 'External service addresses, one per line', 'arvaseo-connector' ); ?></strong></label>
+							<textarea id="<?php echo esc_attr( $arvaseo_origins_key ); ?>" name="<?php echo esc_attr( $arvaseo_origins_key ); ?>" rows="4" class="large-text code" placeholder="https://cdn.example.com"><?php echo esc_textarea( implode( "\n", $arvaseo_stored[ $arvaseo_origins_key ] ) ); ?></textarea>
+							<p class="arvaseo-hint"><?php esc_html_e( 'Save the addresses, then try or turn on this fix. Only public HTTPS origins are kept. Paths, query strings and fragments are removed; credentials, local addresses and custom ports are rejected. An empty list adds no connections.', 'arvaseo-connector' ); ?></p>
+							<?php if ( 'preconnect' === $arvaseo_id ) : ?>
+								<label><input type="checkbox" name="preconnect_anonymous" value="1" <?php checked( $arvaseo_stored['preconnect_anonymous'] ); ?> /> <?php esc_html_e( 'Use anonymous connections for these origins (web fonts or CORS resources)', 'arvaseo-connector' ); ?></label>
+								<p class="arvaseo-hint"><?php esc_html_e( 'Leave this unticked for ordinary third-party scripts. Google Fonts connections are already added by Faster Google Fonts when needed.', 'arvaseo-connector' ); ?></p>
+							<?php endif; ?>
+							<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save addresses', 'arvaseo-connector' ); ?></button>
+						</form>
+					<?php endif; ?>
+
+					<?php if ( in_array( $arvaseo_id, array( 'minify_css', 'minify_js' ), true ) ) : ?>
+						<?php $arvaseo_minify_key = 'minify_css' === $arvaseo_id ? 'css_exclude' : 'defer_exclude'; ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
+							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
+							<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />
+							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+							<label for="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>"><strong><?php esc_html_e( 'Leave these files alone, one handle per line', 'arvaseo-connector' ); ?></strong></label>
+							<textarea id="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>" name="<?php echo esc_attr( $arvaseo_minify_key ); ?>" rows="3" class="large-text code"><?php echo esc_textarea( implode( "\n", $arvaseo_stored[ $arvaseo_minify_key ] ) ); ?></textarea>
+							<p class="arvaseo-hint"><?php esc_html_e( 'CSS exclusions are shared with optimized CSS; script exclusions are shared with Defer scripts. Minification does not combine files or change their loading order. If a file cannot be safely made smaller, the original is served.', 'arvaseo-connector' ); ?></p>
+							<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save exclusions', 'arvaseo-connector' ); ?></button>
+						</form>
+					<?php endif; ?>
+
 					<?php if ( 'wp_extras' === $arvaseo_id ) : ?>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
 							<h4><?php esc_html_e( 'Choose what to remove', 'arvaseo-connector' ); ?></h4>
@@ -1231,6 +1261,6 @@ defined( 'ABSPATH' ) || exit;
 	</div>
 </details>
 
-<p class="arvaseo-hint" style="margin-top: 20px; max-width: 820px"><?php esc_html_e( 'Page caching and minifying files need a caching plugin, such as LiteSpeed Cache or WP Rocket. Arva SEO’s PageSpeed page says which setting to change in the one you have. If you use a page cache other than Cloudflare, clear it after changing a fix here. In an emergency, add define( \'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES\', true ); to wp-config.php to switch every fix off.', 'arvaseo-connector' ); ?></p>
+<p class="arvaseo-hint" style="margin-top: 20px; max-width: 820px"><?php esc_html_e( 'Arva SEO can cache pages and minify supported local CSS and JavaScript. Use one optimizer for each job; when another active plugin handles it, Arva SEO leaves that fix alone. If you use a page cache other than Cloudflare, clear it after changing a fix here. In an emergency, add define( \'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES\', true ); to wp-config.php to switch every fix off.', 'arvaseo-connector' ); ?></p>
 	<?php
 } )();

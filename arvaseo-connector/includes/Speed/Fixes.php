@@ -184,6 +184,42 @@ final class Fixes {
 				'handled_by' => array( 'wp-rocket', 'perfmatters', 'flying-press', 'nitropack', 'flying-scripts', 'litespeed-cache' ),
 				'states'     => self::STATES,
 			),
+			'dns_prefetch'     => array(
+				'title'      => __( 'DNS prefetch', 'arvaseo-connector' ),
+				'what'       => __( 'Looks up the addresses of external services you list before the page needs them. Add only services the page actually uses, up to 10 domains. This does not change your DNS records.', 'arvaseo-connector' ),
+				'group'      => 'sooner',
+				'risk'       => 'safe',
+				'audits'     => array( 'uses-rel-preconnect' => 'Preconnect to required origins' ),
+				'handled_by' => array(),
+				'states'     => self::STATES,
+			),
+			'preconnect'       => array(
+				'title'      => __( 'Preconnect', 'arvaseo-connector' ),
+				'what'       => __( 'Starts connections to the external services you list before their files are needed. Use only important services needed immediately, such as an external font or asset host, up to 4 origins. Too many early connections can slow a page down.', 'arvaseo-connector' ),
+				'group'      => 'sooner',
+				'risk'       => 'check',
+				'audits'     => array( 'uses-rel-preconnect' => 'Preconnect to required origins' ),
+				'handled_by' => array(),
+				'states'     => self::STATES,
+			),
+			'minify_css'       => array(
+				'title'      => __( 'Minify CSS', 'arvaseo-connector' ),
+				'what'       => __( 'Serves smaller cached copies of local stylesheets by removing unnecessary spacing and comments. Original files stay intact, relative image and font addresses keep working, and file order stays the same. Already-minified or unsupported files are left alone.', 'arvaseo-connector' ),
+				'group'      => 'smaller',
+				'risk'       => 'check',
+				'audits'     => array( 'unminified-css' => 'Minify CSS' ),
+				'handled_by' => array_merge( $speed_plugins, array( 'autoptimize', 'w3-total-cache', 'sg-cachepress', 'breeze', 'hummingbird-performance', 'wp-optimize' ) ),
+				'states'     => self::STATES,
+			),
+			'minify_js'        => array(
+				'title'      => __( 'Minify JavaScript', 'arvaseo-connector' ),
+				'what'       => __( 'Serves smaller cached copies of supported local classic scripts. Original files, dependencies, inline code and execution order stay intact. External, already-minified, module and other scripts that depend on their original address are left alone.', 'arvaseo-connector' ),
+				'group'      => 'smaller',
+				'risk'       => 'check',
+				'audits'     => array( 'unminified-javascript' => 'Minify JavaScript' ),
+				'handled_by' => array_merge( $speed_plugins, array( 'autoptimize', 'w3-total-cache', 'sg-cachepress', 'breeze', 'hummingbird-performance', 'wp-optimize' ) ),
+				'states'     => self::STATES,
+			),
 			'google_fonts'     => array(
 				'title'      => __( 'Faster Google Fonts', 'arvaseo-connector' ),
 				'what'       => __( 'Text shows straight away in a similar font while Google Fonts load, and the browser connects to Google’s font servers early.', 'arvaseo-connector' ),
@@ -319,7 +355,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], remote: bool}
+	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -338,21 +374,24 @@ final class Fixes {
 			$extras[ $key ] = (bool) ( $saved['extras'][ $key ] ?? $default );
 		}
 		return array(
-			'fixes'            => $fixes,
-			'extras'           => $extras,
-			'defer_exclude'    => self::strings( $saved['defer_exclude'] ?? array() ),
-			'defer_plugins'    => self::strings( $saved['defer_plugins'] ?? array() ),
-			'exclude_pages'    => self::strings( $saved['exclude_pages'] ?? array() ),
-			'exclude_elements' => self::strings( $saved['exclude_elements'] ?? array() ),
-			'shop_pages'       => (bool) ( $saved['shop_pages'] ?? true ),
-			'eager_images'     => is_int( $saved['eager_images'] ?? null ) ? max( 0, min( self::MAX_EAGER_IMAGES, $saved['eager_images'] ) ) : self::EAGER_IMAGES,
-			'defer_checked_at' => is_string( $saved['defer_checked_at'] ?? null ) ? $saved['defer_checked_at'] : null,
-			'defer_on_at'      => is_int( $saved['defer_on_at'] ?? null ) ? $saved['defer_on_at'] : null,
-			'fonts_local'      => (bool) ( $saved['fonts_local'] ?? false ),
-			'delay_scripts'    => self::strings( $saved['delay_scripts'] ?? array() ),
-			'css_exclude'      => self::strings( $saved['css_exclude'] ?? array() ),
-			'remote'           => (bool) ( $saved['remote'] ?? false ),
-			'server_check'     => is_array( $saved['server_check'] ?? null ) && is_string( $saved['server_check']['at'] ?? null ) ? array(
+			'fixes'                => $fixes,
+			'extras'               => $extras,
+			'defer_exclude'        => self::strings( $saved['defer_exclude'] ?? array() ),
+			'defer_plugins'        => self::strings( $saved['defer_plugins'] ?? array() ),
+			'exclude_pages'        => self::strings( $saved['exclude_pages'] ?? array() ),
+			'exclude_elements'     => self::strings( $saved['exclude_elements'] ?? array() ),
+			'shop_pages'           => (bool) ( $saved['shop_pages'] ?? true ),
+			'eager_images'         => is_int( $saved['eager_images'] ?? null ) ? max( 0, min( self::MAX_EAGER_IMAGES, $saved['eager_images'] ) ) : self::EAGER_IMAGES,
+			'defer_checked_at'     => is_string( $saved['defer_checked_at'] ?? null ) ? $saved['defer_checked_at'] : null,
+			'defer_on_at'          => is_int( $saved['defer_on_at'] ?? null ) ? $saved['defer_on_at'] : null,
+			'fonts_local'          => (bool) ( $saved['fonts_local'] ?? false ),
+			'delay_scripts'        => self::strings( $saved['delay_scripts'] ?? array() ),
+			'css_exclude'          => self::strings( $saved['css_exclude'] ?? array() ),
+			'dns_prefetch_origins' => ResourceHints::normalize( $saved['dns_prefetch_origins'] ?? array(), 10 ),
+			'preconnect_origins'   => ResourceHints::normalize( $saved['preconnect_origins'] ?? array(), 4 ),
+			'preconnect_anonymous' => (bool) ( $saved['preconnect_anonymous'] ?? false ),
+			'remote'               => (bool) ( $saved['remote'] ?? false ),
+			'server_check'         => is_array( $saved['server_check'] ?? null ) && is_string( $saved['server_check']['at'] ?? null ) ? array(
 				'at'          => $saved['server_check']['at'],
 				'cache'       => (bool) ( $saved['server_check']['cache'] ?? false ),
 				'compression' => is_string( $saved['server_check']['compression'] ?? null ) ? $saved['server_check']['compression'] : null,
@@ -617,6 +656,17 @@ final class Fixes {
 		}
 		if ( array_key_exists( 'fonts_local', $choices ) ) {
 			$data['fonts_local'] = (bool) $choices['fonts_local'];
+		}
+		foreach ( array(
+			'dns_prefetch_origins' => 10,
+			'preconnect_origins'   => 4,
+		) as $field => $limit ) {
+			if ( array_key_exists( $field, $choices ) ) {
+				$data[ $field ] = ResourceHints::normalize( $choices[ $field ], $limit );
+			}
+		}
+		if ( array_key_exists( 'preconnect_anonymous', $choices ) ) {
+			$data['preconnect_anonymous'] = (bool) $choices['preconnect_anonymous'];
 		}
 		if ( array_key_exists( 'eager_images', $choices ) ) {
 			$data['eager_images'] = max( 0, min( self::MAX_EAGER_IMAGES, (int) $choices['eager_images'] ) );

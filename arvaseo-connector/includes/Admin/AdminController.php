@@ -976,8 +976,17 @@ final class AdminController {
 			);
 		} elseif ( 'remote' === $fix ) {
 			$choices = array( 'remote' => ! empty( $_POST['remote'] ) );
-		} elseif ( 'critical_css' === $fix || 'unused_css' === $fix ) {
+		} elseif ( in_array( $fix, array( 'critical_css', 'unused_css', 'minify_css' ), true ) ) {
 			$choices = array( 'css_exclude' => $text( 'css_exclude' ) );
+		} elseif ( 'minify_js' === $fix ) {
+			$choices = array( 'defer_exclude' => $text( 'defer_exclude' ) );
+		} elseif ( 'dns_prefetch' === $fix ) {
+			$choices = array( 'dns_prefetch_origins' => $text( 'dns_prefetch_origins' ) );
+		} elseif ( 'preconnect' === $fix ) {
+			$choices = array(
+				'preconnect_origins'   => $text( 'preconnect_origins' ),
+				'preconnect_anonymous' => ! empty( $_POST['preconnect_anonymous'] ),
+			);
 		} elseif ( 'delay_scripts' === $fix ) {
 			$choices = array( 'delay_scripts' => $text( 'delay_scripts' ) );
 		} elseif ( 'google_fonts' === $fix ) {

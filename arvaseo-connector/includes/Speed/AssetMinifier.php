@@ -1,0 +1,310 @@
+<?php
+/**
+ * Opt-in CSS and classic JavaScript minification, with disposable copies in uploads.
+ *
+ * @package ArvaSEO\Connector
+ */
+
+namespace ArvaSEO\Connector\Speed;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Minifies one local static asset at a time. Original files, inline code, script order and loading
+ * attributes are retained. Existing CSS/defer exclusions also apply. Source files are resolved
+ * against WordPress's public content/includes directories and canonicalised before reading;
+ * external URLs, dynamic endpoints, modules and scripts deriving paths from their own URL are skipped.
+ */
+final class AssetMinifier {
+
+	/** Uploads subdirectory. */
+	public const FOLDER = 'arvaseo-minified';
+
+	/** Cache format, bumped when the library or path handling changes. */
+	private const FORMAT = '1-minify-1.3.75';
+
+	/** Individual source limit (1 MiB); per-page source budget (4 MiB). */
+	private const MAX_BYTES  = 1048576;
+	private const PAGE_BYTES = 4194304;
+
+	/** New copies are stopped at these limits; cached pages keep their existing files. */
+	private const MAX_FILES   = 250;
+	private const CACHE_BYTES = 33554432;
+
+	/**
+	 * Result by source URL, including skips, for this request only.
+	 *
+	 * @var array<string, string|null>
+	 */
+	private static array $seen = array();
+
+	/**
+	 * Source bytes processed on this page.
+	 *
+	 * @var int
+	 */
+	private static int $bytes = 0;
+
+	/**
+	 * New files generated during this request.
+	 *
+	 * @var int
+	 */
+	private static int $generated = 0;
+
+	/** Reset per-request safety budgets, also used by integration tests. */
+	public static function reset(): void {
+		self::$seen      = array();
+		self::$bytes     = 0;
+		self::$generated = 0;
+	}
+
+	/**
+	 * Preserve Critical/unused CSS's link and noscript fallbacks while replacing their source.
+	 * Source: https://developer.wordpress.org/reference/hooks/style_loader_tag/.
+	 *
+	 * @param mixed $tag    Style HTML.
+	 * @param mixed $handle Registered handle.
+	 * @param mixed $href   Original address.
+	 * @param mixed $media  Media attribute.
+	 * @return mixed
+	 */
+	public static function style_tag( $tag, $handle, $href = '', $media = 'all' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- WordPress filter contract; actual attributes may have changed in earlier filters.
+		if ( ! is_string( $tag ) || ! Fixes::applies( 'minify_css' ) || in_array( (string) $handle, Fixes::stored()['css_exclude'], true ) ) {
+			return $tag;
+		}
+		$tags = new \WP_HTML_Tag_Processor( $tag );
+		while ( $tags->next_tag( array( 'tag_name' => 'link' ) ) ) {
+			if ( 'stylesheet' !== $tags->get_attribute( 'rel' ) || null !== $tags->get_attribute( 'integrity' ) || null !== $tags->get_attribute( Exclusions::SKIP_ATTRIBUTE ) ) {
+				continue;
+			}
+			$attribute = is_string( $tags->get_attribute( 'data-arvaseo-href' ) ) ? 'data-arvaseo-href' : 'href';
+			$source    = $tags->get_attribute( $attribute );
+			$url       = is_string( $source ) ? self::local_url( $source, 'css' ) : null;
+			if ( null !== $url ) {
+				$tags->set_attribute( $attribute, $url );
+				$tags->set_attribute( 'data-arvaseo-minified', 'css' );
+			}
+		}
+		return $tags->get_updated_html();
+	}
+
+	/**
+	 * Classic external scripts only. Inline before/after tags and delayed-script markers stay intact.
+	 * Source: https://developer.wordpress.org/reference/hooks/script_loader_tag/.
+	 *
+	 * @param mixed $tag    Script HTML.
+	 * @param mixed $handle Registered handle.
+	 * @param mixed $src    Original address.
+	 * @return mixed
+	 */
+	public static function script_tag( $tag, $handle, $src = '' ) {
+		if ( ! is_string( $tag ) || ! Fixes::applies( 'minify_js' ) || Exclusions::leaves_script( (string) $handle, (string) $src ) ) {
+			return $tag;
+		}
+		$tags = new \WP_HTML_Tag_Processor( $tag );
+		while ( $tags->next_tag( array( 'tag_name' => 'script' ) ) ) {
+			$type = strtolower( (string) $tags->get_attribute( 'type' ) );
+			if ( ! in_array( $type, array( '', 'text/javascript', 'application/javascript', DelayScripts::TYPE ), true ) || null !== $tags->get_attribute( 'integrity' ) || null !== $tags->get_attribute( Exclusions::SKIP_ATTRIBUTE ) ) {
+				continue;
+			}
+			$attribute = DelayScripts::TYPE === $type ? 'data-arvaseo-src' : 'src';
+			$source    = $tags->get_attribute( $attribute );
+			if ( ! is_string( $source ) || Exclusions::leaves_script( (string) $handle, $source ) ) {
+				continue;
+			}
+			$url = self::local_url( $source, 'js' );
+			if ( null !== $url ) {
+				$tags->set_attribute( $attribute, $url );
+				$tags->set_attribute( 'data-arvaseo-minified', 'js' );
+			}
+		}
+		return $tags->get_updated_html();
+	}
+
+	/**
+	 * A public copy or null on every unsupported, unsafe or failed operation.
+	 *
+	 * @param string $source Public source URL.
+	 * @param string $kind   css or js.
+	 */
+	private static function local_url( string $source, string $kind ): ?string {
+		$key = $kind . '|' . $source;
+		if ( array_key_exists( $key, self::$seen ) ) {
+			return self::$seen[ $key ];
+		}
+		self::$seen[ $key ] = null;
+		$asset              = self::source( $source, $kind );
+		if ( null === $asset || count( self::$seen ) > 80 ) {
+			return null;
+		}
+		$size = filesize( $asset['path'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- canonical, bounded local static source.
+		if ( false === $size || $size < 1 || $size > self::MAX_BYTES || self::$bytes + $size > self::PAGE_BYTES ) {
+			return null;
+		}
+		self::$bytes += $size;
+		$text         = file_get_contents( $asset['path'], false, null, 0, self::MAX_BYTES + 1 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bounded read from a canonical allowlisted local file, never a URL.
+		if ( false === $text || strlen( $text ) > self::MAX_BYTES || str_contains( $text, "\0" ) ) {
+			return null;
+		}
+		// Moving these scripts changes their resource base; leave them at their original URL.
+		$unsafe = preg_match( '/\b(?:import|export|importScripts)\b|\bnew\s+(?:URL|Worker|SharedWorker)\b|\bdocument\s*(?:\.\s*(?:currentScript|scripts)|\[\s*[\'\"]currentScript)|\bdefine\s*\(/', $text );
+		if ( 'js' === $kind && 0 !== $unsafe ) {
+			return null;
+		}
+		// Moving @imports ahead of @layer order declarations can change the cascade.
+		if ( 'css' === $kind && preg_match( '/@import\b/i', $text ) && preg_match( '/@layer\b/i', $text ) ) {
+			return null;
+		}
+		$name = hash( 'sha256', self::FORMAT . '|' . $asset['url'] . '|' . $text ) . '.' . $kind;
+		$file = self::dir() . '/' . $name;
+		$url  = self::url() . '/' . $name;
+		if ( ! self::same_origin( $url, $asset['url'] ) || is_link( $file ) || ( file_exists( self::dir() ) && ! self::safe_folder() ) ) {
+			return null;
+		}
+		if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) > 0 ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache entry.
+			self::$seen[ $key ] = $url;
+			return $url;
+		}
+		if ( self::$generated >= 12 ) {
+			return null;
+		}
+		try {
+			$minifier = 'css' === $kind ? new InlineCssMinifier( $text, $asset['url'] ) : new InlineJsMinifier( $text );
+			$minified = $minifier->execute( 'css' === $kind ? $url : null );
+		} catch ( \Throwable $error ) {
+			return null;
+		}
+		if ( ! is_string( $minified ) || '' === $minified || strlen( $minified ) >= strlen( $text ) || ! self::room( strlen( $minified ) ) ) {
+			return null;
+		}
+		$fs = self::filesystem();
+		if ( null === $fs || ! wp_mkdir_p( self::dir() ) || ! self::safe_folder() ) {
+			return null;
+		}
+		// Publish atomically, so another visitor never receives a partly written asset.
+		$temp = self::dir() . '/.' . $name . '.' . wp_generate_password( 12, false, false ) . '.tmp';
+		if ( ! $fs->put_contents( $temp, $minified, FS_CHMOD_FILE ) || ! $fs->move( $temp, $file, true ) ) {
+			$fs->delete( $temp );
+			return null;
+		}
+		++self::$generated;
+		self::$seen[ $key ] = $url;
+		return $url;
+	}
+
+	/**
+	 * URL -> canonical local file. No HTTP request, arbitrary URL prefix or traversal is accepted.
+	 *
+	 * @param string $source Original URL.
+	 * @param string $kind   Expected extension.
+	 * @return array{path: string, url: string}|null
+	 */
+	private static function source( string $source, string $kind ): ?array {
+		$home = wp_parse_url( home_url( '/' ) );
+		if ( ! is_array( $home ) || ! isset( $home['scheme'], $home['host'] ) ) {
+			return null;
+		}
+		$origin = $home['scheme'] . '://' . $home['host'] . ( isset( $home['port'] ) ? ':' . $home['port'] : '' );
+		if ( str_starts_with( $source, '//' ) ) {
+			$source = $home['scheme'] . ':' . $source;
+		} elseif ( str_starts_with( $source, '/' ) ) {
+			$source = $origin . $source;
+		}
+		$parts = wp_parse_url( $source );
+		if ( ! is_array( $parts ) || ! self::same_origin( $source, home_url( '/' ) ) || isset( $parts['user'], $parts['pass'] ) || isset( $parts['fragment'] ) ) {
+			return null;
+		}
+		$path = rawurldecode( (string) ( $parts['path'] ?? '' ) );
+		if ( str_contains( $path, "\0" ) || str_contains( $path, '\\' ) || preg_match( '~(?:^|/)\.{1,2}(?:/|$)~', $path ) || ! str_ends_with( strtolower( $path ), '.' . $kind ) || preg_match( '/[.-]min\.' . $kind . '$/i', $path ) || str_contains( $path, '/' . self::FOLDER . '/' ) ) {
+			return null;
+		}
+		parse_str( (string) ( $parts['query'] ?? '' ), $query );
+		if ( array_diff( array_keys( $query ), array( 'ver', 'v' ) ) ) {
+			return null; // Query-dependent CSS/JS may be a generated endpoint rather than this file.
+		}
+		foreach ( array( array( content_url( '/' ), WP_CONTENT_DIR ), array( includes_url( '/' ), ABSPATH . WPINC ) ) as $mapping ) {
+			$prefix = rawurldecode( (string) wp_parse_url( $mapping[0], PHP_URL_PATH ) );
+			$root   = realpath( $mapping[1] );
+			if ( false === $root || ! str_starts_with( $path, $prefix ) || ! self::same_origin( $source, $mapping[0] ) ) {
+				continue;
+			}
+			$local = realpath( $root . '/' . substr( $path, strlen( $prefix ) ) );
+			if ( false !== $local && str_starts_with( $local, $root . DIRECTORY_SEPARATOR ) && is_file( $local ) && is_readable( $local ) && str_ends_with( strtolower( $local ), '.' . $kind ) ) {
+				return array(
+					'path' => $local,
+					'url'  => $source,
+				);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Same public origin, rejecting credentials and non-web protocols.
+	 *
+	 * @param string $first  First URL.
+	 * @param string $second Second URL.
+	 */
+	private static function same_origin( string $first, string $second ): bool {
+		$a = wp_parse_url( $first );
+		$b = wp_parse_url( $second );
+		return is_array( $a ) && is_array( $b ) && in_array( $a['scheme'] ?? '', array( 'http', 'https' ), true ) && ( $a['scheme'] ?? '' ) === ( $b['scheme'] ?? '' ) && strtolower( (string) ( $a['host'] ?? '' ) ) === strtolower( (string) ( $b['host'] ?? '' ) ) && ( $a['port'] ?? ( 'https' === $a['scheme'] ? 443 : 80 ) ) === ( $b['port'] ?? ( 'https' === ( $b['scheme'] ?? '' ) ? 443 : 80 ) ) && ! isset( $a['user'] ) && ! isset( $a['pass'] );
+	}
+
+	/**
+	 * Keep up to 250 files / 32 MiB. Avoid evicting recent copies referenced by a page cache.
+	 *
+	 * @param int $bytes New file bytes.
+	 */
+	private static function room( int $bytes ): bool {
+		$files = glob( self::dir() . '/*.{css,js}', GLOB_BRACE );
+		$files = is_array( $files ) ? $files : array();
+		$total = 0;
+		foreach ( $files as $file ) {
+			$total += (int) filesize( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache files.
+		}
+		return count( $files ) < self::MAX_FILES && $total + $bytes <= self::CACHE_BYTES;
+	}
+
+	/**
+	 * Uninstall/manual purge only; caller must also clear page caches referencing these URLs.
+	 */
+	public static function delete_all(): void {
+		$fs = self::filesystem();
+		if ( null !== $fs && self::safe_folder() ) {
+			$fs->delete( self::dir(), true );
+		}
+		self::reset();
+	}
+
+	/** Cache directory is inside this site's uploads, never a symlink escape. */
+	private static function safe_folder(): bool {
+		$uploads = realpath( (string) wp_get_upload_dir()['basedir'] );
+		$folder  = realpath( self::dir() );
+		return false !== $uploads && false !== $folder && str_starts_with( $folder, $uploads . DIRECTORY_SEPARATOR );
+	}
+
+	/** Current site's cache directory. */
+	private static function dir(): string {
+		return untrailingslashit( (string) wp_get_upload_dir()['basedir'] ) . '/' . self::FOLDER;
+	}
+
+	/** Current site's public cache URL. */
+	private static function url(): string {
+		return untrailingslashit( set_url_scheme( (string) wp_get_upload_dir()['baseurl'] ) ) . '/' . self::FOLDER;
+	}
+
+	/** Direct filesystem access only: never ask for FTP credentials during a page request. */
+	private static function filesystem(): ?\WP_Filesystem_Base {
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		$uploads = (string) wp_get_upload_dir()['basedir'];
+		if ( 'direct' !== get_filesystem_method( array(), $uploads, true ) || ! WP_Filesystem( false, $uploads, true ) ) {
+			return null;
+		}
+		global $wp_filesystem;
+		return $wp_filesystem instanceof \WP_Filesystem_Base ? $wp_filesystem : null;
+	}
+}

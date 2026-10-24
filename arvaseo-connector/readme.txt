@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.7.0
+Stable tag: 2.8.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -215,6 +215,12 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.8.1 =
+Completed optimized CSS downloads reliably on sites with large stylesheets. Existing results are fetched in bounded individual requests, without regenerating them. Includes the new opt-in minification and connection hints from 2.8.0.
+
+= 2.8.0 =
+New opt-in CSS/JavaScript minification and DNS prefetch/preconnect. Fixes changing Google Fonts timestamps invalidating generated CSS. Existing speed settings stay as chosen; cached pages are refreshed once after updating.
+
 = 2.7.0 =
 The security scan reports theme and premium plugin files changed since the last scan, and scripts from new or hiding domains; dashboard file edits are emailed at once. The main image loads first on every tested page, sliders included.
 
@@ -276,6 +282,17 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.8.1 =
+* Fixed: large completed CSS results no longer exceed the connector’s normal response limit when fetched together. CSS results download individually with a bounded CSS-only response allowance; other API calls retain their existing limit.
+* Result checks prioritize recently requested page types and process a bounded number per run, so large old backlogs continue in the background without delaying current pages indefinitely.
+* Fixed: uninstall finishes speed cleanup before removing its logs and options, avoiding writes to already-removed tables.
+
+= 2.8.0 =
+* New: Minify CSS and Minify JavaScript serve smaller cached copies of supported local files, preserve original files and loading order, and fall back to originals for unsupported or unsafe files. Both start off and respect existing exclusions and other optimizers.
+* New: DNS prefetch and Preconnect for explicitly chosen external HTTPS origins, with limits, duplicate prevention and optional anonymous preconnect for fonts or CORS resources. These start off and do not change DNS records.
+* Fixed: themes adding a changing v/ver timestamp to Google Fonts no longer make unchanged styles a new CSS optimization on every request. Font family, subset, display and text choices still distinguish different CSS.
+* Updating refreshes cached pages once when speed fixes are on, so HTML from the previous version does not hide the updated behavior. Settings and saved CSS results are preserved.
 
 = 2.7.0 =
 * Show the main image first now works on every page you tested with PageSpeed in Arva SEO, not only the homepage, and when a slider or page builder shows the main image as a background: it's preloaded at the top of the page. WordPress's own "load first" hint no longer goes to another image, such as the logo.
