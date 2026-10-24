@@ -12,71 +12,61 @@ PageSpeed fixes you switch on one at a time, a free security scan of your files,
 
 == Description ==
 
-Fix the speed problems Google's PageSpeed test finds, one switch at a time, scan the site for security problems, and connect it to a website in your Arva SEO workspace.
+Improve how your WordPress site loads, scan for known security problems, and optionally connect it to your Arva SEO workspace. Local speed fixes and the security scan work without an Arva SEO account. Connected features use the service and allowances of your plan.
 
-= PageSpeed fixes =
+= PageSpeed fixes you control =
 
-Arva SEO → Speed lists each fix with the PageSpeed (Lighthouse) problem it addresses, worded as the report shows it. Every fix is off until you turn it on. You can try it first: while you try a fix, only you see the change when you're signed in, and visitors see your site as before. Turning a fix off puts your pages back as they were. Your theme files and content are never changed. The few fixes that add files say so on their cards and take them away again. The fixes work without an Arva SEO account.
+Arva SEO → Speed explains each fix and the PageSpeed (Lighthouse) problems it addresses. Every fix starts off. Try mode shows supported changes only to signed-in administrators before you enable them for visitors. Server-level caching and compression instead check the site when enabled.
 
-* **Page caching**: pages saved as ready-made HTML and sent without running WordPress, through .htaccess (backed up first) or PHP, checked straight away (Reduce initial server response time)
-* **Show the main image first**: the featured image on posts and pages, and on the homepage the image your latest PageSpeed test in Arva SEO named (Largest Contentful Paint image was lazily loaded; LCP request discovery)
-* **Lazy-load images, videos and maps** below the first few images (Defer offscreen images)
-* **Load styles faster** (critical CSS) and **Remove unused CSS**, worked out on Arva SEO's servers once for each type of page: the first screen's styles go straight into the page and stylesheets stop holding it up, or each page gets only the styles it uses with the full files loading on the first interaction. They need the connection and use the page optimizations of your Arva SEO plan (Eliminate render-blocking resources; Reduce unused CSS)
-* **Defer scripts** in the page's head, leaving jQuery, consent tools and any scripts you choose alone (Eliminate render-blocking resources). Because this one can affect how a site works, it can only be turned on after you've tried it and ticked off your important pages.
-* **Add missing image sizes** to media-library images (Image elements do not have explicit width and height)
-* **Add the mobile viewport tag**, when PageSpeed says it's missing
-* **Click-to-play videos**: YouTube embeds show a preview picture, and the player loads when someone presses play (Lazy load third-party resources with facades)
-* **Faster Google Fonts**: text shows straight away while fonts load, and the browser connects early; or serve copies of the fonts from your own site (Ensure text remains visible during webfont load)
-* **Delay chat widgets and trackers**: chat boxes, heatmaps and social widgets load on the visitor's first scroll, tap or key press; analytics and consent tools are never delayed unless you list them (Reduce the impact of third-party code)
-* **Browser caching and compression** on Apache and LiteSpeed: year-long browser caching for images, fonts, styles and scripts, and compressed pages, as rules in .htaccess that are checked straight away and taken out again if your site doesn't answer normally (Serve static assets with an efficient cache policy; Enable text compression)
-* **Remove unused WordPress extras** you choose: the emoji script, embed discovery, Dashicons for visitors, jQuery Migrate, block styles on pages without blocks
-* **New uploads as WebP**, and convert the images already in your media library in the background, keeping the originals (Serve images in next-gen formats)
-* **Compress images**, new uploads and existing Media Library JPEG/PNG/WebP images, with background batches, saved-byte status, selected-image bulk actions and original restoration. WebP compression is local; optional consented cloud compression uses the site's image allowance for JPEG/PNG only (Efficiently encode images)
-* **Inline CSS and JavaScript minification** without moving the original tags; **inline and external combining** with explicit static snippet and public HTTPS URL approvals, background asset caching and original delivery when unsupported
-* **CSS delivery options**: inline or cached-file used CSS (UCSS), generation per URL or page type, inline or external asynchronous CSS library, and font-display swap for supported styles
-* **JavaScript loading mode**: deferred or delayed until interaction for supported independent classic scripts, retaining dependencies, consent/measurement tools and exclusions
+* **Page caching:** serve saved HTML without running WordPress, through .htaccess or PHP. Signed-in users, personal pages, carts and checkouts are excluded. Cached pages are cleared when relevant content or settings change.
+* **Images and layout:** prioritize featured images and the homepage image identified by a connected PageSpeed test; lazy-load images, videos and maps below the first few images; add missing media-library image dimensions and the mobile viewport tag when needed.
+* **Critical and used CSS:** Load styles faster supplies first-screen styles; Remove unused CSS supplies the styles a page uses, with full stylesheets available on interaction. Arva SEO generates these on its servers using your plan's page optimizations. Choose generation by page type or URL, inline or cached-file used CSS, and an inline or external asynchronous loader. Original styles load until suitable results are ready.
+* **CSS and JavaScript minification:** smaller cached copies of supported local files, plus separate controls for minifying inline style blocks and classic scripts in their existing tags. Unsupported files and code stay unchanged.
+* **CSS and JavaScript combining:** bundle compatible neighboring files in order. Optional inline combining requires approval of an exact public static snippet; a changed snippet stops matching its approval. External combining requires exact approved public HTTPS URLs and background caching. Incompatible scripts, integrity-protected resources and managed critical/used CSS stay separate. Fewer requests do not always improve performance.
+* **Script loading:** defer supported scripts until HTML is parsed, or delay supported independent classic scripts until interaction. Dependencies, consent tools, protected measurement scripts and your exclusions are retained. Changing a public loading mode returns it to preview; enabling it requires checking your important pages.
+* **Chat and third-party widgets:** separately delay supported chat, heatmap and social widgets until interaction. Analytics and consent tools are not selected automatically; you can list additional scripts.
+* **Fonts:** optimize Google Fonts delivery, optionally serve local copies, and apply font-display: swap to supported styles so fallback text can appear while fonts load.
+* **YouTube facades:** show a preview image and load the player when someone presses play.
+* **Browser caching and compression:** checked .htaccess rules for Apache and LiteSpeed, with backups and rollback if the site does not respond normally. Other servers can use the suggested rules.
+* **WordPress extras:** choose whether to remove emoji scripts, embed discovery, visitor Dashicons, jQuery Migrate or unneeded block styles.
+* **Image optimization:** make WebP copies of new or existing uploads while keeping originals. Compress existing Media Library JPEG, PNG and supported WebP images in background batches, or select images with bulk actions. See saved bytes and restore originals when backups were kept. WebP compression is local; optional consented cloud compression sends JPEG/PNG images to Arva SEO and uses your image allowance only when it makes an image smaller.
 
-If you allow it on the Speed page ("Let Arva SEO switch these fixes", off by default), the people who manage this website in Arva SEO can try, turn on and turn off the fixes from its PageSpeed results, by the same rules as the page: a fix that can be tried goes on for everyone only after it's been tried, Defer scripts goes on only in WordPress, and turning a fix off always works. Every change is in Arva SEO → Activity with who asked.
+Use page, script, plugin and element exclusions to leave sensitive parts of your site alone. Defer/delay and CSS delivery leave shop pages alone by default. Turning delivery fixes off restores their normal behavior; image changes have their own restore controls. Theme source files and post content are not rewritten by delivery fixes. Keep backups and test menus, forms, booking flows and checkout before enabling changes for everyone.
 
-If a speed plugin such as WP Rocket or LiteSpeed Cache already does one of these jobs, that fix stays off, so pages are never processed twice, and the page offers to deactivate that plugin (only if you click). When the site is connected, the page also shows which fixes your homepage's latest PageSpeed test asks for, and Arva SEO's PageSpeed results link straight to the right switch.
+When another supported speed plugin handles a job, Arva SEO leaves it to that plugin. Deactivation is offered only as an explicit administrator action. An emergency wp-config.php switch can disable all speed fixes; see the FAQ.
+
+Connected PageSpeed results link to the matching controls. Remote switching is off by default and needs administrator approval. Authorized workspace managers can then request supported changes, subject to the same rules; Defer scripts still requires approval in WordPress. Changes are recorded in Activity.
 
 = Cloudflare =
 
-If your site is behind Cloudflare, connect it on the Speed page with a Cloudflare API token. Cloudflare's copy of your pages is then cleared whenever a fix or your choices change, or new optimized CSS, WebP copies or local fonts are ready, so visitors see the change straight away. A post's own pages are cleared when it changes. The plugin also checks whether Cloudflare's Rocket Loader is on, which clashes with Defer scripts. It works without an Arva SEO account.
+Optionally connect a Cloudflare API token on the Speed page, without an Arva SEO account. The token is stored encrypted. The plugin clears Cloudflare's cached pages when relevant content, delivery settings or optimized assets change, and checks for Rocket Loader conflicts. You can disable duplicate post purges if Cloudflare's own plugin already handles them.
 
-= Security scan =
+= Security scan and chosen repairs =
 
-Arva SEO → Health → Security scans this site on your own server: every week, and whenever you choose Scan now. It runs in the background in small batches, so the site stays fast, and needs no Arva SEO account. It never changes a file by itself: you choose each repair, and can undo it for 30 days.
+Arva SEO → Health → Security scans locally in background batches, weekly or when you choose Scan now. No account is required. It checks:
 
-* **Changed WordPress files**: WordPress's own files compared with WordPress.org's official checksums for your version, including missing files and extra PHP files in wp-admin and wp-includes.
-* **Changed plugin files**: each plugin from the WordPress.org directory compared with its official checksums, including PHP files it doesn't ship.
-* **Code where it shouldn't be**: PHP in the uploads folder, code disguised as an image, and unexpected PHP files in the site's main folder.
-* **Suspicious code**: patterns found in hacked websites (web shells, hidden or encoded code that runs, injected scripts and redirects, .htaccess rules that send search visitors elsewhere) in files that aren't official copies, such as themes and premium plugins. The patterns come with the plugin, and connected sites get new ones daily, with malware found on other websites.
-* **Exposed files**: a .env file, the .git folder, the debug log, database exports and backups (including copies of wp-config.php) that anyone could download, and folder listings in uploads.
-* **Settings that make an attack easier**: PHP without its latest security fixes, file editing in the dashboard, an administrator called "admin", XML-RPC, and username lists.
-* **Changed since the last scan**: files WordPress.org can't check (themes, child themes, premium and must-use plugins, drop-ins) are fingerprinted, and new or changed ones are reported, with the lines that were added for a theme's functions.php, header.php and footer.php and must-use plugins. Updates are recorded again quietly.
-* **Scripts from other websites**: the scripts your homepage, latest post and latest page load from other websites, and where each one is added. When the site is connected, Arva SEO checks the unfamiliar ones (a domain registered days ago, a script that hides what it does, Google's list of unsafe sites).
-* **Dashboard file edits**: a file saved with WordPress's theme or plugin file editor is recorded with who saved it, when and from which address; when the site is connected, Arva SEO emails the workspace's owners and admins at once.
+* WordPress core and directory plugins against official WordPress.org checksums, including changed, missing and unexpected files.
+* PHP in uploads, disguised code, suspicious patterns in nonofficial files, injected redirects and .htaccess rules.
+* Exposed configuration, repository, debug, backup and database files; directory listings; and security-related settings.
+* New or changed theme, premium-plugin, must-use-plugin and drop-in files, including selected added-line evidence.
+* External scripts loaded by sample pages and where they were added, plus dashboard theme/plugin file edits.
 
-Each result says what it means and what to do. A changed WordPress or plugin file can be put back from its official copy on WordPress.org, PHP that shouldn't be there can be moved to quarantine, where it can't run, and the dashboard's file editor can be turned off. "This is expected" hides one you trust, and it's shown again if the file changes. Serious results come first on Overview. A scan finds known signs of trouble; it can't prove a site is clean, so keep WordPress, plugins and themes updated and keep backups.
+Results explain the finding and suggested action. Nothing is repaired automatically. Choose to restore an official file, quarantine unexpected PHP or disable dashboard file editing; supported repairs can be undone for 30 days. Mark an expected result as trusted until its file changes.
 
-When the site is connected to Arva SEO, Health also lists known vulnerabilities in your installed plugins, themes and WordPress version, with the fixed version and a link to each record (vulnerability data: Wordfence Intelligence).
+Connected sites can receive updated security patterns, known-malware fingerprints, vulnerability findings from Wordfence Intelligence and optional alerts. Sharing scan evidence requires separate consent. A scan detects known signs of trouble; it cannot prove a site is clean and does not replace a firewall, backups, updates or professional cleanup.
 
-= Deep scan =
+Optional deep scans need separate administrator consent and are started individually. Code files not matched to official copies are sent to Arva SEO for malware checks and deleted when the scan finishes. Configuration secrets, logs, database exports, backups and media are excluded. Deep scans use the service's applicable allowance.
 
-Your theme and premium plugins can only be checked by pattern on your server. A deep scan, part of the Arva SEO service (included on its paid plans, and top-ups add more on any plan), sends those files to Arva SEO, where ClamAV's database of known malware and Arva SEO's own rules check them; they're deleted as soon as it finishes. It's off until an administrator allows it, and each one is started by an administrator. Secrets, logs, database exports, backups and media are never sent.
+= Optional Arva SEO connection =
 
-= Arva SEO Connector =
+Approve the connection on app.arvaseo.com without entering an Arva SEO password in WordPress. Each site receives revocable encrypted credentials.
 
-* **Secure connection.** Approve it on app.arvaseo.com: no Arva SEO password is entered in WordPress, and the site gets its own revocable, encrypted credentials.
-* **Plugin inventory.** Installed plugins (including must-use and drop-ins) and themes with their versions and update state, from WordPress's own data.
-* **Known vulnerabilities.** Arva SEO checks the plugin list against Wordfence Intelligence's vulnerability data every day, and emails you when one affects an installed version.
-* **Security scan results (optional).** If an administrator also agrees to share them (a separate choice), the scan's results go to Arva SEO: Website Health shows them with what to do, serious ones are emailed, and they can become tasks and appear in reports.
-* **Website Health.** Around 40 checks across core, plugins and themes, security, performance and SEO, using WordPress's Site Health tests. Arva SEO turns them into findings that say what is wrong, why it matters and how to fix and undo it. Nothing is changed on your site automatically.
-* **Content from Arva SEO.** Drafts written in Arva SEO arrive as drafts, pending review, scheduled or published posts, but never beyond the publishing mode you choose here (Draft only by default).
-* **SEO titles and descriptions.** If an administrator allows it (off by default), the SEO titles and meta descriptions your team approves in Arva SEO are written to Yoast SEO or Rank Math for published posts, pages and products and the homepage, in bulk. Only those two fields change, the page caches are cleared, and every change can be undone from Arva SEO.
-* **IndexNow.** The site serves the IndexNow key Arva SEO gives it (as /your-key.txt), so Arva SEO can tell Bing, Yandex, Seznam, Naver and Yep when you publish a post or change a page's SEO title or description, and they recrawl it sooner.
-* **Privacy.** Nothing about the site is shared until an administrator agrees to the exact list of fields. No visitor data, user accounts, emails, passwords or settings are ever sent. Existing content isn't sent either, except the previous SEO title and meta description of a page whose SEO title or description Arva SEO changes (when allowed), so that change can be undone.
+* **Inventory and Website Health:** share installed plugin/theme versions and approved health checks for findings, tasks and reports.
+* **Content delivery:** receive drafts, pending-review, scheduled or published posts within your chosen publishing ceiling; Draft only is the default.
+* **SEO updates:** separately allow approved SEO titles and meta descriptions for published posts, pages, products and the homepage in Yoast SEO or Rank Math. Only those fields change; caches are cleared and updates can be undone.
+* **IndexNow:** serve the key supplied by Arva SEO for its supported search-engine notifications.
+
+Review shared fields in Settings → Diagnostics and data sharing. External services, consent requirements and data handling are detailed below and in the FAQ.
 
 == Installation ==
 
