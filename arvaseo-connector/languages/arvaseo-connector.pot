@@ -2,1283 +2,3825 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Arva SEO Connector 1.0.0\n"
+"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.9.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-13T03:26:44+00:00\n"
+"POT-Creation-Date: 2026-10-24T12:29:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: arvaseo-connector\n"
 
 #. Plugin Name of the plugin
 #: arvaseo-connector.php
-#: includes/Admin/AdminController.php:124
-msgid "Arva SEO Connector"
+msgid "Arva SEO – Speed Booster & Security Scanner"
 msgstr ""
 
-#. Plugin URI of the plugin
+#. Description of the plugin
+#: arvaseo-connector.php
+msgid "PageSpeed fixes you switch on one at a time, each for a named Lighthouse problem and tried first if you like, and a security scan of your files that only reports what it finds. Connects this site to Arva SEO: shares a privacy-minimised plugin inventory and Website Health checks with your consent, shows evidence-backed fix guidance, and receives content you send from Arva SEO within the publishing limits you set here."
+msgstr ""
+
+#. Author of the plugin
+#: arvaseo-connector.php
+#: includes/Admin/AdminController.php:165
+#: includes/Admin/AdminController.php:166
+#: includes/Admin/AdminController.php:243
+msgid "Arva SEO"
+msgstr ""
+
 #. Author URI of the plugin
 #: arvaseo-connector.php
 msgid "https://arvaseo.com/"
 msgstr ""
 
-#. Description of the plugin
-#: arvaseo-connector.php
-msgid "Connects this WordPress site to Arva SEO: shares a privacy-minimised plugin inventory and Website Health checks with your consent, shows evidence-backed fix guidance, and receives content you send from Arva SEO within the publishing limits you set here."
+#: arvaseo-connector.php:28
+msgid "Arva SEO – Speed Booster & Security Scanner needs PHP 8.1 or newer. Ask your host to update PHP; the plugin is not running."
 msgstr ""
 
-#. Author of the plugin
-#: arvaseo-connector.php
-#: includes/Admin/AdminController.php:68
-#: includes/Admin/AdminController.php:69
-msgid "Arva SEO"
+#: includes/Admin/AdminController.php:200
+msgid "Overview"
 msgstr ""
 
-#: arvaseo-connector.php:30
-msgid "Arva SEO Connector needs PHP 8.1 or newer. Ask your host to update PHP; the plugin is not running."
+#: includes/Admin/AdminController.php:200
+msgid "Get started"
 msgstr ""
 
-#: includes/Admin/AdminController.php:88
-#: includes/Admin/AdminController.php:344
-msgid "Connection"
+#: includes/Admin/AdminController.php:201
+#: includes/Admin/AdminController.php:1186
+#: includes/Admin/AdminController.php:1265
+#: includes/Admin/views/connection.php:211
+msgid "Speed"
 msgstr ""
 
-#: includes/Admin/AdminController.php:89
-msgid "Content Sync"
+#: includes/Admin/AdminController.php:202
+msgid "Content"
 msgstr ""
 
-#: includes/Admin/AdminController.php:90
-msgid "Plugin Inventory"
+#: includes/Admin/AdminController.php:203
+msgid "Health"
 msgstr ""
 
-#: includes/Admin/AdminController.php:91
-#: includes/Admin/views/connection.php:97
-#: includes/Admin/views/diagnostics.php:42
-msgid "Website Health"
+#: includes/Admin/AdminController.php:204
+#: includes/Admin/views/connection.php:367
+msgid "Activity"
 msgstr ""
 
-#: includes/Admin/AdminController.php:92
-msgid "Activity Log"
-msgstr ""
-
-#: includes/Admin/AdminController.php:93
+#: includes/Admin/AdminController.php:205
+#: includes/Admin/AdminController.php:309
+#: includes/Security/Findings.php:44
 msgid "Settings"
 msgstr ""
 
-#: includes/Admin/AdminController.php:94
-msgid "Diagnostics & Privacy"
+#: includes/Admin/AdminController.php:206
+msgid "Plugin list"
 msgstr ""
 
-#: includes/Admin/AdminController.php:105
+#: includes/Admin/AdminController.php:207
+#: includes/Admin/views/settings.php:216
+msgid "Diagnostics and data sharing"
+msgstr ""
+
+#: includes/Admin/AdminController.php:218
 msgid "You don’t have permission to view this page."
 msgstr ""
 
-#: includes/Admin/AdminController.php:127
-msgid "Arva SEO Connector sections"
+#: includes/Admin/AdminController.php:244
+msgid "Speed Booster & Security Scanner"
 msgstr ""
 
-#: includes/Admin/AdminController.php:149
-msgid "Connected to Arva SEO. The first plugin inventory and health check are queued and will run in the background."
+#: includes/Admin/AdminController.php:247
+msgid "Reconnect needed"
 msgstr ""
 
-#: includes/Admin/AdminController.php:150
-msgid "Connected to Arva SEO, but the site’s details couldn’t be sent yet. They will be retried automatically."
-msgstr ""
-
-#: includes/Admin/AdminController.php:151
-msgid "Connecting was cancelled. Nothing was changed."
-msgstr ""
-
-#: includes/Admin/AdminController.php:152
-msgid "That connection reply didn’t match a connection started from this site by you, or it expired after 10 minutes. Start again."
-msgstr ""
-
-#: includes/Admin/AdminController.php:153
-msgid "Arva SEO returned an invalid connection code. Start again."
-msgstr ""
-
-#: includes/Admin/AdminController.php:154
-msgid "Arva SEO didn’t accept the connection (the code may have expired or been used). Start again; check the Activity Log if it keeps happening."
-msgstr ""
-
-#: includes/Admin/AdminController.php:155
-msgid "Disconnected. The credentials were removed from this site and revoked at Arva SEO, and synchronisation stopped."
-msgstr ""
-
-#: includes/Admin/AdminController.php:156
-msgid "The connection works."
-msgstr ""
-
-#: includes/Admin/AdminController.php:157
-msgid "The connection test failed. See Connection health below and the Activity Log."
-msgstr ""
-
-#: includes/Admin/AdminController.php:158
-msgid "Plugin inventory sync finished. See the result below."
-msgstr ""
-
-#: includes/Admin/AdminController.php:159
-msgid "Website recheck queued. Checks run in the background and can take a minute; refresh this page to see the results."
-msgstr ""
-
-#: includes/Admin/AdminController.php:160
-#: includes/Cron/PollingService.php:97
-msgid "Checked Arva SEO for content."
-msgstr ""
-
-#: includes/Admin/AdminController.php:161
-msgid "Your data-sharing choice was saved."
-msgstr ""
-
-#: includes/Admin/AdminController.php:162
-msgid "Tick the box to agree to share this data, or connect without it."
-msgstr ""
-
-#: includes/Admin/AdminController.php:168
-msgid "The saved Arva SEO credentials can’t be read (the site’s security keys or ARVASEO_CONNECTOR_ENCRYPTION_KEY changed). Disconnect and connect again."
-msgstr ""
-
-#: includes/Admin/AdminController.php:194
-msgid "You don’t have permission to connect this site."
-msgstr ""
-
-#: includes/Admin/AdminController.php:227
-msgid "Connection tested."
+#: includes/Admin/AdminController.php:249
+msgid "Connected to Arva SEO"
 msgstr ""
 
 #: includes/Admin/AdminController.php:251
+msgid "Not connected"
+msgstr ""
+
+#: includes/Admin/AdminController.php:257
+msgid "Open Arva SEO"
+msgstr ""
+
+#: includes/Admin/AdminController.php:259
+#: includes/Admin/views/health.php:119
+#: includes/Admin/views/security.php:258
+#: includes/Admin/views/security.php:348
+#: includes/Admin/views/speed.php:209
+#: includes/Admin/views/speed.php:318
+#: includes/Admin/views/speed.php:422
+#: includes/Admin/views/speed.php:876
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: includes/Admin/AdminController.php:262
+#: includes/Admin/views/connection.php:76
+#: includes/Admin/views/connection.php:94
+#: includes/Admin/views/settings.php:254
+msgid "Connect to Arva SEO"
+msgstr ""
+
+#: includes/Admin/AdminController.php:268
+msgid "Arva SEO sections"
+msgstr ""
+
+#. translators: %d: number of things that need the administrator.
+#: includes/Admin/AdminController.php:281
+#, php-format
+msgid "%d thing needs you"
+msgid_plural "%d things need you"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/AdminController.php:298
+msgid "How this website is doing, and what needs you. Nothing here changes your site until you choose to."
+msgstr ""
+
+#: includes/Admin/AdminController.php:299
+msgid "Fix what Google’s PageSpeed test finds, one switch at a time. Every fix is off until you turn it on, most can be tried first where only you see them, and turning one off puts your pages back as they were. Your theme files and content are never changed; the few fixes that add files say so."
+msgstr ""
+
+#: includes/Admin/AdminController.php:300
+msgid "Posts sent from Arva SEO arrive here, and the SEO titles your team approves are written to your SEO plugin, only as far as you allow."
+msgstr ""
+
+#: includes/Admin/AdminController.php:301
+msgid "What the security scan and the daily check found on this website, and how to fix it. Nothing changes on your site unless you choose a repair, which can be undone; snoozing, assigning or accepting a finding happens in Arva SEO."
+msgstr ""
+
+#: includes/Admin/AdminController.php:302
+msgid "Everything the plugin did, and who asked. No keys, codes, content or personal data are kept."
+msgstr ""
+
+#: includes/Admin/AdminController.php:303
+msgid "You decide how far Arva SEO may go on this website. Every setting starts at the safest choice."
+msgstr ""
+
+#: includes/Admin/AdminController.php:304
+msgid "The plugins and themes on this site, and exactly what is shared about them with Arva SEO."
+msgstr ""
+
+#: includes/Admin/AdminController.php:305
+msgid "What to share with support if something isn’t working, and what this site shares with Arva SEO."
+msgstr ""
+
+#. translators: %d: number of security problems.
+#: includes/Admin/AdminController.php:343
+#, php-format
+msgid "%d serious security problem"
+msgid_plural "%d serious security problems"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of security problems.
+#: includes/Admin/AdminController.php:345
+#, php-format
+msgid "%d security problem to look at"
+msgid_plural "%d security problems to look at"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/AdminController.php:346
+msgid "See what it found, why it matters and how to fix it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:348
+msgid "Open the results"
+msgstr ""
+
+#: includes/Admin/AdminController.php:353
+#: includes/Admin/views/connection.php:76
+#: includes/Admin/views/connection.php:94
+msgid "Reconnect to Arva SEO"
+msgstr ""
+
+#: includes/Admin/AdminController.php:353
+msgid "The connection stopped working, so nothing is sent or received until you connect again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:353
+#: includes/Admin/views/connection.php:46
+msgid "Reconnect"
+msgstr ""
+
+#: includes/Admin/AdminController.php:357
+#: includes/Admin/views/speed.php:1082
+msgid "Cloudflare refused the saved token"
+msgstr ""
+
+#: includes/Admin/AdminController.php:357
+msgid "Its copy of your pages isn’t cleared any more, so visitors may get old pages after a change. Connect it again with a working token."
+msgstr ""
+
+#: includes/Admin/AdminController.php:357
+msgid "Fix Cloudflare"
+msgstr ""
+
+#: includes/Admin/AdminController.php:359
+msgid "Rocket Loader is on in Cloudflare"
+msgstr ""
+
+#: includes/Admin/AdminController.php:359
+msgid "It changes how scripts load, as Defer scripts and Delay chat widgets do here. Use one or the other, or menus and forms may stop working."
+msgstr ""
+
+#: includes/Admin/AdminController.php:359
+#: includes/Admin/AdminController.php:383
+#: includes/Admin/views/connection.php:238
+msgid "Open Speed"
+msgstr ""
+
+#: includes/Admin/AdminController.php:361
+#: includes/Admin/views/speed.php:1139
+msgid "This website is behind Cloudflare"
+msgstr ""
+
+#: includes/Admin/AdminController.php:361
+msgid "Connect Cloudflare, so visitors and your next PageSpeed test get a fix as soon as you turn it on."
+msgstr ""
+
+#: includes/Admin/AdminController.php:361
+#: includes/Admin/views/speed.php:1142
+#: includes/Admin/views/speed.php:1161
+msgid "Connect Cloudflare"
+msgstr ""
+
+#. translators: %s: plugin names.
+#: includes/Admin/AdminController.php:369
+#, php-format
+msgid "%s does some of the same speed fixes"
+msgid_plural "%s do some of the same speed fixes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/AdminController.php:370
+msgid "Two plugins changing how the same things load can break pages. Choose which one does each job."
+msgstr ""
+
+#: includes/Admin/AdminController.php:372
+#: includes/Admin/AdminController.php:814
+msgid "Review on Speed"
+msgstr ""
+
+#: includes/Admin/AdminController.php:379
+#: includes/Admin/views/content.php:42
+msgid "Choose who posts content from Arva SEO"
+msgstr ""
+
+#: includes/Admin/AdminController.php:379
+msgid "Drafts sent from Arva SEO can’t be saved until you pick the WordPress user they’re created as."
+msgstr ""
+
+#: includes/Admin/AdminController.php:379
+#: includes/Admin/views/content.php:44
+msgid "Choose an author"
+msgstr ""
+
+#: includes/Admin/AdminController.php:383
+msgid "You’re trying a speed fix"
+msgid_plural "You’re trying speed fixes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/AdminController.php:383
+msgid "Only you see it. Check your pages, then turn it on for everyone or stop trying."
+msgstr ""
+
+#. translators: %d: number of speed fixes.
+#: includes/Admin/AdminController.php:391
+#, php-format
+msgid "Your latest PageSpeed test asks for %d fix"
+msgid_plural "Your latest PageSpeed test asks for %d fixes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/AdminController.php:394
+msgid "Review the fix"
+msgid_plural "Review the fixes"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of critical Website Health results.
+#: includes/Admin/AdminController.php:403
+#, php-format
+msgid "%d critical Website Health result"
+msgid_plural "%d critical Website Health results"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/AdminController.php:404
+msgid "See what’s wrong and how to fix it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:406
+#: includes/Admin/views/connection.php:267
+msgid "Open Health"
+msgstr ""
+
+#: includes/Admin/AdminController.php:492
+msgid "Sent to Arva SEO: your homepage, your main page types and any that failed before. Optimized CSS is usually ready within a few minutes; this page checks by itself while it’s open."
+msgstr ""
+
+#: includes/Admin/AdminController.php:493
+msgid "The optimized CSS will be worked out again, each page type using a page optimization. This page checks by itself while it’s open."
+msgstr ""
+
+#: includes/Admin/AdminController.php:494
+msgid "New optimized CSS is ready."
+msgstr ""
+
+#: includes/Admin/AdminController.php:495
+msgid "Nothing new yet. Arva SEO is still working on it; this page checks by itself while it’s open."
+msgstr ""
+
+#: includes/Admin/AdminController.php:506
+msgid "Connected to Arva SEO. The first plugin inventory and health check are queued and will run in the background."
+msgstr ""
+
+#: includes/Admin/AdminController.php:507
+msgid "Connected to Arva SEO, but the site’s details couldn’t be sent yet. They will be retried automatically."
+msgstr ""
+
+#: includes/Admin/AdminController.php:508
+msgid "Connecting was cancelled. Nothing was changed."
+msgstr ""
+
+#: includes/Admin/AdminController.php:509
+msgid "That connection reply didn’t match a connection started from this site by you, or it expired after 10 minutes. Start again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:510
+msgid "Arva SEO returned an invalid connection code. Start again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:511
+msgid "Arva SEO didn’t accept the connection (the code may have expired or been used). Start again; if it keeps happening, Activity shows what went wrong."
+msgstr ""
+
+#: includes/Admin/AdminController.php:516
+msgid "Disconnected. The credentials were removed from this site and revoked at Arva SEO, and synchronisation stopped."
+msgstr ""
+
+#: includes/Admin/AdminController.php:517
+msgid "The connection works."
+msgstr ""
+
+#: includes/Admin/AdminController.php:518
+msgid "The connection test failed. Activity shows what went wrong."
+msgstr ""
+
+#: includes/Admin/AdminController.php:519
+msgid "Plugin inventory sync finished. See the result below."
+msgstr ""
+
+#: includes/Admin/AdminController.php:520
+msgid "Website recheck queued. Checks run in the background and can take a minute; refresh this page to see the results."
+msgstr ""
+
+#: includes/Admin/AdminController.php:521
+#: includes/Cron/PollingService.php:125
+msgid "Checked Arva SEO for content."
+msgstr ""
+
+#: includes/Admin/AdminController.php:522
+msgid "Your data-sharing choice was saved."
+msgstr ""
+
+#: includes/Admin/AdminController.php:523
+msgid "Tick the box to agree to share this data, or connect without it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:524
+msgid "Trying it: only you see the change while you’re signed in. Open your website to check it, then turn it on."
+msgstr ""
+
+#: includes/Admin/AdminController.php:525
+msgid "Turned on for every visitor. Run a new PageSpeed test in Arva SEO to see the change. If you use a page cache, clear it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:526
+msgid "Turned off. Your pages are back to how they were. If you use a page cache, clear it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:527
+msgid "Your choices were saved."
+msgstr ""
+
+#: includes/Admin/AdminController.php:528
+msgid "That fix or setting doesn’t exist."
+msgstr ""
+
+#: includes/Admin/AdminController.php:529
+msgid "Another speed plugin already does this. Use its setting instead."
+msgstr ""
+
+#: includes/Admin/AdminController.php:530
+msgid "This fix isn’t available on this server."
+msgstr ""
+
+#: includes/Admin/AdminController.php:531
+msgid "Try Defer scripts first, check your important pages, then turn it on."
+msgstr ""
+
+#: includes/Admin/AdminController.php:532
+msgid "Tick each page you checked while trying Defer scripts before you turn it on."
+msgstr ""
+
+#: includes/Admin/AdminController.php:533
+msgid "Converting your existing images in the background. You can leave this page; come back to see how far it got."
+msgstr ""
+
+#: includes/Admin/AdminController.php:534
+msgid "Stopped. Images converted so far keep their WebP copies; Continue picks up where it stopped."
+msgstr ""
+
+#: includes/Admin/AdminController.php:535
+msgid "The WebP copies of your existing images were removed. Pages show the originals again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:536
+#: includes/Admin/views/speed.php:844
+msgid "Turn on New uploads as WebP first."
+msgstr ""
+
+#: includes/Admin/AdminController.php:537
+msgid "WordPress couldn’t write to your .htaccess file, so nothing changed. Ask your host to make it writable."
+msgstr ""
+
+#: includes/Admin/AdminController.php:538
+msgid "Your site couldn’t be checked from your server (some hosts block this), so the rules were taken out again to be safe. Nothing changed. Your host can add them for you: they’re listed on the card."
+msgstr ""
+
+#: includes/Admin/AdminController.php:539
+msgid "Your server answered with an error once the rules were in, so they were taken out straight away. Your site is as before. Your host can say which rule it doesn’t allow."
+msgstr ""
+
+#: includes/Admin/AdminController.php:540
+msgid "Page caching is on: your homepage came from the cache when checked. Other pages are saved as visitors open them, and refilled in the background. Run a new PageSpeed test in Arva SEO to see the change."
+msgstr ""
+
+#: includes/Admin/AdminController.php:541
+msgid "Page caching is off. The saved pages, advanced-cache.php and Arva SEO’s line in wp-config.php were removed."
+msgstr ""
+
+#: includes/Admin/AdminController.php:542
+msgid "Every saved page was cleared. Pages are saved again as visitors open them, and refilled in the background."
+msgstr ""
+
+#: includes/Admin/AdminController.php:543
+msgid "You can use Arva SEO’s page cache now. Turn off your host’s cache as it says below, then turn Page caching on."
+msgstr ""
+
+#: includes/Admin/AdminController.php:544
+msgid "Page caching is left to your host’s cache again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:545
+msgid "WordPress couldn’t write the page cache’s files (advanced-cache.php in wp-content, and WP_CACHE in wp-config.php), so nothing changed. Ask your host to make them writable."
+msgstr ""
+
+#: includes/Admin/AdminController.php:546
+msgid "Your homepage couldn’t be checked from your server (some hosts block this), so page caching was taken out again to be safe. Your site is as before."
+msgstr ""
+
+#: includes/Admin/AdminController.php:547
+msgid "Your server answered with an error once page caching was set up, so everything was taken out straight away. Your site is as before."
+msgstr ""
+
+#: includes/Admin/AdminController.php:548
+msgid "Your homepage didn’t answer normally when checked from your server (it redirects or shows an error), so it can’t be cached. Page caching was taken out again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:549
+msgid "Your homepage sets a cookie for every visitor, so it can’t be cached: visitors would share it. A plugin or your theme sets it. Page caching was taken out again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:550
+msgid "Your homepage asks not to be cached (a plugin or your host sends a no-cache header), so page caching was taken out again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:551
+msgid "Your homepage wasn’t served from the cache when checked, so page caching was taken out again. Your site is as before."
+msgstr ""
+
+#: includes/Admin/AdminController.php:552
+msgid "WordPress didn’t load the page cache when checked: another line in wp-config.php may turn WP_CACHE off, or your host loads its own. Page caching was taken out again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:553
+msgid "Your host’s own page cache answered before Arva SEO’s could, so it couldn’t be checked. Turn off the host’s cache first, as Page caching says, then try again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:554
+msgid "Cloudflare is connected. From now on its copy of your pages is cleared whenever a change here affects what visitors get."
+msgstr ""
+
+#: includes/Admin/AdminController.php:555
+msgid "That doesn’t look like a Cloudflare API token. Copy the token Cloudflare showed when you created it (not the Global API Key)."
+msgstr ""
+
+#: includes/Admin/AdminController.php:556
+msgid "Cloudflare didn’t accept that token. Check that it’s active and has Zone: Read and Cache Purge for this website’s domain."
+msgstr ""
+
+#: includes/Admin/AdminController.php:557
+msgid "The token works, but it can’t see this website’s domain. Give it access to the zone (Zone Resources) for this domain, or check that the domain is on Cloudflare."
+msgstr ""
+
+#: includes/Admin/AdminController.php:558
+msgid "Cloudflare couldn’t be reached from your server. Try again in a minute; if it keeps happening, your host may block outgoing connections."
+msgstr ""
+
+#: includes/Admin/AdminController.php:559
+msgid "Cloudflare’s copy of every page was cleared. Visitors get the current pages from now on."
+msgstr ""
+
+#: includes/Admin/AdminController.php:560
+msgid "Cloudflare didn’t clear its copy. The card below says what it answered."
+msgstr ""
+
+#: includes/Admin/AdminController.php:561
+msgid "Checked with Cloudflare."
+msgstr ""
+
+#: includes/Admin/AdminController.php:562
+msgid "Your Cloudflare choice was saved."
+msgstr ""
+
+#: includes/Admin/AdminController.php:563
+msgid "Cloudflare is disconnected and its token was removed from this site. Nothing is cleared from now on."
+msgstr ""
+
+#: includes/Admin/AdminController.php:564
+msgid "The security scan started. It runs in the background in small batches; you can leave this page and come back."
+msgstr ""
+
+#: includes/Admin/AdminController.php:565
+msgid "A security scan is already running."
+msgstr ""
+
+#: includes/Admin/AdminController.php:566
+msgid "The security scan stopped. The results of the previous scan are still shown."
+msgstr ""
+
+#: includes/Admin/AdminController.php:567
+msgid "Marked as expected. It’s hidden from now on, unless the file changes."
+msgstr ""
+
+#: includes/Admin/AdminController.php:568
+msgid "It’s shown again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:569
+msgid "The deep scan started. It sends the files in the background; you can leave this page and come back."
+msgstr ""
+
+#: includes/Admin/AdminController.php:570
+msgid "A deep scan is already running, or deep scans aren’t allowed here yet."
+msgstr ""
+
+#: includes/Admin/AdminController.php:571
+msgid "The deep scan stopped. Nothing more is sent."
+msgstr ""
+
+#: includes/Admin/AdminController.php:572
+msgid "Deep scans send their results the same way as the security scan: share the scan’s results first."
+msgstr ""
+
+#: includes/Admin/AdminController.php:573
+msgid "Done. It can be undone for 30 days under Changes made here."
+msgstr ""
+
+#: includes/Admin/AdminController.php:574
+#: includes/Admin/AdminController.php:580
+msgid "Nothing was changed."
+msgstr ""
+
+#: includes/Admin/AdminController.php:575
+msgid "Compressing your media library started. It runs in the background, a few images at a time; you can leave this page."
+msgstr ""
+
+#: includes/Admin/AdminController.php:576
+msgid "Stopped. Images already compressed stay that way; Continue carries on from here."
+msgstr ""
+
+#: includes/Admin/AdminController.php:577
+msgid "Putting the original images back in the background. Files changed since they were compressed stay as they are."
+msgstr ""
+
+#: includes/Admin/AdminController.php:578
+#: includes/Admin/views/speed.php:929
+msgid "Turn on Compress images first."
+msgstr ""
+
+#: includes/Admin/AdminController.php:579
+msgid "The plugin was deactivated."
+msgstr ""
+
+#: includes/Admin/AdminController.php:581
+msgid "Kept. Arva SEO leaves those fixes to them, and asks again if another speed plugin is activated."
+msgstr ""
+
+#: includes/Admin/AdminController.php:598
+msgid "The saved Arva SEO credentials can’t be read (the site’s security keys or ARVASEO_CONNECTOR_ENCRYPTION_KEY changed). Disconnect and connect again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:625
+msgid "You don’t have permission to connect this site."
+msgstr ""
+
+#: includes/Admin/AdminController.php:658
+msgid "Connection tested."
+msgstr ""
+
+#: includes/Admin/AdminController.php:702
+msgid "A security finding was marked as expected."
+msgstr ""
+
+#: includes/Admin/AdminController.php:702
+msgid "A security finding is shown again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:720
+msgid "Deep scans allowed."
+msgstr ""
+
+#: includes/Admin/AdminController.php:720
+msgid "Deep scans no longer allowed."
+msgstr ""
+
+#. translators: %s: plugin names.
+#: includes/Admin/AdminController.php:809
+#, php-format
+msgid "Arva SEO: %s does some of the same speed fixes. Two plugins changing how the same things load can break pages, so choose which one does each job."
+msgid_plural "Arva SEO: %s do some of the same speed fixes. Two plugins changing how the same things load can break pages, so choose which one does each job."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/AdminController.php:875
 msgid "Website recheck requested."
 msgstr ""
 
-#: includes/Admin/AdminController.php:272
+#: includes/Admin/AdminController.php:896
 msgid "Consent to share plugin inventory and Website Health given."
 msgstr ""
 
-#: includes/Admin/AdminController.php:275
+#: includes/Admin/AdminController.php:899
 msgid "Consent withdrawn: no inventory or health data will be sent."
 msgstr ""
 
-#: includes/Admin/AdminController.php:286
+#: includes/Admin/AdminController.php:916
+msgid "Consent to share the security scan’s results given."
+msgstr ""
+
+#: includes/Admin/AdminController.php:916
+msgid "Consent to share the security scan’s results withdrawn."
+msgstr ""
+
+#: includes/Admin/AdminController.php:930
 msgid "Diagnostics downloaded."
 msgstr ""
 
-#: includes/Admin/AdminController.php:328
+#: includes/Admin/AdminController.php:1070
+msgid "Arva SEO’s servers may compress images."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1070
+msgid "Arva SEO’s servers no longer compress images."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1118
+msgid "Page caching: cleared by hand."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1141
+msgid "The .htaccess backup was downloaded."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1163
+msgid "Cloudflare’s copy of your pages is cleared within a minute."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1166
+msgid "Cloudflare’s copy of your pages was cleared too, so visitors get the change straight away."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1167
+msgid "Cloudflare’s copy of your pages couldn’t be cleared. The Cloudflare card below says why; you can clear it there."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1184
+msgid "Arva SEO: Defer scripts is on. If something stopped working on your site, such as a menu, slider, form or checkout, turn it off or leave that script alone."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1235
 msgid "Copied."
 msgstr ""
 
-#: includes/Admin/AdminController.php:329
+#: includes/Admin/AdminController.php:1236
+msgid "Replace this file with WordPress.org’s official copy? The current file is kept for 30 days, so you can undo it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1237
+msgid "Deactivate this plugin? Its settings stay, so you can activate it again from the Plugins page. Clear any page cache afterwards."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1238
+msgid "Put the original images back? Files changed since they were compressed stay as they are."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1239
+msgid "Move this file to quarantine, where it can’t run? It’s kept for 30 days, so you can undo it. If you’re not sure what it does, back up your site first."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1240
 msgid "Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again."
 msgstr ""
 
-#: includes/Admin/AdminController.php:330
+#: includes/Admin/AdminController.php:1241
 msgid "Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?"
 msgstr ""
 
-#: includes/Admin/AdminController.php:331
+#: includes/Admin/AdminController.php:1242
 msgid "With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?"
 msgstr ""
 
-#: includes/Admin/AdminController.php:384
+#: includes/Admin/AdminController.php:1243
+msgid "With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1244
+msgid "Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1245
+msgid "This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1246
+msgid "Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1247
+msgid "Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1248
+msgid "Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1307
 msgid "Never"
 msgstr ""
 
-#: includes/Admin/AdminController.php:388
-#: includes/Admin/views/inventory.php:33
+#: includes/Admin/AdminController.php:1311
+#: includes/Admin/views/inventory.php:36
+#: includes/Admin/views/speed.php:1110
 msgid "Unknown"
 msgstr ""
 
 #. translators: 1: date and time, 2: relative time such as "5 mins".
-#: includes/Admin/AdminController.php:391
+#: includes/Admin/AdminController.php:1314
 #, php-format
 msgid "%1$s (%2$s ago)"
 msgstr ""
 
-#: includes/Admin/AdminController.php:402
+#: includes/Admin/AdminController.php:1325
+#: includes/Speed/Exclusions.php:658
 msgid "You don’t have permission to do that."
 msgstr ""
 
-#: includes/Admin/views/activity.php:29
-msgid "What the connector did, without tokens, codes, content or personal data. Kept for the number of days set in Settings."
-msgstr ""
-
-#: includes/Admin/views/activity.php:32
-msgid "Show"
-msgstr ""
-
-#: includes/Admin/views/activity.php:34
+#: includes/Admin/views/activity.php:37
 msgid "Everything"
 msgstr ""
 
-#: includes/Admin/views/activity.php:35
+#: includes/Admin/views/activity.php:38
 msgid "Warnings"
 msgstr ""
 
-#: includes/Admin/views/activity.php:36
+#: includes/Admin/views/activity.php:39
 msgid "Errors"
 msgstr ""
 
-#: includes/Admin/views/activity.php:38
-msgid "Filter"
-msgstr ""
-
-#: includes/Admin/views/activity.php:41
+#: includes/Admin/views/activity.php:42
+#: includes/Admin/views/activity.php:64
 msgid "Connector activity"
 msgstr ""
 
-#: includes/Admin/views/activity.php:43
-msgid "Time"
-msgstr ""
-
 #: includes/Admin/views/activity.php:44
-msgid "Level"
+#: includes/Admin/views/activity.php:82
+msgid "Show"
 msgstr ""
 
-#: includes/Admin/views/activity.php:45
-msgid "What happened"
+#. translators: 1: number of days, 2: site time zone.
+#: includes/Admin/views/activity.php:52
+#, php-format
+msgid "Kept for %1$d days (Settings). Times are in your site’s time zone, %2$s."
 msgstr ""
 
-#: includes/Admin/views/activity.php:46
-msgid "Details"
+#: includes/Admin/views/activity.php:59
+msgid "Nothing to look at"
 msgstr ""
 
-#: includes/Admin/views/activity.php:47
-msgid "By"
-msgstr ""
-
-#: includes/Admin/views/activity.php:51
+#: includes/Admin/views/activity.php:59
 msgid "No activity yet."
 msgstr ""
 
-#: includes/Admin/views/activity.php:60
+#: includes/Admin/views/activity.php:59
+msgid "Nothing of this kind in the log."
+msgstr ""
+
+#: includes/Admin/views/activity.php:66
+msgid "When"
+msgstr ""
+
+#: includes/Admin/views/activity.php:67
+msgid "What happened"
+msgstr ""
+
+#: includes/Admin/views/activity.php:68
+#: includes/Admin/views/speed.php:510
+msgid "Details"
+msgstr ""
+
+#: includes/Admin/views/activity.php:69
+msgid "By"
+msgstr ""
+
+#: includes/Admin/views/activity.php:87
+#: includes/Admin/views/connection.php:379
 msgid "Automatic"
 msgstr ""
 
-#: includes/Admin/views/connection.php:21
-msgid "Identify this site and keep the connection working"
+#: includes/Admin/views/connection.php:37
+msgid "This website isn’t connected to Arva SEO yet"
 msgstr ""
 
-#: includes/Admin/views/connection.php:22
-msgid "Send the plugin and theme inventory"
-msgstr ""
-
-#: includes/Admin/views/connection.php:23
-msgid "Send Website Health checks"
-msgstr ""
-
-#: includes/Admin/views/connection.php:24
-msgid "Show Arva SEO’s findings here"
-msgstr ""
-
-#: includes/Admin/views/connection.php:25
-msgid "Receive content sent from Arva SEO"
-msgstr ""
-
-#: includes/Admin/views/connection.php:26
-msgid "Report what WordPress did with that content"
-msgstr ""
-
-#: includes/Admin/views/connection.php:29
-#: includes/Admin/views/connection.php:56
-msgid "Connected"
-msgstr ""
-
-#: includes/Admin/views/connection.php:30
-msgid "Reconnect required"
-msgstr ""
-
-#: includes/Admin/views/connection.php:31
-msgid "Not connected"
-msgstr ""
-
-#: includes/Admin/views/connection.php:40
-msgid "Connection status"
-msgstr ""
-
-#: includes/Admin/views/connection.php:45
-msgid "Workspace"
+#: includes/Admin/views/connection.php:38
+msgid "An administrator can connect it from this page."
 msgstr ""
 
 #: includes/Admin/views/connection.php:46
-msgid "Website in Arva SEO"
+msgid "Welcome"
 msgstr ""
 
-#: includes/Admin/views/connection.php:48
-msgid "Client"
-msgstr ""
-
+#. translators: the words in <span> are highlighted.
 #: includes/Admin/views/connection.php:50
-msgid "Site registration ID"
+msgid "Make this website faster today. <span>Do your own SEO</span> step by step."
 msgstr ""
 
-#: includes/Admin/views/connection.php:51
-msgid "Permissions granted"
-msgstr ""
-
-#: includes/Admin/views/connection.php:57
-msgid "Last successful communication"
+#: includes/Admin/views/connection.php:53
+msgid "Start with the speed fixes, no account needed. Connect to Arva SEO when you want help with the rest: what to fix first, the searches worth winning, and content sent straight to WordPress."
 msgstr ""
 
 #: includes/Admin/views/connection.php:58
-msgid "Access renews"
-msgstr ""
-
-#: includes/Admin/views/connection.php:58
-msgid "Unavailable"
+msgid "No account needed"
 msgstr ""
 
 #: includes/Admin/views/connection.php:59
-msgid "Access is renewed automatically; tokens are never shown."
+msgid "Speed up this website"
 msgstr ""
 
-#: includes/Admin/views/connection.php:60
-msgid "Instant requests from Arva SEO"
-msgstr ""
-
+#. translators: %d: number of speed fixes.
 #: includes/Admin/views/connection.php:63
-msgid "Working"
-msgstr ""
-
-#: includes/Admin/views/connection.php:63
-msgid "Not available (checked every 5 minutes instead)"
+#, php-format
+msgid "%d fixes for what Google’s PageSpeed test finds, each named after the problem it solves."
 msgstr ""
 
 #: includes/Admin/views/connection.php:67
-msgid "Last error"
+msgid "Try a fix first. Only you see the change while you’re signed in."
 msgstr ""
 
-#: includes/Admin/views/connection.php:73
-msgid "Test connection"
+#: includes/Admin/views/connection.php:68
+msgid "Turn it on for everyone, or off again in one click."
 msgstr ""
 
-#: includes/Admin/views/connection.php:74
-msgid "Disconnect"
+#: includes/Admin/views/connection.php:69
+msgid "No coding, and your theme files are never changed."
 msgstr ""
 
-#: includes/Admin/views/connection.php:76
-#: includes/Admin/views/health.php:101
-msgid "View in Arva SEO"
+#: includes/Admin/views/connection.php:71
+msgid "Open the speed fixes"
 msgstr ""
 
-#: includes/Admin/views/connection.php:76
-#: includes/Admin/views/health.php:101
-msgid "(opens in a new tab)"
+#: includes/Admin/views/connection.php:75
+msgid "Your first website is free"
 msgstr ""
 
-#: includes/Admin/views/connection.php:86
-#: includes/Admin/views/connection.php:116
-msgid "Reconnect to Arva SEO"
+#: includes/Admin/views/connection.php:77
+msgid "The AI-powered SEO workspace for business owners."
 msgstr ""
 
-#: includes/Admin/views/connection.php:86
-#: includes/Admin/views/connection.php:116
-msgid "Connect to Arva SEO"
+#: includes/Admin/views/connection.php:79
+msgid "See which fixes your latest PageSpeed test asks for."
+msgstr ""
+
+#: includes/Admin/views/connection.php:80
+msgid "A health check of this website, with what to fix first."
+msgstr ""
+
+#: includes/Admin/views/connection.php:81
+msgid "Send the SEO titles and drafts you approve to WordPress, only as far as you allow."
 msgstr ""
 
 #: includes/Admin/views/connection.php:87
-msgid "You’ll sign in on app.arvaseo.com and choose the website this WordPress site belongs to. You never enter an Arva SEO password here."
-msgstr ""
-
-#: includes/Admin/views/connection.php:92
 msgid "What to allow"
 msgstr ""
 
-#: includes/Admin/views/connection.php:93
-msgid "Share the plugin inventory and Website Health checks with Arva SEO"
+#: includes/Admin/views/connection.php:88
+msgid "Share the plugin list and Website Health checks with Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/connection.php:95
-msgid "Exactly what is shared"
+#: includes/Admin/views/connection.php:89
+msgid "Also share the security scan’s results (what it finds, and the files’ paths inside the site)"
 msgstr ""
 
-#: includes/Admin/views/connection.php:97
-#: includes/Admin/views/diagnostics.php:42
-msgid "Plugin and theme inventory"
+#: includes/Admin/views/connection.php:90
+msgid "I agree to share the data listed under “Exactly what is shared” with Arva SEO for these purposes."
 msgstr ""
 
-#: includes/Admin/views/connection.php:104
-#: includes/Admin/views/diagnostics.php:49
-msgid "Never sent"
-msgstr ""
-
-#: includes/Admin/views/connection.php:110
-msgid "Recipient: Arva SEO (api.arvaseo.com). Purpose: explain this site’s health, updates and risks with fix guidance. No other telemetry is collected."
-msgstr ""
-
-#: includes/Admin/views/connection.php:112
-msgid "I agree to share the data listed above with Arva SEO for these purposes."
-msgstr ""
-
-#: includes/Admin/views/connection.php:113
-msgid "Allow Arva SEO to send content to this site"
-msgstr ""
-
-#: includes/Admin/views/connection.php:114
-msgid "(only as drafts until you choose another publishing mode in Settings)"
+#: includes/Admin/views/connection.php:91
+msgid "Allow Arva SEO to send content to this site (only as drafts until you choose another publishing mode in Settings)"
 msgstr ""
 
 #. translators: %s: Arva SEO app host.
-#: includes/Admin/views/connection.php:120
+#: includes/Admin/views/connection.php:98
 #, php-format
-msgid "You’ll be sent to %s and brought back here."
+msgid "You’ll sign in or create a free account at %s, then come back here. You never enter an Arva SEO password here."
 msgstr ""
 
-#: includes/Admin/views/content.php:22
-#: includes/Admin/views/settings.php:15
+#: includes/Admin/views/connection.php:107
+msgid "How connecting works"
+msgstr ""
+
+#: includes/Admin/views/connection.php:109
+msgid "Press Connect"
+msgstr ""
+
+#: includes/Admin/views/connection.php:109
+msgid "Sign in to Arva SEO, or create a free account."
+msgstr ""
+
+#: includes/Admin/views/connection.php:110
+msgid "Choose this website"
+msgstr ""
+
+#: includes/Admin/views/connection.php:110
+msgid "Pick the website this WordPress site belongs to. You can change what Arva SEO may do any time in Settings."
+msgstr ""
+
+#: includes/Admin/views/connection.php:111
+msgid "Come back here"
+msgstr ""
+
+#: includes/Admin/views/connection.php:111
+msgid "Content arrives as drafts until you allow more. Nothing is published without you."
+msgstr ""
+
+#: includes/Admin/views/connection.php:116
+msgid "Exactly what is shared"
+msgstr ""
+
+#: includes/Admin/views/connection.php:117
+msgid "Recipient: Arva SEO (api.arvaseo.com). Purpose: explain this site’s health, updates and risks with fix guidance. No other telemetry is collected."
+msgstr ""
+
+#: includes/Admin/views/connection.php:119
+msgid "Every field, and what’s never sent"
+msgstr ""
+
+#: includes/Admin/views/connection.php:121
+#: includes/Admin/views/settings.php:188
+msgid "Plugin and theme list"
+msgstr ""
+
+#: includes/Admin/views/connection.php:121
+msgid "Website Health"
+msgstr ""
+
+#: includes/Admin/views/connection.php:128
+msgid "Security scan results (only if you tick that box)"
+msgstr ""
+
+#: includes/Admin/views/connection.php:134
+#: includes/Admin/views/diagnostics.php:122
+msgid "Never sent"
+msgstr ""
+
+#: includes/Admin/views/connection.php:160
+#: includes/Admin/views/content.php:27
+#: includes/Admin/views/settings.php:24
 msgid "Draft only"
 msgstr ""
 
-#: includes/Admin/views/content.php:23
-msgid "Editorial review (draft, pending review)"
+#: includes/Admin/views/connection.php:161
+#: includes/Admin/views/content.php:28
+#: includes/Admin/views/settings.php:25
+msgid "Editorial review"
 msgstr ""
 
-#: includes/Admin/views/content.php:24
-#: includes/Admin/views/settings.php:17
-msgid "Editorial review and scheduling"
+#: includes/Admin/views/connection.php:162
+#: includes/Admin/views/settings.php:26
+msgid "Review and scheduling"
 msgstr ""
 
-#: includes/Admin/views/content.php:25
-#: includes/Admin/views/settings.php:18
+#: includes/Admin/views/connection.php:163
+#: includes/Admin/views/content.php:30
+#: includes/Admin/views/settings.php:27
 msgid "Full publishing"
 msgstr ""
 
-#: includes/Admin/views/content.php:32
-msgid "What Arva SEO may do here"
+#: includes/Admin/views/connection.php:170
+msgid "Identify this site and keep the connection working"
 msgstr ""
 
-#: includes/Admin/views/content.php:34
-#: includes/Admin/views/settings.php:26
-#: includes/Admin/views/settings.php:27
-msgid "Publishing mode"
+#: includes/Admin/views/connection.php:171
+msgid "Receive the plugin and theme list"
 msgstr ""
 
-#. translators: %s: comma-separated WordPress statuses.
-#: includes/Admin/views/content.php:38
+#: includes/Admin/views/connection.php:172
+msgid "Receive Website Health checks"
+msgstr ""
+
+#: includes/Admin/views/connection.php:173
+msgid "Show its findings here"
+msgstr ""
+
+#: includes/Admin/views/connection.php:174
+msgid "Send content to this site"
+msgstr ""
+
+#: includes/Admin/views/connection.php:175
+msgid "Hear what WordPress did with that content"
+msgstr ""
+
+#: includes/Admin/views/connection.php:184
+msgid "Nothing needs you right now"
+msgstr ""
+
+#: includes/Admin/views/connection.php:184
+msgid "Arva SEO checks this website every day. Anything worth your attention shows up here."
+msgstr ""
+
+#: includes/Admin/views/connection.php:188
+msgid "Needs you"
+msgstr ""
+
+#. translators: %d: number of things to look at.
+#: includes/Admin/views/connection.php:191
 #, php-format
-msgid "Allowed statuses: %s. Anything else is refused."
+msgid "%d thing to look at"
+msgid_plural "%d things to look at"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/connection.php:194
+msgid "Most urgent first"
 msgstr ""
 
-#: includes/Admin/views/content.php:40
-msgid "Requests above this mode are saved as drafts instead (and reported as downgraded)."
+#: includes/Admin/views/connection.php:215
+msgid "Performance on phones"
 msgstr ""
 
-#: includes/Admin/views/content.php:44
-#: includes/Admin/views/settings.php:40
+#: includes/Admin/views/connection.php:218
+msgid "No PageSpeed test yet"
+msgstr ""
+
+#: includes/Admin/views/connection.php:219
+msgid "Test your homepage in Arva SEO to see which fixes it needs."
+msgstr ""
+
+#. translators: %d: number of speed fixes that are on.
+#: includes/Admin/views/connection.php:224
+#, php-format
+msgid "%d fix on"
+msgid_plural "%d fixes on"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of speed fixes being tried.
+#: includes/Admin/views/connection.php:227
+#, php-format
+msgid "%d being tried"
+msgid_plural "%d being tried"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of speed fixes the latest test asks for.
+#: includes/Admin/views/connection.php:231
+#, php-format
+msgid "%d asked for"
+msgid_plural "%d asked for"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/connection.php:234
+msgid "Cloudflare connected"
+msgstr ""
+
+#: includes/Admin/views/connection.php:243
+msgid "Website health"
+msgstr ""
+
+#: includes/Admin/views/connection.php:245
+msgid "No check yet"
+msgstr ""
+
+#: includes/Admin/views/connection.php:246
+msgid "The first check runs in the background shortly after connecting."
+msgstr ""
+
+#. translators: %d: number of results to look at.
+#: includes/Admin/views/connection.php:252
+msgid "All checks passed"
+msgstr ""
+
+#. translators: %d: number of results to look at.
+#: includes/Admin/views/connection.php:252
+#, php-format
+msgid "%d to look at"
+msgid_plural "%d to look at"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/connection.php:256
+#: includes/Admin/views/health.php:29
+#: includes/Admin/views/security.php:74
+msgid "Critical"
+msgstr ""
+
+#: includes/Admin/views/connection.php:257
+#: includes/Admin/views/health.php:30
+msgid "Recommended"
+msgstr ""
+
+#: includes/Admin/views/connection.php:258
+#: includes/Admin/views/health.php:31
+msgid "Passed"
+msgstr ""
+
+#. translators: 1: when the site was last checked, 2: number of checks that couldn't run.
+#: includes/Admin/views/connection.php:263
+#, php-format
+msgid "Checked %1$s. %2$d couldn’t run."
+msgstr ""
+
+#: includes/Admin/views/connection.php:272
+msgid "Content from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/connection.php:275
+msgid "Sent so far"
+msgstr ""
+
+#. translators: %d: number of posts received.
+#: includes/Admin/views/connection.php:278
+#: includes/Admin/views/content.php:173
+msgid "None yet"
+msgstr ""
+
+#. translators: %d: number of posts received.
+#: includes/Admin/views/connection.php:278
+#, php-format
+msgid "%d post"
+msgid_plural "%d posts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/connection.php:281
+#: includes/Admin/views/content.php:86
+#: includes/Admin/views/settings.php:115
+msgid "SEO titles and descriptions"
+msgstr ""
+
+#: includes/Admin/views/connection.php:282
+msgid "Allowed"
+msgstr ""
+
+#: includes/Admin/views/connection.php:282
+#: includes/Admin/views/content.php:89
+msgid "Not allowed"
+msgstr ""
+
+#: includes/Admin/views/connection.php:284
+#: includes/Admin/views/content.php:83
+#: includes/Admin/views/settings.php:81
 msgid "Default author"
 msgstr ""
 
-#: includes/Admin/views/content.php:44
-msgid "Not set: content can’t be saved until you choose one in Settings"
+#: includes/Admin/views/connection.php:287
+#: includes/Admin/views/content.php:83
+msgid "Not chosen"
 msgstr ""
 
-#: includes/Admin/views/content.php:45
-msgid "Allowed content types"
+#: includes/Admin/views/connection.php:291
+msgid "Open Content"
 msgstr ""
 
-#: includes/Admin/views/content.php:46
-#: includes/Admin/views/settings.php:66
-msgid "Edits made in WordPress"
+#: includes/Admin/views/connection.php:299
+#: includes/Admin/views/settings.php:59
+#: includes/Admin/views/settings.php:225
+msgid "Connection"
 msgstr ""
 
-#: includes/Admin/views/content.php:46
-msgid "Overwritten by newer content from Arva SEO (a revision is kept)"
+#. translators: %s: Arva SEO workspace name.
+#: includes/Admin/views/connection.php:304
+#, php-format
+msgid "in the workspace %s"
 msgstr ""
 
-#: includes/Admin/views/content.php:46
-msgid "Kept: a newer version from Arva SEO is refused as a conflict"
+#. translators: %s: client name.
+#: includes/Admin/views/connection.php:307
+#, php-format
+msgid "client: %s"
 msgstr ""
 
-#: includes/Admin/views/content.php:47
-msgid "Last check for content"
+#: includes/Admin/views/connection.php:315
+#: includes/Admin/views/settings.php:246
+msgid "Test connection"
 msgstr ""
 
-#: includes/Admin/views/content.php:52
-msgid "Check for content now"
+#: includes/Admin/views/connection.php:316
+#: includes/Admin/views/settings.php:247
+msgid "Disconnect"
 msgstr ""
 
-#: includes/Admin/views/content.php:55
-msgid "Change settings"
+#: includes/Admin/views/connection.php:322
+#: includes/Admin/views/connection.php:332
+msgid "Connected"
 msgstr ""
 
-#: includes/Admin/views/content.php:59
-msgid "Scheduled posts rely on WP-Cron, which runs when the site gets visits. On quiet sites, set up a real server cron job so posts publish on time (see the administrator guide)."
+#: includes/Admin/views/connection.php:328
+msgid "Instant requests work"
 msgstr ""
 
-#: includes/Admin/views/content.php:63
-msgid "Recent deliveries"
+#: includes/Admin/views/connection.php:328
+msgid "Checked every 5 minutes"
 msgstr ""
 
-#: includes/Admin/views/content.php:65
-msgid "Nothing has been sent from Arva SEO yet."
+#: includes/Admin/views/connection.php:333
+msgid "Last heard from"
 msgstr ""
 
-#: includes/Admin/views/content.php:68
-msgid "Content received from Arva SEO"
+#: includes/Admin/views/connection.php:334
+msgid "Access"
 msgstr ""
 
-#: includes/Admin/views/content.php:70
-msgid "Received"
-msgstr ""
-
-#: includes/Admin/views/content.php:71
-msgid "Post"
-msgstr ""
-
-#: includes/Admin/views/content.php:72
-msgid "Requested"
-msgstr ""
-
-#: includes/Admin/views/content.php:73
-msgid "Applied"
-msgstr ""
-
-#: includes/Admin/views/content.php:74
-#: includes/Admin/views/health.php:219
-msgid "Result"
-msgstr ""
-
-#: includes/Admin/views/content.php:75
-msgid "Reported to Arva SEO"
-msgstr ""
-
-#: includes/Admin/views/content.php:93
-msgid "(no title)"
-msgstr ""
-
-#: includes/Admin/views/content.php:95
-msgid "Preview"
-msgstr ""
-
-#: includes/Admin/views/content.php:104
-msgid "processing"
-msgstr ""
-
-#: includes/Admin/views/content.php:108
-#: includes/Admin/views/health.php:176
-msgid "Yes"
-msgstr ""
-
-#: includes/Admin/views/content.php:108
-msgid "Pending, will retry"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:18
-#: includes/Admin/views/diagnostics.php:20
-msgid "Diagnostics"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:19
-msgid "Share this with Arva SEO support if something isn’t working. It contains versions, connection state, sync results and settings only: no tokens, secrets, file paths, usernames, emails or content."
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:23
-msgid "Copy"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:24
-msgid "Download"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:30
-msgid "Data sharing"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:34
-msgid "Not shared: no plugin inventory or health data is sent"
+#: includes/Admin/views/connection.php:338
+msgid "Unavailable"
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/diagnostics.php:37
+#: includes/Admin/views/connection.php:340
+#, php-format
+msgid "Renews by itself (next %s). Keys are never shown."
+msgstr ""
+
+#: includes/Admin/views/connection.php:344
+msgid "Site registration ID"
+msgstr ""
+
+#: includes/Admin/views/connection.php:346
+msgid "Last error"
+msgstr ""
+
+#. translators: %d: number of permissions.
+#: includes/Admin/views/connection.php:353
+#, php-format
+msgid "What Arva SEO is allowed to do (%d)"
+msgid_plural "What Arva SEO is allowed to do (%d)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/connection.php:367
+msgid "Lately"
+msgstr ""
+
+#: includes/Admin/views/connection.php:368
+msgid "See all activity"
+msgstr ""
+
+#: includes/Admin/views/connection.php:372
+msgid "Nothing yet."
+msgstr ""
+
+#: includes/Admin/views/content.php:27
+msgid "Content arrives as drafts."
+msgstr ""
+
+#: includes/Admin/views/content.php:28
+msgid "Drafts, or Pending Review."
+msgstr ""
+
+#: includes/Admin/views/content.php:29
+msgid "And scheduling"
+msgstr ""
+
+#: includes/Admin/views/content.php:29
+msgid "Also posts for a future time."
+msgstr ""
+
+#: includes/Admin/views/content.php:30
+msgid "Also publishes straight away."
+msgstr ""
+
+#: includes/Admin/views/content.php:42
+msgid "Drafts from Arva SEO can’t be saved until you pick the WordPress user they’re created as."
+msgstr ""
+
+#: includes/Admin/views/content.php:51
+msgid "What Arva SEO may do here"
+msgstr ""
+
+#: includes/Admin/views/content.php:55
+msgid "Check for content now"
+msgstr ""
+
+#: includes/Admin/views/content.php:58
+msgid "Change in Settings"
+msgstr ""
+
+#: includes/Admin/views/content.php:63
+msgid "Publishing modes, from the safest"
+msgstr ""
+
+#: includes/Admin/views/content.php:68
+#: includes/Admin/views/health.php:35
+msgid "Current"
+msgstr ""
+
+#. translators: %s: comma-separated WordPress statuses.
+#: includes/Admin/views/content.php:76
+#, php-format
+msgid "Allowed statuses: %s. Arva SEO can never go beyond the mode you set: anything above it is refused."
+msgstr ""
+
+#: includes/Admin/views/content.php:78
+msgid "Requests above this mode are saved as drafts instead (and reported as downgraded)."
+msgstr ""
+
+#: includes/Admin/views/content.php:84
+#: includes/Admin/views/settings.php:101
+msgid "Content types"
+msgstr ""
+
+#: includes/Admin/views/content.php:85
+msgid "Edits made in WordPress"
+msgstr ""
+
+#: includes/Admin/views/content.php:85
+msgid "Replaced by newer content from Arva SEO (a revision is kept)"
+msgstr ""
+
+#: includes/Admin/views/content.php:85
+msgid "Kept. A newer version from Arva SEO is reported as a conflict."
+msgstr ""
+
+#: includes/Admin/views/content.php:91
+msgid "Allow in Settings"
+msgstr ""
+
+#. translators: %s: the SEO plugin's name.
+#: includes/Admin/views/content.php:95
+#, php-format
+msgid "Written to %s when your team approves them"
+msgstr ""
+
+#: includes/Admin/views/content.php:97
+msgid "Allowed, but no supported SEO plugin is in use: see Settings"
+msgstr ""
+
+#: includes/Admin/views/content.php:101
+msgid "Last check for content"
+msgstr ""
+
+#: includes/Admin/views/content.php:106
+msgid "Sent from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/content.php:107
+msgid "Recent deliveries"
+msgstr ""
+
+#: includes/Admin/views/content.php:111
+msgid "Nothing sent yet"
+msgstr ""
+
+#: includes/Admin/views/content.php:111
+msgid "When your team sends a draft from Arva SEO’s Content section, it appears here and in Posts, for you to check and publish."
+msgstr ""
+
+#: includes/Admin/views/content.php:116
+msgid "Content received from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/content.php:118
+#: includes/Admin/views/content.php:184
+msgid "Received"
+msgstr ""
+
+#: includes/Admin/views/content.php:119
+msgid "Post"
+msgstr ""
+
+#: includes/Admin/views/content.php:120
+msgid "Requested"
+msgstr ""
+
+#: includes/Admin/views/content.php:121
+msgid "Applied"
+msgstr ""
+
+#: includes/Admin/views/content.php:122
+#: includes/Admin/views/content.php:187
+#: includes/Admin/views/health.php:275
+msgid "Result"
+msgstr ""
+
+#: includes/Admin/views/content.php:123
+#: includes/Admin/views/content.php:188
+msgid "Reported to Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/content.php:141
+#: includes/Admin/views/content.php:200
+msgid "(no title)"
+msgstr ""
+
+#: includes/Admin/views/content.php:143
+msgid "Preview"
+msgstr ""
+
+#: includes/Admin/views/content.php:152
+#: includes/Admin/views/content.php:207
+msgid "processing"
+msgstr ""
+
+#: includes/Admin/views/content.php:156
+#: includes/Admin/views/content.php:211
+#: includes/Admin/views/health.php:207
+msgid "Yes"
+msgstr ""
+
+#: includes/Admin/views/content.php:156
+#: includes/Admin/views/content.php:211
+msgid "Pending, will retry"
+msgstr ""
+
+#: includes/Admin/views/content.php:166
+msgid "Your SEO plugin"
+msgstr ""
+
+#: includes/Admin/views/content.php:167
+msgid "SEO title and description updates"
+msgstr ""
+
+#: includes/Admin/views/content.php:173
+msgid "The titles and descriptions your team approves in Arva SEO appear here once they’re written."
+msgstr ""
+
+#: includes/Admin/views/content.php:175
+msgid "Not allowed yet"
+msgstr ""
+
+#: includes/Admin/views/content.php:175
+msgid "Turn on “Existing content” in Settings to let Arva SEO write the titles and descriptions your team approves. Each change can be undone from Arva SEO."
+msgstr ""
+
+#: includes/Admin/views/content.php:182
+msgid "SEO title and description updates from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/content.php:185
+msgid "Page"
+msgstr ""
+
+#: includes/Admin/views/content.php:186
+#: includes/Admin/views/settings.php:118
+msgid "SEO plugin"
+msgstr ""
+
+#: includes/Admin/views/content.php:198
+#: includes/Speed/CssOptimizer.php:752
+msgid "Homepage"
+msgstr ""
+
+#: includes/Admin/views/content.php:220
+msgid "Scheduled posts rely on WP-Cron, which runs when the site gets visits. On quiet sites, set up a real server cron job so posts publish on time (see the administrator guide)."
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:21
+msgid "For support"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:22
+#: includes/Admin/views/diagnostics.php:24
+msgid "Diagnostics"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:23
+msgid "Share this with Arva SEO support if something isn’t working. It contains versions, connection state, sync results and settings only: no tokens, secrets, file paths, usernames, emails or content."
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:27
+msgid "Copy"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:28
+msgid "Download"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:34
+msgid "Data sharing"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:38
+msgid "Not shared: no plugin list or health data is sent"
+msgstr ""
+
+#. translators: %s: date and time.
+#: includes/Admin/views/diagnostics.php:41
+#: includes/Admin/views/diagnostics.php:61
 #, php-format
 msgid "Shared since %s"
 msgstr ""
 
-#: includes/Admin/views/diagnostics.php:55
-msgid "Stored on this site"
+#: includes/Admin/views/diagnostics.php:48
+msgid "Share the plugin list and Website Health checks listed below with Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/diagnostics.php:57
-msgid "Encrypted connection credentials (removed on disconnect)"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:58
-msgid "Connection details, settings and your consent record"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:59
-msgid "Which posts came from Arva SEO, with delivery results (kept 180 days)"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:60
-msgid "Received event IDs, to refuse replays (kept 7 days)"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:61
-msgid "The activity log (kept for the period chosen in Settings)"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:63
-msgid "To stop sharing, withdraw consent below or disconnect. To have Arva SEO delete what it holds, disconnect and contact Arva SEO support; see arvaseo.com/privacy/."
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:67
-msgid "Share the plugin inventory and Website Health checks listed above with Arva SEO"
-msgstr ""
-
-#: includes/Admin/views/diagnostics.php:68
+#: includes/Admin/views/diagnostics.php:49
 msgid "Save data-sharing choice"
 msgstr ""
 
-#: includes/Admin/views/health.php:22
-msgid "Critical"
+#: includes/Admin/views/diagnostics.php:55
+msgid "Also share the security scan’s results"
 msgstr ""
 
-#: includes/Admin/views/health.php:23
-msgid "Recommended"
+#: includes/Admin/views/diagnostics.php:58
+msgid "Share the plugin list and Website Health checks first."
 msgstr ""
 
-#: includes/Admin/views/health.php:24
-msgid "Passed"
+#: includes/Admin/views/diagnostics.php:63
+msgid "What each problem is and the file’s path inside the site, never the files themselves."
 msgstr ""
 
-#: includes/Admin/views/health.php:25
-msgid "Couldn’t check"
+#: includes/Admin/views/diagnostics.php:67
+#: includes/Admin/views/diagnostics.php:85
+msgid "Save this choice"
 msgstr ""
 
-#: includes/Admin/views/health.php:28
-msgid "Current"
+#: includes/Admin/views/diagnostics.php:73
+#: includes/Admin/views/security.php:267
+msgid "Allow deep scans"
 msgstr ""
 
-#: includes/Admin/views/health.php:29
-msgid "Stale: may no longer describe the site"
+#: includes/Admin/views/diagnostics.php:76
+msgid "Share the security scan’s results first."
 msgstr ""
 
-#: includes/Admin/views/health.php:30
-msgid "Expired"
+#. translators: %s: date and time.
+#: includes/Admin/views/diagnostics.php:79
+#, php-format
+msgid "Allowed since %s"
 msgstr ""
 
-#: includes/Admin/views/health.php:31
-msgid "Superseded by a newer check (assessment pending)"
+#: includes/Admin/views/diagnostics.php:81
+msgid "Only when an administrator starts one: the files that aren’t official copies go to Arva SEO to be checked for known malware, and are deleted after."
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:88
+msgid "Deep scans: every field"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:98
+msgid "Security scan results: every field"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:109
+msgid "Plugin and theme list: every field"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:109
+msgid "Website Health: every field"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:120
+msgid "Never sent, and what’s stored on this site"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:128
+msgid "Stored on this site"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:130
+msgid "Encrypted connection credentials (removed on disconnect)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:131
+msgid "Connection details, settings and your consent record"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:132
+msgid "Which posts came from Arva SEO, with delivery results (kept 180 days)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:133
+msgid "Received event IDs, to refuse replays (kept 7 days)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:134
+msgid "The activity log (kept for the period chosen in Settings)"
+msgstr ""
+
+#: includes/Admin/views/diagnostics.php:138
+msgid "To stop sharing, switch it off above or disconnect. To have Arva SEO delete what it holds, disconnect and contact Arva SEO support; see arvaseo.com/privacy/."
 msgstr ""
 
 #: includes/Admin/views/health.php:32
-msgid "No assessment yet"
-msgstr ""
-
-#: includes/Admin/views/health.php:35
-msgid "Open"
+msgid "Couldn’t check"
 msgstr ""
 
 #: includes/Admin/views/health.php:36
-msgid "Needs verification"
+msgid "Stale: may no longer describe the site"
 msgstr ""
 
 #: includes/Admin/views/health.php:37
-msgid "In progress"
+msgid "Expired"
 msgstr ""
 
 #: includes/Admin/views/health.php:38
-msgid "Snoozed"
+msgid "Superseded by a newer check (assessment pending)"
 msgstr ""
 
 #: includes/Admin/views/health.php:39
-msgid "Dismissed"
+msgid "No assessment yet"
 msgstr ""
 
-#: includes/Admin/views/health.php:40
-msgid "Accepted risk"
+#: includes/Admin/views/health.php:42
+#: includes/Admin/views/settings.php:219
+msgid "Open"
 msgstr ""
 
-#: includes/Admin/views/health.php:41
-msgid "Resolved"
+#: includes/Admin/views/health.php:43
+msgid "Needs checking"
 msgstr ""
 
 #: includes/Admin/views/health.php:44
-msgid "Site administrator"
+msgid "In progress"
 msgstr ""
 
 #: includes/Admin/views/health.php:45
-msgid "Developer"
+msgid "Snoozed"
 msgstr ""
 
 #: includes/Admin/views/health.php:46
-msgid "Hosting provider"
+msgid "Dismissed"
 msgstr ""
 
 #: includes/Admin/views/health.php:47
-msgid "Your SEO specialist"
+msgid "Accepted risk"
 msgstr ""
 
-#: includes/Admin/views/health.php:50
-msgid "Measured by WordPress"
+#: includes/Admin/views/health.php:48
+msgid "Resolved"
 msgstr ""
 
 #: includes/Admin/views/health.php:51
-msgid "Assessed by an Arva SEO rule"
+msgid "Site administrator"
 msgstr ""
 
 #: includes/Admin/views/health.php:52
-msgid "Detected by an Arva SEO audit"
+msgid "Developer"
 msgstr ""
 
 #: includes/Admin/views/health.php:53
-msgid "From an advisory provider"
+msgid "Hosting provider"
 msgstr ""
 
-#: includes/Admin/views/health.php:56
-msgid "WordPress core"
+#: includes/Admin/views/health.php:54
+msgid "Your SEO specialist"
 msgstr ""
 
 #: includes/Admin/views/health.php:57
-msgid "Plugins and themes"
+msgid "Measured by WordPress"
 msgstr ""
 
 #: includes/Admin/views/health.php:58
-msgid "Runtime and hosting"
+msgid "Assessed by an Arva SEO rule"
 msgstr ""
 
 #: includes/Admin/views/health.php:59
-msgid "Security and configuration"
+msgid "Detected by an Arva SEO audit"
 msgstr ""
 
 #: includes/Admin/views/health.php:60
+msgid "From an advisory provider"
+msgstr ""
+
+#: includes/Admin/views/health.php:63
+msgid "WordPress core"
+msgstr ""
+
+#: includes/Admin/views/health.php:64
+msgid "Plugins and themes"
+msgstr ""
+
+#: includes/Admin/views/health.php:65
+msgid "Runtime and hosting"
+msgstr ""
+
+#: includes/Admin/views/health.php:66
+msgid "Security and configuration"
+msgstr ""
+
+#: includes/Admin/views/health.php:67
 msgid "Reliability"
 msgstr ""
 
-#: includes/Admin/views/health.php:61
+#: includes/Admin/views/health.php:68
 msgid "Performance"
 msgstr ""
 
-#: includes/Admin/views/health.php:62
+#: includes/Admin/views/health.php:69
 msgid "SEO and indexability"
 msgstr ""
 
-#: includes/Admin/views/health.php:68
-msgid "Overview"
+#: includes/Admin/views/health.php:79
+msgid "Last check"
 msgstr ""
 
-#: includes/Admin/views/health.php:70
-msgid "Last checked"
+#. translators: %s: relative time such as "5 hours".
+#: includes/Admin/views/health.php:84
+msgid "Not checked yet"
 msgstr ""
 
-#: includes/Admin/views/health.php:71
-msgid "Assessed by Arva SEO"
+#. translators: %s: relative time such as "5 hours".
+#: includes/Admin/views/health.php:84
+#, php-format
+msgid "%s ago"
 msgstr ""
 
 #. translators: %s: rules version.
-#: includes/Admin/views/health.php:78
+#: includes/Admin/views/health.php:92
 #, php-format
-msgid "Rules version %s"
+msgid "Assessed with rules %s"
 msgstr ""
 
-#: includes/Admin/views/health.php:84
-msgid "Last upload"
+#: includes/Admin/views/health.php:94
+msgid "Assessed by Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/health.php:84
-#: includes/Admin/views/inventory.php:49
-msgid "Failed"
+#: includes/Admin/views/health.php:100
+msgid "Last upload failed"
 msgstr ""
 
-#: includes/Admin/views/health.php:88
+#: includes/Admin/views/health.php:106
 msgid "Check results"
 msgstr ""
 
-#: includes/Admin/views/health.php:93
-msgid "“Couldn’t check” is never counted as passed. There is no overall score."
+#: includes/Admin/views/health.php:111
+msgid "“Couldn’t check” never counts as passed, and there’s no overall score."
 msgstr ""
 
-#: includes/Admin/views/health.php:98
-msgid "Recheck website"
+#: includes/Admin/views/health.php:116
+msgid "Check again now"
 msgstr ""
 
-#: includes/Admin/views/health.php:105
-msgid "This view is read-only. Snoozing, dismissing, accepting a risk or assigning a finding happens in Arva SEO. Nothing here changes your site."
+#: includes/Admin/views/health.php:119
+msgid "Open in Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/health.php:110
+#: includes/Admin/views/health.php:131
 msgid "Changed since the previous check"
 msgstr ""
 
-#: includes/Admin/views/health.php:114
-#: includes/Admin/views/health.php:115
+#: includes/Admin/views/health.php:135
+#: includes/Admin/views/health.php:136
 msgid "not checked"
 msgstr ""
 
-#: includes/Admin/views/health.php:122
+#: includes/Admin/views/health.php:144
 msgid "Findings and fix guidance"
 msgstr ""
 
-#: includes/Admin/views/health.php:124
-msgid "Connect to Arva SEO to get findings with evidence and step-by-step fix guidance. The checks below run locally either way."
+#: includes/Admin/views/health.php:145
+msgid "Connect to Arva SEO to get findings with evidence and step-by-step fix guidance. The checks below run here either way."
 msgstr ""
 
-#: includes/Admin/views/health.php:126
+#: includes/Admin/views/health.php:151
+msgid "Being assessed"
+msgstr ""
+
+#: includes/Admin/views/health.php:151
+msgid "No open findings"
+msgstr ""
+
+#: includes/Admin/views/health.php:152
 msgid "Arva SEO is assessing the latest check. Refresh in a few minutes."
 msgstr ""
 
-#: includes/Admin/views/health.php:126
-msgid "No open findings."
+#: includes/Admin/views/health.php:152
+msgid "Nothing to fix from the latest check."
 msgstr ""
 
-#: includes/Admin/views/health.php:129
+#: includes/Admin/views/health.php:157
 msgid "These findings are not current. They describe the site as it was at the last assessment."
 msgstr ""
 
+#. translators: %d: number of findings.
+#: includes/Admin/views/health.php:169
+#: includes/Admin/views/security.php:321
+#: includes/Admin/views/security.php:380
+#, php-format
+msgid "%d finding"
+msgid_plural "%d findings"
+msgstr[0] ""
+msgstr[1] ""
+
 #. translators: %s: severity.
-#: includes/Admin/views/health.php:146
+#: includes/Admin/views/health.php:181
 #, php-format
 msgid "Severity: %s"
 msgstr ""
 
+#: includes/Admin/views/health.php:189
+msgid "Wording edited in Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/health.php:195
+msgid "What’s wrong and how to fix it"
+msgstr ""
+
+#: includes/Admin/views/health.php:199
+msgid "What’s wrong"
+msgstr ""
+
+#: includes/Admin/views/health.php:200
+msgid "What to fix"
+msgstr ""
+
+#: includes/Admin/views/health.php:203
+msgid "How to fix it, step by step"
+msgstr ""
+
+#: includes/Admin/views/health.php:204
+msgid "Why it matters:"
+msgstr ""
+
+#: includes/Admin/views/health.php:205
+msgid "Who should do it:"
+msgstr ""
+
+#: includes/Admin/views/health.php:206
+msgid "Risk:"
+msgstr ""
+
+#: includes/Admin/views/health.php:207
+msgid "Backup first:"
+msgstr ""
+
+#: includes/Admin/views/health.php:207
+msgid "No"
+msgstr ""
+
+#: includes/Admin/views/health.php:209
+msgid "Before you start:"
+msgstr ""
+
+#: includes/Admin/views/health.php:216
+msgid "Steps:"
+msgstr ""
+
+#: includes/Admin/views/health.php:222
+msgid "How to verify:"
+msgstr ""
+
+#: includes/Admin/views/health.php:228
+msgid "How to undo:"
+msgstr ""
+
+#: includes/Admin/views/health.php:235
+msgid "Note from your SEO team:"
+msgstr ""
+
+#: includes/Admin/views/health.php:239
+msgid "The evidence"
+msgstr ""
+
 #. translators: %s: confidence.
-#: includes/Admin/views/health.php:148
+#: includes/Admin/views/health.php:244
 #, php-format
 msgid "Confidence: %s"
 msgstr ""
 
-#: includes/Admin/views/health.php:154
-msgid "Wording edited in Arva SEO"
-msgstr ""
+#. translators: %d: number of checks.
+#: includes/Admin/views/health.php:266
+#, php-format
+msgid "Show every check (%d)"
+msgid_plural "Show every check (%d)"
+msgstr[0] ""
+msgstr[1] ""
 
-#: includes/Admin/views/health.php:158
-msgid "What’s wrong:"
-msgstr ""
-
-#: includes/Admin/views/health.php:159
-msgid "What to fix:"
-msgstr ""
-
-#: includes/Admin/views/health.php:161
-msgid "View evidence"
-msgstr ""
-
-#: includes/Admin/views/health.php:172
-msgid "View fix guidance"
-msgstr ""
-
-#: includes/Admin/views/health.php:173
-msgid "Why it matters:"
-msgstr ""
-
-#: includes/Admin/views/health.php:174
-msgid "Who should do it:"
-msgstr ""
-
-#: includes/Admin/views/health.php:175
-msgid "Risk:"
-msgstr ""
-
-#: includes/Admin/views/health.php:176
-msgid "Backup first:"
-msgstr ""
-
-#: includes/Admin/views/health.php:176
-msgid "No"
-msgstr ""
-
-#: includes/Admin/views/health.php:178
-msgid "Before you start:"
-msgstr ""
-
-#: includes/Admin/views/health.php:185
-msgid "Steps:"
-msgstr ""
-
-#: includes/Admin/views/health.php:191
-msgid "How to verify:"
-msgstr ""
-
-#: includes/Admin/views/health.php:197
-msgid "How to undo:"
-msgstr ""
-
-#: includes/Admin/views/health.php:204
-msgid "Note from your SEO team:"
-msgstr ""
-
-#: includes/Admin/views/health.php:213
-msgid "All checks"
-msgstr ""
-
-#: includes/Admin/views/health.php:215
+#: includes/Admin/views/health.php:271
 msgid "Website Health checks and results"
 msgstr ""
 
-#: includes/Admin/views/health.php:217
+#: includes/Admin/views/health.php:273
 msgid "Check"
 msgstr ""
 
-#: includes/Admin/views/health.php:218
+#: includes/Admin/views/health.php:274
 msgid "Category"
 msgstr ""
 
-#: includes/Admin/views/health.php:220
+#: includes/Admin/views/health.php:276
 msgid "Measured value"
 msgstr ""
 
-#: includes/Admin/views/health.php:221
+#: includes/Admin/views/health.php:277
 msgid "Source"
 msgstr ""
 
 #. translators: %s: version number.
-#: includes/Admin/views/inventory.php:22
+#: includes/Admin/views/inventory.php:25
 #, php-format
 msgid "Update available: %s"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:25
+#: includes/Admin/views/inventory.php:28
 msgid "Up to date"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:28
+#: includes/Admin/views/inventory.php:31
 msgid "Unknown (update data is out of date)"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:29
+#: includes/Admin/views/inventory.php:32
 msgid "Unknown (no update data)"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:30
+#: includes/Admin/views/inventory.php:33
 msgid "Unknown (update data unreadable)"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:31
+#: includes/Admin/views/inventory.php:34
 msgid "Unknown (not listed by WordPress.org)"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:36
-#: includes/Admin/views/inventory.php:75
+#: includes/Admin/views/inventory.php:39
+#: includes/Admin/views/inventory.php:85
 msgid "Plugin"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:37
+#: includes/Admin/views/inventory.php:40
 msgid "Must-use"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:38
+#: includes/Admin/views/inventory.php:41
 msgid "Drop-in"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:43
-msgid "Inventory sync"
+#: includes/Admin/views/inventory.php:48
+msgid "Shared with Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:45
-msgid "Last sent to Arva SEO"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:46
-msgid "Last attempt"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:52
-msgid "Sharing"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:52
+#: includes/Admin/views/inventory.php:49
 msgid "Allowed by an administrator"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:52
+#: includes/Admin/views/inventory.php:49
 msgid "Not allowed: nothing is sent"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:56
-msgid "Sync inventory now"
+#: includes/Admin/views/inventory.php:53
+#: includes/Admin/views/settings.php:204
+msgid "Send it now"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:60
+#: includes/Admin/views/inventory.php:58
+msgid "Last sent to Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:59
+#: includes/Admin/views/security.php:221
+msgid "Last attempt"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:62
+#: includes/Admin/views/speed.php:1096
+msgid "Failed"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:67
 msgid "Exactly which fields are shared"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:66
-msgid "Plugin settings, license keys and file paths are never sent. The inventory never forces an update check: it uses the update data WordPress already has."
-msgstr ""
-
-#: includes/Admin/views/inventory.php:71
-msgid "Plugins"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:73
-msgid "Installed plugins"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:76
-msgid "Type"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:77
-#: includes/Admin/views/inventory.php:111
-msgid "Version"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:78
-#: includes/Admin/views/inventory.php:112
-msgid "State"
-msgstr ""
-
-#: includes/Admin/views/inventory.php:79
-#: includes/Admin/views/inventory.php:113
-msgid "Updates"
+#: includes/Admin/views/inventory.php:74
+msgid "Plugin settings, license keys and file paths are never sent. The list never forces an update check: it uses the update data WordPress already has."
 msgstr ""
 
 #: includes/Admin/views/inventory.php:80
+msgid "Plugins"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:83
+msgid "Installed plugins"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:86
+msgid "Type"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:87
+#: includes/Admin/views/inventory.php:125
+msgid "Version"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:88
+#: includes/Admin/views/inventory.php:126
+msgid "State"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:89
+#: includes/Admin/views/inventory.php:127
+msgid "Updates"
+msgstr ""
+
+#: includes/Admin/views/inventory.php:90
 msgid "Automatic updates"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:91
+#: includes/Admin/views/inventory.php:101
 msgid "Network active"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:93
-#: includes/Admin/views/inventory.php:127
+#: includes/Admin/views/inventory.php:103
+#: includes/Admin/views/inventory.php:141
 msgid "Active"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:95
-#: includes/Admin/views/inventory.php:127
+#: includes/Admin/views/inventory.php:105
+#: includes/Admin/views/inventory.php:141
 msgid "Inactive"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:100
+#: includes/Admin/views/inventory.php:110
 msgid "Not applicable"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:100
+#: includes/Admin/views/inventory.php:110
+#: includes/Admin/views/speed.php:328
+#: includes/Admin/views/speed.php:1106
+#: includes/Speed/Fixes.php:723
 msgid "On"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:100
+#: includes/Admin/views/inventory.php:110
+#: includes/Admin/views/speed.php:330
+#: includes/Admin/views/speed.php:1108
+#: includes/Speed/Fixes.php:721
 msgid "Off"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:106
+#: includes/Admin/views/inventory.php:119
 msgid "Themes"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:108
+#: includes/Admin/views/inventory.php:122
 msgid "Installed themes"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:110
+#: includes/Admin/views/inventory.php:124
 msgid "Theme"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:123
+#: includes/Admin/views/inventory.php:137
 msgid "child theme"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:124
+#: includes/Admin/views/inventory.php:138
 msgid "parent of the active theme"
 msgstr ""
 
-#: includes/Admin/views/inventory.php:127
+#: includes/Admin/views/inventory.php:141
 msgid "In use as parent"
 msgstr ""
 
-#: includes/Admin/views/settings.php:15
-msgid "Content arrives as drafts. Nothing is published, scheduled or sent for review. (Default)"
+#: includes/Admin/views/security.php:59
+msgid "Restore the official copy"
 msgstr ""
 
-#: includes/Admin/views/settings.php:16
-msgid "Editorial review"
+#: includes/Admin/views/security.php:60
+msgid "Turn off the file editor"
 msgstr ""
 
-#: includes/Admin/views/settings.php:16
+#: includes/Admin/views/security.php:61
+msgid "Move to quarantine"
+msgstr ""
+
+#: includes/Admin/views/security.php:75
+msgid "High"
+msgstr ""
+
+#: includes/Admin/views/security.php:76
+msgid "Medium"
+msgstr ""
+
+#: includes/Admin/views/security.php:77
+msgid "Low"
+msgstr ""
+
+#: includes/Admin/views/security.php:94
+msgid "Security scan"
+msgstr ""
+
+#: includes/Admin/views/security.php:98
+msgid "Scanning now"
+msgstr ""
+
+#: includes/Admin/views/security.php:100
+msgid "Not scanned yet"
+msgstr ""
+
+#. translators: %s: relative time such as "5 hours".
+#: includes/Admin/views/security.php:103
+#, php-format
+msgid "Scanned %s ago"
+msgstr ""
+
+#. translators: 1: number of files, 2: duration such as "3 mins".
+#: includes/Admin/views/security.php:118
+#, php-format
+msgid "%1$s files checked in %2$s"
+msgstr ""
+
+#: includes/Admin/views/security.php:126
+msgid "The scan compares WordPress and your WordPress.org plugins with their official copies, looks for code where it shouldn’t be and for patterns hackers use, and checks for files anyone can download. It runs on this server and only reports what it finds."
+msgstr ""
+
+#: includes/Admin/views/security.php:128
+msgid "Security findings by severity"
+msgstr ""
+
+#: includes/Admin/views/security.php:137
+#: includes/Admin/views/security.php:254
+#: includes/Admin/views/speed.php:835
+#: includes/Admin/views/speed.php:920
+msgid "Stop"
+msgstr ""
+
+#: includes/Admin/views/security.php:139
+msgid "Scan now"
+msgstr ""
+
+#: includes/Admin/views/security.php:139
+msgid "Scan again"
+msgstr ""
+
+#: includes/Admin/views/security.php:142
+msgid "What it checked"
+msgstr ""
+
+#. translators: %s: WordPress version.
+#: includes/Admin/views/security.php:152
+#, php-format
+msgid "WordPress %s matched against WordPress.org’s checksums."
+msgstr ""
+
+#: includes/Admin/views/security.php:154
+msgid "WordPress.org’s checksums couldn’t be fetched, so WordPress’s own files were checked by pattern only."
+msgstr ""
+
+#: includes/Admin/views/security.php:163
+msgid "The site has more files than one scan covers here, so the scan stopped after the first 150,000."
+msgstr ""
+
+#: includes/Admin/views/security.php:166
+msgid "The site couldn’t reach itself, so some exposed-file checks were skipped (Site Health’s loopback check says more)."
+msgstr ""
+
+#: includes/Admin/views/security.php:174
+msgid "No known problems found in the last scan"
+msgstr ""
+
+#: includes/Admin/views/security.php:175
+msgid "A scan finds known signs of trouble; it can’t prove a site is clean. Keep WordPress, plugins and themes updated, and keep backups."
+msgstr ""
+
+#: includes/Admin/views/security.php:184
+msgid "Deep scan"
+msgstr ""
+
+#: includes/Admin/views/security.php:188
+msgid "Deep scan under way"
+msgstr ""
+
+#. translators: %s: relative time such as "5 hours".
+#: includes/Admin/views/security.php:191
+#, php-format
+msgid "Deep scan %s ago"
+msgstr ""
+
+#: includes/Admin/views/security.php:193
+msgid "Check further on Arva SEO’s servers"
+msgstr ""
+
+#. translators: %s: number of files.
+#: includes/Admin/views/security.php:211
+#, php-format
+msgid "%s files that aren’t official copies checked: no known malware found"
+msgstr ""
+
+#. translators: 1: number of files, 2: number of findings.
+#: includes/Admin/views/security.php:213
+#, php-format
+msgid "%1$s files that aren’t official copies checked: %2$d finding, listed below"
+msgid_plural "%1$s files that aren’t official copies checked: %2$d findings, listed below"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/security.php:227
+msgid "Deep scans need a connection to Arva SEO. They’re included on paid plans, and a top-up adds them on any plan."
+msgstr ""
+
+#: includes/Admin/views/security.php:229
+msgid "Deep scans send their results the same way as the security scan, so share the scan’s results first."
+msgstr ""
+
+#. translators: 1: deep scans left this month, 2: included a month, 3: deep scans in top-ups.
+#: includes/Admin/views/security.php:236
+#, php-format
+msgid "%1$d of %2$d deep scans left this month for this website, and %3$d in top-ups."
+msgstr ""
+
+#. translators: 1: deep scans left this month, 2: included a month.
+#: includes/Admin/views/security.php:238
+#, php-format
+msgid "%1$d of %2$d deep scans left this month for this website."
+msgstr ""
+
+#. translators: %d: deep scans in top-ups.
+#: includes/Admin/views/security.php:242
+#, php-format
+msgid "%d deep scan left in top-ups."
+msgid_plural "%d deep scans left in top-ups."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/security.php:244
+msgid "Deep scans are included on paid plans, and a top-up adds them on any plan."
+msgstr ""
+
+#: includes/Admin/views/security.php:256
+msgid "Run a deep scan"
+msgstr ""
+
+#: includes/Admin/views/security.php:258
+msgid "Get more deep scans"
+msgstr ""
+
+#: includes/Admin/views/security.php:269
+#: includes/Admin/views/security.php:292
+#: includes/Admin/views/security.php:312
+msgid "Every field that’s sent"
+msgstr ""
+
+#: includes/Admin/views/security.php:273
+msgid "How deep scans work"
+msgstr ""
+
+#: includes/Admin/views/security.php:278
+msgid "A deep scan sends the files the security scan couldn’t match to an official copy (your theme, premium plugins and anything unexpected) to Arva SEO, where ClamAV’s database of known malware and Arva SEO’s own rules check them. They’re deleted as soon as the scan finishes. Configuration files, logs, database exports, backups and media are never sent."
+msgstr ""
+
+#: includes/Admin/views/security.php:284
+msgid "Share the scan’s results with Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/security.php:285
+msgid "Arva SEO then shows them in Website Health with what to do, emails you when something serious turns up, and can add them to tasks and reports. It receives what each problem is and the file’s path inside the site, never the files themselves."
+msgstr ""
+
+#: includes/Admin/views/security.php:291
+msgid "Share the results"
+msgstr ""
+
+#: includes/Admin/views/security.php:299
+msgid "Share what the scan now checks"
+msgstr ""
+
+#: includes/Admin/views/security.php:300
+msgid "This version also watches files that changed since the last scan, scripts your pages load from other websites, and edits made with WordPress’s file editor. To check those on Arva SEO’s servers and email your team when a file is edited in the dashboard, Arva SEO needs a few more details: up to 10 added lines of a changed file, the scripts’ addresses, and for a dashboard edit who saved it and from which IP address. Until you agree, the scan’s results are shared as before, without these."
+msgstr ""
+
+#: includes/Admin/views/security.php:311
+msgid "Share these too"
+msgstr ""
+
+#: includes/Admin/views/security.php:331
+#: includes/Admin/views/security.php:406
+msgid "What it means and what to do"
+msgstr ""
+
+#: includes/Admin/views/security.php:334
+#: includes/Admin/views/security.php:411
+msgid "What it means"
+msgstr ""
+
+#: includes/Admin/views/security.php:335
+#: includes/Admin/views/security.php:412
+msgid "What to do"
+msgstr ""
+
+#. translators: %s: the vulnerability data's provider.
+#: includes/Admin/views/security.php:343
+#, php-format
+msgid "Vulnerability data: %s"
+msgstr ""
+
+#: includes/Admin/views/security.php:348
+msgid "See the vulnerability’s record"
+msgstr ""
+
+#: includes/Admin/views/security.php:354
+msgid "License"
+msgstr ""
+
+#: includes/Admin/views/security.php:404
+msgid "This is expected"
+msgstr ""
+
+#: includes/Admin/views/security.php:420
+msgid "What the file starts with"
+msgstr ""
+
+#: includes/Admin/views/security.php:429
+msgid "The scan keeps copies of themes’ functions.php, header.php and footer.php and of must-use plugins only, so it can’t show what changed in this file."
+msgstr ""
+
+#: includes/Admin/views/security.php:432
+msgid "The code it matched"
+msgstr ""
+
+#. translators: %d: number of changes.
+#: includes/Admin/views/security.php:447
+#, php-format
+msgid "%d change made here"
+msgid_plural "%d changes made here"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: what was done, 2: relative time such as "2 hours".
+#: includes/Admin/views/security.php:458
+#, php-format
+msgid "%1$s, %2$s ago"
+msgstr ""
+
+#: includes/Admin/views/security.php:460
+msgid "Official copy restored"
+msgstr ""
+
+#: includes/Admin/views/security.php:461
+msgid "File editor turned off"
+msgstr ""
+
+#: includes/Admin/views/security.php:462
+msgid "Moved to quarantine"
+msgstr ""
+
+#: includes/Admin/views/security.php:469
+msgid "undone"
+msgstr ""
+
+#: includes/Admin/views/security.php:477
+msgid "Undo"
+msgstr ""
+
+#: includes/Admin/views/security.php:483
+msgid "Each change can be undone for 30 days; the previous file is kept until then in wp-content/arvaseo-quarantine, where it can’t run."
+msgstr ""
+
+#. translators: %d: number of findings.
+#: includes/Admin/views/security.php:492
+#, php-format
+msgid "%d finding marked as expected"
+msgid_plural "%d findings marked as expected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/security.php:501
+msgid "Show again"
+msgstr ""
+
+#: includes/Admin/views/settings.php:24
+msgid "Content arrives as drafts. Nothing is published, scheduled or sent for review. Recommended."
+msgstr ""
+
+#: includes/Admin/views/settings.php:25
 msgid "Drafts, or Pending Review so an editor approves before publishing."
 msgstr ""
 
-#: includes/Admin/views/settings.php:17
+#: includes/Admin/views/settings.php:26
 msgid "Also lets Arva SEO schedule posts for a future time."
 msgstr ""
 
-#: includes/Admin/views/settings.php:18
-msgid "Also lets Arva SEO publish immediately."
+#: includes/Admin/views/settings.php:27
+msgid "Also lets Arva SEO publish straight away."
 msgstr ""
 
-#: includes/Admin/views/settings.php:23
-msgid "Publishing"
-msgstr ""
-
-#: includes/Admin/views/settings.php:31
-msgid "Arva SEO can never go beyond this. Requests above it are refused (arvaseo_status_not_allowed)."
-msgstr ""
-
-#: includes/Admin/views/settings.php:35
-msgid "Requests above the mode"
-msgstr ""
-
-#: includes/Admin/views/settings.php:36
-msgid "Downgrade disallowed requests to Draft instead of refusing them"
-msgstr ""
-
-#: includes/Admin/views/settings.php:37
-msgid "Off by default. When on, Arva SEO is told what was requested and that a draft was created instead."
-msgstr ""
-
-#: includes/Admin/views/settings.php:49
-msgid "— Choose an author —"
+#: includes/Admin/views/settings.php:53
+msgid "Settings sections"
 msgstr ""
 
 #: includes/Admin/views/settings.php:54
-msgid "Posts from Arva SEO are created as this user. They must be able to publish for Scheduling or Full publishing. Arva SEO never chooses a user ID."
+#: includes/Admin/views/settings.php:66
+msgid "Publishing"
 msgstr ""
 
-#: includes/Admin/views/settings.php:58
-#: includes/Admin/views/settings.php:59
-msgid "Content types"
+#: includes/Admin/views/settings.php:55
+msgid "SEO titles"
 msgstr ""
 
-#: includes/Admin/views/settings.php:67
-msgid "Let newer content from Arva SEO replace posts edited here"
-msgstr ""
-
-#: includes/Admin/views/settings.php:68
-msgid "Off by default: an edited post is kept and Arva SEO is told there’s a conflict. When on, a revision is saved first. Only posts that came from Arva SEO are ever updated; nothing is deleted."
-msgstr ""
-
-#: includes/Admin/views/settings.php:71
-msgid "Categories and tags"
-msgstr ""
-
-#: includes/Admin/views/settings.php:72
-msgid "Create categories and tags that don’t exist yet"
-msgstr ""
-
-#: includes/Admin/views/settings.php:73
-msgid "Off: only existing ones are used; others are skipped and reported."
-msgstr ""
-
-#: includes/Admin/views/settings.php:76
-#: includes/Admin/views/settings.php:77
-msgid "SEO title and description"
-msgstr ""
-
-#: includes/Admin/views/settings.php:78
-msgid "Don’t write them"
-msgstr ""
-
-#: includes/Admin/views/settings.php:79
-msgid "Yoast SEO fields (when active)"
-msgstr ""
-
-#: includes/Admin/views/settings.php:80
-msgid "Rank Math fields (when active)"
-msgstr ""
-
-#: includes/Admin/views/settings.php:85
+#: includes/Admin/views/settings.php:56
+#: includes/Admin/views/settings.php:144
 msgid "Featured images"
 msgstr ""
 
-#: includes/Admin/views/settings.php:88
-msgid "Import"
-msgstr ""
-
-#: includes/Admin/views/settings.php:89
-msgid "Download featured images sent with content"
-msgstr ""
-
-#: includes/Admin/views/settings.php:92
-msgid "Approved image hosts"
-msgstr ""
-
-#: includes/Admin/views/settings.php:94
-msgid "One exact host per line (for example images.example.com). Images from any other host are skipped. HTTPS only; JPEG, PNG, GIF and WebP only, up to 8 MB."
-msgstr ""
-
-#: includes/Admin/views/settings.php:98
+#: includes/Admin/views/settings.php:57
+#: includes/Admin/views/settings.php:155
 msgid "Checks and records"
 msgstr ""
 
-#: includes/Admin/views/settings.php:101
-#: includes/Admin/views/settings.php:102
+#: includes/Admin/views/settings.php:58
+#: includes/Admin/views/settings.php:183
+msgid "Data and privacy"
+msgstr ""
+
+#: includes/Admin/views/settings.php:67
+msgid "What happens to content sent from Arva SEO."
+msgstr ""
+
+#: includes/Admin/views/settings.php:70
+msgid "Publishing mode"
+msgstr ""
+
+#: includes/Admin/views/settings.php:77
+msgid "Arva SEO can never go beyond this. Requests above it are refused (arvaseo_status_not_allowed)."
+msgstr ""
+
+#: includes/Admin/views/settings.php:78
+msgid "Save a draft instead of refusing"
+msgstr ""
+
+#: includes/Admin/views/settings.php:78
+msgid "Off by default. When on, a request above this mode is saved as a draft, and Arva SEO is told what was asked for and what was done."
+msgstr ""
+
+#: includes/Admin/views/settings.php:82
+msgid "Posts from Arva SEO are created as this user. They must be able to publish for Scheduling or Full publishing. Arva SEO never chooses a user ID."
+msgstr ""
+
+#: includes/Admin/views/settings.php:90
+msgid "— Choose an author —"
+msgstr ""
+
+#: includes/Admin/views/settings.php:96
+msgid "Needed before drafts from Arva SEO can be saved"
+msgstr ""
+
+#: includes/Admin/views/settings.php:109
+msgid "Let newer content from Arva SEO replace posts edited here"
+msgstr ""
+
+#: includes/Admin/views/settings.php:109
+msgid "Off by default: an edited post is kept and Arva SEO is told there’s a conflict. When on, a revision is saved first. Only posts that came from Arva SEO are ever updated; nothing is deleted."
+msgstr ""
+
+#: includes/Admin/views/settings.php:110
+msgid "Create categories and tags that don’t exist yet"
+msgstr ""
+
+#: includes/Admin/views/settings.php:110
+msgid "Off: only existing ones are used; others are skipped and reported."
+msgstr ""
+
+#: includes/Admin/views/settings.php:111
+#: includes/Admin/views/settings.php:140
+#: includes/Admin/views/settings.php:151
+#: includes/Admin/views/settings.php:178
+msgid "Save settings"
+msgstr ""
+
+#: includes/Admin/views/settings.php:116
+msgid "Written to your SEO plugin. Only its SEO title and meta description fields change."
+msgstr ""
+
+#: includes/Admin/views/settings.php:120
+msgid "Detect automatically"
+msgstr ""
+
+#: includes/Admin/views/settings.php:121
+msgid "Yoast SEO"
+msgstr ""
+
+#: includes/Admin/views/settings.php:122
+msgid "Rank Math"
+msgstr ""
+
+#. translators: %s: the SEO plugin's name, for example Yoast SEO.
+#: includes/Admin/views/settings.php:129
+#, php-format
+msgid "Writing to %s."
+msgstr ""
+
+#: includes/Admin/views/settings.php:131
+msgid "Both Yoast SEO and Rank Math are active: choose the one your site uses."
+msgstr ""
+
+#: includes/Admin/views/settings.php:133
+msgid "Neither Yoast SEO nor Rank Math is active (or the one chosen isn’t), so nothing is written."
+msgstr ""
+
+#: includes/Admin/views/settings.php:138
+msgid "New drafts"
+msgstr ""
+
+#: includes/Admin/views/settings.php:138
+msgid "Add the SEO title and meta description to content sent from Arva SEO."
+msgstr ""
+
+#: includes/Admin/views/settings.php:139
+msgid "Existing content"
+msgstr ""
+
+#: includes/Admin/views/settings.php:139
+msgid "Let Arva SEO update the SEO titles and meta descriptions of published posts, pages and products, and the homepage (not category, tag or other archive pages). Nothing else in the post changes. The previous title and description of each changed page are sent to Arva SEO, so every change can be undone from there."
+msgstr ""
+
+#: includes/Admin/views/settings.php:146
+msgid "Download featured images sent with content"
+msgstr ""
+
+#: includes/Admin/views/settings.php:146
+msgid "HTTPS only; JPEG, PNG, GIF and WebP only, up to 8 MB."
+msgstr ""
+
+#: includes/Admin/views/settings.php:147
+msgid "Approved image hosts"
+msgstr ""
+
+#: includes/Admin/views/settings.php:148
+msgid "One exact host per line, such as images.example.com. Images from any other host are skipped."
+msgstr ""
+
+#: includes/Admin/views/settings.php:157
 msgid "Website Health checks"
 msgstr ""
 
-#: includes/Admin/views/settings.php:103
+#: includes/Admin/views/settings.php:159
 msgid "Once a day"
 msgstr ""
 
-#: includes/Admin/views/settings.php:104
+#: includes/Admin/views/settings.php:160
 msgid "Twice a day"
 msgstr ""
 
-#: includes/Admin/views/settings.php:108
-#: includes/Admin/views/settings.php:109
+#: includes/Admin/views/settings.php:163
+msgid "Scan for security problems every week"
+msgstr ""
+
+#: includes/Admin/views/settings.php:163
+msgid "The scan runs on this server in small batches and only reports what it finds. You can always run one from Health."
+msgstr ""
+
+#: includes/Admin/views/settings.php:165
 msgid "Keep the activity log for"
 msgstr ""
 
 #. translators: %d: number of days.
-#: includes/Admin/views/settings.php:114
+#: includes/Admin/views/settings.php:171
 #, php-format
 msgid "%d days"
 msgstr ""
 
-#: includes/Admin/views/settings.php:121
-msgid "When the plugin is deleted"
+#: includes/Admin/views/settings.php:177
+msgid "When the plugin is deleted, also delete its settings, logs and delivery records"
 msgstr ""
 
-#: includes/Admin/views/settings.php:122
-msgid "Also delete settings, logs and delivery records"
+#: includes/Admin/views/settings.php:177
+msgid "The connection is always removed and revoked on delete. Posts created from Arva SEO are never deleted."
 msgstr ""
 
-#: includes/Admin/views/settings.php:123
-msgid "Credentials are always removed and revoked on delete. Posts created from Arva SEO are never deleted."
+#: includes/Admin/views/settings.php:184
+msgid "What leaves this website, and what support can see."
 msgstr ""
 
-#: includes/Api/ApiClient.php:64
+#. translators: %s: date and time.
+#: includes/Admin/views/settings.php:194
+#, php-format
+msgid "Shared with Arva SEO. Last sent %s."
+msgstr ""
+
+#: includes/Admin/views/settings.php:196
+msgid "Not shared: nothing is sent."
+msgstr ""
+
+#: includes/Admin/views/settings.php:207
+msgid "See the list"
+msgstr ""
+
+#: includes/Admin/views/settings.php:217
+msgid "Diagnostics to copy for support (versions, connection state and settings only: no keys, file paths, usernames, emails or content), every field that’s shared, and your choice to share it."
+msgstr ""
+
+#. translators: 1: website name in Arva SEO, 2: workspace name.
+#: includes/Admin/views/settings.php:234
+#, php-format
+msgid "%1$s, in %2$s"
+msgstr ""
+
+#. translators: %s: date and time.
+#: includes/Admin/views/settings.php:240
+#, php-format
+msgid "Connected %s. Access renews by itself."
+msgstr ""
+
+#: includes/Admin/views/settings.php:253
+msgid "Not connected to Arva SEO. The speed fixes work either way."
+msgstr ""
+
+#: includes/Admin/views/speed.php:49
+msgid "The emoji script and styles"
+msgstr ""
+
+#: includes/Admin/views/speed.php:49
+msgid "Browsers show emoji by themselves."
+msgstr ""
+
+#: includes/Admin/views/speed.php:50
+msgid "The embed discovery script"
+msgstr ""
+
+#: includes/Admin/views/speed.php:50
+msgid "Lets other websites embed your posts as cards. Embedding videos and posts on your site still works."
+msgstr ""
+
+#: includes/Admin/views/speed.php:51
+msgid "Dashicons for visitors"
+msgstr ""
+
+#: includes/Admin/views/speed.php:51
+msgid "The dashboard’s icon font. Leave it on if your theme shows these icons to visitors."
+msgstr ""
+
+#: includes/Admin/views/speed.php:52
+msgid "jQuery Migrate"
+msgstr ""
+
+#: includes/Admin/views/speed.php:52
+msgid "Helps old plugins with new jQuery. Only remove it if you’ve checked your site works without it."
+msgstr ""
+
+#: includes/Admin/views/speed.php:53
+msgid "Block styles on pages without blocks"
+msgstr ""
+
+#: includes/Admin/views/speed.php:53
+msgid "Classic themes only. Leave it on if you use block widgets."
+msgstr ""
+
+#: includes/Admin/views/speed.php:56
+msgid "The main content appears faster."
+msgstr ""
+
+#: includes/Admin/views/speed.php:57
+msgid "Nothing jumps around while it loads."
+msgstr ""
+
+#: includes/Admin/views/speed.php:58
+msgid "Widgets and videos load when someone needs them."
+msgstr ""
+
+#: includes/Admin/views/speed.php:59
+msgid "Less to download on every visit."
+msgstr ""
+
+#: includes/Admin/views/speed.php:114
+msgid "Your .htaccess backup"
+msgstr ""
+
+#. translators: 1: date and time of the original copy, 2: date and time of the latest copy.
+#: includes/Admin/views/speed.php:119
+#, php-format
+msgid "Arva SEO keeps a copy of your .htaccess file from before it first changed it (%1$s), and from before its latest change (%2$s)."
+msgstr ""
+
+#. translators: %s: date and time.
+#: includes/Admin/views/speed.php:121
+#, php-format
+msgid "Arva SEO keeps a copy of your .htaccess file from before it first changed it (%s)."
+msgstr ""
+
+#: includes/Admin/views/speed.php:125
+msgid "Download the original"
+msgstr ""
+
+#: includes/Admin/views/speed.php:126
+msgid "Download the latest copy"
+msgstr ""
+
+#: includes/Admin/views/speed.php:169
+msgid "Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again."
+msgstr ""
+
+#: includes/Admin/views/speed.php:176
+#: includes/Admin/views/speed.php:192
+msgid "Your latest PageSpeed test"
+msgstr ""
+
+#: includes/Admin/views/speed.php:177
+msgid "No test yet"
+msgstr ""
+
+#: includes/Admin/views/speed.php:182
+msgid "Run a PageSpeed test of your homepage in Arva SEO (PageSpeed, on phones). This page then shows which of these fixes it needs. The fixes work either way."
+msgstr ""
+
+#: includes/Admin/views/speed.php:183
+msgid "Connect to Arva SEO and test your homepage there to see which of these fixes it needs. The fixes work without connecting."
+msgstr ""
+
+#. translators: %s: PageSpeed score.
+#: includes/Admin/views/speed.php:196
+#, php-format
+msgid "Performance %s out of 100 on phones"
+msgstr ""
+
+#. translators: %s: date and time.
+#: includes/Admin/views/speed.php:202
+#, php-format
+msgid "Tested %s in Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/speed.php:209
+msgid "Run a new test in Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/speed.php:215
+msgid "None of the problems it found are ones these fixes address. Arva SEO’s PageSpeed page has the steps for the rest."
+msgstr ""
+
+#: includes/Admin/views/speed.php:217
+msgid "This test asks for:"
+msgstr ""
+
+#. translators: 1: fix state, 2: Lighthouse audit names.
+#: includes/Admin/views/speed.php:224
+#, php-format
+msgid "(%1$s; fixes %2$s)"
+msgstr ""
+
+#. translators: %s: plugin names.
+#: includes/Admin/views/speed.php:244
+#, php-format
+msgid "Arva SEO leaves the fixes %s can do to them."
+msgstr ""
+
+#: includes/Admin/views/speed.php:247
+msgid "Review"
+msgstr ""
+
+#: includes/Admin/views/speed.php:251
+msgid "Other speed plugins"
+msgstr ""
+
+#. translators: %s: plugin name.
+#: includes/Admin/views/speed.php:257
+#, php-format
+msgid "%s does some of the same jobs"
+msgstr ""
+
+#. translators: %d: number of plugins.
+#: includes/Admin/views/speed.php:259
+#, php-format
+msgid "%d other speed plugins do some of the same jobs"
+msgstr ""
+
+#: includes/Admin/views/speed.php:263
+msgid "Two plugins changing how the same things load can break pages or undo each other’s work. Deactivate one to use Arva SEO’s fixes instead, or keep it and Arva SEO leaves those fixes to it."
+msgstr ""
+
+#: includes/Admin/views/speed.php:270
+msgid "Does the same as:"
+msgstr ""
+
+#: includes/Admin/views/speed.php:281
+msgid "On for the whole network: a network administrator can deactivate it."
+msgstr ""
+
+#. translators: %s: plugin name.
+#: includes/Admin/views/speed.php:290
+#, php-format
+msgid "Deactivate %s"
+msgstr ""
+
+#: includes/Admin/views/speed.php:300
+msgid "Keep it"
+msgstr ""
+
+#: includes/Admin/views/speed.php:300
+msgid "Keep them"
+msgstr ""
+
+#: includes/Admin/views/speed.php:301
+msgid "Deactivating keeps the plugin’s settings, so you can activate it again from Plugins."
+msgstr ""
+
+#. translators: %s: names of the fixes being tried.
+#: includes/Admin/views/speed.php:313
+#, php-format
+msgid "You’re trying %s."
+msgstr ""
+
+#: includes/Admin/views/speed.php:316
+msgid "Only you see the change while you’re signed in. Visit a few pages, then turn it on for everyone or stop trying."
+msgstr ""
+
+#: includes/Admin/views/speed.php:318
+msgid "View your site"
+msgstr ""
+
+#: includes/Admin/views/speed.php:323
+msgid "Show fixes"
+msgstr ""
+
+#: includes/Admin/views/speed.php:326
+msgid "All"
+msgstr ""
+
+#: includes/Admin/views/speed.php:327
+msgid "Asked for by the test"
+msgstr ""
+
+#: includes/Admin/views/speed.php:329
+msgid "Trying"
+msgstr ""
+
+#: includes/Admin/views/speed.php:340
+msgid "Safe fixes only change how things load. Fixes marked “Check your pages” can affect how your site works, so try them first."
+msgstr ""
+
+#: includes/Admin/views/speed.php:372
+msgid "Done by your host"
+msgstr ""
+
+#: includes/Admin/views/speed.php:377
+msgid "Asked for by your latest test"
+msgstr ""
+
+#: includes/Admin/views/speed.php:383
+msgid "Check your pages"
+msgstr ""
+
+#: includes/Admin/views/speed.php:383
+msgid "Safe"
+msgstr ""
+
+#: includes/Admin/views/speed.php:391
+msgid "Rocket Loader is on in Cloudflare and also changes how scripts load. Use one or the other."
+msgstr ""
+
+#: includes/Admin/views/speed.php:391
+msgid "See Cloudflare"
+msgstr ""
+
+#. translators: %s: the host's cache, such as SiteGround's dynamic cache.
+#: includes/Admin/views/speed.php:398
+#, php-format
+msgid "%s already caches your pages on your host’s servers, so Arva SEO leaves page caching to it and pages aren’t cached twice. Keeping it is usually best."
+msgstr ""
+
+#: includes/Admin/views/speed.php:401
+msgid "Use Arva SEO’s page cache instead"
+msgstr ""
+
+#. translators: %s: plugin name.
+#: includes/Admin/views/speed.php:408
+#, php-format
+msgid "%s can do this, so Arva SEO leaves it to that plugin and your pages aren’t processed twice."
+msgstr ""
+
+#: includes/Admin/views/speed.php:410
+msgid "Use Arva SEO’s instead"
+msgstr ""
+
+#: includes/Admin/views/speed.php:413
+msgid "Remove Arva SEO’s rules"
+msgstr ""
+
+#: includes/Admin/views/speed.php:421
+msgid "Trying it: only you see the change while you’re signed in. Visitors see your site as before."
+msgstr ""
+
+#: includes/Admin/views/speed.php:422
+msgid "Open your homepage"
+msgstr ""
+
+#. translators: 1: the host's cache, 2: how to turn it off.
+#: includes/Admin/views/speed.php:431
+#, php-format
+msgid "You chose Arva SEO’s page cache over %1$s. Turn the host’s cache off so pages aren’t cached twice. %2$s"
+msgstr ""
+
+#. translators: %s: the host's cache.
+#: includes/Admin/views/speed.php:437
+#, php-format
+msgid "Leave it to %s"
+msgstr ""
+
+#. translators: %s: the host's cache, such as SiteGround's dynamic cache.
+#: includes/Admin/views/speed.php:447
+#, php-format
+msgid "%s keeps its own copy of your pages, in front of WordPress, and nothing here can clear it when a page changes, so visitors can see an old copy for up to 12 hours. Install SiteGround’s Speed Optimizer plugin (you can turn its caching options off): Arva SEO then clears that copy whenever your pages change. Until then, clear it in Site Tools → Speed → Caching after a change."
+msgstr ""
+
+#: includes/Admin/views/speed.php:453
+msgid "The page cache isn’t running: its advanced-cache.php file in wp-content was removed or replaced, perhaps by another plugin. Turn this off and on again to set it up again."
+msgstr ""
+
+#: includes/Admin/views/speed.php:456
+msgid "The rules aren’t in your .htaccess file any more: another plugin or your host may have rewritten it. Turn this off and on again to add them back."
+msgstr ""
+
+#. translators: %d: page types waiting for next month's page optimizations.
+#: includes/Admin/views/speed.php:463
+#, php-format
+msgid "%d page type waits for next month’s page optimizations; it loads its normal styles until then."
+msgid_plural "%d page types wait for next month’s page optimizations; they load their normal styles until then."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:467
+msgid "More page optimizations"
+msgstr ""
+
+#: includes/Admin/views/speed.php:490
+msgid "Try it"
+msgstr ""
+
+#: includes/Admin/views/speed.php:493
+msgid "Turn it on after the checks below."
+msgstr ""
+
+#: includes/Admin/views/speed.php:498
+#: includes/Admin/views/speed.php:532
+msgid "Turn on for everyone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:498
+msgid "Turn on"
+msgstr ""
+
+#: includes/Admin/views/speed.php:504
+msgid "Stop trying"
+msgstr ""
+
+#: includes/Admin/views/speed.php:504
+msgid "Turn off"
+msgstr ""
+
+#: includes/Admin/views/speed.php:510
+msgid "Details and options"
+msgstr ""
+
+#. translators: %s: date and time.
+#: includes/Admin/views/speed.php:515
+#, php-format
+msgid "On since %s."
+msgstr ""
+
+#: includes/Admin/views/speed.php:527
+msgid "Before turning it on for everyone, check these while trying it:"
+msgstr ""
+
+#: includes/Admin/views/speed.php:528
+msgid "My homepage looks and works as before"
+msgstr ""
+
+#: includes/Admin/views/speed.php:529
+msgid "Contact or booking forms, and the checkout if I sell online, still work"
+msgstr ""
+
+#: includes/Admin/views/speed.php:530
+msgid "Menus, sliders, pop-ups and chat still work, on a phone too"
+msgstr ""
+
+#: includes/Admin/views/speed.php:539
+msgid "Fixes in PageSpeed:"
+msgstr ""
+
+#: includes/Admin/views/speed.php:550
+msgid "Check your pages: it can affect how parts of your site work. Try it first."
+msgstr ""
+
+#: includes/Admin/views/speed.php:551
+msgid "Changes your server’s settings for every visitor at once. Check your important pages after turning it on."
+msgstr ""
+
+#: includes/Admin/views/speed.php:557
+msgid "Safe: it only changes how things load, not what visitors see."
+msgstr ""
+
+#: includes/Admin/views/speed.php:562
+msgid "The line for wp-config.php"
+msgstr ""
+
+#: includes/Admin/views/speed.php:563
+msgid "Above the line that says “That’s all, stop editing!”:"
+msgstr ""
+
+#: includes/Admin/views/speed.php:570
+msgid "The rules for your host"
+msgstr ""
+
+#: includes/Admin/views/speed.php:571
+msgid "nginx:"
+msgstr ""
+
+#: includes/Admin/views/speed.php:573
+msgid "Apache or LiteSpeed (.htaccess):"
+msgstr ""
+
+#. translators: %s: milliseconds.
+#: includes/Admin/views/speed.php:588
+#, php-format
+msgid "%s ms"
+msgstr ""
+
+#. translators: %s: seconds.
+#: includes/Admin/views/speed.php:590
+#, php-format
+msgid "%s s"
+msgstr ""
+
+#. translators: 1: time to make the homepage, such as 640 ms, 2: time from the cache.
+#: includes/Admin/views/speed.php:592
+#, php-format
+msgid "Checked: your homepage took %1$s to make, and %2$s from the cache (asked for from your server)."
+msgstr ""
+
+#: includes/Admin/views/speed.php:596
+msgid "Your server sends saved pages itself, through rules in .htaccess, without starting PHP."
+msgstr ""
+
+#: includes/Admin/views/speed.php:596
+msgid "Saved pages are sent before WordPress loads (advanced-cache.php in wp-content)."
+msgstr ""
+
+#. translators: 1: number of pages, 2: their size, such as 4 MB.
+#: includes/Admin/views/speed.php:602
+#, php-format
+msgid "%1$s page in the cache (%2$s). Each is made again after 10 hours, or when it changes."
+msgid_plural "%1$s pages in the cache (%2$s). Each is made again after 10 hours, or when it changes."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: pages refilled so far, 2: pages to refill.
+#: includes/Admin/views/speed.php:613
+#, php-format
+msgid "Refilling the cache in the background: %1$s of %2$s pages, a few a minute."
+msgstr ""
+
+#: includes/Admin/views/speed.php:618
+msgid "Clear the cache"
+msgstr ""
+
+#: includes/Admin/views/speed.php:618
+msgid "Also in the toolbar on your site’s pages. Cloudflare’s copy is cleared too, when it’s connected."
+msgstr ""
+
+#: includes/Admin/views/speed.php:621
+msgid "Never cached"
+msgstr ""
+
+#: includes/Admin/views/speed.php:622
+msgid "Signed-in users, visitors with a comment, a password or items in their cart, carts, checkouts and account pages, searches and addresses with a query (tracking ones like utm_source are fine), and any page that sets a cookie or asks not to be cached. Pages you leave alone below aren’t cached either."
+msgstr ""
+
+#: includes/Admin/views/speed.php:625
+msgid "Choices"
+msgstr ""
+
+#: includes/Admin/views/speed.php:630
+msgid "Page caching choices"
+msgstr ""
+
+#: includes/Admin/views/speed.php:631
+msgid "Refill the cache in the background"
+msgstr ""
+
+#: includes/Admin/views/speed.php:631
+msgid "After it’s cleared, your homepage, latest posts and pages, and main categories are visited a few a minute, so the first visitor gets a fast page too."
+msgstr ""
+
+#: includes/Admin/views/speed.php:632
+msgid "A separate copy for phones"
+msgstr ""
+
+#: includes/Admin/views/speed.php:632
+msgid "Only for themes or plugins that send phones different HTML (a separate mobile menu or layout). Most themes send the same page and let the screen size decide, so one copy is right and fills twice as fast."
+msgstr ""
+
+#: includes/Admin/views/speed.php:634
+#: includes/Admin/views/speed.php:706
+msgid "Save choices"
+msgstr ""
+
+#: includes/Admin/views/speed.php:643
+msgid "Checked: images, fonts, styles and scripts now stay in browsers for a year."
+msgstr ""
+
+#: includes/Admin/views/speed.php:643
+msgid "Your server didn’t add the cache lifetimes. Ask your host to turn on mod_expires."
+msgstr ""
+
+#. translators: %s: compression method, such as br or gzip.
+#: includes/Admin/views/speed.php:649
+#, php-format
+msgid "Checked: pages are sent compressed (%s)."
+msgstr ""
+
+#: includes/Admin/views/speed.php:650
+msgid "Pages weren’t compressed when checked from your server. Your host may compress them further along (a CDN, for example); if PageSpeed still asks for it, ask your host to turn on mod_deflate or Brotli."
+msgstr ""
+
+#: includes/Admin/views/speed.php:657
+msgid "The rules it adds"
+msgstr ""
+
+#: includes/Admin/views/speed.php:658
+msgid "If you edit your theme’s files by hand, visitors may see the old version for a while; WordPress and plugins add a version to their files, so their updates show straight away."
+msgstr ""
+
+#: includes/Admin/views/speed.php:670
+msgid "External service addresses, one per line"
+msgstr ""
+
+#: includes/Admin/views/speed.php:672
+msgid "Save the addresses, then try or turn on this fix. Only public HTTPS origins are kept. Paths, query strings and fragments are removed; credentials, local addresses and custom ports are rejected. An empty list adds no connections."
+msgstr ""
+
+#: includes/Admin/views/speed.php:674
+msgid "Use anonymous connections for these origins (web fonts or CORS resources)"
+msgstr ""
+
+#: includes/Admin/views/speed.php:675
+msgid "Leave this unticked for ordinary third-party scripts. Google Fonts connections are already added by Faster Google Fonts when needed."
+msgstr ""
+
+#: includes/Admin/views/speed.php:677
+msgid "Save addresses"
+msgstr ""
+
+#: includes/Admin/views/speed.php:687
+msgid "Leave these files alone, one handle per line"
+msgstr ""
+
+#: includes/Admin/views/speed.php:689
+msgid "CSS exclusions are shared with optimized CSS and CSS combining; script exclusions are shared with Defer scripts and JavaScript combining. Minification and combining are separate options. Unsupported files keep their original delivery."
+msgstr ""
+
+#: includes/Admin/views/speed.php:690
+msgid "Save exclusions"
+msgstr ""
+
+#: includes/Admin/views/speed.php:696
+msgid "Choose what to remove"
+msgstr ""
+
+#: includes/Admin/views/speed.php:701
+msgid "Remove these"
+msgstr ""
+
+#. translators: 1: page types with optimized CSS, 2: page types waiting.
+#: includes/Admin/views/speed.php:715
+#, php-format
+msgid "Optimized CSS for %1$d page types; %2$d waiting."
+msgstr ""
+
+#. translators: %d: page types that couldn't be optimized.
+#: includes/Admin/views/speed.php:722
+#, php-format
+msgid "%d couldn’t be optimized."
+msgid_plural "%d couldn’t be optimized."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: page optimizations used, 2: page optimizations included this month.
+#: includes/Admin/views/speed.php:728
+#, php-format
+msgid "Page optimizations this month: %1$d of %2$d."
+msgstr ""
+
+#: includes/Admin/views/speed.php:736
+msgid "Optimized CSS: work it out again, or leave stylesheets alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:737
+msgid "Pages are grouped by type (homepage, page, post, product, category…) and by their stylesheets; each group uses one page optimization. A stylesheet that changes, after a theme or plugin update, makes a new group; clearing your cache costs nothing."
+msgstr ""
+
+#: includes/Admin/views/speed.php:741
+msgid "Optimize now"
+msgstr ""
+
+#: includes/Admin/views/speed.php:742
+msgid "Check for results"
+msgstr ""
+
+#: includes/Admin/views/speed.php:743
+msgid "Regenerate"
+msgstr ""
+
+#. translators: %d: page types being optimized.
+#: includes/Admin/views/speed.php:765
+#, php-format
+msgid "Being optimized: %d page type. This page checks every 20 seconds and updates when it’s done."
+msgid_plural "Being optimized: %d page types. This page checks every 20 seconds and updates when they’re done."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:772
+msgid "Couldn’t be optimized"
+msgstr ""
+
+#: includes/Admin/views/speed.php:782
+msgid "Optimize now tries these again. They load as before in the meantime."
+msgstr ""
+
+#: includes/Admin/views/speed.php:789
+msgid "Leave these stylesheets alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:790
+msgid "One stylesheet name (handle) per line; they load as before. Both CSS fixes share this list."
+msgstr ""
+
+#: includes/Admin/views/speed.php:792
+#: includes/Admin/views/speed.php:948
+#: includes/Admin/views/speed.php:962
+#: includes/Admin/views/speed.php:985
+#: includes/Admin/views/speed.php:1037
+#: includes/Admin/views/speed.php:1129
+#: includes/Admin/views/speed.php:1246
+msgid "Save"
+msgstr ""
+
+#: includes/Admin/views/speed.php:794
+msgid "Arva SEO loads your public pages like a visitor, as a phone and as a computer, to see which styles they use. Only page addresses are sent, never content or visitor data."
+msgstr ""
+
+#: includes/Admin/views/speed.php:800
+msgid "Convert your existing images too"
+msgstr ""
+
+#: includes/Admin/views/speed.php:801
+msgid "Each JPEG and PNG in your media library, and each of its sizes, gets a WebP copy beside it, kept only when it’s smaller. Your originals stay as they are, and Undo removes every copy. It runs in the background, a few images at a time."
+msgstr ""
+
+#. translators: 1: images done, 2: all images, 3: space saved, such as 2 MB.
+#: includes/Admin/views/speed.php:808
+#, php-format
+msgid "%1$d of %2$d images, %3$s smaller so far."
+msgstr ""
+
+#: includes/Admin/views/speed.php:813
+msgid "Converting…"
+msgstr ""
+
+#: includes/Admin/views/speed.php:834
+#: includes/Admin/views/speed.php:919
+msgid "Continue"
+msgstr ""
+
+#: includes/Admin/views/speed.php:834
+msgid "Convert images added since"
+msgstr ""
+
+#: includes/Admin/views/speed.php:834
+msgid "Convert existing images"
+msgstr ""
+
+#: includes/Admin/views/speed.php:836
+msgid "Undo: remove the copies"
+msgstr ""
+
+#: includes/Admin/views/speed.php:855
+msgid "On this server. Connect to Arva SEO to have its servers compress images more strongly (100 a month on the Free plan)."
+msgstr ""
+
+#: includes/Admin/views/speed.php:857
+msgid "On this server. Arva SEO’s servers compress images more strongly once you allow it below."
+msgstr ""
+
+#. translators: %s: date, such as November 1.
+#: includes/Admin/views/speed.php:860
+#, php-format
+msgid "No image compressions left this month on Arva SEO’s servers, so this server compresses images until %s."
+msgstr ""
+
+#: includes/Admin/views/speed.php:862
+msgid "Arva SEO’s servers didn’t answer a moment ago, so images wait a few minutes for them."
+msgstr ""
+
+#. translators: 1: compressions left this month, 2: included a month, 3: compressions in top-ups.
+#: includes/Admin/views/speed.php:867
+#, php-format
+msgid "On Arva SEO’s servers: %1$s of %2$s image compressions left this month, and %3$s in top-ups."
+msgstr ""
+
+#. translators: 1: compressions left this month, 2: included a month.
+#: includes/Admin/views/speed.php:869
+#, php-format
+msgid "On Arva SEO’s servers: %1$s of %2$s image compressions left this month."
+msgstr ""
+
+#: includes/Admin/views/speed.php:872
+msgid "On Arva SEO’s servers. Each image counts once, with all its sizes, and only when it gets at least 5% smaller."
+msgstr ""
+
+#: includes/Admin/views/speed.php:876
+msgid "Get more image compressions"
+msgstr ""
+
+#. translators: 1: number of images, 2: space saved, such as 12 MB.
+#: includes/Admin/views/speed.php:883
+#, php-format
+msgid "%1$s image compressed so far, %2$s smaller."
+msgid_plural "%1$s images compressed so far, %2$s smaller."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:889
+msgid "Compress your existing images too"
+msgstr ""
+
+#: includes/Admin/views/speed.php:890
+msgid "Each JPEG and PNG in your media library, with its sizes, is saved smaller in the background, a few images at a time. A file is replaced only when it gets at least 5% smaller, and its original is kept, so Restore puts it back."
+msgstr ""
+
+#. translators: 1: images looked at, 2: images in the library.
+#: includes/Admin/views/speed.php:896
+#, php-format
+msgid "%1$s of %2$s images done."
+msgstr ""
+
+#: includes/Admin/views/speed.php:897
+msgid "Compressing…"
+msgstr ""
+
+#: includes/Admin/views/speed.php:898
+msgid "Putting the originals back…"
+msgstr ""
+
+#: includes/Admin/views/speed.php:919
+msgid "Compress images added since"
+msgstr ""
+
+#: includes/Admin/views/speed.php:919
+msgid "Compress existing images"
+msgstr ""
+
+#: includes/Admin/views/speed.php:921
+msgid "Restore the originals"
+msgstr ""
+
+#: includes/Admin/views/speed.php:934
+msgid "Where images are compressed, and the originals"
+msgstr ""
+
+#: includes/Admin/views/speed.php:940
+msgid "Use Arva SEO’s servers"
+msgstr ""
+
+#: includes/Admin/views/speed.php:940
+msgid "Each image and its sizes are sent to Arva SEO, compressed more strongly than this server can, sent back and deleted from Arva SEO straight away. Each image counts once against your plan’s monthly image compressions, and only when it gets at least 5% smaller. When none are left, this server carries on."
+msgstr ""
+
+#: includes/Admin/views/speed.php:943
+msgid "To use Arva SEO’s servers, share data with Arva SEO first (Settings → Diagnostics and data sharing)."
+msgstr ""
+
+#: includes/Admin/views/speed.php:946
+msgid "Keep the originals"
+msgstr ""
+
+#: includes/Admin/views/speed.php:946
+msgid "A copy of each original is kept in wp-content/arvaseo-originals, so Restore can put it back. Turn this off to save disk space: images compressed after that can’t be put back."
+msgstr ""
+
+#: includes/Admin/views/speed.php:954
+msgid "The widgets it delays, and others to delay"
+msgstr ""
+
+#: includes/Admin/views/speed.php:958
+msgid "Tawk.to, Crisp, Intercom, LiveChat, Tidio, Zendesk, Drift and HubSpot chat; Hotjar and Microsoft Clarity; Facebook, X (Twitter) and Pinterest widgets; Elfsight widgets. Only scripts your theme or plugins add the WordPress way can be delayed."
+msgstr ""
+
+#: includes/Admin/views/speed.php:959
+msgid "Also delay these scripts"
+msgstr ""
+
+#: includes/Admin/views/speed.php:960
+msgid "One per line: a script name (handle) or part of its file address. A script that other scripts need is never delayed. To keep a widget loading straight away on some pages, leave those pages alone below."
+msgstr ""
+
+#: includes/Admin/views/speed.php:968
+#: includes/Admin/views/speed.php:973
+msgid "Serve them from your site"
+msgstr ""
+
+#: includes/Admin/views/speed.php:973
+msgid "Copies of the fonts your pages use are kept in your uploads folder and used instead of Google’s, so browsers don’t connect to Google for them (better for privacy too). Each copy is made in the background the first time a page needs it; until then Google’s fonts are used."
+msgstr ""
+
+#. translators: %d: number of Google Fonts stylesheets copied.
+#: includes/Admin/views/speed.php:979
+#, php-format
+msgid "%d font stylesheet is served from your site."
+msgid_plural "%d font stylesheets are served from your site."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:991
+msgid "Leave scripts alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:996
+msgid "Open your homepage while trying it: the scripts it defers are listed here, so you can leave one alone if something stops working."
+msgstr ""
+
+#: includes/Admin/views/speed.php:998
+msgid "Scripts it deferred on the last page you opened while trying it:"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1004
+msgid "Left alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1007
+msgid "Leave alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1014
+msgid "Leave these scripts alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1015
+msgid "One per line: a script name (handle), such as one from the list above, or part of its file address, such as booking.js or /plugins/contact-form-7/. jQuery and consent or cookie tools are always left alone."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1023
+msgid "Leave every script from a plugin alone"
+msgstr ""
+
+#. translators: %d: number of plugins chosen.
+#: includes/Admin/views/speed.php:1025
+#, php-format
+msgid "Leave every script from a plugin alone (%d chosen)"
+msgid_plural "Leave every script from a plugin alone (%d chosen)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:1030
+msgid "Plugins whose scripts Defer scripts leaves alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1044
+msgid "Leave a page, image or video alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1044
+msgid "Leave a page alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1056
+msgid "Cloudflare"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1056
+msgid "Visitors get your changes straight away."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1073
+msgid "Cloudflare is connected"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1075
+msgid "Cloudflare’s copy of every page is cleared when a fix goes on or off for visitors, when your choices here change, and when new optimized CSS, WebP copies or local fonts are ready."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1077
+msgid "Clear Cloudflare’s copy now"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1083
+msgid "It may have been deleted, have expired or lost a permission. Disconnect, then connect again with a new token."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1088
+msgid "Last cleared"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1091
+msgid "Not yet"
+msgstr ""
+
+#. translators: %d: number of pages.
+#: includes/Admin/views/speed.php:1094
+msgid "Every page"
+msgstr ""
+
+#. translators: %d: number of pages.
+#: includes/Admin/views/speed.php:1094
+#, php-format
+msgid "%d page"
+msgid_plural "%d pages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:1103
+msgid "Rocket Loader"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1111
+msgid "Give the token Zone Settings: Read to check it."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1115
+msgid "Checked"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1118
+msgid "Rocket Loader changes how scripts load, as Defer scripts and Delay chat widgets and trackers do here. Using both can stop menus, forms or checkouts working. Keep the fixes here and turn Rocket Loader off in your Cloudflare dashboard, or turn these fixes off."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1127
+msgid "Also clear a post’s pages when it’s published, updated or unpublished"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1127
+msgid "The post, the homepage, the blog page, the feed and its category and tag pages. Leave this off if Cloudflare’s own plugin already does it."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1133
+msgid "Check again"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1134
+msgid "Disconnect Cloudflare"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1138
+msgid "Seen in front of this website"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1138
+msgid "Optional"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1139
+msgid "Using Cloudflare?"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1140
+msgid "Cloudflare can keep copies of your pages. Connect it here and those copies are cleared whenever a change here affects what visitors get, so visitors and your next PageSpeed test see a fix as soon as you turn it on. It works without an Arva SEO account. Only page addresses are sent, to Cloudflare."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1149
+msgid "In your Cloudflare dashboard, open My Profile → API Tokens → Create Token → Create Custom Token."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1150
+msgid "Permissions: Zone → Zone → Read, Zone → Cache Purge → Purge, and Zone → Zone Settings → Read (so Rocket Loader can be checked)."
+msgstr ""
+
+#. translators: %s: this website's domain.
+#: includes/Admin/views/speed.php:1154
+#, php-format
+msgid "Zone Resources: Include → Specific zone → %s. Create the token and paste it below."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1158
+msgid "Cloudflare API token"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1160
+msgid "Kept encrypted on this site and only ever sent to Cloudflare. A token, not the Global API Key."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1168
+msgid "Leave things alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1168
+msgid "If a fix stops something working on part of your site, leave that part alone instead of turning the fix off everywhere."
+msgstr ""
+
+#. translators: %d: number of page addresses.
+#: includes/Admin/views/speed.php:1175
+#, php-format
+msgid "%d page address"
+msgid_plural "%d page addresses"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of posts and pages.
+#: includes/Admin/views/speed.php:1177
+#, php-format
+msgid "%d post or page by its tick box"
+msgid_plural "%d posts and pages by their tick box"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of images, videos and maps.
+#: includes/Admin/views/speed.php:1179
+#, php-format
+msgid "%d image, video or map"
+msgid_plural "%d images, videos or maps"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:1188
+msgid "Nothing is left alone: every fix that’s on runs on every page."
+msgstr ""
+
+#. translators: %s: what is left alone, such as "2 page addresses and 3 images, videos or maps".
+#: includes/Admin/views/speed.php:1190
+#, php-format
+msgid "Left alone: %s."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1201
+msgid "Pages"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1202
+msgid "No fix runs on these. One address per line, the part after your domain, such as /contact/. A * matches anything: /shop/* is every page under /shop/. You can also tick “Leave this page alone” when you edit a post or page, or use Arva SEO in the toolbar while you view any page."
+msgstr ""
+
+#. translators: %d: number of posts and pages.
+#: includes/Admin/views/speed.php:1208
+#, php-format
+msgid "%d post or page is left alone by its own tick box."
+msgid_plural "%d posts and pages are left alone by their own tick box."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:1214
+msgid "Leave cart, checkout and account pages alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1214
+msgid "Recommended: payment and account forms often need their scripts loaded in order."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1218
+msgid "Images, videos and maps"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1219
+msgid "One per line: a CSS class starting with a dot (.hero-slide), an id starting with # (#main-banner), or part of the file’s address (logo.svg, vimeo.com). Lazy-load, Add missing image sizes and Click-to-play videos leave these alone. A block’s Additional CSS class counts for everything inside the block; in older content, put the class on the image itself."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1221
+msgid "Images loaded straight away"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1223
+msgid "How many images at the top of each page Lazy-load never delays. 3 suits most sites; raise it if a slider at the top shows its slides late."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1227
+msgid "Save what to leave alone"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1229
+msgid "Scripts are left alone on the Defer scripts row."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1230
+msgid "Go to Defer scripts"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1236
+msgid "Switching from Arva SEO"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1244
+msgid "Let Arva SEO switch these fixes"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1244
+msgid "People who manage this website in Arva SEO can try, turn on and turn off these fixes from its PageSpeed results, by the same rules as this page: a fix that can be tried goes on for everyone only after it’s been tried, Defer scripts goes on only here, and turning a fix off always works. Every change is in Activity with who asked."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1252
+msgid "For developers"
+msgstr ""
+
+#: includes/Admin/views/speed.php:1255
+msgid "(bool $applies, string $fix_id): turn a fix off for any page condition."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1256
+msgid "(bool $defer, string $handle, string $src): leave a script alone."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1257
+msgid "(bool $optimize, string $fix_id, string $tag, array $attributes): leave an image or frame alone."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1258
+msgid "(string $why), an action: a change here altered what visitors get on every page, so a page cache can clear its copies."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1260
+msgid "Lazy-load also leaves alone images marked skip-lazy or no-lazy, as other speed plugins do, and every fix leaves alone an element with the data-arvaseo-skip attribute."
+msgstr ""
+
+#: includes/Admin/views/speed.php:1264
+msgid "Arva SEO can cache pages and minify supported local CSS and JavaScript. Use one optimizer for each job; when another active plugin handles it, Arva SEO leaves that fix alone. If you use a page cache other than Cloudflare, clear it after changing a fix here. In an emergency, add define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true ); to wp-config.php to switch every fix off."
+msgstr ""
+
+#: includes/Api/ApiClient.php:73
 msgid "This site isn’t connected to Arva SEO."
 msgstr ""
 
-#: includes/Api/ApiClient.php:70
+#: includes/Api/ApiClient.php:79
 msgid "Reconnect this site to Arva SEO."
 msgstr ""
 
-#: includes/Api/ApiClient.php:145
-msgid "Couldn’t renew the connection’s access; will retry."
+#: includes/Api/ApiClient.php:118
+msgid "This server couldn’t look up Arva SEO’s address (a DNS problem on your host). After an address change, a host can keep old records for up to a day or two: try again later, or ask your host to refresh its DNS cache for api.arvaseo.com."
 msgstr ""
 
-#: includes/Api/ApiClient.php:232
-msgid "Arva SEO no longer accepts this connection. Reconnect to resume."
+#: includes/Api/ApiClient.php:119
+msgid "Arva SEO didn’t answer in time. Try again in a few minutes; if it keeps happening, ask your host whether it blocks outgoing connections to api.arvaseo.com."
 msgstr ""
 
-#: includes/Api/ApiClient.php:292
-msgid "Couldn’t reach Arva SEO."
+#: includes/Api/ApiClient.php:120
+msgid "This server couldn’t make a secure connection to Arva SEO. Ask your host to update its list of trusted certificates (CA bundle) and OpenSSL."
 msgstr ""
 
-#: includes/Api/ApiClient.php:298
+#: includes/Api/ApiClient.php:121
 msgid "Couldn’t reach Arva SEO. Check the server’s internet connection and try again."
 msgstr ""
 
-#: includes/Api/ApiClient.php:308
+#: includes/Api/ApiClient.php:184
+msgid "Couldn’t renew the connection’s access; will retry."
+msgstr ""
+
+#: includes/Api/ApiClient.php:272
+msgid "Arva SEO no longer accepts this connection. Reconnect to resume."
+msgstr ""
+
+#: includes/Api/ApiClient.php:335
+msgid "Couldn’t reach Arva SEO."
+msgstr ""
+
+#: includes/Api/ApiClient.php:354
 msgid "Arva SEO couldn’t complete the request."
 msgstr ""
 
-#: includes/Auth/AuthService.php:65
+#: includes/Auth/AuthService.php:67
 msgid "Started connecting to Arva SEO."
 msgstr ""
 
-#: includes/Auth/AuthService.php:98
+#: includes/Auth/AuthService.php:100
 msgid "A connection reply didn’t match a connection started here; it was ignored."
 msgstr ""
 
-#: includes/Auth/AuthService.php:105
+#: includes/Auth/AuthService.php:107
 msgid "Connecting was cancelled in Arva SEO."
 msgstr ""
 
-#: includes/Auth/AuthService.php:133
+#: includes/Auth/AuthService.php:135
 msgid "Arva SEO didn’t accept the connection code."
 msgstr ""
 
-#: includes/Auth/AuthService.php:168
+#: includes/Auth/AuthService.php:172
 msgid "Connected to Arva SEO."
 msgstr ""
 
-#: includes/Auth/AuthService.php:209
+#: includes/Auth/AuthService.php:213
 msgid "Disconnected from Arva SEO. Nothing more is sent or received."
 msgstr ""
 
@@ -1291,6 +3833,7 @@ msgid "This delivery key was already used for different content."
 msgstr ""
 
 #: includes/Content/ContentDeliveryService.php:89
+#: includes/Content/SeoUpdateService.php:90
 msgid "This event ID was already used."
 msgstr ""
 
@@ -1386,6 +3929,70 @@ msgstr ""
 msgid "The content checksum doesn’t match."
 msgstr ""
 
+#: includes/Content/SeoUpdateService.php:67
+msgid "Ignored an SEO update without valid identifiers."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:82
+msgid "This update ID was already used for different values."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:112
+msgid "An administrator hasn’t allowed Arva SEO to update SEO titles and descriptions on this site (Arva SEO → Settings in WordPress)."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:116
+msgid "Neither Yoast SEO nor Rank Math is active on this site (or the one chosen in Arva SEO → Settings isn’t)."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:119
+msgid "Both Yoast SEO and Rank Math are active. Choose which one Arva SEO writes to in Arva SEO → Settings in WordPress."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:125
+msgid "WordPress has no post, page or product at this address. Category, tag and other archive pages can’t be updated yet."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:126
+msgid "This post isn’t published, so Arva SEO doesn’t change it."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:127
+msgid "This content type can’t be updated from Arva SEO."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:138
+msgid "WordPress didn’t keep the new values (another plugin may have changed them)."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:143
+msgid "SEO title and description updated from Arva SEO."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:200
+msgid "Couldn’t report an SEO update result to Arva SEO; will retry."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:303
+msgid "The update has undocumented or missing fields."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:306
+msgid "This update’s schema version isn’t supported. Update the Arva SEO Connector plugin."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:310
+msgid "This update is for another site, website or workspace."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:319
+msgid "A field in the update isn’t valid."
+msgstr ""
+
+#: includes/Content/SeoUpdateService.php:323
+msgid "This address isn’t on this WordPress site."
+msgstr ""
+
 #: includes/Cron/CronManager.php:83
 msgid "Every 5 minutes (Arva SEO Connector)"
 msgstr ""
@@ -1394,15 +4001,15 @@ msgstr ""
 msgid "Ignored an assessment that didn’t match this site or schema."
 msgstr ""
 
-#: includes/Health/HealthSnapshotService.php:64
+#: includes/Health/HealthSnapshotService.php:61
 msgid "Website Health checks ran."
 msgstr ""
 
-#: includes/Health/HealthSnapshotService.php:90
+#: includes/Health/HealthSnapshotService.php:87
 msgid "Website Health snapshot sent to Arva SEO for assessment."
 msgstr ""
 
-#: includes/Health/HealthSnapshotService.php:101
+#: includes/Health/HealthSnapshotService.php:98
 msgid "Couldn’t send the Website Health snapshot."
 msgstr ""
 
@@ -1414,48 +4021,56 @@ msgstr ""
 msgid "Couldn’t send the plugin inventory."
 msgstr ""
 
-#: includes/Privacy/PrivacyService.php:74
+#: includes/Privacy/PrivacyService.php:172
 msgid "Passwords, salts, access or refresh tokens, signing secrets, license keys or API keys"
 msgstr ""
 
-#: includes/Privacy/PrivacyService.php:75
-msgid "Database credentials, file paths, configuration files, server or debug logs"
-msgstr ""
-
-#: includes/Privacy/PrivacyService.php:76
-msgid "Usernames, email addresses, visitor data or form submissions"
-msgstr ""
-
-#: includes/Privacy/PrivacyService.php:77
-msgid "Plugin or theme settings, uploaded files, and your existing posts and pages"
+#: includes/Privacy/PrivacyService.php:173
+msgid "Database credentials, configuration files, server or debug logs, and file paths (except the paths of files the security scan flags, if you share its results, and the files a deep scan checks, when an administrator starts one)"
 msgstr ""
 
 #: includes/Privacy/PrivacyService.php:174
-msgid "This site uses the Arva SEO Connector to work with Arva SEO, an SEO service used by the site owner or their agency."
+msgid "Usernames, email addresses, visitor data or form submissions"
 msgstr ""
 
 #: includes/Privacy/PrivacyService.php:175
+msgid "Plugin or theme settings, uploaded files (except the images compression sends, if an administrator lets Arva SEO’s servers compress them), and the content of your existing posts and pages (if you let Arva SEO update SEO titles and descriptions, only the previous title and description of the pages it updates)"
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:407
+msgid "This site uses the Arva SEO Connector to work with Arva SEO, an SEO service used by the site owner or their agency."
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:408
 msgid "With an administrator’s consent, the connector sends Arva SEO technical information about this website: the installed plugins and themes with their versions and update state, and the results of WordPress health checks (software versions and configuration facts such as whether HTTPS is used). It does not send visitor information, comments, form submissions, user accounts or email addresses."
 msgstr ""
 
-#: includes/Privacy/PrivacyService.php:176
-msgid "Content written in Arva SEO may be sent to this site as posts or pages. The connector keeps a log of its own activity, which may record which administrator performed an action (by user ID), for the retention period set in the plugin."
+#: includes/Privacy/PrivacyService.php:409
+msgid "The plugin’s security scan runs on this site’s own server and only looks at the site’s files and settings. If an administrator also agrees, its results (the kind of each problem found and the path of the file concerned) are sent to Arva SEO. They contain no information about visitors."
 msgstr ""
 
-#: includes/Privacy/PrivacyService.php:188
-#: includes/Privacy/PrivacyService.php:202
+#: includes/Privacy/PrivacyService.php:410
+msgid "If an administrator allows deep scans and starts one, the site’s code files that aren’t official copies of WordPress or its plugins (such as the theme and premium plugins) are sent to Arva SEO to be checked for known malware, and deleted there as soon as the scan finishes. Configuration files, logs, database exports, backups and uploaded media are never sent."
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:411
+msgid "Content written in Arva SEO may be sent to this site as posts or pages. If an administrator allows it, Arva SEO may also update the SEO titles and meta descriptions of published content; the previous title and description of each changed page are sent to Arva SEO so the change can be undone. The connector keeps a log of its own activity, which may record which administrator performed an action (by user ID), for the retention period set in the plugin."
+msgstr ""
+
+#: includes/Privacy/PrivacyService.php:423
+#: includes/Privacy/PrivacyService.php:437
 msgid "Arva SEO Connector activity log"
 msgstr ""
 
-#: includes/Privacy/PrivacyService.php:230
+#: includes/Privacy/PrivacyService.php:465
 msgid "Arva SEO Connector activity"
 msgstr ""
 
-#: includes/Privacy/PrivacyService.php:234
+#: includes/Privacy/PrivacyService.php:469
 msgid "Time (UTC)"
 msgstr ""
 
-#: includes/Privacy/PrivacyService.php:238
+#: includes/Privacy/PrivacyService.php:473
 msgid "Action"
 msgstr ""
 
@@ -1467,27 +4082,1419 @@ msgstr ""
 msgid "Payload too large."
 msgstr ""
 
-#: includes/Rest/WebhookController.php:85
+#: includes/Rest/WebhookController.php:87
 msgid "Too many requests."
 msgstr ""
 
-#: includes/Rest/WebhookController.php:105
-#: includes/Rest/WebhookController.php:115
+#: includes/Rest/WebhookController.php:107
+#: includes/Rest/WebhookController.php:117
 msgid "Invalid event."
 msgstr ""
 
-#: includes/Rest/WebhookController.php:108
+#: includes/Rest/WebhookController.php:110
 msgid "This event was already received."
 msgstr ""
 
-#: includes/Rest/WebhookController.php:195
+#: includes/Rest/WebhookController.php:226
 msgid "Received a request from Arva SEO."
 msgstr ""
 
-#: includes/Settings.php:111
+#: includes/Security/DeepScan.php:100
+msgid "Running the security scan first"
+msgstr ""
+
+#: includes/Security/DeepScan.php:101
+msgid "Listing the files to check"
+msgstr ""
+
+#: includes/Security/DeepScan.php:102
+msgid "Sending the files to Arva SEO"
+msgstr ""
+
+#: includes/Security/DeepScan.php:103
+msgid "Scanning on Arva SEO’s servers"
+msgstr ""
+
+#. translators: %s: relative time such as "2 mins".
+#: includes/Security/DeepScan.php:121
+#: includes/Security/Scanner.php:199
+#, php-format
+msgid "started %s ago"
+msgstr ""
+
+#. translators: 1: number of files, 2: "started 2 mins ago".
+#. translators: 1: files checked, 2: "started 2 mins ago".
+#: includes/Security/DeepScan.php:126
+#: includes/Security/Scanner.php:225
+#, php-format
+msgid "%1$s files checked so far, %2$s"
+msgstr ""
+
+#. translators: 1: number of files, 2: "started 2 mins ago".
+#: includes/Security/DeepScan.php:130
+#, php-format
+msgid "%1$s files listed so far, %2$s"
+msgstr ""
+
+#. translators: 1: number of files, 2: "started 2 mins ago".
+#: includes/Security/DeepScan.php:136
+#, php-format
+msgid "%1$s files to check, %2$s"
+msgstr ""
+
+#. translators: 1: files sent, 2: files to send, 3: files Arva SEO checked recently, 4: "started 2 mins ago".
+#: includes/Security/DeepScan.php:138
+#, php-format
+msgid "%1$s of %2$s files sent (%3$s checked recently, so not sent again), %4$s"
+msgstr ""
+
+#. translators: 1: number of files, 2: "started 2 mins ago".
+#: includes/Security/DeepScan.php:142
+#, php-format
+msgid "Checking %1$s files, usually a minute or two, %2$s"
+msgstr ""
+
+#. translators: 1: step number, 2: what the step does.
+#: includes/Security/DeepScan.php:147
+#, php-format
+msgid "Step %1$d of 3: %2$s"
+msgstr ""
+
+#: includes/Security/DeepScan.php:207
+msgid "Deep scan started."
+msgstr ""
+
+#: includes/Security/DeepScan.php:221
+msgid "Deep scan stopped."
+msgstr ""
+
+#: includes/Security/DeepScan.php:324
+msgid "Every file the security scan looked at is an official copy, so there was nothing to send for a deep scan."
+msgstr ""
+
+#: includes/Security/DeepScan.php:388
+msgid "Some files changed while the deep scan was sending them. Run it again."
+msgstr ""
+
+#: includes/Security/DeepScan.php:436
+msgid "Arva SEO didn’t finish the deep scan in time, so it wasn’t counted. Try again later."
+msgstr ""
+
+#: includes/Security/DeepScan.php:454
+msgid "Arva SEO couldn’t finish the deep scan, so it wasn’t counted. Try again later."
+msgstr ""
+
+#. translators: 1: number of files, 2: number of findings.
+#: includes/Security/DeepScan.php:512
+#, php-format
+msgid "Deep scan finished: %1$d files checked, %2$d findings."
+msgstr ""
+
+#: includes/Security/DeepScan.php:576
+msgid "This website has no deep scans left this month."
+msgstr ""
+
+#: includes/Security/DeepScan.php:578
+msgid "The deep scan couldn’t finish. Try again later."
+msgstr ""
+
+#. translators: %s: PHP version, such as 8.1.
+#: includes/Security/Exposure.php:134
+#, php-format
+msgid "PHP %s no longer gets security fixes"
+msgstr ""
+
+#. translators: 1: PHP version, such as 8.3.30, 2: the date PHP released the fixes.
+#: includes/Security/Exposure.php:149
+#, php-format
+msgid "PHP %1$s is missing security fixes from %2$s"
+msgstr ""
+
+#. translators: 1: feed version, 2: number of known malware files.
+#: includes/Security/Feed.php:93
+#, php-format
+msgid "Security feed updated to %1$s (%2$d known malware files)."
+msgstr ""
+
+#: includes/Security/Feed.php:246
+#: includes/Security/Findings.php:114
+#: includes/Security/Findings.php:119
+msgid "Known malware"
+msgstr ""
+
+#: includes/Security/Feed.php:274
+msgid "confirmed as bad by Arva SEO"
+msgstr ""
+
+#. translators: 1: file path, 2: username.
+#: includes/Security/FileEdits.php:113
+#, php-format
+msgid "%1$s was changed in the dashboard’s file editor by %2$s."
+msgstr ""
+
+#: includes/Security/Findings.php:37
+msgid "Known vulnerabilities"
+msgstr ""
+
+#: includes/Security/Findings.php:37
+msgid "Installed versions with a published security hole."
+msgstr ""
+
+#: includes/Security/Findings.php:38
+msgid "Found by the deep scan"
+msgstr ""
+
+#: includes/Security/Findings.php:38
+msgid "Known malware and hacking patterns found on Arva SEO’s servers in files that aren’t official copies."
+msgstr ""
+
+#: includes/Security/Findings.php:39
+#: includes/Security/Findings.php:105
+#: includes/Security/Findings.php:109
+#: includes/Security/Findings.php:136
+msgid "Suspicious code"
+msgstr ""
+
+#: includes/Security/Findings.php:39
+msgid "Patterns hackers use, in files that aren’t official copies."
+msgstr ""
+
+#: includes/Security/Findings.php:40
+#: includes/Security/Findings.php:141
+msgid "Changed since the last scan"
+msgstr ""
+
+#: includes/Security/Findings.php:40
+msgid "Theme, must-use plugin and other files that WordPress.org can’t check, new or changed since the scan recorded them."
+msgstr ""
+
+#: includes/Security/Findings.php:41
+msgid "Changed files"
+msgstr ""
+
+#: includes/Security/Findings.php:41
+msgid "WordPress and plugin files that differ from the official copies."
+msgstr ""
+
+#: includes/Security/Findings.php:42
+msgid "Files that shouldn’t be there"
+msgstr ""
+
+#: includes/Security/Findings.php:42
+msgid "Code where WordPress never puts it."
+msgstr ""
+
+#: includes/Security/Findings.php:43
+msgid "Exposed files"
+msgstr ""
+
+#: includes/Security/Findings.php:43
+msgid "Private files anyone on the internet can download."
+msgstr ""
+
+#: includes/Security/Findings.php:44
+msgid "Settings that make an attack easier."
+msgstr ""
+
+#: includes/Security/Findings.php:101
+msgid "If you didn’t change it yourself, reinstall the same version from WordPress.org (Dashboard → Updates → Re-install, or the plugin’s page) and change your passwords. Restore from a backup if more files are affected."
+msgstr ""
+
+#: includes/Security/Findings.php:106
+msgid "This settings file has a rule found in hacked websites. A few security, caching and redirect plugins write similar rules, so check which plugin added it."
+msgstr ""
+
+#: includes/Security/Findings.php:107
+msgid "If no plugin you use added it, save a copy of the file, remove the rule, delete any file the rule names, then change your WordPress, hosting and database passwords. If a plugin you trust added it, mark it as expected."
+msgstr ""
+
+#: includes/Security/Findings.php:110
+msgid "This file contains a pattern found in hacked websites. Some premium plugins and themes use similar tricks to hide their code, so check where the file comes from."
+msgstr ""
+
+#: includes/Security/Findings.php:111
+msgid "If the file isn’t part of a plugin or theme you installed on purpose, it’s likely malware: restore the plugin or theme from a fresh copy, delete files you don’t recognize, then change your WordPress, hosting and database passwords. If it’s from a product you trust, mark it as expected."
+msgstr ""
+
+#: includes/Security/Findings.php:115
+msgid "ClamAV’s database of known malware matched this file: it’s code from a known hacking campaign or tool, not just a suspicious pattern, so the site has very likely been hacked."
+msgstr ""
+
+#: includes/Security/Findings.php:116
+#: includes/Security/Findings.php:121
+msgid "Restore the plugin or theme the file belongs to from a fresh copy, or delete the file if nothing you installed needs it. Then change your WordPress, hosting and database passwords, and look for how it got in (an outdated plugin, a nulled theme or a stolen password). Ask your host or a security specialist if more files are affected."
+msgstr ""
+
+#: includes/Security/Findings.php:120
+msgid "This exact file was found to be malware by a deep scan on another website Arva SEO checks: it’s code from a known hacking campaign or tool, not just a suspicious pattern, so the site has very likely been hacked."
+msgstr ""
+
+#: includes/Security/Findings.php:124
+msgid "PHP needs a security update"
+msgstr ""
+
+#. translators: %s: the PHP version with the fixes, such as 8.3.36.
+#: includes/Security/Findings.php:126
+#, php-format
+msgid "PHP, which runs every page of your site, has released fixes for security holes since this version. The fixes are in PHP %s and later, and attackers look for servers that haven’t installed them."
+msgstr ""
+
+#. translators: %s: the PHP version with the fixes, such as 8.3.36.
+#: includes/Security/Findings.php:128
+#, php-format
+msgid "In your hosting panel, choose the newest PHP version it offers (at least %s), or ask your host to update PHP. Some hosts build PHP with the fixes added under an older number: if yours does, ask them to confirm, then mark this as expected. Check the site afterwards."
+msgstr ""
+
+#: includes/Security/Findings.php:131
+msgid "PHP no longer gets security fixes"
+msgstr ""
+
+#: includes/Security/Findings.php:132
+msgid "Each PHP version gets security fixes for a few years. This one no longer does, so holes found in it from now on are never fixed, and newer plugins stop supporting it."
+msgstr ""
+
+#: includes/Security/Findings.php:133
+msgid "Move to PHP 8.3 or newer in your hosting panel, or ask your host. Update your plugins and theme first, take a backup, and check the site afterwards."
+msgstr ""
+
+#: includes/Security/Findings.php:137
+msgid "The deep scan found a pattern from hacked websites in this file. A few premium plugins and themes hide their code in similar ways, so check where the file comes from."
+msgstr ""
+
+#: includes/Security/Findings.php:138
+msgid "If the file isn’t part of a plugin or theme you installed on purpose, restore that plugin or theme from a fresh copy, delete files you don’t recognize and change your passwords. If it’s from a product you trust, mark it as expected."
+msgstr ""
+
+#: includes/Security/Findings.php:142
+msgid "This file is different from the copy the scan recorded. Themes, premium plugins and must-use plugins can’t be checked against WordPress.org, so a change nobody made on purpose is how injected code shows up: one added line can load a script on every page."
+msgstr ""
+
+#: includes/Security/Findings.php:143
+msgid "Ask whoever looks after the site whether they changed it. If nobody did, remove the added lines (or restore the file from a backup or a fresh copy of the theme or plugin), turn off the file editor, and change the passwords of every administrator. If the change is expected, mark it as expected: the file as it is now becomes the recorded copy."
+msgstr ""
+
+#: includes/Security/Findings.php:146
+msgid "A new file since the last scan"
+msgstr ""
+
+#: includes/Security/Findings.php:147
+msgid "This file wasn’t there when the scan recorded this theme or plugin, and it wasn’t added by an update."
+msgstr ""
+
+#: includes/Security/Findings.php:148
+msgid "If nobody on your team added it, save a copy, delete it, and change the passwords of every administrator. If it’s expected, mark it as expected."
+msgstr ""
+
+#: includes/Security/Findings.php:150
+msgid "A WordPress file was changed"
+msgstr ""
+
+#: includes/Security/Findings.php:150
+msgid "WordPress files are the same on every site. A changed one usually means a hack, or a developer edited WordPress itself (which updates undo)."
+msgstr ""
+
+#: includes/Security/Findings.php:150
+msgid "Dashboard → Updates → Re-install version puts back WordPress’s own files without touching your content. Then run the scan again."
+msgstr ""
+
+#: includes/Security/Findings.php:151
+msgid "A WordPress file is missing"
+msgstr ""
+
+#: includes/Security/Findings.php:151
+msgid "A file that comes with WordPress isn’t there, so parts of the dashboard may fail, and it can be a sign that files were tampered with."
+msgstr ""
+
+#: includes/Security/Findings.php:151
+msgid "Dashboard → Updates → Re-install version puts it back."
+msgstr ""
+
+#: includes/Security/Findings.php:152
+msgid "An extra file among WordPress’s own"
+msgstr ""
+
+#: includes/Security/Findings.php:152
+msgid "WordPress never adds files to wp-admin or wp-includes outside updates, so hackers hide backdoors there."
+msgstr ""
+
+#: includes/Security/Findings.php:152
+msgid "If nobody on your team put it there, delete it, then re-install WordPress from Dashboard → Updates and change your passwords."
+msgstr ""
+
+#: includes/Security/Findings.php:153
+msgid "An extra PHP file in the site’s main folder"
+msgstr ""
+
+#: includes/Security/Findings.php:153
+msgid "Besides WordPress’s own files and wp-config.php, PHP files here are usually left-over tools or a hacker’s backdoor."
+msgstr ""
+
+#: includes/Security/Findings.php:153
+msgid "If you don’t know what it’s for, ask your developer or host, then delete it."
+msgstr ""
+
+#: includes/Security/Findings.php:154
+msgid "A plugin file was changed"
+msgstr ""
+
+#: includes/Security/Findings.php:154
+msgid "It differs from the plugin’s official copy on WordPress.org at this version."
+msgstr ""
+
+#: includes/Security/Findings.php:155
+msgid "An extra file inside a plugin"
+msgstr ""
+
+#: includes/Security/Findings.php:155
+msgid "This PHP file isn’t part of the plugin’s official copy on WordPress.org at this version."
+msgstr ""
+
+#: includes/Security/Findings.php:156
+msgid "A PHP file in the uploads folder"
+msgstr ""
+
+#: includes/Security/Findings.php:156
+msgid "The uploads folder is for images and documents. PHP there is how most hacks keep a way back in."
+msgstr ""
+
+#: includes/Security/Findings.php:156
+msgid "Delete it unless a plugin you trust put it there on purpose (a few caching and backup plugins do), then change your passwords."
+msgstr ""
+
+#: includes/Security/Findings.php:157
+msgid "Code disguised as an image"
+msgstr ""
+
+#: includes/Security/Findings.php:157
+msgid "This file has an image’s name but starts with PHP code: a common way to hide a backdoor."
+msgstr ""
+
+#: includes/Security/Findings.php:157
+msgid "Delete it, look for the code that loads it (the scan may list it under Suspicious code), and change your passwords."
+msgstr ""
+
+#: includes/Security/Findings.php:158
+msgid "Your site’s .git folder can be downloaded"
+msgstr ""
+
+#: includes/Security/Findings.php:158
+msgid "Anyone can rebuild your site’s code from it, including passwords that were ever committed."
+msgstr ""
+
+#: includes/Security/Findings.php:158
+msgid "Delete the .git folder from the web server, or ask your host to block access to it."
+msgstr ""
+
+#: includes/Security/Findings.php:159
+msgid "A .env file can be downloaded"
+msgstr ""
+
+#: includes/Security/Findings.php:159
+msgid "These files usually hold passwords and keys."
+msgstr ""
+
+#: includes/Security/Findings.php:159
+msgid "Move it out of the public folder or delete it, then change every password and key that was in it."
+msgstr ""
+
+#: includes/Security/Findings.php:160
+msgid "A copy of wp-config.php can be downloaded"
+msgstr ""
+
+#: includes/Security/Findings.php:160
+msgid "It contains your database password and security keys, readable by anyone who finds it."
+msgstr ""
+
+#: includes/Security/Findings.php:160
+msgid "Delete the copy, then change your database password and WordPress’s security keys."
+msgstr ""
+
+#: includes/Security/Findings.php:161
+msgid "The debug log can be downloaded"
+msgstr ""
+
+#: includes/Security/Findings.php:161
+msgid "Error logs show file paths and sometimes personal or private data."
+msgstr ""
+
+#: includes/Security/Findings.php:161
+msgid "Delete wp-content/debug.log and turn off WP_DEBUG_LOG on a live site, or log to a folder outside the website."
+msgstr ""
+
+#: includes/Security/Findings.php:162
+msgid "A database export can be downloaded"
+msgstr ""
+
+#: includes/Security/Findings.php:162
+msgid "It holds everything in your site, including users’ details."
+msgstr ""
+
+#: includes/Security/Findings.php:162
+msgid "Delete it from the website’s folders and keep backups somewhere private."
+msgstr ""
+
+#: includes/Security/Findings.php:163
+msgid "A backup file can be downloaded"
+msgstr ""
+
+#: includes/Security/Findings.php:163
+msgid "Backups in the website’s folder can include your configuration and code."
+msgstr ""
+
+#: includes/Security/Findings.php:163
+msgid "Move it out of the website’s folders, or delete it."
+msgstr ""
+
+#: includes/Security/Findings.php:164
+msgid "Folder contents are listed"
+msgstr ""
+
+#: includes/Security/Findings.php:164
+msgid "Anyone can browse every file in your uploads folder, including ones you didn’t link to."
+msgstr ""
+
+#: includes/Security/Findings.php:164
+msgid "Ask your host to turn off directory listing (Options -Indexes), or add an empty index.php to the folder."
+msgstr ""
+
+#: includes/Security/Findings.php:165
+msgid "Plugins and themes can be edited in the dashboard"
+msgstr ""
+
+#: includes/Security/Findings.php:165
+msgid "Anyone who gets into an administrator account can add code to the site in a few clicks."
+msgstr ""
+
+#: includes/Security/Findings.php:165
+msgid "Add define( 'DISALLOW_FILE_EDIT', true ); to wp-config.php."
+msgstr ""
+
+#: includes/Security/Findings.php:166
+msgid "An administrator is called “admin”"
+msgstr ""
+
+#: includes/Security/Findings.php:166
+msgid "It’s the first name every password-guessing attack tries."
+msgstr ""
+
+#: includes/Security/Findings.php:166
+msgid "Create a new administrator with another name, sign in as it, and delete “admin”, giving its posts to the new user."
+msgstr ""
+
+#: includes/Security/Findings.php:167
+msgid "XML-RPC answers"
+msgstr ""
+
+#: includes/Security/Findings.php:167
+msgid "Old apps use it, and attackers use it to try many passwords in one request. Jetpack and some apps still need it."
+msgstr ""
+
+#: includes/Security/Findings.php:167
+msgid "If nothing you use needs it, turn it off with a security plugin or ask your host to block xmlrpc.php."
+msgstr ""
+
+#: includes/Security/Findings.php:168
+msgid "Usernames can be listed"
+msgstr ""
+
+#: includes/Security/Findings.php:168
+msgid "Attackers collect usernames this way before guessing passwords."
+msgstr ""
+
+#: includes/Security/Findings.php:168
+msgid "A security plugin can hide author pages and the users list in the REST API from visitors."
+msgstr ""
+
+#: includes/Security/Findings.php:169
+msgid "A known vulnerability"
+msgstr ""
+
+#: includes/Security/Findings.php:169
+msgid "This version has a published security hole that attackers scan for."
+msgstr ""
+
+#: includes/Security/Findings.php:169
+msgid "Update it now. If there’s no fixed version yet, deactivate it until there is."
+msgstr ""
+
+#: includes/Security/Findings.php:170
+msgid "Security finding"
+msgstr ""
+
+#. translators: 1: a host name, 2: what it is, such as "Malware loader".
+#: includes/Security/OutsideScripts.php:316
+#, php-format
+msgid "Loads a script from %1$s (%2$s)"
+msgstr ""
+
+#: includes/Security/Repairs.php:92
+msgid "This file can’t be restored from here."
+msgstr ""
+
+#: includes/Security/Repairs.php:97
+msgid "WordPress.org has no official copy of this file for the installed version."
+msgstr ""
+
+#: includes/Security/Repairs.php:116
+msgid "The official copy couldn’t be downloaded, or didn’t match WordPress.org’s checksum, so nothing was changed."
+msgstr ""
+
+#: includes/Security/Repairs.php:121
+msgid "WordPress can’t write files here directly, so nothing was changed."
+msgstr ""
+
+#: includes/Security/Repairs.php:127
+msgid "A copy of the current file couldn’t be kept, so nothing was changed."
+msgstr ""
+
+#: includes/Security/Repairs.php:130
+msgid "The file’s folder couldn’t be created, so nothing was changed."
+msgstr ""
+
+#: includes/Security/Repairs.php:133
+msgid "The official copy couldn’t be written, so nothing was changed."
+msgstr ""
+
+#. translators: %s: file path.
+#: includes/Security/Repairs.php:141
+#, php-format
+msgid "Restored the official copy of %s."
+msgstr ""
+
+#: includes/Security/Repairs.php:146
+msgid "The official copy is back. The previous file is kept for 30 days in case you need to undo it."
+msgstr ""
+
+#: includes/Security/Repairs.php:159
+msgid "This file can’t be moved from here."
+msgstr ""
+
+#: includes/Security/Repairs.php:165
+msgid "The file isn’t there any more, or WordPress can’t move it directly."
+msgstr ""
+
+#: includes/Security/Repairs.php:170
+msgid "The file couldn’t be moved, so nothing was changed."
+msgstr ""
+
+#. translators: %s: file path.
+#: includes/Security/Repairs.php:178
+#, php-format
+msgid "Moved %s to quarantine."
+msgstr ""
+
+#: includes/Security/Repairs.php:183
+msgid "The file is in quarantine, where it can’t run. It’s kept for 30 days in case you need to undo it."
+msgstr ""
+
+#: includes/Security/Repairs.php:199
+msgid "WordPress can’t change your wp-config.php file. Add define( 'DISALLOW_FILE_EDIT', true ); to it yourself."
+msgstr ""
+
+#: includes/Security/Repairs.php:209
+msgid "wp-config.php doesn’t start the usual way, so it was left alone. Add define( 'DISALLOW_FILE_EDIT', true ); to it yourself."
+msgstr ""
+
+#: includes/Security/Repairs.php:212
+#: includes/Security/Repairs.php:289
+msgid "wp-config.php couldn’t be written, so nothing was changed."
+msgstr ""
+
+#: includes/Security/Repairs.php:218
+msgid "The dashboard’s theme and plugin editors were turned off (DISALLOW_FILE_EDIT in wp-config.php)."
+msgstr ""
+
+#: includes/Security/Repairs.php:221
+msgid "The file editor is off: nobody can change theme or plugin files from the dashboard now, even with an administrator’s password."
+msgstr ""
+
+#: includes/Security/Repairs.php:239
+msgid "This change can’t be undone from here."
+msgstr ""
+
+#: includes/Security/Repairs.php:245
+msgid "The file changed again since, so it was left as it is."
+msgstr ""
+
+#: includes/Security/Repairs.php:250
+msgid "Another file is in its place now, or the kept copy is gone, so nothing was changed."
+msgstr ""
+
+#: includes/Security/Repairs.php:255
+msgid "The previous file couldn’t be put back."
+msgstr ""
+
+#. translators: %s: file path.
+#: includes/Security/Repairs.php:262
+#, php-format
+msgid "Undid the change to %s."
+msgstr ""
+
+#: includes/Security/Repairs.php:267
+msgid "Undone: the previous file is back. Run the scan again to see it in the results."
+msgstr ""
+
+#: includes/Security/Repairs.php:283
+msgid "The line Arva SEO added isn’t in wp-config.php any more, so nothing was changed."
+msgstr ""
+
+#: includes/Security/Repairs.php:295
+msgid "The dashboard’s file editor was turned back on."
+msgstr ""
+
+#: includes/Security/Repairs.php:298
+msgid "Undone: the file editor is back on."
+msgstr ""
+
+#. translators: %d: number of findings.
+#: includes/Security/Report.php:116
+#, php-format
+msgid "Security scan results sent to Arva SEO (%d finding)."
+msgid_plural "Security scan results sent to Arva SEO (%d findings)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Security/Scanner.php:152
+msgid "Security scan started."
+msgstr ""
+
+#: includes/Security/Scanner.php:167
+msgid "Security scan stopped."
+msgstr ""
+
+#: includes/Security/Scanner.php:177
+msgid "Checking WordPress’s own files"
+msgstr ""
+
+#: includes/Security/Scanner.php:178
+msgid "Checking plugins against WordPress.org"
+msgstr ""
+
+#: includes/Security/Scanner.php:179
+msgid "Looking through the site’s files"
+msgstr ""
+
+#: includes/Security/Scanner.php:180
+msgid "Checking for exposed files and settings"
+msgstr ""
+
+#: includes/Security/Scanner.php:181
+msgid "Finishing"
+msgstr ""
+
+#. translators: 1: plugin number, 2: number of plugins, 3: "started 2 mins ago".
+#: includes/Security/Scanner.php:211
+#, php-format
+msgid "Plugin %1$d of %2$d, %3$s"
+msgstr ""
+
+#. translators: 1: files checked, 2: files the last scan checked, 3: "started 2 mins ago".
+#: includes/Security/Scanner.php:215
+#, php-format
+msgid "%1$s files checked, of about %2$s (the last scan’s count), %3$s"
+msgstr ""
+
+#. translators: 1: files checked, 2: "started 2 mins ago".
+#: includes/Security/Scanner.php:219
+#, php-format
+msgid "Almost done: %1$s files checked, %2$s"
+msgstr ""
+
+#. translators: %s: "started 2 mins ago".
+#: includes/Security/Scanner.php:222
+#, php-format
+msgid "Comparing WordPress’s files with WordPress.org’s copies, %s"
+msgstr ""
+
+#. translators: 1: step number, 2: what the step does.
+#: includes/Security/Scanner.php:230
+#, php-format
+msgid "Step %1$d of 4: %2$s"
+msgstr ""
+
+#. translators: 1: number of files, 2: number of findings.
+#: includes/Security/Scanner.php:659
+#, php-format
+msgid "Security scan finished: %1$d files checked, %2$d findings."
+msgstr ""
+
+#. translators: %s: the malware's name, such as "Known malware (Php.Webshell-123)".
+#: includes/Security/Scanner.php:814
+#, php-format
+msgid "%s, found on other websites"
+msgstr ""
+
+#: includes/Settings.php:125
 msgid "Publishing settings changed."
 msgstr ""
 
-#: includes/Site/SiteRegistrationService.php:37
+#: includes/Settings.php:137
+msgid "Arva SEO may now update SEO titles and meta descriptions."
+msgstr ""
+
+#: includes/Settings.php:137
+msgid "Arva SEO may no longer update SEO titles and meta descriptions."
+msgstr ""
+
+#: includes/Site/SiteRegistrationService.php:38
 msgid "Couldn’t update this site’s details in Arva SEO."
+msgstr ""
+
+#. translators: %s: the Cloudflare zone (a domain).
+#: includes/Speed/Cloudflare.php:193
+#, php-format
+msgid "Cloudflare connected for %s."
+msgstr ""
+
+#: includes/Speed/Cloudflare.php:216
+msgid "Cloudflare disconnected. Its token was removed from this site."
+msgstr ""
+
+#: includes/Speed/Cloudflare.php:446
+msgid "Cloudflare: its copy of every page was cleared."
+msgstr ""
+
+#. translators: %d: number of pages.
+#: includes/Speed/Cloudflare.php:448
+#, php-format
+msgid "Cloudflare: its copy of %d page was cleared."
+msgid_plural "Cloudflare: its copy of %d pages was cleared."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: Cloudflare's error.
+#: includes/Speed/Cloudflare.php:459
+#, php-format
+msgid "Cloudflare didn’t clear its copy of your pages: %s"
+msgstr ""
+
+#: includes/Speed/Cloudflare.php:482
+msgid "No Cloudflare token is saved."
+msgstr ""
+
+#: includes/Speed/Cloudflare.php:504
+msgid "Cloudflare couldn’t be reached from your server."
+msgstr ""
+
+#. translators: 1: HTTP status, 2: Cloudflare's message.
+#: includes/Speed/Cloudflare.php:522
+#, php-format
+msgid "Cloudflare answered %1$d%2$s"
+msgstr ""
+
+#. translators: %d: number of page types.
+#: includes/Speed/CssOptimizer.php:541
+#, php-format
+msgid "PageSpeed fixes: optimized CSS is ready for %d page type."
+msgid_plural "PageSpeed fixes: optimized CSS is ready for %d page types."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Speed/CssOptimizer.php:594
+msgid "PageSpeed fixes: optimized CSS will be worked out again."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:691
+msgid "This address isn’t on the website connected to Arva SEO."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:726
+msgid "Your host’s bot protection blocked Arva SEO from loading the page. Arva SEO now tries again under its own name, ArvaSEO-Bot; if it still fails, ask your host to allow ArvaSEO-Bot."
+msgstr ""
+
+#. translators: %d: HTTP status, such as 503.
+#: includes/Speed/CssOptimizer.php:730
+#, php-format
+msgid "The page answered with a server error (%d)."
+msgstr ""
+
+#. translators: %d: HTTP status, such as 410.
+#: includes/Speed/CssOptimizer.php:734
+#, php-format
+msgid "The page answered with an error (%d)."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:735
+msgid "The page didn’t load."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:738
+msgid "The page took too long to load."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:739
+msgid "The page’s styles are too large to optimize."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:740
+msgid "The page loads from an address Arva SEO doesn’t load (a private network)."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:741
+msgid "Arva SEO couldn’t work this page out."
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:753
+msgid "Blog page"
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:754
+msgid "Not found page"
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:755
+msgid "Search results"
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:756
+msgid "Categories"
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:757
+msgid "Tags"
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:758
+msgid "Author pages"
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:759
+msgid "Date archives"
+msgstr ""
+
+#. translators: %s: a post type's name, such as Products.
+#: includes/Speed/CssOptimizer.php:768
+#, php-format
+msgid "%s list"
+msgstr ""
+
+#: includes/Speed/CssOptimizer.php:774
+msgid "Other pages"
+msgstr ""
+
+#: includes/Speed/Exclusions.php:490
+msgid "PageSpeed fixes (Arva SEO)"
+msgstr ""
+
+#: includes/Speed/Exclusions.php:503
+#: includes/Speed/Exclusions.php:602
+msgid "Leave this page alone"
+msgstr ""
+
+#: includes/Speed/Exclusions.php:504
+msgid "No PageSpeed fixes run on it. Tick this if something on this page stops working with a fix on."
+msgstr ""
+
+#. translators: %s: post or page title.
+#: includes/Speed/Exclusions.php:545
+#, php-format
+msgid "PageSpeed fixes: “%s” is left alone."
+msgstr ""
+
+#. translators: %s: post or page title.
+#: includes/Speed/Exclusions.php:545
+#, php-format
+msgid "PageSpeed fixes: “%s” uses them again."
+msgstr ""
+
+#. translators: %s: page address.
+#: includes/Speed/Exclusions.php:577
+#, php-format
+msgid "PageSpeed fixes: %s is left alone."
+msgstr ""
+
+#. translators: %s: page address.
+#: includes/Speed/Exclusions.php:577
+#, php-format
+msgid "PageSpeed fixes: %s uses them again."
+msgstr ""
+
+#: includes/Speed/Exclusions.php:605
+msgid "Use PageSpeed fixes on this page again"
+msgstr ""
+
+#: includes/Speed/Exclusions.php:608
+msgid "Shop page: Defer scripts leaves it alone"
+msgstr ""
+
+#: includes/Speed/Exclusions.php:608
+msgid "Left alone by your list of pages"
+msgstr ""
+
+#: includes/Speed/Exclusions.php:623
+msgid "PageSpeed fixes"
+msgstr ""
+
+#: includes/Speed/Fixes.php:61
+msgid "Page caching"
+msgstr ""
+
+#: includes/Speed/Fixes.php:62
+msgid "Each page is saved as ready-made HTML and sent to visitors without running WordPress, so it starts arriving in milliseconds instead of a second or more. Signed-in users, carts and checkouts, and pages that change for each visitor are never cached, and pages are cleared when you change them. Turning it on checks your homepage straight away: if it isn’t served from the cache, it’s turned off again."
+msgstr ""
+
+#: includes/Speed/Fixes.php:74
+msgid "Show the main image first"
+msgstr ""
+
+#: includes/Speed/Fixes.php:75
+msgid "On posts and pages, the featured image loads straight away with a high priority instead of waiting its turn, so the largest thing on the screen appears sooner. On every page you tested with PageSpeed in Arva SEO, so does the image the test found as the largest thing on the screen, even when a slider or page builder shows it as a background."
+msgstr ""
+
+#: includes/Speed/Fixes.php:88
+msgid "Lazy-load images, videos and maps"
+msgstr ""
+
+#: includes/Speed/Fixes.php:89
+msgid "Images, videos and maps further down the page load only when a visitor scrolls near them. The first few images on a page always load straight away."
+msgstr ""
+
+#: includes/Speed/Fixes.php:99
+msgid "Load styles faster"
+msgstr ""
+
+#: includes/Speed/Fixes.php:100
+msgid "The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan."
+msgstr ""
+
+#: includes/Speed/Fixes.php:111
+msgid "Remove unused CSS"
+msgstr ""
+
+#: includes/Speed/Fixes.php:112
+msgid "Each page gets only the styles it uses, worked out by Arva SEO for each type of page. The full stylesheets load on the visitor’s first scroll, tap, click or key press, so menus, pop-ups and sliders keep their styles."
+msgstr ""
+
+#: includes/Speed/Fixes.php:124
+msgid "Defer scripts"
+msgstr ""
+
+#: includes/Speed/Fixes.php:125
+msgid "Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery, consent tools and any scripts you list are left alone."
+msgstr ""
+
+#: includes/Speed/Fixes.php:136
+msgid "Add missing image sizes"
+msgstr ""
+
+#: includes/Speed/Fixes.php:137
+msgid "Images from your media library that are missing a width and height get them, so the browser keeps room for them and the page stops jumping while it loads."
+msgstr ""
+
+#: includes/Speed/Fixes.php:149
+msgid "Add the mobile viewport tag"
+msgstr ""
+
+#: includes/Speed/Fixes.php:150
+msgid "Adds the tag that tells phones to show the page at their own width. Most themes already have it: turn this on only when PageSpeed says it’s missing."
+msgstr ""
+
+#: includes/Speed/Fixes.php:161
+msgid "Click-to-play videos"
+msgstr ""
+
+#: includes/Speed/Fixes.php:162
+msgid "YouTube videos show a preview picture with a play button, and the player loads when someone presses it. Until then nothing loads from YouTube except the picture."
+msgstr ""
+
+#: includes/Speed/Fixes.php:174
+msgid "Delay chat widgets and trackers"
+msgstr ""
+
+#: includes/Speed/Fixes.php:175
+msgid "Chat boxes, heatmaps and social widgets load on the visitor’s first scroll, tap, click or key press instead of while the page loads, so the page is ready to use sooner. Analytics and consent tools are never delayed unless you list them."
+msgstr ""
+
+#: includes/Speed/Fixes.php:188
+msgid "DNS prefetch"
+msgstr ""
+
+#: includes/Speed/Fixes.php:189
+msgid "Looks up the addresses of external services you list before the page needs them. Add only services the page actually uses, up to 10 domains. This does not change your DNS records."
+msgstr ""
+
+#: includes/Speed/Fixes.php:197
+msgid "Preconnect"
+msgstr ""
+
+#: includes/Speed/Fixes.php:198
+msgid "Starts connections to the external services you list before their files are needed. Use only important services needed immediately, such as an external font or asset host, up to 4 origins. Too many early connections can slow a page down."
+msgstr ""
+
+#: includes/Speed/Fixes.php:206
+msgid "Minify CSS"
+msgstr ""
+
+#: includes/Speed/Fixes.php:207
+msgid "Serves smaller cached copies of local stylesheets by removing unnecessary spacing and comments. Original files stay intact, relative image and font addresses keep working, and file order stays the same. Already-minified or unsupported files are left alone."
+msgstr ""
+
+#: includes/Speed/Fixes.php:215
+msgid "Minify JavaScript"
+msgstr ""
+
+#: includes/Speed/Fixes.php:216
+msgid "Serves smaller cached copies of supported local classic scripts. Original files, dependencies, inline code and execution order stay intact. External, already-minified, module and other scripts that depend on their original address are left alone."
+msgstr ""
+
+#: includes/Speed/Fixes.php:224
+msgid "Combine CSS"
+msgstr ""
+
+#: includes/Speed/Fixes.php:225
+msgid "Combines adjacent compatible local stylesheets into one cached file, preserving their order and image or font addresses. Inline styles, different media rules and styles managed by Critical CSS or Remove unused CSS stay separate. Try it and check your pages; fewer files do not always make a site faster."
+msgstr ""
+
+#: includes/Speed/Fixes.php:233
+msgid "Combine JavaScript"
+msgstr ""
+
+#: includes/Speed/Fixes.php:234
+msgid "Combines adjacent compatible local classic scripts into one cached file in their existing order. Inline code, asynchronous, module, delayed and unsupported scripts stay separate. Original files stay intact. Try it and check menus, forms and checkout before enabling it for visitors."
+msgstr ""
+
+#: includes/Speed/Fixes.php:242
+msgid "Faster Google Fonts"
+msgstr ""
+
+#: includes/Speed/Fixes.php:243
+msgid "Text shows straight away in a similar font while Google Fonts load, and the browser connects to Google’s font servers early."
+msgstr ""
+
+#: includes/Speed/Fixes.php:255
+msgid "Remove unused WordPress extras"
+msgstr ""
+
+#: includes/Speed/Fixes.php:256
+msgid "Switches off the parts of WordPress most sites don’t use, so pages load less. Choose which below."
+msgstr ""
+
+#: includes/Speed/Fixes.php:268
+msgid "Browser caching and compression"
+msgstr ""
+
+#: includes/Speed/Fixes.php:269
+msgid "Visitors’ browsers keep your images, fonts, styles and scripts for a year instead of downloading them on every visit, and pages, styles and scripts are sent compressed. The rules go in your .htaccess file, and your site is checked straight away: if it doesn’t answer normally, they’re taken out again."
+msgstr ""
+
+#: includes/Speed/Fixes.php:283
+msgid "New uploads as WebP"
+msgstr ""
+
+#: includes/Speed/Fixes.php:284
+msgid "Images you upload from now on also get smaller WebP copies, which WordPress shows instead. You can convert the images already in your media library too. Your originals always stay as they are."
+msgstr ""
+
+#: includes/Speed/Fixes.php:297
+msgid "Compress images"
+msgstr ""
+
+#: includes/Speed/Fixes.php:298
+msgid "Images you upload from now on are saved smaller: photos lose the hidden camera data and are saved at a quality you can’t tell apart, and PNGs are saved without loss. When this site is connected, Arva SEO’s servers compress them more. You can compress the images already in your media library too, and the originals are kept so you can put them back."
+msgstr ""
+
+#: includes/Speed/Fixes.php:320
+msgid "Your page shows sooner"
+msgstr ""
+
+#: includes/Speed/Fixes.php:321
+msgid "The page holds still and fits phones"
+msgstr ""
+
+#: includes/Speed/Fixes.php:322
+msgid "Less waiting for things nobody has asked for"
+msgstr ""
+
+#: includes/Speed/Fixes.php:323
+msgid "Smaller files"
+msgstr ""
+
+#: includes/Speed/Fixes.php:484
+msgid "This server’s image library can’t make WebP images. Ask your host to enable WebP in Imagick or GD."
+msgstr ""
+
+#: includes/Speed/Fixes.php:493
+msgid "Connect to Arva SEO first: these styles are worked out on Arva SEO’s servers, using the page optimizations in your plan."
+msgstr ""
+
+#: includes/Speed/Fixes.php:578
+msgid "PageSpeed fix “Page caching” wasn’t turned on: your homepage wasn’t served from the cache when checked, so everything was taken out again."
+msgstr ""
+
+#: includes/Speed/Fixes.php:593
+msgid "PageSpeed fix “Browser caching and compression” wasn’t turned on: the site didn’t answer normally with the rules, so they were taken out again."
+msgstr ""
+
+#. translators: 1: fix name, 2: new state (off, trying, on).
+#: includes/Speed/Fixes.php:620
+#, php-format
+msgid "PageSpeed fix “%1$s”: %2$s."
+msgstr ""
+
+#: includes/Speed/Fixes.php:697
+msgid "PageSpeed fix choices saved."
+msgstr ""
+
+#: includes/Speed/Fixes.php:722
+msgid "Trying (only you see it)"
+msgstr ""
+
+#: includes/Speed/Fixes.php:724
+msgid "Done by another plugin"
+msgstr ""
+
+#: includes/Speed/Fixes.php:725
+msgid "Not available on this server"
+msgstr ""
+
+#: includes/Speed/ImageCompression.php:213
+msgid "PageSpeed fixes: compressing the media library started."
+msgstr ""
+
+#: includes/Speed/ImageCompression.php:227
+msgid "PageSpeed fixes: compressing the media library stopped."
+msgstr ""
+
+#: includes/Speed/ImageCompression.php:242
+msgid "PageSpeed fixes: putting the original images back."
+msgstr ""
+
+#. translators: %d: number of images.
+#: includes/Speed/ImageCompression.php:322
+#, php-format
+msgid "PageSpeed fixes: the media library is compressed (%d image smaller so far)."
+msgid_plural "PageSpeed fixes: the media library is compressed (%d images smaller so far)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Speed/ImageCompression.php:355
+msgid "PageSpeed fixes: the original images are back."
+msgstr ""
+
+#. translators: %d: number of font files.
+#: includes/Speed/LocalFonts.php:112
+#, php-format
+msgid "PageSpeed fixes: Google Fonts copied to your site (%d file)."
+msgid_plural "PageSpeed fixes: Google Fonts copied to your site (%d files)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Speed/LocalFonts.php:192
+msgid "PageSpeed fixes: Google Fonts couldn’t be copied to your site, so Google’s address stays. It’s tried again tomorrow."
+msgstr ""
+
+#: includes/Speed/OtherPlugins.php:87
+msgid "It also runs your web host’s own page cache and clears it when your pages change. Keeping it is usually best: without it, visitors can get out-of-date pages. To use Arva SEO’s page cache instead, choose it under Page caching and turn the host’s cache off as it says."
+msgstr ""
+
+#: includes/Speed/OtherPlugins.php:88
+msgid "It also caches your pages. Arva SEO’s Page caching can do that instead: deactivate this plugin, then turn Page caching on below."
+msgstr ""
+
+#: includes/Speed/OtherPlugins.php:89
+msgid "Images it already compressed stay that way after you deactivate it. Turn on Compress images here for the ones you upload next, and for the rest of your media library."
+msgstr ""
+
+#: includes/Speed/OtherPlugins.php:131
+msgid "That plugin isn’t one of the speed plugins Arva SEO found, or it’s already off. Nothing was changed."
+msgstr ""
+
+#. translators: %s: plugin name.
+#: includes/Speed/OtherPlugins.php:138
+#, php-format
+msgid "%s is on for the whole network, so only a network administrator can deactivate it (Network Admin → Plugins)."
+msgstr ""
+
+#: includes/Speed/OtherPlugins.php:144
+msgid "Your account can’t deactivate plugins on this site. Nothing was changed."
+msgstr ""
+
+#. translators: %s: plugin name.
+#: includes/Speed/OtherPlugins.php:152
+#, php-format
+msgid "%s couldn’t be deactivated. Try from the Plugins page."
+msgstr ""
+
+#. translators: %s: plugin name.
+#: includes/Speed/OtherPlugins.php:158
+#, php-format
+msgid "PageSpeed fixes: %s was deactivated from the Speed page."
+msgstr ""
+
+#. translators: %s: plugin name.
+#: includes/Speed/OtherPlugins.php:164
+#, php-format
+msgid "%s was deactivated. The fixes it did are off now: turn on Arva SEO’s below, one at a time. If you use a page cache, clear it."
+msgstr ""
+
+#. translators: 1: names separated by commas, 2: the last name.
+#: includes/Speed/OtherPlugins.php:179
+#, php-format
+msgid "%1$s and %2$s"
+msgstr ""
+
+#: includes/Speed/PageCache.php:255
+#: includes/Speed/PageCache.php:265
+msgid "SiteGround’s dynamic cache"
+msgstr ""
+
+#: includes/Speed/PageCache.php:265
+msgid "In Speed Optimizer → Caching, turn off Dynamic Caching. You can keep the plugin for its other settings."
+msgstr ""
+
+#: includes/Speed/PageCache.php:266
+msgid "LiteSpeed Cache"
+msgstr ""
+
+#: includes/Speed/PageCache.php:266
+msgid "In LiteSpeed Cache → Cache, set Enable Cache to Off. You can keep the plugin for its other settings."
+msgstr ""
+
+#: includes/Speed/PageCache.php:267
+msgid "WP Engine’s page cache"
+msgstr ""
+
+#: includes/Speed/PageCache.php:267
+msgid "WP Engine’s cache can’t be turned off from WordPress: ask WP Engine’s support to turn it off for this site. Until then it stays in front of Arva SEO’s."
+msgstr ""
+
+#: includes/Speed/PageCache.php:268
+msgid "Kinsta’s page cache"
+msgstr ""
+
+#: includes/Speed/PageCache.php:268
+msgid "Kinsta’s cache can’t be turned off from WordPress: ask Kinsta’s support to turn it off for this site. Until then it stays in front of Arva SEO’s."
+msgstr ""
+
+#: includes/Speed/PageCache.php:269
+msgid "Cloudways’ Varnish cache"
+msgstr ""
+
+#: includes/Speed/PageCache.php:269
+msgid "In Cloudways → your application → Application Settings, turn off Varnish, and turn off Breeze’s page cache."
+msgstr ""
+
+#. translators: %s: the host's cache, such as SiteGround's dynamic cache.
+#: includes/Speed/PageCache.php:304
+#, php-format
+msgid "Page caching: Arva SEO’s page cache may be used instead of %s."
+msgstr ""
+
+#. translators: %s: the host's cache, such as SiteGround's dynamic cache.
+#. translators: %s: the host's cache.
+#: includes/Speed/PageCache.php:304
+#: includes/Speed/PageCache.php:306
+msgid "the host’s cache"
+msgstr ""
+
+#. translators: %s: the host's cache.
+#: includes/Speed/PageCache.php:306
+#, php-format
+msgid "Page caching: left to %s."
+msgstr ""
+
+#: includes/Speed/PageCache.php:315
+msgid "Not on a multisite network yet: its sites share one advanced-cache.php file."
+msgstr ""
+
+#: includes/Speed/PageCache.php:319
+msgid "WordPress can’t write to your wp-content folder, where saved pages go. Ask your host to make it writable."
+msgstr ""
+
+#: includes/Speed/PageCache.php:322
+msgid "WordPress can’t change your wp-config.php file. Add the line below near the top of it, then turn this on."
+msgstr ""
+
+#. translators: %s: the other cache, such as WP Rocket.
+#: includes/Speed/PageCache.php:468
+#, php-format
+msgid "Page caching was turned off: %s caches pages now."
+msgstr ""
+
+#: includes/Speed/PageCache.php:510
+msgid "Page caching choices saved."
+msgstr ""
+
+#: includes/Speed/PageCache.php:678
+msgid "Page caching: WP_CACHE was turned on in wp-config.php."
+msgstr ""
+
+#: includes/Speed/PageCache.php:1059
+msgid "Page caching: every saved page was cleared."
+msgstr ""
+
+#. translators: 1: fix name, 2: new state, 3: person's name.
+#: includes/Speed/RemoteFixes.php:84
+#, php-format
+msgid "PageSpeed fix “%1$s”: %2$s, asked for in Arva SEO by %3$s."
+msgstr ""
+
+#: includes/Speed/RemoteFixes.php:121
+msgid "someone on your team"
+msgstr ""
+
+#. translators: %d: number of fixes being tried.
+#: includes/Speed/Runtime.php:136
+#, php-format
+msgid "Arva SEO: trying %d PageSpeed fix"
+msgid_plural "Arva SEO: trying %d PageSpeed fixes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Speed/Runtime.php:137
+msgid "Arva SEO: PageSpeed fixes"
+msgstr ""
+
+#: includes/Speed/Runtime.php:140
+msgid "Only you see the fixes you’re trying while signed in. Visitors see your site as before."
+msgstr ""
+
+#: includes/Speed/Runtime.php:140
+msgid "PageSpeed fixes are on for your visitors."
+msgstr ""
+
+#: includes/Speed/Runtime.php:148
+msgid "Clear the page cache"
+msgstr ""
+
+#: includes/Speed/Runtime.php:485
+msgid "YouTube video"
+msgstr ""
+
+#. translators: %s: the video's title.
+#: includes/Speed/Runtime.php:497
+#, php-format
+msgid "Play video: %s"
+msgstr ""
+
+#: includes/Speed/ServerRules.php:164
+msgid "Not on a multisite network: its sites share one .htaccess file. Ask your host to turn on browser caching and compression for the network."
+msgstr ""
+
+#: includes/Speed/ServerRules.php:167
+msgid "Your server doesn’t read .htaccess files (it’s probably nginx). Ask your host to add the rules below."
+msgstr ""
+
+#: includes/Speed/ServerRules.php:172
+msgid "WordPress can’t write to your .htaccess file. Ask your host to make it writable, or to add the rules below."
+msgstr ""
+
+#: includes/Speed/WebpLibrary.php:82
+msgid "PageSpeed fixes: converting existing images to WebP started."
+msgstr ""
+
+#: includes/Speed/WebpLibrary.php:94
+msgid "PageSpeed fixes: converting existing images to WebP stopped."
+msgstr ""
+
+#. translators: %d: number of images.
+#: includes/Speed/WebpLibrary.php:122
+#, php-format
+msgid "PageSpeed fixes: %d existing image was converted to WebP."
+msgid_plural "PageSpeed fixes: %d existing images were converted to WebP."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Speed/WebpLibrary.php:196
+msgid "PageSpeed fixes: the WebP copies of existing images were removed."
 msgstr ""

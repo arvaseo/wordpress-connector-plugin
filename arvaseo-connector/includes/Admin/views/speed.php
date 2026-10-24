@@ -470,7 +470,7 @@ defined( 'ABSPATH' ) || exit;
 
 			<?php
 			// Details: closed unless something in it is running or being tried.
-			$arvaseo_options = in_array( $arvaseo_id, array( 'page_cache', 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts' ), true ) && 'handled' !== $arvaseo_state;
+			$arvaseo_options = in_array( $arvaseo_id, array( 'page_cache', 'browser_caching', 'wp_extras', 'critical_css', 'unused_css', 'webp_uploads', 'compress_images', 'delay_scripts', 'google_fonts', 'defer_scripts', 'combine_css', 'combine_js' ), true ) && 'handled' !== $arvaseo_state;
 			$arvaseo_open    = false;
 			if ( 'webp_uploads' === $arvaseo_id ) {
 				$arvaseo_open = $arvaseo_webp['running'];
@@ -678,15 +678,15 @@ defined( 'ABSPATH' ) || exit;
 						</form>
 					<?php endif; ?>
 
-					<?php if ( in_array( $arvaseo_id, array( 'minify_css', 'minify_js' ), true ) ) : ?>
-						<?php $arvaseo_minify_key = 'minify_css' === $arvaseo_id ? 'css_exclude' : 'defer_exclude'; ?>
+					<?php if ( in_array( $arvaseo_id, array( 'minify_css', 'minify_js', 'combine_css', 'combine_js' ), true ) ) : ?>
+						<?php $arvaseo_minify_key = in_array( $arvaseo_id, array( 'minify_css', 'combine_css' ), true ) ? 'css_exclude' : 'defer_exclude'; ?>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
 							<label for="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>"><strong><?php esc_html_e( 'Leave these files alone, one handle per line', 'arvaseo-connector' ); ?></strong></label>
 							<textarea id="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>" name="<?php echo esc_attr( $arvaseo_minify_key ); ?>" rows="3" class="large-text code"><?php echo esc_textarea( implode( "\n", $arvaseo_stored[ $arvaseo_minify_key ] ) ); ?></textarea>
-							<p class="arvaseo-hint"><?php esc_html_e( 'CSS exclusions are shared with optimized CSS; script exclusions are shared with Defer scripts. Minification does not combine files or change their loading order. If a file cannot be safely made smaller, the original is served.', 'arvaseo-connector' ); ?></p>
+							<p class="arvaseo-hint"><?php esc_html_e( 'CSS exclusions are shared with optimized CSS and CSS combining; script exclusions are shared with Defer scripts and JavaScript combining. Minification and combining are separate options. Unsupported files keep their original delivery.', 'arvaseo-connector' ); ?></p>
 							<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save exclusions', 'arvaseo-connector' ); ?></button>
 						</form>
 					<?php endif; ?>
@@ -1211,7 +1211,7 @@ defined( 'ABSPATH' ) || exit;
 			<?php endif; ?>
 			<?php if ( Exclusions::has_shop() ) : ?>
 				<input type="hidden" name="shop_pages_shown" value="1" />
-				<label class="arvaseo-check" style="margin-top: 12px"><input type="checkbox" name="shop_pages" value="1" <?php checked( $arvaseo_stored['shop_pages'] ); ?> /> <span><?php esc_html_e( 'Defer scripts leaves the cart, checkout and account pages alone', 'arvaseo-connector' ); ?><br /><span class="arvaseo-hint"><?php esc_html_e( 'Recommended: payment and account forms often need their scripts loaded in order.', 'arvaseo-connector' ); ?></span></span></label>
+				<label class="arvaseo-check" style="margin-top: 12px"><input type="checkbox" name="shop_pages" value="1" <?php checked( $arvaseo_stored['shop_pages'] ); ?> /> <span><?php esc_html_e( 'Leave cart, checkout and account pages alone', 'arvaseo-connector' ); ?><br /><span class="arvaseo-hint"><?php esc_html_e( 'Recommended: payment and account forms often need their scripts loaded in order.', 'arvaseo-connector' ); ?></span></span></label>
 			<?php endif; ?>
 		</section>
 		<section class="arvaseo-card">

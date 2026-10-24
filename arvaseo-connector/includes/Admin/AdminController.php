@@ -976,9 +976,9 @@ final class AdminController {
 			);
 		} elseif ( 'remote' === $fix ) {
 			$choices = array( 'remote' => ! empty( $_POST['remote'] ) );
-		} elseif ( in_array( $fix, array( 'critical_css', 'unused_css', 'minify_css' ), true ) ) {
+		} elseif ( in_array( $fix, array( 'critical_css', 'unused_css', 'minify_css', 'combine_css' ), true ) ) {
 			$choices = array( 'css_exclude' => $text( 'css_exclude' ) );
-		} elseif ( 'minify_js' === $fix ) {
+		} elseif ( in_array( $fix, array( 'minify_js', 'combine_js' ), true ) ) {
 			$choices = array( 'defer_exclude' => $text( 'defer_exclude' ) );
 		} elseif ( 'dns_prefetch' === $fix ) {
 			$choices = array( 'dns_prefetch_origins' => $text( 'dns_prefetch_origins' ) );

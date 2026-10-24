@@ -196,11 +196,17 @@ final class AssetMinifier {
 	/**
 	 * URL -> canonical local file. No HTTP request, arbitrary URL prefix or traversal is accepted.
 	 *
-	 * @param string $source Original URL.
-	 * @param string $kind   Expected extension.
+	 * The combiner may also read existing minified copies; minification keeps its original skips.
+	 *
+	 * @param string $source         Original URL.
+	 * @param string $kind           Expected extension.
+	 * @param bool   $allow_minified Whether already-minified static files are eligible.
 	 * @return array{path: string, url: string}|null
 	 */
-	private static function source( string $source, string $kind ): ?array {
+	public static function source( string $source, string $kind, bool $allow_minified = false ): ?array {
+		if ( ! in_array( $kind, array( 'css', 'js' ), true ) ) {
+			return null;
+		}
 		$home = wp_parse_url( home_url( '/' ) );
 		if ( ! is_array( $home ) || ! isset( $home['scheme'], $home['host'] ) ) {
 			return null;
@@ -216,7 +222,7 @@ final class AssetMinifier {
 			return null;
 		}
 		$path = rawurldecode( (string) ( $parts['path'] ?? '' ) );
-		if ( str_contains( $path, "\0" ) || str_contains( $path, '\\' ) || preg_match( '~(?:^|/)\.{1,2}(?:/|$)~', $path ) || ! str_ends_with( strtolower( $path ), '.' . $kind ) || preg_match( '/[.-]min\.' . $kind . '$/i', $path ) || str_contains( $path, '/' . self::FOLDER . '/' ) ) {
+		if ( str_contains( $path, "\0" ) || str_contains( $path, '\\' ) || preg_match( '~(?:^|/)\.{1,2}(?:/|$)~', $path ) || ! str_ends_with( strtolower( $path ), '.' . $kind ) || ( ! $allow_minified && ( preg_match( '/[.-]min\.' . $kind . '$/i', $path ) || str_contains( $path, '/' . self::FOLDER . '/' ) ) ) ) {
 			return null;
 		}
 		parse_str( (string) ( $parts['query'] ?? '' ), $query );
@@ -246,7 +252,7 @@ final class AssetMinifier {
 	 * @param string $first  First URL.
 	 * @param string $second Second URL.
 	 */
-	private static function same_origin( string $first, string $second ): bool {
+	public static function same_origin( string $first, string $second ): bool {
 		$a = wp_parse_url( $first );
 		$b = wp_parse_url( $second );
 		return is_array( $a ) && is_array( $b ) && in_array( $a['scheme'] ?? '', array( 'http', 'https' ), true ) && ( $a['scheme'] ?? '' ) === ( $b['scheme'] ?? '' ) && strtolower( (string) ( $a['host'] ?? '' ) ) === strtolower( (string) ( $b['host'] ?? '' ) ) && ( $a['port'] ?? ( 'https' === $a['scheme'] ? 443 : 80 ) ) === ( $b['port'] ?? ( 'https' === ( $b['scheme'] ?? '' ) ? 443 : 80 ) ) && ! isset( $a['user'] ) && ! isset( $a['pass'] );

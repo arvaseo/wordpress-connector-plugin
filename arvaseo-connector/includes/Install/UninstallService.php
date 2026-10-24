@@ -68,6 +68,7 @@ final class UninstallService {
 		// Undo can log activity and invalidate caches; finish it before removing tables or options.
 		\ArvaSEO\Connector\Speed\LocalFonts::delete_all();
 		\ArvaSEO\Connector\Speed\AssetMinifier::delete_all();
+		\ArvaSEO\Connector\Speed\AssetBundles::delete_all();
 		\ArvaSEO\Connector\Speed\WebpLibrary::undo();
 		\ArvaSEO\Connector\Speed\CssOptimizer::delete_all();
 		Schema::drop();

@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.8.1
+Stable tag: 2.9.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,11 @@ Your theme and premium plugins can only be checked by pattern on your server. A 
 For reliable scheduled publishing on low-traffic sites, run WP-Cron from a server scheduler (see the administrator guide).
 
 == Frequently Asked Questions ==
+
+= Can I combine CSS and JavaScript? =
+
+Yes. Arva SEO → Speed has separate Combine CSS and Combine JavaScript controls. Each starts off and has a Try mode visible only to administrators. Compatible neighboring local files are bundled in their existing order. CSS image and font addresses keep working; inline code, asynchronous or module scripts, excluded files and Critical CSS/Remove unused CSS delivery stay separate. Minification remains a separate setting. Fewer requests do not always improve performance, so check your site before enabling a control for visitors.
+
 
 = Does the plugin change my site? =
 
@@ -215,6 +220,10 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.9.0 =
+New optional Combine CSS and Combine JavaScript controls in Arva SEO → Speed. Both start off. Existing minification, Critical CSS and script-loading settings are preserved.
+
+
 = 2.8.1 =
 Completed optimized CSS downloads reliably on sites with large stylesheets. Existing results are fetched in bounded individual requests, without regenerating them. Includes the new opt-in minification and connection hints from 2.8.0.
 
@@ -282,6 +291,12 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.9.0 =
+* New: separate opt-in Combine CSS and Combine JavaScript controls with administrator-only Try mode and existing file/page exclusions.
+* Compatible neighboring local files share a cached bundle in their existing order. CSS image and font URLs are preserved; unsupported, inline, asynchronous, module and optimized-CSS delivery stays separate.
+* Combining is separate from minification. Original files are untouched, failed or unsupported groups retain their original delivery, and both controls start off.
+
 
 = 2.8.1 =
 * Fixed: large completed CSS results no longer exceed the connector’s normal response limit when fetched together. CSS results download individually with a bounded CSS-only response allowance; other API calls retain their existing limit.

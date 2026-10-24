@@ -237,6 +237,9 @@ final class Runtime {
 		if ( CssOptimizer::wanted() && null === Exclusions::page_reason( 'critical_css' ) ) {
 			CssOptimizer::on_page();
 		}
+		if ( Fixes::applies( 'combine_css' ) || Fixes::applies( 'combine_js' ) ) {
+			AssetCombiner::on_page();
+		}
 		if ( Fixes::applies( 'webp_uploads' ) ) {
 			WebpLibrary::on_page();
 		}
