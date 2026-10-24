@@ -158,7 +158,17 @@ final class AssetMinifier {
 		if ( 'css' === $kind && preg_match( '/@import\b/i', $text ) && preg_match( '/@layer\b/i', $text ) ) {
 			return null;
 		}
-		$name = hash( 'sha256', self::FORMAT . '|' . (int) $swap . '|' . (int) $minify . '|' . $asset['url'] . '|' . $text ) . '.' . $kind;
+		try {
+			$input = $swap ? FontDisplay::swap( $text ) : $text;
+		} catch ( \Throwable $error ) {
+			return null;
+		}
+		// Reuse 2.9 copies when their output is unchanged, including at the cache capacity limit.
+		$format = self::FORMAT;
+		if ( ! $minify || $input !== $text ) {
+			$format .= '|' . (int) $swap . '|' . (int) $minify;
+		}
+		$name = hash( 'sha256', $format . '|' . $asset['url'] . '|' . $text ) . '.' . $kind;
 		$file = self::dir() . '/' . $name;
 		$url  = self::url() . '/' . $name;
 		if ( ! self::same_origin( $url, $asset['url'] ) || is_link( $file ) || ( file_exists( self::dir() ) && ! self::safe_folder() ) ) {
@@ -172,7 +182,6 @@ final class AssetMinifier {
 			return null;
 		}
 		try {
-			$input = $swap ? FontDisplay::swap( $text ) : $text;
 			if ( $minify ) {
 				$minifier = 'css' === $kind ? new InlineCssMinifier( $input, $asset['url'] ) : new InlineJsMinifier( $input );
 				$minified = $minifier->execute( 'css' === $kind ? $url : null );
@@ -182,7 +191,7 @@ final class AssetMinifier {
 		} catch ( \Throwable $error ) {
 			return null;
 		}
-		if ( ! is_string( $minified ) || '' === $minified || $minified === $text || ( ! $swap && strlen( $minified ) >= strlen( $text ) ) || ! self::room( strlen( $minified ) ) ) {
+		if ( ! is_string( $minified ) || '' === $minified || $minified === $text || ( $input === $text && strlen( $minified ) >= strlen( $text ) ) || ! self::room( strlen( $minified ) ) ) {
 			return null;
 		}
 		$fs = self::filesystem();
