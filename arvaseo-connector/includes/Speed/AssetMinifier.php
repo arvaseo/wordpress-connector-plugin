@@ -264,8 +264,7 @@ final class AssetMinifier {
 	 * @param int $bytes New file bytes.
 	 */
 	private static function room( int $bytes ): bool {
-		$files = glob( self::dir() . '/*.{css,js}', GLOB_BRACE );
-		$files = is_array( $files ) ? $files : array();
+		$files = array_merge( glob( self::dir() . '/*.css' ) ?: array(), glob( self::dir() . '/*.js' ) ?: array() );
 		$total = 0;
 		foreach ( $files as $file ) {
 			$total += (int) filesize( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache files.
