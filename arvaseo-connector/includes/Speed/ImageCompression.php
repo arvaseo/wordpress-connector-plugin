@@ -471,6 +471,7 @@ final class ImageCompression {
 				),
 				false
 			);
+			Fixes::pages_changed( 'compress' );
 		}
 		return $saved;
 	}

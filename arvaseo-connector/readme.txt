@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.0
+Stable tag: 2.10.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.10.1 =
+Clears connected page and CDN caches after image compression changes files, so cached pages do not keep links to replaced WebP copies. Original-image backups and existing compression settings are preserved.
+
 = 2.10.0 =
 Adds advanced inline/external CSS and JS controls, CSS delivery choices, delayed loading mode, font-display swap, and Media Library compression actions. New switches start Off; existing delivery defaults are retained. Review approved public resources and preview changes before turning them on.
 
@@ -288,6 +291,9 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.1 =
+* Fixed: successful image compression now notifies page and connected CDN caches, including when a larger WebP sidecar is removed. Images that do not change do not trigger a purge.
 
 = 2.10.0 =
 * New: inline CSS/JavaScript minification and explicitly approved static inline/external sources in compatible ordered bundles; external files are cached in bounded pinned background requests, never fetched while rendering pages.
