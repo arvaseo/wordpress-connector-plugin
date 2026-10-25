@@ -215,7 +215,7 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 == Upgrade Notice ==
 
 = 2.10.2 =
-Combines enabled CSS groups before generating critical and used CSS. Generation and delivery use the same stylesheet groups; changed combined files get fresh results, while full styles remain available until matching results are ready.
+Combines enabled CSS groups before generating critical and used CSS. Generation and delivery use the same stylesheet groups; changed combined files get fresh results, while full styles remain available until matching results are ready. Timestamp-only cache busters on verified static local CSS reuse the same minified files, bundles and generated results instead of using another page optimization on each visit.
 
 = 2.10.1 =
 Clears connected page and CDN caches after image compression changes files, so cached pages do not keep links to replaced WebP copies. Original-image backups and existing compression settings are preserved.

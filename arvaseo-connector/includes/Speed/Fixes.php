@@ -222,7 +222,7 @@ final class Fixes {
 			),
 			'combine_css'      => array(
 				'title'      => __( 'Combine CSS', 'arvaseo-connector' ),
-				'what'       => __( 'Combines adjacent compatible local stylesheets into one cached file, preserving their order and image or font addresses. Inline styles, different media rules and styles managed by Critical CSS or Remove unused CSS stay separate. Try it and check your pages; fewer files do not always make a site faster.', 'arvaseo-connector' ),
+				'what'       => __( 'Combines adjacent compatible local stylesheets into one cached file, preserving their order and image or font addresses. When Critical CSS or Remove unused CSS is enabled, compatible files are combined first, then their optimized styles are generated. Unapproved inline styles and incompatible media rules stay separate. Try it and check your pages; fewer files do not always make a site faster.', 'arvaseo-connector' ),
 				'group'      => 'smaller',
 				'risk'       => 'check',
 				'audits'     => array(),

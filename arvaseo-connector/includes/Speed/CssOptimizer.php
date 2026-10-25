@@ -407,8 +407,8 @@ final class CssOptimizer {
 	}
 
 	/**
-	 * Ignore only Google Fonts' known cache busters, in signatures and result lookup alike.
-	 * Other full addresses remain significant: their path determines relative CSS resources.
+	 * Ignore known cache busters only for Google Fonts and verified static local CSS.
+	 * Preserve origin, path and content because they determine relative resources and styles.
 	 *
 	 * @param string $href Actual printed or rendered stylesheet address.
 	 */
@@ -416,6 +416,10 @@ final class CssOptimizer {
 		if ( 'fonts.googleapis.com' === strtolower( (string) wp_parse_url( $href, PHP_URL_HOST ) )
 			&& in_array( wp_parse_url( $href, PHP_URL_PATH ), array( '/css', '/css2' ), true ) ) {
 			return self::content_key( $href, null );
+		}
+		$asset = AssetMinifier::source( $href, 'css', true );
+		if ( null !== $asset ) {
+			return $asset['url'] . '|' . self::content_key( $asset['url'], null );
 		}
 		return $href;
 	}
@@ -599,6 +603,10 @@ final class CssOptimizer {
 	 * @param string $src Address.
 	 */
 	private static function local_path( string $src ): ?string {
+		$asset = AssetMinifier::source( $src, 'css', true );
+		if ( null !== $asset ) {
+			return $asset['path']; // The verified decoded path also covers escaped filenames.
+		}
 		$src = (string) strtok( set_url_scheme( str_starts_with( $src, '//' ) ? 'https:' . $src : $src ), '?' );
 		$map = array(
 			set_url_scheme( content_url() )   => WP_CONTENT_DIR,

@@ -255,7 +255,9 @@ final class AssetMinifier {
 			if ( false !== $local && str_starts_with( $local, $root . DIRECTORY_SEPARATOR ) && is_file( $local ) && is_readable( $local ) && str_ends_with( strtolower( $local ), '.' . $kind ) ) {
 				return array(
 					'path' => $local,
-					'url'  => $source,
+					// Static CSS cache busters do not change its bytes or relative resource base.
+					// Normalize only after the same-origin file and query allowlist are verified.
+					'url'  => 'css' === $kind ? remove_query_arg( array( 'v', 'ver' ), $source ) : $source,
 				);
 			}
 		}
