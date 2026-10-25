@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.1
+Stable tag: 2.10.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,7 +20,7 @@ Arva SEO → Speed explains each fix and the PageSpeed (Lighthouse) problems it 
 
 * **Page caching:** serve saved HTML without running WordPress, through .htaccess or PHP. Signed-in users, personal pages, carts and checkouts are excluded. Cached pages are cleared when relevant content or settings change.
 * **Images and layout:** prioritize featured images and the homepage image identified by a connected PageSpeed test; lazy-load images, videos and maps below the first few images; add missing media-library image dimensions and the mobile viewport tag when needed.
-* **Critical and used CSS:** Load styles faster supplies first-screen styles; Remove unused CSS supplies the styles a page uses, with full stylesheets available on interaction. Arva SEO generates these on its servers using your plan's page optimizations. Choose generation by page type or URL, inline or cached-file used CSS, and an inline or external asynchronous loader. Original styles load until suitable results are ready.
+* **Critical and used CSS:** Load styles faster supplies first-screen styles; Remove unused CSS supplies the styles a page uses, with full stylesheets available on interaction. When Combine CSS is on, compatible styles are combined first; both results are generated from those same combined files. Arva SEO generates these on its servers using your plan's page optimizations. Choose generation by page type or URL, inline or cached-file used CSS, and an inline or external asynchronous loader. Original styles load until suitable results are ready.
 * **CSS and JavaScript minification:** smaller cached copies of supported local files, plus separate controls for minifying inline style blocks and classic scripts in their existing tags. Unsupported files and code stay unchanged.
 * **CSS and JavaScript combining:** bundle compatible neighboring files in order. Optional inline combining requires approval of an exact public static snippet; a changed snippet stops matching its approval. External combining requires exact approved public HTTPS URLs and background caching. Incompatible scripts, integrity-protected resources and managed critical/used CSS stay separate. Fewer requests do not always improve performance.
 * **Script loading:** defer supported scripts until HTML is parsed, or delay supported independent classic scripts until interaction. Dependencies, consent tools, protected measurement scripts and your exclusions are retained. Changing a public loading mode returns it to preview; enabling it requires checking your important pages.
@@ -213,6 +213,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.10.2 =
+Combines enabled CSS groups before generating critical and used CSS. Generation and delivery use the same stylesheet groups; changed combined files get fresh results, while full styles remain available until matching results are ready.
 
 = 2.10.1 =
 Clears connected page and CDN caches after image compression changes files, so cached pages do not keep links to replaced WebP copies. Original-image backups and existing compression settings are preserved.

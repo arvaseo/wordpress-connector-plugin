@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
  * stylesheet's critical and used CSS; the plugin fetches them and keeps them in uploads/arvaseo-css.
  * A changed stylesheet makes a new signature, so CSS that no longer matches is never used, and a
  * cache clear costs nothing. While Arva SEO renders a page (a short-lived signed parameter), the
- * page is served with its original styles and never cached.
+ * page keeps the same CSS preparation as visitors, without generated CSS or page caching.
  */
 final class CssOptimizer {
 
@@ -64,7 +64,7 @@ final class CssOptimizer {
 	 * @param string               $handle Style handle.
 	 * @param \_WP_Dependency|null $style  Its registration.
 	 */
-	private static function signed_in_only( string $handle, $style ): bool {
+	public static function signed_in_only( string $handle, $style ): bool {
 		if ( in_array( $handle, self::SIGNED_IN_HANDLES, true ) || 1 === preg_match( '/admin[-_]?bar/i', $handle ) ) {
 			return true;
 		}
@@ -180,6 +180,9 @@ final class CssOptimizer {
 	 * use its results if there are any, note the page for Arva SEO if not, and print the critical CSS.
 	 */
 	public static function prepare(): void {
+		if ( self::combined_mode() ) {
+			return; // Final printed bundles, not the original enqueue handles, define this result.
+		}
 		$styles = wp_styles();
 		$styles->all_deps( $styles->queue );
 		$sheets = array();
@@ -229,6 +232,194 @@ final class CssOptimizer {
 		}
 	}
 
+	/** Whether CSS must be combined before its generated CSS can be selected. */
+	public static function combined_mode(): bool {
+		return Fixes::applies( 'combine_css' );
+	}
+
+	/**
+	 * Select results only after the combiner has produced the final head stylesheets.
+	 * The renderer follows that same preparation but must never consume its own results.
+	 *
+	 * @param string $html Complete, already combined page HTML.
+	 */
+	public static function combined_html( string $html ): string {
+		if ( ! self::combined_mode() || ! self::wanted() || self::is_render_request() || self::$loader_printed
+			|| null !== Exclusions::page_reason( 'critical_css' ) || strlen( $html ) > 4194304
+			|| ! preg_match( '~\A(?:\xEF\xBB\xBF)?\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b~i', $html ) || false === stripos( $html, '</html>' ) ) {
+			return $html;
+		}
+		// A signed-out renderer cannot reproduce administrator-only trial preparations.
+		foreach ( array( 'combine_css', 'minify_css', 'minify_inline_css', 'combine_inline_css', 'combine_external_css', 'font_display_swap', 'google_fonts' ) as $fix ) {
+			if ( 'trying' === Fixes::state( $fix ) && Fixes::applies( $fix ) ) {
+				return $html;
+			}
+		}
+		$page = self::combined_sheets( $html );
+		if ( null === $page || array() === $page['sheets'] ) {
+			return $html;
+		}
+		$template = self::template();
+		$scope    = ( Fixes::stored()['ccss_per_url'] ?? false ) ? 'url-v1|' . self::current_url() . '|' : '';
+		$settings = array( 'exclude' => Fixes::stored()['css_exclude'] );
+		foreach ( array( 'minify_css', 'minify_inline_css', 'combine_inline_css', 'combine_external_css', 'font_display_swap', 'google_fonts' ) as $fix ) {
+			$settings[ $fix ] = Fixes::applies( $fix );
+		}
+		$signature = sha1( 'combined-css-v1|' . $scope . $template . '|' . (string) wp_json_encode( array( $settings, $page['context'] ) ) );
+		$stored    = self::load( $signature );
+		if ( null === $stored ) {
+			// Toolbar styles can split public bundles even when those styles are excluded.
+			// Optimize now visits anonymously; signed-in previews may reuse matching results.
+			if ( ! is_user_logged_in() ) {
+				self::note( $signature, $template );
+			}
+			return $html;
+		}
+		if ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) {
+			return $html;
+		}
+		$usable = array();
+		foreach ( $stored as $sheet ) {
+			if ( is_string( $sheet['id'] ?? null ) && is_string( $sheet['href'] ?? null ) ) {
+				$usable[ $sheet['id'] . '|' . self::combined_href_key( $sheet['href'] ) ] = $sheet;
+			}
+		}
+		$edits      = array();
+		self::$page = array(
+			'signature' => $signature,
+			'template'  => $template,
+			'sheets'    => array(),
+		);
+		foreach ( $page['sheets'] as $sheet ) {
+			$key = $sheet['id'] . '|' . self::combined_href_key( $sheet['href'] );
+			if ( ! isset( $usable[ $key ] ) ) {
+				continue;
+			}
+			$handle                          = substr( $sheet['id'], 0, -4 );
+			self::$page['sheets'][ $handle ] = $usable[ $key ];
+			$replacement                     = self::style_tag( $sheet['tag'], $handle, $sheet['href'], $sheet['media'] );
+			if ( ! Fixes::applies( 'unused_css' ) ) {
+				$critical = self::font_css( (string) $usable[ $key ]['critical'] );
+				if ( '' !== $critical ) {
+					$replacement = sprintf( '<style id="arvaseo-critical-%1$s"%2$s>%3$s</style>', esc_attr( substr( sha1( $key ), 0, 16 ) ), 'all' === $sheet['media'] ? '' : ' media="' . esc_attr( $sheet['media'] ) . '"', self::safe_css( $critical ) ) . "\n" . $replacement;
+				}
+			}
+			$edits[] = array(
+				'start'  => $sheet['start'],
+				'length' => $sheet['length'],
+				'html'   => $replacement,
+			);
+		}
+		if ( array() === $edits ) {
+			return $html;
+		}
+		$edits[] = array(
+			'start'  => $page['body_end'],
+			'length' => 0,
+			'html'   => self::loader_markup(),
+		);
+		usort( $edits, static fn ( array $a, array $b ): int => $a['start'] <=> $b['start'] );
+		foreach ( array_reverse( $edits ) as $edit ) {
+			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
+		}
+		return $html;
+	}
+
+	/**
+	 * Parse bounded, active head styles without entering comments, scripts or inert containers.
+	 * Inline and excluded CSS still influence the signature because they affect the rendered page.
+	 *
+	 * @param string $html Complete HTML.
+	 * @return array{sheets:array<int,array<string,mixed>>,context:array<int,mixed>,body_end:int}|null
+	 */
+	private static function combined_sheets( string $html ): ?array {
+		$position = 0;
+		$seen     = 0;
+		$in_head  = false;
+		$head_end = false;
+		$body_end = null;
+		$sheets   = array();
+		$context  = array();
+		$ids      = array();
+		for ( $start = strpos( $html, '<' ); false !== $start; $start = strpos( $html, '<', $position ) ) {
+			$token = AssetCombiner::token( $html, $start );
+			if ( null === $token || ++$seen > 10000 ) {
+				return null;
+			}
+			$position = $token['end'];
+			if ( 'head' === $token['tag'] ) {
+				$in_head  = ! $token['close'];
+				$head_end = $head_end || $token['close'];
+				continue;
+			}
+			if ( 'body' === $token['tag'] && $token['close'] ) {
+				$body_end = $token['start'];
+			}
+			if ( $token['close'] || ! in_array( $token['tag'], array( 'base', 'meta', 'link', 'style' ), true ) ) {
+				continue;
+			}
+			$tags = new \WP_HTML_Tag_Processor( $token['open'] . ( 'style' === $token['tag'] ? '</style>' : '' ) );
+			if ( ! $tags->next_tag() || 'base' === $token['tag'] || ( 'meta' === $token['tag'] && str_starts_with( strtolower( (string) $tags->get_attribute( 'http-equiv' ) ), 'content-security-policy' ) ) ) {
+				return null;
+			}
+			if ( ! $in_head || ! in_array( $token['tag'], array( 'link', 'style' ), true ) ) {
+				continue;
+			}
+			$id     = (string) $tags->get_attribute( 'id' );
+			$handle = (string) preg_replace( 'style' === $token['tag'] ? '/-inline-css$/' : '/-css$/', '', $id );
+			$style  = wp_styles()->registered[ $handle ] ?? null;
+			if ( self::signed_in_only( $handle, $style ) || ( null !== $style && 1 === (int) wp_styles()->get_data( $handle, 'group' ) ) ) {
+				continue;
+			}
+			$media = (string) ( $tags->get_attribute( 'media' ) ?? 'all' );
+			if ( 'style' === $token['tag'] ) {
+				$context[] = array( 'inline', $id, $media, hash( 'sha256', $token['body'] ) );
+				continue;
+			}
+			if ( 'stylesheet' !== strtolower( (string) $tags->get_attribute( 'rel' ) ) ) {
+				continue;
+			}
+			$href      = \WP_Http::make_absolute_url( (string) $tags->get_attribute( 'href' ), self::current_url() );
+			$context[] = array( 'link', $id, $media, self::combined_href_key( $href ), self::content_key( $href, null ) );
+			$allowed   = array( 'id', 'href', 'rel', 'media', 'type', 'data-arvaseo-combined', 'data-arvaseo-minified', 'data-arvaseo-font-display' );
+			$combined  = 'css' === $tags->get_attribute( 'data-arvaseo-combined' ) && str_contains( $href, '/' . AssetBundles::FOLDER . '/' ) && AssetMinifier::same_origin( $href, home_url( '/' ) );
+			if ( '' === $id || sanitize_key( $id ) !== $id || isset( $ids[ $id ] ) || ! str_ends_with( $id, '-css' ) || str_starts_with( $id, 'arvaseo-' )
+				|| ( ! $combined && null === $style ) || in_array( $handle, Fixes::stored()['css_exclude'], true ) || 'print' === strtolower( trim( $media ) )
+				|| ! in_array( strtolower( (string) $tags->get_attribute( 'type' ) ), array( '', 'text/css' ), true )
+				|| array_diff( $tags->get_attribute_names_with_prefix( '' ) ?? array(), $allowed ) ) {
+				continue;
+			}
+			$ids[ $id ] = true;
+			$sheets[]   = array(
+				'id'     => $id,
+				'href'   => $href,
+				'media'  => '' === $media ? 'all' : $media,
+				'start'  => $token['start'],
+				'length' => $token['end'] - $token['start'],
+				'tag'    => $token['open'],
+			);
+		}
+		return $head_end && null !== $body_end ? array(
+			'sheets'   => $sheets,
+			'context'  => $context,
+			'body_end' => $body_end,
+		) : null;
+	}
+
+	/**
+	 * Ignore only Google Fonts' known cache busters, in signatures and result lookup alike.
+	 * Other full addresses remain significant: their path determines relative CSS resources.
+	 *
+	 * @param string $href Actual printed or rendered stylesheet address.
+	 */
+	private static function combined_href_key( string $href ): string {
+		if ( 'fonts.googleapis.com' === strtolower( (string) wp_parse_url( $href, PHP_URL_HOST ) )
+			&& in_array( wp_parse_url( $href, PHP_URL_PATH ), array( '/css', '/css2' ), true ) ) {
+			return self::content_key( $href, null );
+		}
+		return $href;
+	}
+
 	/**
 	 * A stylesheet's tag: with Remove unused CSS, its used CSS in place and the full file on the
 	 * first interaction; with Load styles faster, the file loading without holding the page up.
@@ -275,26 +466,30 @@ final class CssOptimizer {
 	 * One inline or external library handles asynchronous sheets and interaction-delayed originals.
 	 */
 	public static function loader(): void {
+		echo self::loader_markup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress builds the bundled script tag.
+	}
+
+	/** A string is also safe to append from the final output-buffer callback. */
+	private static function loader_markup(): string {
 		if ( self::$loader_printed || null === self::$page || array() === self::$page['sheets'] || ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) ) {
-			return;
+			return '';
 		}
 		$file = ARVASEO_CONNECTOR_DIR . '/assets/js/css-loader.js';
 		$js   = is_readable( $file ) ? file_get_contents( $file ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- this plugin's bounded, bundled static library.
 		if ( ! is_string( $js ) || '' === $js ) {
-			return;
+			return '';
 		}
 		self::$loader_printed = true;
 		if ( Fixes::stored()['css_async_inline'] ?? true ) {
-			wp_print_inline_script_tag( $js, array( 'id' => Fixes::applies( 'unused_css' ) ? 'arvaseo-ucss-loader' : 'arvaseo-css-loader' ) );
-		} else {
-			wp_print_script_tag(
-				array(
-					'src'   => plugins_url( 'assets/js/css-loader.js', ARVASEO_CONNECTOR_FILE ) . '?ver=' . rawurlencode( ARVASEO_CONNECTOR_VERSION ),
-					'id'    => 'arvaseo-css-loader',
-					'defer' => true,
-				)
-			);
+			return wp_get_inline_script_tag( $js, array( 'id' => Fixes::applies( 'unused_css' ) ? 'arvaseo-ucss-loader' : 'arvaseo-css-loader' ) );
 		}
+		return wp_get_script_tag(
+			array(
+				'src'   => plugins_url( 'assets/js/css-loader.js', ARVASEO_CONNECTOR_FILE ) . '?ver=' . rawurlencode( ARVASEO_CONNECTOR_VERSION ),
+				'id'    => 'arvaseo-css-loader',
+				'defer' => true,
+			)
+		);
 	}
 
 	/**

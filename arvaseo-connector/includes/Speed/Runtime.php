@@ -173,12 +173,16 @@ final class Runtime {
 		}
 		CssOptimizer::reset();
 		AssetMinifier::reset();
-		// Arva SEO's renderer: the page with its original styles, uncached, and none of the fixes.
+		Exclusions::reset();
+		// Render the same prepared CSS as visitors, without generated CSS or unrelated fixes.
 		if ( CssOptimizer::is_render_request() ) {
 			CssOptimizer::serve_original();
+			if ( Fixes::applies( 'combine_css' ) ) {
+				self::prepare_css();
+				AssetCombiner::on_page();
+			}
 			return;
 		}
-		Exclusions::reset();
 		self::$images_seen     = 0;
 		self::$lookups         = 0;
 		self::$main_image_done = false;
@@ -214,16 +218,9 @@ final class Runtime {
 			add_filter( 'embed_oembed_html', array( self::class, 'youtube_facade' ), 20, 2 );
 			add_filter( 'render_block', array( self::class, 'youtube_block' ), 20, 2 );
 		}
+		self::prepare_css();
 		if ( Fixes::applies( 'google_fonts' ) ) {
-			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
 			add_filter( 'wp_resource_hints', array( self::class, 'font_preconnect' ), 20, 2 );
-		} elseif ( Fixes::applies( 'font_display_swap' ) ) {
-			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
-		}
-		// Keep tag attributes, dependencies and order: filter only the selected asset address.
-		// Source: https://developer.wordpress.org/reference/hooks/style_loader_tag/.
-		if ( Fixes::applies( 'minify_css' ) || Fixes::applies( 'font_display_swap' ) ) {
-			add_filter( 'style_loader_tag', array( AssetMinifier::class, 'style_tag' ), 30, 4 );
 		}
 		if ( Fixes::applies( 'minify_js' ) ) {
 			add_filter( 'script_loader_tag', array( AssetMinifier::class, 'script_tag' ), 30, 3 );
@@ -250,6 +247,16 @@ final class Runtime {
 		}
 		if ( Fixes::applies( 'viewport' ) ) {
 			add_action( 'wp_head', array( self::class, 'viewport' ), 0 );
+		}
+	}
+
+	/** The CSS preparation shared by a visitor and the signed generation request. */
+	private static function prepare_css(): void {
+		if ( Fixes::applies( 'google_fonts' ) || Fixes::applies( 'font_display_swap' ) ) {
+			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
+		}
+		if ( Fixes::applies( 'minify_css' ) || Fixes::applies( 'font_display_swap' ) ) {
+			add_filter( 'style_loader_tag', array( AssetMinifier::class, 'style_tag' ), 30, 4 );
 		}
 	}
 

@@ -33,7 +33,10 @@ final class AssetCombiner {
 
 	/** Inline changes use this same complete-response buffer, including when combining is off. */
 	private static function wanted(): bool {
-		foreach ( array( 'combine_css', 'combine_js', 'minify_inline_css', 'minify_inline_js', 'combine_inline_css', 'combine_inline_js', 'font_display_swap' ) as $fix ) {
+		$fixes = CssOptimizer::is_render_request()
+			? array( 'combine_css', 'minify_inline_css', 'combine_inline_css', 'font_display_swap' )
+			: array( 'combine_css', 'combine_js', 'minify_inline_css', 'minify_inline_js', 'combine_inline_css', 'combine_inline_js', 'font_display_swap' );
+		foreach ( $fixes as $fix ) {
 			if ( Fixes::applies( $fix ) ) {
 				return true;
 			}
@@ -68,8 +71,9 @@ final class AssetCombiner {
 	 * @param string $html Final page HTML, after other asset filters.
 	 */
 	public static function filter( string $html ): string {
-		$css = Fixes::applies( 'combine_css' );
-		$js  = Fixes::applies( 'combine_js' );
+		$rendering = CssOptimizer::is_render_request();
+		$css       = Fixes::applies( 'combine_css' );
+		$js        = ! $rendering && Fixes::applies( 'combine_js' );
 		if ( ! self::wanted() || strlen( $html ) > self::MAX_HTML || ! preg_match( '~\A(?:\xEF\xBB\xBF)?\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b~i', $html ) || false === stripos( $html, '</html>' ) || self::restricted_html( $html ) ) {
 			return $html;
 		}
@@ -85,7 +89,7 @@ final class AssetCombiner {
 				return $html;
 			}
 			$asset    = self::asset( $token, $css, $js );
-			$minified = InlineAssets::minify( $token );
+			$minified = ! $rendering || 'style' === $token['tag'] ? InlineAssets::minify( $token ) : null;
 			if ( null !== $minified ) {
 				$inline_edits[] = array(
 					'start'  => $token['start'],
@@ -119,7 +123,7 @@ final class AssetCombiner {
 		foreach ( array_reverse( $edits ) as $edit ) {
 			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
 		}
-		return $html;
+		return CssOptimizer::combined_html( $html );
 	}
 
 
@@ -247,6 +251,10 @@ final class AssetCombiner {
 	private static function asset( array $token, bool $css, bool $js ): ?array {
 		$inline = InlineAssets::inspect( $token );
 		if ( null !== $inline && ( 'css' === $inline['kind'] ? $css : $js ) && InlineAssets::approved( $inline['id'], $inline['text'], $inline['kind'] ) ) {
+			$handle = (string) preg_replace( '/-inline-css$/', '', $inline['id'] );
+			if ( 'css' === $inline['kind'] && CssOptimizer::signed_in_only( $handle, wp_styles()->registered[ $handle ] ?? null ) ) {
+				return null;
+			}
 			$tags = new \WP_HTML_Tag_Processor( $token['open'] );
 			$tags->next_tag();
 			$key = array( $inline['kind'], strtolower( (string) $tags->get_attribute( 'type' ) ), (string) $tags->get_attribute( 'nonce' ) );
@@ -288,6 +296,9 @@ final class AssetCombiner {
 		$registry = 'css' === $kind ? wp_styles() : wp_scripts();
 		$item     = $registry->registered[ $handle ] ?? null;
 		if ( null === $item || ! is_string( $item->src ) || '' === $item->src ) {
+			return null;
+		}
+		if ( 'css' === $kind && CssOptimizer::signed_in_only( $handle, $item ) ) {
 			return null;
 		}
 		if ( ! InlineAssets::registered_safe( $handle, $kind, $registry ) ) {
