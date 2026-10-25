@@ -31,8 +31,11 @@ final class AssetCombiner {
 		self::$buffer_started = ob_start( array( self::class, 'capture' ) );
 	}
 
-	/** Inline changes use this same complete-response buffer, including when combining is off. */
+	/** Inline changes and moving jQuery use this same complete-response buffer, including when combining is off. */
 	private static function wanted(): bool {
+		if ( HeadScripts::wanted() ) {
+			return true;
+		}
 		$fixes = CssOptimizer::is_render_request()
 			? array( 'combine_css', 'minify_inline_css', 'combine_inline_css', 'font_display_swap' )
 			: array( 'combine_css', 'combine_js', 'minify_inline_css', 'minify_inline_js', 'combine_inline_css', 'combine_inline_js', 'font_display_swap' );
@@ -76,6 +79,9 @@ final class AssetCombiner {
 		$js        = ! $rendering && Fixes::applies( 'combine_js' );
 		if ( ! self::wanted() || strlen( $html ) > self::MAX_HTML || ! preg_match( '~\A(?:\xEF\xBB\xBF)?\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b~i', $html ) || false === stripos( $html, '</html>' ) || self::restricted_html( $html ) ) {
 			return $html;
+		}
+		if ( HeadScripts::wanted() ) {
+			$html = HeadScripts::move( $html );
 		}
 		InlineAssets::prepare( $html );
 		$position     = 0;

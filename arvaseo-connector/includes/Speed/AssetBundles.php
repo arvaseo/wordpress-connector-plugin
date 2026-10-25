@@ -99,6 +99,7 @@ final class AssetBundles {
 			return null;
 		}
 		if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) > 0 ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- immutable generated static file.
+			AssetCache::used( $file );
 			return $url;
 		}
 		if ( self::$generated >= 12 ) {
@@ -128,8 +129,12 @@ final class AssetBundles {
 		}
 		// A line comment or an unterminated ASI boundary must not consume the following file.
 		$text = implode( 'js' === $kind ? "\n;\n" : "\n", $parts ) . "\n";
-		$fs   = self::filesystem();
-		if ( null === $fs || ! self::room( strlen( $text ) ) || ! wp_mkdir_p( self::dir() ) || ! self::safe_folder() ) {
+		if ( ! self::room( strlen( $text ) ) ) {
+			AssetCache::full();
+			return null;
+		}
+		$fs = self::filesystem();
+		if ( null === $fs || ! wp_mkdir_p( self::dir() ) || ! self::safe_folder() ) {
 			return null;
 		}
 		$temp = self::dir() . '/.' . $name . '.' . wp_generate_password( 12, false, false ) . '.tmp';
@@ -379,6 +384,16 @@ final class AssetBundles {
 			$total += (int) filesize( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static files only.
 		}
 		return count( $files ) < self::MAX_FILES && $total + $bytes <= self::CACHE_BYTES;
+	}
+
+	/**
+	 * Delete bundles no page used since a time (AssetCache::rotate(), which then clears page caches).
+	 *
+	 * @param int $before Last use before this time.
+	 * @return int Files deleted.
+	 */
+	public static function remove_unused( int $before ): int {
+		return file_exists( self::dir() ) && self::safe_folder() ? AssetCache::remove_unused( self::dir(), $before ) : 0;
 	}
 
 	/** Uninstall or manual purge only; page caches must be invalidated by the caller. */

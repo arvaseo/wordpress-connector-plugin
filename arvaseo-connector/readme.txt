@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.2
+Stable tag: 2.10.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.10.3 =
+Generated CSS now reaches stylesheets with capital letters in their names (Elementor's entrance animations, some themes' fonts) and the same file printed under several names, so they stop blocking the first paint. Defer scripts moves WordPress's jQuery from the head to just before the first script that may use it. Full minified/combined folders clean up unused files instead of stopping for good, and scripts versioned with the time no longer get a new copy on every page view.
+
 = 2.10.2 =
 Combines enabled CSS groups before generating critical and used CSS. Generation and delivery use the same stylesheet groups; changed combined files get fresh results, while full styles remain available until matching results are ready. Timestamp-only cache busters on verified static local CSS reuse the same minified files, bundles and generated results instead of using another page optimization on each visit.
 
@@ -294,6 +297,13 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.3 =
+* Fixed: optimized (used/critical) CSS never applied to stylesheets whose handles contain capital letters, such as Elementor's e-animation-fadeInUp or a theme's google-fonts-Inter: their ids were stored in lower case and rejected when combining. They stayed render-blocking. Results saved by earlier versions are matched too.
+* Fixed: a stylesheet printed under several handles (a theme's heading fonts, h1 to h6) only had optimized CSS for the first one, because the renderer keeps one result per address; the others stayed render-blocking. Each copy now uses that result in its own place.
+* Fixed: minified copies and combined bundles were named after a script's full address, so a theme that versions scripts with the time made a new copy on every page view, filling the 250-file folders within hours. Full folders then stopped minifying and combining changed files for good. Cache busters no longer name copies; files record when pages last used them; a full folder now schedules a background clean-up of files no page used for a day, followed by a refresh of saved pages.
+* Fixed: a page type waiting for optimized CSS whose scheduled sync was lost waited forever; its next visit schedules it again. Results of page types no longer tracked are deleted (daily and when the list is trimmed) instead of filling uploads.
+* Improved: Defer scripts moves WordPress's jQuery (jquery-core, jquery-migrate and their inline parts) from the head to just before the first script, inline event handler or asynchronous script of the page, so it no longer blocks the first paint. Nothing moves when something in the head may use it; developers can veto with the arvaseo_connector_move_head_scripts filter.
 
 = 2.10.1 =
 * Fixed: successful image compression now notifies page and connected CDN caches, including when a larger WebP sidecar is removed. Images that do not change do not trigger a purge.

@@ -169,15 +169,24 @@ final class AssetMinifier {
 			$format .= '|' . (int) $swap . '|' . (int) $minify;
 		}
 		$name = hash( 'sha256', $format . '|' . $asset['url'] . '|' . $text ) . '.' . $kind;
-		$file = self::dir() . '/' . $name;
-		$url  = self::url() . '/' . $name;
-		if ( ! self::same_origin( $url, $asset['url'] ) || is_link( $file ) || ( file_exists( self::dir() ) && ! self::safe_folder() ) ) {
+		// Scripts were named after their full address until 2.10.2, cache busters included.
+		$names = 'js' === $kind && $asset['original'] !== $asset['url'] ? array( $name, hash( 'sha256', $format . '|' . $asset['original'] . '|' . $text ) . '.' . $kind ) : array( $name );
+		if ( ! self::same_origin( self::url() . '/' . $name, $asset['url'] ) || ( file_exists( self::dir() ) && ! self::safe_folder() ) ) {
 			return null;
 		}
-		if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) > 0 ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache entry.
-			self::$seen[ $key ] = $url;
-			return $url;
+		foreach ( $names as $existing ) {
+			$file = self::dir() . '/' . $existing;
+			if ( is_link( $file ) ) {
+				return null;
+			}
+			if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) > 0 ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache entry.
+				AssetCache::used( $file );
+				self::$seen[ $key ] = self::url() . '/' . $existing;
+				return self::$seen[ $key ];
+			}
 		}
+		$file = self::dir() . '/' . $name;
+		$url  = self::url() . '/' . $name;
 		if ( self::$generated >= 12 ) {
 			return null;
 		}
@@ -191,7 +200,11 @@ final class AssetMinifier {
 		} catch ( \Throwable $error ) {
 			return null;
 		}
-		if ( ! is_string( $minified ) || '' === $minified || $minified === $text || ( $input === $text && strlen( $minified ) >= strlen( $text ) ) || ! self::room( strlen( $minified ) ) ) {
+		if ( ! is_string( $minified ) || '' === $minified || $minified === $text || ( $input === $text && strlen( $minified ) >= strlen( $text ) ) ) {
+			return null;
+		}
+		if ( ! self::room( strlen( $minified ) ) ) {
+			AssetCache::full();
 			return null;
 		}
 		$fs = self::filesystem();
@@ -217,7 +230,7 @@ final class AssetMinifier {
 	 * @param string $source         Original URL.
 	 * @param string $kind           Expected extension.
 	 * @param bool   $allow_minified Whether already-minified static files are eligible.
-	 * @return array{path: string, url: string}|null
+	 * @return array{path: string, url: string, original: string}|null
 	 */
 	public static function source( string $source, string $kind, bool $allow_minified = false ): ?array {
 		if ( ! in_array( $kind, array( 'css', 'js' ), true ) ) {
@@ -254,10 +267,13 @@ final class AssetMinifier {
 			$local = realpath( $root . '/' . substr( $path, strlen( $prefix ) ) );
 			if ( false !== $local && str_starts_with( $local, $root . DIRECTORY_SEPARATOR ) && is_file( $local ) && is_readable( $local ) && str_ends_with( strtolower( $local ), '.' . $kind ) ) {
 				return array(
-					'path' => $local,
-					// Static CSS cache busters do not change its bytes or relative resource base.
-					// Normalize only after the same-origin file and query allowlist are verified.
-					'url'  => 'css' === $kind ? remove_query_arg( array( 'v', 'ver' ), $source ) : $source,
+					'path'     => $local,
+					// Static cache busters change neither the bytes nor a stylesheet's resource base.
+					// Some themes print time() as one (Solace: ?v=1792909342), which named a new copy
+					// of every script on each page view until the cache was full. Normalize only
+					// after the same-origin file and query allowlist are verified.
+					'url'      => remove_query_arg( array( 'v', 'ver' ), $source ),
+					'original' => $source,
 				);
 			}
 		}
@@ -288,6 +304,16 @@ final class AssetMinifier {
 			$total += (int) filesize( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache files.
 		}
 		return count( $files ) < self::MAX_FILES && $total + $bytes <= self::CACHE_BYTES;
+	}
+
+	/**
+	 * Delete copies no page used since a time (AssetCache::rotate(), which then clears page caches).
+	 *
+	 * @param int $before Last use before this time.
+	 * @return int Files deleted.
+	 */
+	public static function remove_unused( int $before ): int {
+		return file_exists( self::dir() ) && self::safe_folder() ? AssetCache::remove_unused( self::dir(), $before ) : 0;
 	}
 
 	/**

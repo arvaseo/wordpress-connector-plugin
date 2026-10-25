@@ -86,6 +86,7 @@ final class Runtime {
 		ImageCompression::init();
 		MediaLibraryCompression::init();
 		ExternalAssets::init();
+		AssetCache::init();
 		CssOptimizer::init();
 		Cloudflare::init();
 		PageCache::init();

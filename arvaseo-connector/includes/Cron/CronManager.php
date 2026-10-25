@@ -142,6 +142,7 @@ final class CronManager {
 		self::clear_sync();
 		wp_clear_scheduled_hook( 'arvaseo_connector_maintenance' );
 		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\Cloudflare::HOOK );
+		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\AssetCache::HOOK );
 		wp_unschedule_hook( \ArvaSEO\Connector\Speed\ExternalAssets::HOOK );
 		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::HOOK );
 		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::WEEKLY );
@@ -196,5 +197,7 @@ final class CronManager {
 		// phpcs:enable
 		// Repairs can be undone for 30 days; after that their kept copies are deleted.
 		\ArvaSEO\Connector\Security\Repairs::purge();
+		// Optimized CSS of page types that are no longer tracked.
+		\ArvaSEO\Connector\Speed\CssOptimizer::prune_results();
 	}
 }

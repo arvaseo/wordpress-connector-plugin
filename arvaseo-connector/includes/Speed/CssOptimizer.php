@@ -212,9 +212,9 @@ final class CssOptimizer {
 		}
 		$excluded = Fixes::stored()['css_exclude'];
 		$usable   = array();
-		foreach ( $stored as $sheet ) {
-			$handle = preg_replace( '/-css$/', '', (string) ( $sheet['id'] ?? '' ) );
-			if ( is_string( $handle ) && isset( $sheets[ $handle ] ) && ! in_array( $handle, $excluded, true ) ) {
+		foreach ( $sheets as $handle => $key ) {
+			$sheet = self::stored_sheet( $stored, $handle . '-css', $key, static fn ( string $href ): string => self::content_key( $href, null ), false );
+			if ( null !== $sheet && ! in_array( $handle, $excluded, true ) ) {
 				$usable[ $handle ] = $sheet;
 			}
 		}
@@ -278,12 +278,13 @@ final class CssOptimizer {
 		if ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) {
 			return $html;
 		}
-		$usable = array();
+		$keys = array();
 		foreach ( $stored as $sheet ) {
-			if ( is_string( $sheet['id'] ?? null ) && is_string( $sheet['href'] ?? null ) ) {
-				$usable[ $sheet['id'] . '|' . self::combined_href_key( $sheet['href'] ) ] = $sheet;
+			if ( is_string( $sheet['href'] ?? null ) && ! isset( $keys[ $sheet['href'] ] ) ) {
+				$keys[ $sheet['href'] ] = self::combined_href_key( $sheet['href'] );
 			}
 		}
+		$key_of     = static fn ( string $href ): string => $keys[ $href ] ?? self::combined_href_key( $href );
 		$edits      = array();
 		self::$page = array(
 			'signature' => $signature,
@@ -291,15 +292,17 @@ final class CssOptimizer {
 			'sheets'    => array(),
 		);
 		foreach ( $page['sheets'] as $sheet ) {
-			$key = $sheet['id'] . '|' . self::combined_href_key( $sheet['href'] );
-			if ( ! isset( $usable[ $key ] ) ) {
+			$href_key = self::combined_href_key( $sheet['href'] );
+			$result   = self::stored_sheet( $stored, $sheet['id'], $href_key, $key_of, true );
+			if ( null === $result ) {
 				continue;
 			}
+			$key                             = $sheet['id'] . '|' . $href_key;
 			$handle                          = substr( $sheet['id'], 0, -4 );
-			self::$page['sheets'][ $handle ] = $usable[ $key ];
+			self::$page['sheets'][ $handle ] = $result;
 			$replacement                     = self::style_tag( $sheet['tag'], $handle, $sheet['href'], $sheet['media'] );
 			if ( ! Fixes::applies( 'unused_css' ) ) {
-				$critical = self::font_css( (string) $usable[ $key ]['critical'] );
+				$critical = self::font_css( (string) $result['critical'] );
 				if ( '' !== $critical ) {
 					$replacement = sprintf( '<style id="arvaseo-critical-%1$s"%2$s>%3$s</style>', esc_attr( substr( sha1( $key ), 0, 16 ) ), 'all' === $sheet['media'] ? '' : ' media="' . esc_attr( $sheet['media'] ) . '"', self::safe_css( $critical ) ) . "\n" . $replacement;
 				}
@@ -383,7 +386,7 @@ final class CssOptimizer {
 			$context[] = array( 'link', $id, $media, self::combined_href_key( $href ), self::content_key( $href, null ) );
 			$allowed   = array( 'id', 'href', 'rel', 'media', 'type', 'data-arvaseo-combined', 'data-arvaseo-minified', 'data-arvaseo-font-display' );
 			$combined  = 'css' === $tags->get_attribute( 'data-arvaseo-combined' ) && str_contains( $href, '/' . AssetBundles::FOLDER . '/' ) && AssetMinifier::same_origin( $href, home_url( '/' ) );
-			if ( '' === $id || sanitize_key( $id ) !== $id || isset( $ids[ $id ] ) || ! str_ends_with( $id, '-css' ) || str_starts_with( $id, 'arvaseo-' )
+			if ( '' === $id || ! self::is_sheet_id( $id ) || isset( $ids[ $id ] ) || ! str_ends_with( $id, '-css' ) || str_starts_with( $id, 'arvaseo-' )
 				|| ( ! $combined && null === $style ) || in_array( $handle, Fixes::stored()['css_exclude'], true ) || 'print' === strtolower( trim( $media ) )
 				|| ! in_array( strtolower( (string) $tags->get_attribute( 'type' ) ), array( '', 'text/css' ), true )
 				|| array_diff( $tags->get_attribute_names_with_prefix( '' ) ?? array(), $allowed ) ) {
@@ -422,6 +425,58 @@ final class CssOptimizer {
 			return $asset['url'] . '|' . self::content_key( $asset['url'], null );
 		}
 		return $href;
+	}
+
+	/**
+	 * A stylesheet id WordPress prints: its handle (letters in either case, digits, - and _) and -css.
+	 *
+	 * @param string $id The id attribute.
+	 */
+	private static function is_sheet_id( string $id ): bool {
+		return 1 === preg_match( '/^[A-Za-z0-9_-]+$/', $id );
+	}
+
+	/**
+	 * The stored result for one printed stylesheet. By its id first: case is compared loosely,
+	 * because 2.10.2 and earlier stored ids in lower case, so handles such as Elementor's
+	 * e-animation-fadeInUp or a theme's google-fonts-Inter never found their results and stayed
+	 * render-blocking. Otherwise by its address: Arva SEO's renderer keeps one result per address,
+	 * named after the first link that loaded it, and themes print the same file (a Google Fonts
+	 * stylesheet, typically) under several handles. A file's used CSS on a page is the same
+	 * whichever link loads it.
+	 *
+	 * @param array<int, array<string, mixed>> $stored       The page type's stored sheets.
+	 * @param string                           $id           The link's id (handle-css).
+	 * @param string                           $key          The link's address key.
+	 * @param callable(string): string         $key_of       A stored address's key.
+	 * @param bool                             $id_needs_key Whether an id match must have the same address too.
+	 * @return array<string, mixed>|null
+	 */
+	private static function stored_sheet( array $stored, string $id, string $key, callable $key_of, bool $id_needs_key ): ?array {
+		$same_key = static fn ( array $sheet ): bool => is_string( $sheet['href'] ?? null ) && '' !== $sheet['href'] && $key_of( $sheet['href'] ) === $key;
+		$folded   = array();
+		foreach ( $stored as $sheet ) {
+			$stored_id = is_string( $sheet['id'] ?? null ) ? $sheet['id'] : '';
+			if ( '' === $stored_id || strtolower( $stored_id ) !== strtolower( $id ) || ( $id_needs_key && ! $same_key( $sheet ) ) ) {
+				continue;
+			}
+			if ( $stored_id === $id ) {
+				return $sheet;
+			}
+			$folded[] = $sheet;
+		}
+		if ( 1 === count( $folded ) ) {
+			return $folded[0];
+		}
+		if ( array() !== $folded ) {
+			return null; // Ids that differ only in case are ambiguous: leave the stylesheet as it is.
+		}
+		foreach ( $stored as $sheet ) {
+			if ( $same_key( $sheet ) ) {
+				return $sheet;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -666,11 +721,55 @@ final class CssOptimizer {
 	 * @param array<string, array<string, mixed>> $index Index.
 	 */
 	private static function save_index( array $index ): void {
+		$dropped = array();
 		if ( count( $index ) > self::MAX_ENTRIES ) {
 			uasort( $index, static fn ( $a, $b ) => ( $b['at'] ?? 0 ) <=> ( $a['at'] ?? 0 ) );
-			$index = array_slice( $index, 0, self::MAX_ENTRIES, true );
+			$dropped = array_keys( array_slice( $index, self::MAX_ENTRIES, null, true ) );
+			$index   = array_slice( $index, 0, self::MAX_ENTRIES, true );
 		}
 		update_option( self::INDEX, $index, false );
+		// A page type that is no longer tracked never uses its results again: they'd only fill uploads.
+		foreach ( $dropped as $signature ) {
+			self::delete_result( (string) $signature );
+		}
+	}
+
+	/**
+	 * Delete the stored results of every signature the index no longer has (daily maintenance).
+	 * Earlier versions left them behind when old page types were dropped: hundreds of MB on a
+	 * site whose page types changed often.
+	 *
+	 * @return int Files deleted.
+	 */
+	public static function prune_results(): int {
+		$files = glob( self::dir() . '/*.json' );
+		if ( ! is_array( $files ) || is_link( self::dir() ) ) {
+			return 0;
+		}
+		$index   = self::index();
+		$deleted = 0;
+		foreach ( $files as $file ) {
+			$signature = basename( $file, '.json' );
+			if ( ! isset( $index[ $signature ] ) && self::delete_result( $signature ) ) {
+				++$deleted;
+			}
+		}
+		return $deleted;
+	}
+
+	/**
+	 * Delete one signature's stored results.
+	 *
+	 * @param string $signature Signature.
+	 */
+	private static function delete_result( string $signature ): bool {
+		$file = self::dir() . '/' . $signature . '.json';
+		if ( ! preg_match( '/^[a-f0-9]{40}$/', $signature ) || is_link( self::dir() ) || is_link( $file ) || ! is_file( $file ) ) {
+			return false;
+		}
+		wp_delete_file( $file );
+		clearstatcache( true, $file );
+		return ! file_exists( $file );
 	}
 
 	/**
@@ -688,6 +787,10 @@ final class CssOptimizer {
 		}
 		$index = self::index();
 		if ( isset( $index[ $signature ] ) ) {
+			// Still waiting: a sync that was lost (a failed or cancelled run) must not leave it waiting for good.
+			if ( in_array( $index[ $signature ]['status'], array( 'needed', 'requested' ), true ) && ! wp_next_scheduled( self::HOOK ) ) {
+				wp_schedule_single_event( time() + 30, self::HOOK );
+			}
 			return;
 		}
 		$index[ $signature ] = array(
@@ -848,7 +951,8 @@ final class CssOptimizer {
 				continue;
 			}
 			$clean[] = array(
-				'id'       => is_string( $sheet['id'] ?? null ) ? sanitize_key( $sheet['id'] ) : null,
+				// Case is kept: handles such as Elementor's e-animation-fadeInUp are printed as they are.
+				'id'       => is_string( $sheet['id'] ?? null ) ? (string) preg_replace( '/[^A-Za-z0-9_-]/', '', $sheet['id'] ) : null,
 				'href'     => esc_url_raw( (string) ( $sheet['href'] ?? '' ) ),
 				'used'     => wp_strip_all_tags( $sheet['used'] ),
 				'critical' => wp_strip_all_tags( $sheet['critical'] ),
