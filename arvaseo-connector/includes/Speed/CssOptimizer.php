@@ -443,7 +443,9 @@ final class CssOptimizer {
 	 * render-blocking. Otherwise by its address: Arva SEO's renderer keeps one result per address,
 	 * named after the first link that loaded it, and themes print the same file (a Google Fonts
 	 * stylesheet, typically) under several handles. A file's used CSS on a page is the same
-	 * whichever link loads it.
+	 * whichever link loads it. When several results fit (a theme that versions files with the
+	 * time gives the phone and the computer render different addresses), the last one is used,
+	 * as before.
 	 *
 	 * @param array<int, array<string, mixed>> $stored       The page type's stored sheets.
 	 * @param string                           $id           The link's id (handle-css).
@@ -454,29 +456,29 @@ final class CssOptimizer {
 	 */
 	private static function stored_sheet( array $stored, string $id, string $key, callable $key_of, bool $id_needs_key ): ?array {
 		$same_key = static fn ( array $sheet ): bool => is_string( $sheet['href'] ?? null ) && '' !== $sheet['href'] && $key_of( $sheet['href'] ) === $key;
+		$exact    = null;
 		$folded   = array();
+		$by_key   = null;
 		foreach ( $stored as $sheet ) {
 			$stored_id = is_string( $sheet['id'] ?? null ) ? $sheet['id'] : '';
-			if ( '' === $stored_id || strtolower( $stored_id ) !== strtolower( $id ) || ( $id_needs_key && ! $same_key( $sheet ) ) ) {
-				continue;
+			if ( '' !== $stored_id && strtolower( $stored_id ) === strtolower( $id ) && ( ! $id_needs_key || $same_key( $sheet ) ) ) {
+				if ( $stored_id === $id ) {
+					$exact = $sheet;
+				} else {
+					$folded[ $stored_id ] = $sheet;
+				}
+			} elseif ( $same_key( $sheet ) ) {
+				$by_key = $sheet;
 			}
-			if ( $stored_id === $id ) {
-				return $sheet;
-			}
-			$folded[] = $sheet;
 		}
-		if ( 1 === count( $folded ) ) {
-			return $folded[0];
+		if ( null !== $exact ) {
+			return $exact;
 		}
 		if ( array() !== $folded ) {
-			return null; // Ids that differ only in case are ambiguous: leave the stylesheet as it is.
+			// Two handles that differ only in case are ambiguous: leave the stylesheet as it is.
+			return 1 === count( $folded ) ? reset( $folded ) : null;
 		}
-		foreach ( $stored as $sheet ) {
-			if ( $same_key( $sheet ) ) {
-				return $sheet;
-			}
-		}
-		return null;
+		return $by_key;
 	}
 
 	/**
