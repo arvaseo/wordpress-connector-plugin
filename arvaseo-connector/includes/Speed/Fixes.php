@@ -122,7 +122,7 @@ final class Fixes {
 			),
 			'defer_scripts'    => array(
 				'title'      => __( 'Defer scripts', 'arvaseo-connector' ),
-				'what'       => __( 'Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery, consent tools and any scripts you list are left alone.', 'arvaseo-connector' ),
+				'what'       => __( 'Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery isn’t deferred: it moves down to just before the first script that may use it. Consent tools and any scripts you list are left alone.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'check',
 				'audits'     => array(

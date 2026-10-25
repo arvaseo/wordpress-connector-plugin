@@ -25,7 +25,8 @@ defined( 'ABSPATH' ) || exit;
  * Deferred scripts and modules run after the page is read, when jQuery has run anyway, and data
  * scripts (JSON, speculation rules, delayed scripts) don't run, so they don't stop the move. If
  * that point is still in the head, nothing moves. jQuery itself never writes into the page, so
- * where it is read doesn't change what it does. Developers can veto with
+ * where it is read doesn't change what it does. Listing jquery-core (or its file) under "Leave
+ * these scripts alone" keeps it in the head, and developers can veto with
  * arvaseo_connector_move_head_scripts.
  */
 final class HeadScripts {
@@ -105,7 +106,8 @@ final class HeadScripts {
 				continue;
 			}
 			// Something here may use jQuery: it goes just before, unless that's still in the head.
-			if ( ! $in_body || ! in_array( 'jquery-core', $group['files'], true ) ) {
+			$tags = substr( $html, $group['start'], $group['end'] - $group['start'] );
+			if ( ! $in_body || ! in_array( 'jquery-core', $group['files'], true ) || self::listed( $tags ) ) {
 				return $html;
 			}
 			/**
@@ -118,10 +120,35 @@ final class HeadScripts {
 			if ( ! (bool) apply_filters( 'arvaseo_connector_move_head_scripts', true, $group['files'] ) ) {
 				return $html;
 			}
-			$tags = substr( $html, $group['start'], $group['end'] - $group['start'] );
 			return substr( $html, 0, $group['start'] ) . substr( $html, $group['end'], $token['start'] - $group['end'] ) . $tags . "\n" . substr( $html, $token['start'] );
 		}
 		return $html;
+	}
+
+	/**
+	 * Whether the administrator listed jQuery under Defer scripts' "Leave these scripts alone",
+	 * by handle or by part of its file address: then it stays in the head as well.
+	 *
+	 * @param string $tags The tags that would move.
+	 */
+	private static function listed( string $tags ): bool {
+		$sources = array();
+		$scan    = new \WP_HTML_Tag_Processor( $tags );
+		while ( $scan->next_tag( array( 'tag_name' => 'script' ) ) ) {
+			$sources[] = (string) $scan->get_attribute( 'src' );
+		}
+		foreach ( Fixes::stored()['defer_exclude'] as $entry ) {
+			$entry = trim( (string) $entry );
+			if ( in_array( strtolower( $entry ), array( 'jquery', 'jquery-core', 'jquery-migrate' ), true ) ) {
+				return true;
+			}
+			foreach ( $sources as $source ) {
+				if ( '' !== $entry && '' !== $source && ( str_contains( $entry, '/' ) || str_contains( $entry, '.' ) ) && false !== stripos( $source, $entry ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

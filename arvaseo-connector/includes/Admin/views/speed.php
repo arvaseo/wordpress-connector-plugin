@@ -999,7 +999,7 @@ defined( 'ABSPATH' ) || exit;
 								</ul>
 							<?php endif; ?>
 							<label class="arvaseo-label" for="arvaseo-defer-exclude" style="margin-top: 10px"><?php esc_html_e( 'Leave these scripts alone', 'arvaseo-connector' ); ?></label>
-							<p class="arvaseo-hint"><?php esc_html_e( 'One per line: a script name (handle), such as one from the list above, or part of its file address, such as booking.js or /plugins/contact-form-7/. jQuery and consent or cookie tools are always left alone.', 'arvaseo-connector' ); ?></p>
+							<p class="arvaseo-hint"><?php esc_html_e( 'One per line: a script name (handle), such as one from the list above, or part of its file address, such as booking.js or /plugins/contact-form-7/. Consent or cookie tools are always left alone, and jQuery is never deferred; list jquery-core to keep it in the head too.', 'arvaseo-connector' ); ?></p>
 							<textarea id="arvaseo-defer-exclude" name="defer_exclude" rows="3"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['defer_exclude'] ) ); ?></textarea>
 							<?php if ( array() !== $arvaseo_plugins ) : ?>
 								<details class="arvaseo-more" <?php echo array() !== $arvaseo_stored['defer_plugins'] ? 'open' : ''; ?>>
