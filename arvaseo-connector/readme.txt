@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.3
+Stable tag: 2.10.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.10.4 =
+Icon fonts that a theme or widget prints into the page itself (Font Awesome and similar) load once the page has loaded instead of holding it up, while Load styles faster or Remove unused CSS is on. Faster Google Fonts served from your site now works with themes that add the time to font addresses.
+
 = 2.10.3 =
 Generated CSS now reaches stylesheets with capital letters in their names (Elementor's entrance animations, some themes' fonts) and the same file printed under several names, so they stop blocking the first paint. Defer scripts moves WordPress's jQuery from the head to just before the first script that may use it. Full minified/combined folders clean up unused files instead of stopping for good, and scripts versioned with the time no longer get a new copy on every page view.
 
@@ -297,6 +300,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.4 =
+* Improved: Load styles faster (and Remove unused CSS) left icon font stylesheets that a theme or widget prints into the page itself, outside WordPress's styles, holding the page up: Solace Extra's menu, for example, prints Font Awesome from a CDN for every menu item with a sub-menu, so scripts after it waited for it and its 114 KB font loaded with the first paint. Known icon libraries (Font Awesome, Line Awesome, Bootstrap Icons, Remix Icon, Boxicons, Ionicons, Material Icons and Symbols, Themify, Simple Line Icons) now load once the page has loaded, or at the first interaction if that's sooner, with a noscript copy. Stylesheets from WordPress's queue keep the used-CSS delivery; developers can decide per stylesheet with the arvaseo_connector_late_icon_style filter.
+* Fixed: Faster Google Fonts, "Serve them from your site", named each copy after the full address, so a theme that adds v=time() to its Google Fonts addresses (Solace does) got a new copy on every page view: the copy was never used, a new download was scheduled each time, and each finished copy cleared the page caches again. Cache busters (v, ver) no longer name copies; existing copies keep their names.
+* Fixed: css2 Google Fonts addresses naming several families shared a copy with an address naming only their last family, because repeated family= parameters were collapsed. They now get their own copy.
 
 = 2.10.3 =
 * Fixed: optimized (used/critical) CSS never applied to stylesheets whose handles contain capital letters, such as Elementor's e-animation-fadeInUp or a theme's google-fonts-Inter: their ids were stored in lower case and rejected when combining. They stayed render-blocking. Results saved by earlier versions are matched too.

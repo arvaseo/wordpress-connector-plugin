@@ -31,9 +31,9 @@ final class AssetCombiner {
 		self::$buffer_started = ob_start( array( self::class, 'capture' ) );
 	}
 
-	/** Inline changes and moving jQuery use this same complete-response buffer, including when combining is off. */
+	/** Inline changes, moving jQuery and late icon libraries use this same complete-response buffer, including when combining is off. */
 	private static function wanted(): bool {
-		if ( HeadScripts::wanted() ) {
+		if ( HeadScripts::wanted() || IconStyles::wanted() ) {
 			return true;
 		}
 		$fixes = CssOptimizer::is_render_request()
@@ -82,6 +82,9 @@ final class AssetCombiner {
 		}
 		if ( HeadScripts::wanted() ) {
 			$html = HeadScripts::move( $html );
+		}
+		if ( IconStyles::wanted() ) {
+			$html = IconStyles::defer( $html );
 		}
 		InlineAssets::prepare( $html );
 		$position     = 0;

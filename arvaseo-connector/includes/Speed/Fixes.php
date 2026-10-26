@@ -97,7 +97,7 @@ final class Fixes {
 			),
 			'critical_css'     => array(
 				'title'      => __( 'Load styles faster', 'arvaseo-connector' ),
-				'what'       => __( 'The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan.', 'arvaseo-connector' ),
+				'what'       => __( 'The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan. Icon fonts that a theme or widget prints into the page itself (Font Awesome and similar) load once the page has loaded.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'check',
 				'audits'     => array(

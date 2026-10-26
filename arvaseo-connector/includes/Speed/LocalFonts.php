@@ -142,12 +142,31 @@ final class LocalFonts {
 	}
 
 	/**
-	 * A stylesheet's copy name: the same families, weights and text give the same copy.
+	 * A stylesheet's copy name: the same families, weights and text give the same copy, whatever
+	 * cache buster (v, ver) or display a theme adds. Some themes add v=time() to every Google Fonts
+	 * address; that used to name a new copy on every page view, so the copy was never used, a new
+	 * download was scheduled each time and each finished copy cleared the page caches again.
+	 * css2 addresses can name several families with repeated family= parameters, which
+	 * remove_query_arg() collapses to the last one: those keep every other parameter, in order.
 	 *
 	 * @param string $src Address.
 	 */
 	private static function key( string $src ): string {
-		return substr( md5( (string) remove_query_arg( array( 'display', 'ver' ), self::absolute( $src ) ) ), 0, 16 );
+		$url   = self::absolute( $src );
+		$query = (string) wp_parse_url( $url, PHP_URL_QUERY );
+		$pairs = '' === $query ? array() : explode( '&', $query );
+		$names = array_map( static fn ( string $pair ): string => strtolower( rawurldecode( explode( '=', $pair, 2 )[0] ) ), $pairs );
+		if ( count( $names ) === count( array_unique( $names ) ) ) {
+			// One of each: the name 2.10.3 and earlier gave it without a cache buster, so existing copies stay in use.
+			return substr( md5( (string) remove_query_arg( array( 'display', 'ver', 'v' ), $url ) ), 0, 16 );
+		}
+		$kept = array();
+		foreach ( $pairs as $i => $pair ) {
+			if ( ! in_array( $names[ $i ], array( 'display', 'ver', 'v' ), true ) ) {
+				$kept[] = $pair;
+			}
+		}
+		return substr( md5( 'families|' . strtok( $url, '?' ) . '?' . implode( '&', $kept ) ), 0, 16 );
 	}
 
 	/**
