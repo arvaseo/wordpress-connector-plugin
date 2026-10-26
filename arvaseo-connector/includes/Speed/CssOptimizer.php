@@ -857,6 +857,10 @@ final class CssOptimizer {
 		}
 		$index  = self::index();
 		$client = ApiClient::instance();
+		// The next run is scheduled before any request: a run cut short (a slow download past the
+		// time limit) used to leave page types waiting for good, since pages kept by the page
+		// cache don't note them again.
+		self::schedule_sync( $index );
 
 		$send = array();
 		foreach ( $index as $signature => $entry ) {
@@ -926,9 +930,7 @@ final class CssOptimizer {
 			update_option( 'arvaseo_connector_css_allowance', $out['allowance'] + array( 'at' => time() ), false );
 		}
 		self::save_index( $index );
-		if ( array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'], array( 'needed', 'requested' ), true ) ) && ! wp_next_scheduled( self::HOOK ) ) {
-			wp_schedule_single_event( time() + 2 * MINUTE_IN_SECONDS, self::HOOK );
-		}
+		self::schedule_sync( $index );
 		if ( $out['ready'] > 0 ) {
 			Fixes::pages_changed( 'css' );
 			AuditLogger::info(
@@ -938,6 +940,17 @@ final class CssOptimizer {
 			);
 		}
 		return $out;
+	}
+
+	/**
+	 * Another sync in two minutes, while page types wait to be sent or for their results.
+	 *
+	 * @param array<string, array<string, mixed>> $index Index.
+	 */
+	private static function schedule_sync( array $index ): void {
+		if ( array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'] ?? '', array( 'needed', 'requested' ), true ) ) && ! wp_next_scheduled( self::HOOK ) ) {
+			wp_schedule_single_event( time() + 2 * MINUTE_IN_SECONDS, self::HOOK );
+		}
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.5
+Stable tag: 2.10.6
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.10.6 =
+With Load styles faster or Remove unused CSS, entrance animations (Elementor's and similar) no longer play a second time when the rest of the styles arrive at the first scroll or tap. Optimized CSS that is still being worked out can no longer be left waiting after an interrupted background run.
+
 = 2.10.5 =
 Moving jQuery down the page and loading icon fonts late are now choices you turn on (Defer scripts, Load styles faster). The clean-up of minified and combined files no longer deletes files another page cache may still use.
 
@@ -303,6 +306,10 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.6 =
+* Fixed: with Load styles faster or Remove unused CSS, an entrance animation that a page's scripts start as content comes into view (Elementor's fadeInUp, for one) had no keyframes in the used CSS, so the element appeared without it; then, when the full stylesheets arrived at the visitor's first scroll, tap or key press, every such animation already on screen played again over content the visitor was reading. Animations that start only because the full styles arrived now end at once; endless animations (spinners) and those already running are left alone. Arva SEO's servers will also keep these animations in the used CSS.
+* Fixed: a background run that fetches optimized CSS and was cut short (a slow download past PHP's time limit) left the page types it was working on waiting until a page that wasn't in the page cache was visited, while every visitor got the cached pages without optimized CSS. The next run is now scheduled before the downloads start.
 
 = 2.10.5 =
 * Changed: moving jQuery out of the head (2.10.3) is now a choice of its own under Defer scripts, "Move jQuery down the page", off until an administrator turns it on. Updating no longer changes what Defer scripts does on sites where it was already checked and on, and turning the choice on returns Defer scripts to preview until the pages are checked again.
