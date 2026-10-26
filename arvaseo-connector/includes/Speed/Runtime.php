@@ -96,11 +96,17 @@ final class Runtime {
 	 * Settings and generated CSS are preserved; only cached pages are invalidated once.
 	 */
 	public static function upgrade(): void {
-		$option = 'arvaseo_connector_speed_version';
-		if ( ARVASEO_CONNECTOR_VERSION === get_option( $option ) ) {
+		$option   = 'arvaseo_connector_speed_version';
+		$previous = get_option( $option );
+		if ( ARVASEO_CONNECTOR_VERSION === $previous ) {
 			return;
 		}
 		update_option( $option, ARVASEO_CONNECTOR_VERSION, false );
+		// Optimized CSS saved by 1.6.0 to 2.10.0 (and the 2.10.1+ builds) may have lost rules
+		// (CssOptimizer::store()): it's downloaded again, free, and each file is used until then.
+		if ( ! is_string( $previous ) || version_compare( $previous, '2.11.0', '<' ) ) {
+			CssOptimizer::redownload_all();
+		}
 		// Report new capabilities promptly so Arva SEO does not keep showing an older plugin.
 		if ( ! wp_next_scheduled( 'arvaseo_connector_register' ) ) {
 			wp_schedule_single_event( time(), 'arvaseo_connector_register' );

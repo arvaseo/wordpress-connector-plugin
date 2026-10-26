@@ -544,11 +544,22 @@ final class CssOptimizer {
 			'ready'     => 0,
 			'allowance' => null,
 		);
-		if ( ! TokenStore::is_connected() || ! ( self::wanted() ) ) {
+		if ( ! TokenStore::is_connected() ) {
 			return $out;
 		}
 		$index  = self::index();
+		$wanted = self::wanted();
+		// Results saved before 2.10.0.1 may have lost rules (see store()): they're fetched again
+		// first, at no cost, also while both fixes are off, so they're whole when one is turned on.
+		$again = array_keys( array_filter( $index, static fn ( $entry ) => 'redownload' === ( $entry['status'] ?? '' ) ) );
+		if ( ! $wanted && array() === $again ) {
+			return $out;
+		}
 		$client = ApiClient::instance();
+		// The next run is scheduled before any request: a run cut short (a slow download past the
+		// time limit) used to leave page types waiting for good, since pages kept by the page
+		// cache, and pages already noted, don't note them again.
+		self::schedule_sync( $index );
 
 		$send = array();
 		foreach ( $index as $signature => $entry ) {
@@ -563,7 +574,7 @@ final class CssOptimizer {
 				break;
 			}
 		}
-		if ( array() !== $send ) {
+		if ( $wanted && array() !== $send ) {
 			$response = $client->site( 'POST', '/css-optimizations', array( 'items' => $send ) );
 			if ( $response->ok() ) {
 				foreach ( (array) ( $response->body['data'] ?? array() ) as $row ) {
@@ -582,18 +593,18 @@ final class CssOptimizer {
 
 		$waiting = array_reverse( array_filter( $index, static fn ( $entry ) => 'requested' === $entry['status'] ), true );
 		uasort( $waiting, static fn ( $a, $b ) => ( $b['at'] ?? 0 ) <=> ( $a['at'] ?? 0 ) );
-		$waiting = array_keys( $waiting );
+		$waiting = $wanted ? array_keys( $waiting ) : array();
 		$started = microtime( true );
 		$fetched = 0;
 		// A single result may contain hundreds of KB of CSS. Combining ten can exceed
 		// the API client's response limit and leave already-generated results waiting forever.
-		foreach ( array_slice( $waiting, 0, self::RESULTS_PER_SYNC ) as $signature ) {
+		foreach ( array_slice( array_merge( $again, $waiting ), 0, self::RESULTS_PER_SYNC ) as $asked ) {
 			if ( $fetched > 0 && microtime( true ) - $started >= self::FETCH_SECONDS ) {
 				break;
 			}
 			// The renderer accepts up to 2 MB of CSS per result; JSON escaping can enlarge it.
 			// Only this single-result download opts into the larger bounded response allowance.
-			$response = $client->site( 'GET', '/css-optimizations?signatures=' . $signature, null, self::FETCH_SECONDS, ApiClient::MAX_RESPONSE_LIMIT );
+			$response = $client->site( 'GET', '/css-optimizations?signatures=' . $asked, null, self::FETCH_SECONDS, ApiClient::MAX_RESPONSE_LIMIT );
 			++$fetched;
 			if ( ! $response->ok() ) {
 				break;
@@ -607,20 +618,23 @@ final class CssOptimizer {
 				if ( 'ready' === ( $row['status'] ?? '' ) && self::store( $signature, (array) ( $row['sheets'] ?? array() ) ) ) {
 					$index[ $signature ]['status'] = 'ready';
 					++$out['ready'];
-				} elseif ( 'failed' === ( $row['status'] ?? '' ) ) {
+				} elseif ( 'failed' === ( $row['status'] ?? '' ) && 'redownload' !== $index[ $signature ]['status'] ) {
 					$index[ $signature ]['status']       = 'failed';
 					$index[ $signature ]['error']        = substr( (string) ( $row['error_code'] ?? '' ), 0, 40 );
 					$index[ $signature ]['error_status'] = (int) ( $row['error_status'] ?? 0 );
 				}
+			}
+			// A re-download without a new copy (Arva SEO deletes results with their WordPress site,
+			// for example after a reconnect) keeps the file it has, as before.
+			if ( 'redownload' === ( $index[ $asked ]['status'] ?? '' ) ) {
+				$index[ $asked ]['status'] = 'ready';
 			}
 		}
 		if ( null !== $out['allowance'] ) {
 			update_option( 'arvaseo_connector_css_allowance', $out['allowance'] + array( 'at' => time() ), false );
 		}
 		self::save_index( $index );
-		if ( array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'], array( 'needed', 'requested' ), true ) ) && ! wp_next_scheduled( self::HOOK ) ) {
-			wp_schedule_single_event( time() + 2 * MINUTE_IN_SECONDS, self::HOOK );
-		}
+		self::schedule_sync( $index );
 		if ( $out['ready'] > 0 ) {
 			Fixes::pages_changed( 'css' );
 			AuditLogger::info(
@@ -633,7 +647,49 @@ final class CssOptimizer {
 	}
 
 	/**
-	 * Keep one signature's results.
+	 * Another sync in two minutes, while page types wait to be sent, for their results or to be
+	 * downloaded again.
+	 *
+	 * @param array<string, array<string, mixed>> $index Index.
+	 */
+	private static function schedule_sync( array $index ): void {
+		if ( array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'] ?? '', array( 'needed', 'requested', 'redownload' ), true ) ) && ! wp_next_scheduled( self::HOOK ) ) {
+			wp_schedule_single_event( time() + 2 * MINUTE_IN_SECONDS, self::HOOK );
+		}
+	}
+
+	/**
+	 * After an update: every page type with results downloads them again (free: they're kept on
+	 * Arva SEO's servers, and fetching them reserves nothing). Until then, and when Arva SEO no
+	 * longer has them, each keeps the file it has.
+	 *
+	 * @return int Page types to download again.
+	 */
+	public static function redownload_all(): int {
+		$index = self::index();
+		$count = 0;
+		foreach ( $index as $signature => $entry ) {
+			if ( 'ready' === ( $entry['status'] ?? '' ) ) {
+				$index[ $signature ]['status'] = 'redownload';
+				++$count;
+			}
+		}
+		if ( $count > 0 ) {
+			self::save_index( $index );
+			if ( ! wp_next_scheduled( self::HOOK ) ) {
+				wp_schedule_single_event( time() + 30, self::HOOK );
+			}
+		}
+		return $count;
+	}
+
+	/**
+	 * Keep one signature's results, with their CSS exactly as Arva SEO sent it: it's printed
+	 * through safe_css(), so it can't end its style element. (Up to 2.10.0 it went through
+	 * wp_strip_all_tags(), which removed everything from a "<" to the next ">", or to the end:
+	 * media queries such as (width<=1023.98px), SVG icons in data: addresses and content:"<"
+	 * lost their rules, sometimes the rest of the stylesheet.) A sheet whose CSS contains
+	 * "</style" or a NUL byte isn't kept; its stylesheet then loads as it is.
 	 *
 	 * @param string                           $signature Signature.
 	 * @param array<int, array<string, mixed>> $sheets    Sheets.
@@ -641,14 +697,14 @@ final class CssOptimizer {
 	private static function store( string $signature, array $sheets ): bool {
 		$clean = array();
 		foreach ( $sheets as $sheet ) {
-			if ( ! is_array( $sheet ) || ! is_string( $sheet['used'] ?? null ) || ! is_string( $sheet['critical'] ?? null ) ) {
+			if ( ! is_array( $sheet ) || ! is_string( $sheet['used'] ?? null ) || ! is_string( $sheet['critical'] ?? null ) || ! self::storable( $sheet['used'] ) || ! self::storable( $sheet['critical'] ) ) {
 				continue;
 			}
 			$clean[] = array(
 				'id'       => is_string( $sheet['id'] ?? null ) ? sanitize_key( $sheet['id'] ) : null,
 				'href'     => esc_url_raw( (string) ( $sheet['href'] ?? '' ) ),
-				'used'     => wp_strip_all_tags( $sheet['used'] ),
-				'critical' => wp_strip_all_tags( $sheet['critical'] ),
+				'used'     => $sheet['used'],
+				'critical' => $sheet['critical'],
 			);
 		}
 		$fs = self::filesystem();
@@ -662,6 +718,15 @@ final class CssOptimizer {
 			),
 			FS_CHMOD_FILE
 		);
+	}
+
+	/**
+	 * Whether generated CSS can be kept: it never contains "</style" or a NUL byte.
+	 *
+	 * @param string $css CSS.
+	 */
+	private static function storable( string $css ): bool {
+		return false === stripos( $css, '</style' ) && ! str_contains( $css, "\0" );
 	}
 
 	/**
@@ -751,7 +816,7 @@ final class CssOptimizer {
 			if ( 'not_a_page' === $status ) {
 				continue;
 			}
-			if ( 'ready' === $status ) {
+			if ( in_array( $status, array( 'ready', 'redownload' ), true ) ) {
 				++$counts['ready'];
 			} elseif ( in_array( $status, array( 'needed', 'requested', 'daily_cap' ), true ) ) {
 				++$counts['waiting'];

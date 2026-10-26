@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.10.0\n"
+"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.10.0.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-24T14:31:08+00:00\n"
+"POT-Creation-Date: 2026-10-26T07:43:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: arvaseo-connector\n"
@@ -1507,7 +1507,7 @@ msgid "SEO plugin"
 msgstr ""
 
 #: includes/Admin/views/content.php:198
-#: includes/Speed/CssOptimizer.php:840
+#: includes/Speed/CssOptimizer.php:905
 msgid "Homepage"
 msgstr ""
 
@@ -4991,92 +4991,92 @@ msgid "Cloudflare answered %1$d%2$s"
 msgstr ""
 
 #. translators: %d: number of page types.
-#: includes/Speed/CssOptimizer.php:629
+#: includes/Speed/CssOptimizer.php:643
 #, php-format
 msgid "PageSpeed fixes: optimized CSS is ready for %d page type."
 msgid_plural "PageSpeed fixes: optimized CSS is ready for %d page types."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Speed/CssOptimizer.php:682
+#: includes/Speed/CssOptimizer.php:747
 msgid "PageSpeed fixes: optimized CSS will be worked out again."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:779
+#: includes/Speed/CssOptimizer.php:844
 msgid "This address isn’t on the website connected to Arva SEO."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:814
+#: includes/Speed/CssOptimizer.php:879
 msgid "Your host’s bot protection blocked Arva SEO from loading the page. Arva SEO now tries again under its own name, ArvaSEO-Bot; if it still fails, ask your host to allow ArvaSEO-Bot."
 msgstr ""
 
 #. translators: %d: HTTP status, such as 503.
-#: includes/Speed/CssOptimizer.php:818
+#: includes/Speed/CssOptimizer.php:883
 #, php-format
 msgid "The page answered with a server error (%d)."
 msgstr ""
 
 #. translators: %d: HTTP status, such as 410.
-#: includes/Speed/CssOptimizer.php:822
+#: includes/Speed/CssOptimizer.php:887
 #, php-format
 msgid "The page answered with an error (%d)."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:823
+#: includes/Speed/CssOptimizer.php:888
 msgid "The page didn’t load."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:826
+#: includes/Speed/CssOptimizer.php:891
 msgid "The page took too long to load."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:827
+#: includes/Speed/CssOptimizer.php:892
 msgid "The page’s styles are too large to optimize."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:828
+#: includes/Speed/CssOptimizer.php:893
 msgid "The page loads from an address Arva SEO doesn’t load (a private network)."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:829
+#: includes/Speed/CssOptimizer.php:894
 msgid "Arva SEO couldn’t work this page out."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:841
+#: includes/Speed/CssOptimizer.php:906
 msgid "Blog page"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:842
+#: includes/Speed/CssOptimizer.php:907
 msgid "Not found page"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:843
+#: includes/Speed/CssOptimizer.php:908
 msgid "Search results"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:844
+#: includes/Speed/CssOptimizer.php:909
 msgid "Categories"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:845
+#: includes/Speed/CssOptimizer.php:910
 msgid "Tags"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:846
+#: includes/Speed/CssOptimizer.php:911
 msgid "Author pages"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:847
+#: includes/Speed/CssOptimizer.php:912
 msgid "Date archives"
 msgstr ""
 
 #. translators: %s: a post type's name, such as Products.
-#: includes/Speed/CssOptimizer.php:856
+#: includes/Speed/CssOptimizer.php:921
 #, php-format
 msgid "%s list"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:862
+#: includes/Speed/CssOptimizer.php:927
 msgid "Other pages"
 msgstr ""
 
@@ -5436,14 +5436,14 @@ msgid "PageSpeed fixes: the original images are back."
 msgstr ""
 
 #. translators: %d: number of font files.
-#: includes/Speed/LocalFonts.php:112
+#: includes/Speed/LocalFonts.php:118
 #, php-format
 msgid "PageSpeed fixes: Google Fonts copied to your site (%d file)."
 msgid_plural "PageSpeed fixes: Google Fonts copied to your site (%d files)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Speed/LocalFonts.php:192
+#: includes/Speed/LocalFonts.php:237
 msgid "PageSpeed fixes: Google Fonts couldn’t be copied to your site, so Google’s address stays. It’s tried again tomorrow."
 msgstr ""
 
@@ -5672,35 +5672,35 @@ msgid "someone on your team"
 msgstr ""
 
 #. translators: %d: number of fixes being tried.
-#: includes/Speed/Runtime.php:138
+#: includes/Speed/Runtime.php:144
 #, php-format
 msgid "Arva SEO: trying %d PageSpeed fix"
 msgid_plural "Arva SEO: trying %d PageSpeed fixes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Speed/Runtime.php:139
+#: includes/Speed/Runtime.php:145
 msgid "Arva SEO: PageSpeed fixes"
 msgstr ""
 
-#: includes/Speed/Runtime.php:142
+#: includes/Speed/Runtime.php:148
 msgid "Only you see the fixes you’re trying while signed in. Visitors see your site as before."
 msgstr ""
 
-#: includes/Speed/Runtime.php:142
+#: includes/Speed/Runtime.php:148
 msgid "PageSpeed fixes are on for your visitors."
 msgstr ""
 
-#: includes/Speed/Runtime.php:150
+#: includes/Speed/Runtime.php:156
 msgid "Clear the page cache"
 msgstr ""
 
-#: includes/Speed/Runtime.php:487
+#: includes/Speed/Runtime.php:493
 msgid "YouTube video"
 msgstr ""
 
 #. translators: %s: the video's title.
-#: includes/Speed/Runtime.php:499
+#: includes/Speed/Runtime.php:505
 #, php-format
 msgid "Play video: %s"
 msgstr ""

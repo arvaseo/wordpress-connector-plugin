@@ -52,8 +52,11 @@ final class LocalFonts {
 		if ( file_exists( $file ) ) {
 			return self::url() . '/' . $key . '.css';
 		}
-		if ( ! wp_next_scheduled( self::HOOK, array( $src ) ) && ! get_transient( 'arvaseo_connector_fonts_failed_' . $key ) ) {
-			wp_schedule_single_event( time(), self::HOOK, array( $src ) );
+		// Scheduled without its cache busters: a theme's v=time() would otherwise schedule another
+		// download on every page view until the first copy is ready.
+		$canonical = self::canonical( $src );
+		if ( ! wp_next_scheduled( self::HOOK, array( $canonical ) ) && ! get_transient( 'arvaseo_connector_fonts_failed_' . $key ) ) {
+			wp_schedule_single_event( time(), self::HOOK, array( $canonical ) );
 		}
 		return null;
 	}
@@ -77,7 +80,10 @@ final class LocalFonts {
 			return;
 		}
 		$key = self::key( $src );
-		$css = self::fetch( self::absolute( $src ), 262144 );
+		if ( file_exists( self::dir() . '/' . $key . '.css' ) || get_transient( 'arvaseo_connector_fonts_failed_' . $key ) ) {
+			return; // Copied already (an event scheduled before the copy was ready, or twice), or failed today.
+		}
+		$css = self::fetch( self::canonical( $src ), 262144 );
 		if ( null === $css || ! str_contains( $css, '@font-face' ) ) {
 			self::failed( $key, 'stylesheet' );
 			return;
@@ -142,12 +148,51 @@ final class LocalFonts {
 	}
 
 	/**
-	 * A stylesheet's copy name: the same families, weights and text give the same copy.
+	 * A stylesheet's copy name: the same families, weights and text give the same copy, whatever
+	 * cache buster (v, ver) or display a theme adds. Some themes add v=time() to every Google Fonts
+	 * address; that used to name a new copy on every page view, so the copy was never used, a new
+	 * download was scheduled each time and each finished copy cleared the page caches again.
+	 * css2 addresses can name several families with repeated family= parameters, which
+	 * remove_query_arg() collapses to the last one: those keep every other parameter, in order.
 	 *
 	 * @param string $src Address.
 	 */
 	private static function key( string $src ): string {
-		return substr( md5( (string) remove_query_arg( array( 'display', 'ver' ), self::absolute( $src ) ) ), 0, 16 );
+		$url   = self::absolute( $src );
+		$query = (string) wp_parse_url( $url, PHP_URL_QUERY );
+		$pairs = '' === $query ? array() : explode( '&', $query );
+		$names = array_map( static fn ( string $pair ): string => strtolower( rawurldecode( explode( '=', $pair, 2 )[0] ) ), $pairs );
+		if ( count( $names ) === count( array_unique( $names ) ) ) {
+			// One of each: the name 2.10.0 and earlier gave it without a cache buster, so existing copies stay in use.
+			return substr( md5( (string) remove_query_arg( array( 'display', 'ver', 'v' ), $url ) ), 0, 16 );
+		}
+		$kept = array();
+		foreach ( $pairs as $i => $pair ) {
+			if ( ! in_array( $names[ $i ], array( 'display', 'ver', 'v' ), true ) ) {
+				$kept[] = $pair;
+			}
+		}
+		return substr( md5( 'families|' . strtok( $url, '?' ) . '?' . implode( '&', $kept ) ), 0, 16 );
+	}
+
+	/**
+	 * The address a copy is made from: https, without the cache busters (v, ver) and display a
+	 * theme adds, every other parameter kept in its order. It has the same copy name (key()).
+	 *
+	 * @param string $src Address.
+	 */
+	private static function canonical( string $src ): string {
+		$parts = explode( '?', self::absolute( $src ), 2 );
+		if ( ! isset( $parts[1] ) ) {
+			return $parts[0];
+		}
+		$kept = array();
+		foreach ( explode( '&', $parts[1] ) as $pair ) {
+			if ( '' !== $pair && ! in_array( strtolower( rawurldecode( explode( '=', $pair, 2 )[0] ) ), array( 'display', 'ver', 'v' ), true ) ) {
+				$kept[] = $pair;
+			}
+		}
+		return $parts[0] . ( array() === $kept ? '' : '?' . implode( '&', $kept ) );
 	}
 
 	/**

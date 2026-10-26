@@ -214,6 +214,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.10.0.1 =
+Fixes phone layouts and icons that optimized CSS could break on some themes. Optimized styles are downloaded again automatically, at no cost.
+
 = 2.10.0 =
 Adds advanced inline/external CSS and JS controls, CSS delivery choices, delayed loading mode, font-display swap, and Media Library compression actions. New switches start Off; existing delivery defaults are retained. Review approved public resources and preview changes before turning them on.
 
@@ -288,6 +291,12 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.0.1 =
+* Fixed: optimized CSS (Load styles faster and Remove unused CSS) lost rules on some themes, because it was saved with everything from a "<" to the next ">" taken out (since 1.6.0). Media queries written as (width<=1023.98px), which many themes use for their phone menu and header, icons drawn with SVG in data: addresses (menu arrows, form icons) and content:"<" lost their rules, sometimes with the rest of the stylesheet. Optimized CSS is now kept exactly as Arva SEO worked it out; a stylesheet whose CSS contains "</style" or a NUL byte loads as it is.
+* Fixed: optimized CSS saved by earlier versions is downloaded again after updating, at no cost and without using page optimizations, at most 10 page types each run. Until then, and when Arva SEO no longer has a page type's results, it keeps its current CSS.
+* Fixed: an optimized CSS sync cut short by a slow download could leave page types waiting until a new page type was found. The next sync is now scheduled before any request.
+* Fixed: Faster Google Fonts, "Serve them from your site", named each copy after the full address, so a theme that adds v=time() to its Google Fonts addresses got a new download on every page view, a copy that was never used, and page caches cleared again with each copy. Cache busters (v, ver) no longer name copies, one download is scheduled per stylesheet and a copy is never made twice; existing copies keep their names. After a copy fails, downloads already waiting also wait a day. css2 addresses naming several families get their own copy instead of sharing their last family's.
 
 = 2.10.0 =
 * New: inline CSS/JavaScript minification and explicitly approved static inline/external sources in compatible ordered bundles; external files are cached in bounded pinned background requests, never fetched while rendering pages.
