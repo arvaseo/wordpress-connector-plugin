@@ -1,7 +1,8 @@
 <?php
 /**
- * Load styles faster, for icon fonts printed outside WordPress's styles: Font Awesome and similar
- * libraries that a theme or widget prints straight into the page load once the page has loaded.
+ * Load styles faster, for icon fonts printed outside WordPress's styles: when chosen, Font Awesome
+ * and similar libraries that a theme or widget prints straight into the page load once the page
+ * has loaded.
  *
  * @package ArvaSEO\Connector
  */
@@ -15,8 +16,10 @@ defined( 'ABSPATH' ) || exit;
  * (Solace Extra's menu prints Font Awesome from cdnjs for every menu item with a sub-menu). It isn't
  * in WordPress's style queue, so Arva SEO has no used CSS for it and it keeps holding the page up:
  * scripts after it wait for it, and its font, often over 100 KB, loads with the page's first
- * paint. Icons are decoration, so such a stylesheet (and so its font) now loads once the page has
- * loaded, or at the visitor's first scroll, tap, click, key press or mouse move if that's sooner.
+ * paint. When the administrator chose "Load icon fonts after the page" (2.10.5; off until then),
+ * such a stylesheet (and so its font) loads once the page has loaded, or at the visitor's first
+ * scroll, tap, click, key press or mouse move if that's sooner. Until then its icons don't show,
+ * and text next to an icon can move a little when it appears.
  *
  * Only known icon libraries move. A stylesheet WordPress printed from its queue is left to the
  * used-CSS delivery; one with its own onload handler, a media other than all or screen, or the
@@ -46,9 +49,10 @@ final class IconStyles {
 	/** Moved tags carry their address here until the loader sets it. */
 	public const ATTRIBUTE = 'data-arvaseo-late-href';
 
-	/** Whether icon libraries load late on this page: Load styles faster or Remove unused CSS applies. */
+	/** Whether icon libraries load late on this page: chosen, and Load styles faster or Remove unused CSS applies. */
 	public static function wanted(): bool {
-		return ( Fixes::applies( 'critical_css' ) || Fixes::applies( 'unused_css' ) )
+		return Fixes::stored()['late_icons']
+			&& ( Fixes::applies( 'critical_css' ) || Fixes::applies( 'unused_css' ) )
 			&& ! CssOptimizer::is_render_request()
 			&& null === Exclusions::page_reason( 'critical_css' );
 	}

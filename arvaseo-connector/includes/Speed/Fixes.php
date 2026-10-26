@@ -97,7 +97,7 @@ final class Fixes {
 			),
 			'critical_css'     => array(
 				'title'      => __( 'Load styles faster', 'arvaseo-connector' ),
-				'what'       => __( 'The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan. Icon fonts that a theme or widget prints into the page itself (Font Awesome and similar) load once the page has loaded.', 'arvaseo-connector' ),
+				'what'       => __( 'The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan. You can also let icon fonts that a theme or widget prints into the page itself (Font Awesome and similar) load once the page has loaded.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'check',
 				'audits'     => array(
@@ -122,7 +122,7 @@ final class Fixes {
 			),
 			'defer_scripts'    => array(
 				'title'      => __( 'Defer scripts', 'arvaseo-connector' ),
-				'what'       => __( 'Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery isn’t deferred: it moves down to just before the first script that may use it. Consent tools and any scripts you list are left alone.', 'arvaseo-connector' ),
+				'what'       => __( 'Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery isn’t deferred, and consent tools and any scripts you list are left alone. You can also let jQuery move down the page, to just before the first script that may use it.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'check',
 				'audits'     => array(
@@ -423,7 +423,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[]}
+	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[]}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -457,6 +457,9 @@ final class Fixes {
 			'ccss_per_url'           => (bool) ( $saved['ccss_per_url'] ?? false ),
 			'css_async_inline'       => (bool) ( $saved['css_async_inline'] ?? true ),
 			'js_loading_mode'        => 'delayed' === ( $saved['js_loading_mode'] ?? '' ) ? 'delayed' : 'deferred',
+			// 2.10.5: both start off, so updating never changes what an administrator already checked.
+			'move_jquery'            => (bool) ( $saved['move_jquery'] ?? false ),
+			'late_icons'             => (bool) ( $saved['late_icons'] ?? false ),
 			'combine_inline_css_ids' => self::inline_approvals( $saved['combine_inline_css_ids'] ?? array() ),
 			'combine_inline_js_ids'  => self::inline_approvals( $saved['combine_inline_js_ids'] ?? array() ),
 			'external_asset_urls'    => ExternalAssets::normalize_urls( $saved['external_asset_urls'] ?? array() ),
@@ -720,7 +723,9 @@ final class Fixes {
 	 * - shop_pages: leave shop pages alone (Defer scripts);
 	 * - eager_images: images at the top of each page that load straight away;
 	 * - fonts_local: Faster Google Fonts serves copies from the site;
-	 * - delay_scripts: text box of scripts Delay chat widgets and trackers also delays.
+	 * - delay_scripts: text box of scripts Delay chat widgets and trackers also delays;
+	 * - move_jquery: Defer scripts moves jQuery out of the head (turning it on goes back to trying);
+	 * - late_icons: Load styles faster loads icon libraries printed into the page after it.
 	 *
 	 * @param array<string, mixed> $choices Choices.
 	 */
@@ -733,15 +738,21 @@ final class Fixes {
 		}
 		if ( array_key_exists( 'js_loading_mode', $choices ) ) {
 			$mode = 'delayed' === $choices['js_loading_mode'] ? 'delayed' : 'deferred';
-			if ( $mode !== $data['js_loading_mode'] && 'on' === $data['fixes']['defer_scripts']['state'] ) {
-				$data['fixes']['defer_scripts'] = array(
-					'state' => 'trying',
-					'since' => gmdate( 'c' ),
-				);
-				$data['defer_checked_at']       = null;
-				$data['defer_on_at']            = null;
+			if ( $mode !== $data['js_loading_mode'] ) {
+				$data = self::check_defer_again( $data );
 			}
 			$data['js_loading_mode'] = $mode;
+		}
+		if ( array_key_exists( 'move_jquery', $choices ) ) {
+			$move = (bool) $choices['move_jquery'];
+			if ( $move && ! $data['move_jquery'] ) {
+				// What runs before jQuery changes: the administrator checks their pages again first.
+				$data = self::check_defer_again( $data );
+			}
+			$data['move_jquery'] = $move;
+		}
+		if ( array_key_exists( 'late_icons', $choices ) ) {
+			$data['late_icons'] = (bool) $choices['late_icons'];
 		}
 		foreach ( array( 'combine_inline_css_ids', 'combine_inline_js_ids' ) as $field ) {
 			if ( array_key_exists( $field, $choices ) ) {
@@ -803,6 +814,25 @@ final class Fixes {
 			self::pages_changed( 'choices' );
 		}
 		AuditLogger::info( 'speed.options_saved', __( 'PageSpeed fix choices saved.', 'arvaseo-connector' ), array( 'changed' => array_keys( $choices ) ) );
+	}
+
+	/**
+	 * Defer scripts changes what it does: while it's on for visitors, it goes back to being tried,
+	 * so the administrator checks their important pages again before visitors get the change.
+	 *
+	 * @param array<string, mixed> $data The stored() shape.
+	 * @return array<string, mixed>
+	 */
+	private static function check_defer_again( array $data ): array {
+		if ( 'on' === $data['fixes']['defer_scripts']['state'] ) {
+			$data['fixes']['defer_scripts'] = array(
+				'state' => 'trying',
+				'since' => gmdate( 'c' ),
+			);
+			$data['defer_checked_at']       = null;
+			$data['defer_on_at']            = null;
+		}
+		return $data;
 	}
 
 	/**

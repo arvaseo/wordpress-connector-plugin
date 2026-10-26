@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.4
+Stable tag: 2.10.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.10.5 =
+Moving jQuery down the page and loading icon fonts late are now choices you turn on (Defer scripts, Load styles faster). The clean-up of minified and combined files no longer deletes files another page cache may still use.
+
 = 2.10.4 =
 Icon fonts that a theme or widget prints into the page itself (Font Awesome and similar) load once the page has loaded instead of holding it up, while Load styles faster or Remove unused CSS is on. Faster Google Fonts served from your site now works with themes that add the time to font addresses.
 
@@ -300,6 +303,15 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.5 =
+* Changed: moving jQuery out of the head (2.10.3) is now a choice of its own under Defer scripts, "Move jQuery down the page", off until an administrator turns it on. Updating no longer changes what Defer scripts does on sites where it was already checked and on, and turning the choice on returns Defer scripts to preview until the pages are checked again.
+* Fixed: with jQuery moved down, an async script or an inline loader before it in the head (Google Tag Manager's snippet, whose Custom HTML tags often call jQuery) could run before jQuery and fail with "jQuery is not defined". jQuery now stays in the head when anything before it may run at a time of its own and use it: an async script, an inline script that adds scripts or mentions jQuery, or an event handler that mentions it. Google's gtag.js doesn't count; developers can name others with the arvaseo_connector_script_without_jquery filter.
+* Changed: loading icon fonts after the page (2.10.4) is now a choice under Load styles faster and Remove unused CSS, "Load icon fonts after the page", off until an administrator turns it on, because those icons show a moment later and text next to them can move.
+* Fixed: the clean-up of full minified and combined folders (2.10.3) deleted files that pages saved by another cache could still use: WP Super Cache, Cache Enabler, WP Fastest Cache, W3 Total Cache and similar kept serving pages pointing at deleted files until they expired. Those with a documented API (WP Super Cache, W3 Total Cache, WP Rocket, WP Fastest Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper) are now cleared with Arva SEO's own when every page changes; while any other page cache may keep pages (another cache plugin or advanced-cache.php, Kinsta's or Cloudways' server cache, SiteGround's without its plugin, Cloudflare without the connection) nothing is deleted. Files are kept for a week after their last use instead of a day.
+* Fixed: Combine CSS left a whole run of adjacent stylesheets uncombined when one of them couldn't be combined (WordPress's block library starts with an @import), while Arva SEO's renderer got a bundle for the files around it, so the stored optimized CSS matched none of them and they stayed render-blocking on posts. The others are now combined around it, in order.
+* Fixed: with Combine CSS on, Arva SEO's renderer got WordPress's emoji styles and the other extras that "Remove unused WordPress extras" takes out for visitors, which split its stylesheets differently from visitors' pages. The renderer now gets the same page.
+* Fixed: Faster Google Fonts, "Serve them from your site", scheduled a download with the full address, cache busters included, so until the first copy was ready a theme adding v=time() scheduled another download on every uncached page view, and each one copied the fonts again and cleared the page caches. One download is scheduled, and a copy that exists is never made again. Copies no page used for 30 days, such as those earlier versions made for each page view, are deleted in the daily maintenance.
 
 = 2.10.4 =
 * Improved: Load styles faster (and Remove unused CSS) left icon font stylesheets that a theme or widget prints into the page itself, outside WordPress's styles, holding the page up: Solace Extra's menu, for example, prints Font Awesome from a CDN for every menu item with a sub-menu, so scripts after it waited for it and its 114 KB font loaded with the first paint. Known icon libraries (Font Awesome, Line Awesome, Bootstrap Icons, Remix Icon, Boxicons, Ionicons, Material Icons and Symbols, Themify, Simple Line Icons) now load once the page has loaded, or at the first interaction if that's sooner, with a noscript copy. Stylesheets from WordPress's queue keep the used-CSS delivery; developers can decide per stylesheet with the arvaseo_connector_late_icon_style filter.

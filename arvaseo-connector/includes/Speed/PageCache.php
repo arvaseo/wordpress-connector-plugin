@@ -62,6 +62,12 @@ final class PageCache {
 	/** Hosts' own plugins, which run the host's server cache: people may choose Arva SEO's instead. */
 	public const HOST_PLUGINS = array( 'sg-cachepress', 'litespeed-cache', 'breeze' );
 
+	/** Cache plugins' documented functions that clear every saved page (purge_host_cache()). */
+	private const CLEAR_FUNCTIONS = array( 'wp_cache_clear_cache', 'w3tc_pgcache_flush', 'rocket_clean_domain' );
+
+	/** Cache plugins' documented actions that clear every saved page: WP Fastest Cache, Cache Enabler, Hummingbird, Nginx Helper. */
+	private const CLEAR_HOOKS = array( 'wpfc_clear_all_cache', 'cache_enabler_clear_complete_cache', 'wphb_clear_page_cache', 'rt_nginx_helper_purge_all' );
+
 	/**
 	 * Whether everything was cleared in this request already (a settings page saves several options).
 	 *
@@ -222,7 +228,10 @@ final class PageCache {
 	/**
 	 * A change here altered every page (2.7.0): clear the host's own cache too, through the API
 	 * its plugin offers (SiteGround's Speed Optimizer, LiteSpeed Cache, WP Engine, Breeze), so
-	 * visitors don't get an old copy for hours.
+	 * visitors don't get an old copy for hours. Since 2.10.5 also the cache plugins with a
+	 * documented API to clear everything (WP Super Cache, W3 Total Cache, WP Rocket, WP Fastest
+	 * Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper): their saved pages may use
+	 * minified and combined files that a clean-up deletes.
 	 */
 	public static function purge_host_cache(): void {
 		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
@@ -234,6 +243,42 @@ final class PageCache {
 		if ( class_exists( 'WpeCommon', false ) && is_callable( $wp_engine ) ) {
 			call_user_func( $wp_engine );
 		}
+		foreach ( self::CLEAR_FUNCTIONS as $function ) {
+			if ( function_exists( $function ) ) {
+				call_user_func( $function );
+			}
+		}
+		foreach ( self::CLEAR_HOOKS as $hook ) {
+			if ( has_action( $hook ) ) {
+				do_action( $hook ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- the cache plugins' documented purge hooks.
+			}
+		}
+		$comet = array( 'comet_cache', 'clear' );
+		if ( class_exists( 'comet_cache', false ) && is_callable( $comet ) ) {
+			call_user_func( $comet );
+		}
+	}
+
+	/**
+	 * Whether Arva SEO clears a cache plugin's saved pages with its own (purge_host_cache()): the
+	 * plugin's documented API to clear everything is there.
+	 *
+	 * @param string $slug Plugin folder.
+	 */
+	public static function can_clear( string $slug ): bool {
+		$apis = array(
+			'wp-super-cache'          => static fn (): bool => function_exists( 'wp_cache_clear_cache' ),
+			'w3-total-cache'          => static fn (): bool => function_exists( 'w3tc_pgcache_flush' ),
+			'wp-rocket'               => static fn (): bool => function_exists( 'rocket_clean_domain' ),
+			'wp-fastest-cache'        => static fn (): bool => (bool) has_action( 'wpfc_clear_all_cache' ),
+			'cache-enabler'           => static fn (): bool => (bool) has_action( 'cache_enabler_clear_complete_cache' ),
+			'hummingbird-performance' => static fn (): bool => (bool) has_action( 'wphb_clear_page_cache' ),
+			'comet-cache'             => static fn (): bool => class_exists( 'comet_cache', false ) && is_callable( array( 'comet_cache', 'clear' ) ),
+			'sg-cachepress'           => static fn (): bool => function_exists( 'sg_cachepress_purge_cache' ),
+			'litespeed-cache'         => static fn (): bool => (bool) has_action( 'litespeed_purge_all' ),
+			'breeze'                  => static fn (): bool => (bool) has_action( 'breeze_clear_all_cache' ),
+		);
+		return isset( $apis[ $slug ] ) && $apis[ $slug ]();
 	}
 
 	/**

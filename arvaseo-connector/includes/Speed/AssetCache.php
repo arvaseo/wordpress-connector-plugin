@@ -18,8 +18,15 @@ defined( 'ABSPATH' ) || exit;
  * nothing ever made room again: once a folder was full (in hours, on a theme that versions its
  * files with the time), every changed file kept its original, unminified and uncombined address
  * for good. Now a reused file records its use (its modified time, at most hourly), and a full
- * folder schedules one background clean-up: files no page used for a day go, then every saved
+ * folder schedules one background clean-up: files no page used for a week go, then every saved
  * page is made again, so no saved page can point at a deleted file.
+ *
+ * That last step only holds for caches Arva SEO clears: its own, the host's (SiteGround, LiteSpeed,
+ * WP Engine, Breeze), Cloudflare once connected, and cache plugins with a documented API to clear
+ * everything (PageCache::can_clear()). Since 2.10.5 nothing is deleted while any other page cache
+ * may keep pages: another cache plugin, an advanced-cache.php that isn't one of those, Kinsta's
+ * or Cloudways' server cache, SiteGround's without its plugin, or Cloudflare without the
+ * connection. A full folder then keeps the original addresses for new files, as before 2.10.3.
  */
 final class AssetCache {
 
@@ -33,6 +40,9 @@ final class AssetCache {
 
 	/** At most one clean-up in this time. */
 	private const GAP = 6 * HOUR_IN_SECONDS;
+
+	/** What kept the last clean-up from deleting anything (not autoloaded), so it's logged once. */
+	public const KEPT = 'arvaseo_connector_asset_cache_kept';
 
 	/**
 	 * Hooks.
@@ -73,20 +83,74 @@ final class AssetCache {
 
 	/**
 	 * Files unused this long aren't in any saved page: a page lives PageCache::ttl() (10 hours by
-	 * default) and the files it uses were touched when it was made, an hour at most before.
+	 * default) and the files it uses were touched when it was made, an hour at most before. A week
+	 * at least, for caches in front of the site that nothing here can see.
 	 */
 	public static function unused_after(): int {
-		return max( DAY_IN_SECONDS, PageCache::ttl() + 2 * self::TOUCH_EVERY );
+		return max( WEEK_IN_SECONDS, PageCache::ttl() + 2 * self::TOUCH_EVERY );
+	}
+
+	/**
+	 * A cache that may keep saved pages using generated files, and that Arva SEO can't clear when
+	 * it deletes them: its name, or null when there's none.
+	 */
+	public static function cleanup_blocker(): ?string {
+		$active  = Fixes::active_plugin_slugs();
+		$known   = array_merge( PageCache::CACHE_PLUGINS, PageCache::HOST_PLUGINS );
+		$blocker = null;
+		foreach ( $known as $slug ) {
+			if ( in_array( $slug, $active, true ) && ! PageCache::can_clear( $slug ) ) {
+				$blocker = Fixes::plugin_names()[ $slug ] ?? $slug;
+				break;
+			}
+		}
+		$host = PageCache::host_cache();
+		if ( null === $blocker && null !== $host && ( 'kinsta' === $host['id'] || ( 'cloudways' === $host['id'] && ! PageCache::can_clear( 'breeze' ) ) ) ) {
+			$blocker = $host['name'];
+		}
+		if ( null === $blocker ) {
+			$blocker = PageCache::uncleared_host_cache();
+		}
+		if ( null === $blocker && defined( 'WP_CACHE' ) && WP_CACHE && file_exists( PageCache::dropin() ) && ! PageCache::dropin_is_ours() && array() === array_intersect( $known, $active ) ) {
+			$blocker = __( 'another page cache (wp-content/advanced-cache.php)', 'arvaseo-connector' );
+		}
+		if ( null === $blocker && Cloudflare::seen() && ! Cloudflare::connected() ) {
+			$blocker = __( 'Cloudflare (not connected to Arva SEO)', 'arvaseo-connector' );
+		}
+		/**
+		 * What keeps the generated-file clean-up from deleting minified and combined files: a
+		 * cache that may still serve saved pages using them and that Arva SEO can't clear. Return
+		 * null when the host's cache is cleared some other way, or a name to keep the files.
+		 *
+		 * @param string|null $blocker The cache's name, or null.
+		 */
+		$blocker = apply_filters( 'arvaseo_connector_asset_cleanup_blocker', $blocker );
+		return is_string( $blocker ) && '' !== $blocker ? $blocker : null;
 	}
 
 	/**
 	 * The clean-up: delete minified copies and bundles no page used lately, then have every saved
-	 * page made again (this plugin's page cache, the host's and Cloudflare's).
+	 * page made again (this plugin's page cache, the host's, Cloudflare's and the cache plugins'
+	 * Arva SEO can clear). Nothing is deleted while another cache may keep pages.
 	 *
 	 * @return int Files deleted.
 	 */
 	public static function rotate(): int {
 		update_option( self::LAST, time(), false );
+		$blocker = self::cleanup_blocker();
+		if ( null !== $blocker ) {
+			if ( get_option( self::KEPT ) !== $blocker ) {
+				update_option( self::KEPT, $blocker, false );
+				AuditLogger::info(
+					'speed.assets_kept',
+					/* translators: %s: a page cache, such as WP Fastest Cache. */
+					sprintf( __( 'PageSpeed fixes: unused minified and combined files were kept, because %s may still have saved pages that use them and Arva SEO can’t clear it. Until there’s room, new files keep their original addresses.', 'arvaseo-connector' ), $blocker ),
+					array( 'cache' => $blocker )
+				);
+			}
+			return 0;
+		}
+		delete_option( self::KEPT );
 		$before  = time() - self::unused_after();
 		$removed = AssetMinifier::remove_unused( $before ) + AssetBundles::remove_unused( $before );
 		if ( $removed > 0 ) {

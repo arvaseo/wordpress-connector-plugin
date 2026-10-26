@@ -199,5 +199,7 @@ final class CronManager {
 		\ArvaSEO\Connector\Security\Repairs::purge();
 		// Optimized CSS of page types that are no longer tracked.
 		\ArvaSEO\Connector\Speed\CssOptimizer::prune_results();
+		// Google Fonts copies no page used for 30 days.
+		\ArvaSEO\Connector\Speed\LocalFonts::remove_unused();
 	}
 }

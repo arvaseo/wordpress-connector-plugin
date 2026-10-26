@@ -250,7 +250,7 @@ final class CssOptimizer {
 			return $html;
 		}
 		// A signed-out renderer cannot reproduce administrator-only trial preparations.
-		foreach ( array( 'combine_css', 'minify_css', 'minify_inline_css', 'combine_inline_css', 'combine_external_css', 'font_display_swap', 'google_fonts' ) as $fix ) {
+		foreach ( array( 'combine_css', 'minify_css', 'minify_inline_css', 'combine_inline_css', 'combine_external_css', 'font_display_swap', 'google_fonts', 'wp_extras' ) as $fix ) {
 			if ( 'trying' === Fixes::state( $fix ) && Fixes::applies( $fix ) ) {
 				return $html;
 			}

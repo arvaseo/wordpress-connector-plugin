@@ -181,6 +181,11 @@ final class Runtime {
 			if ( Fixes::applies( 'combine_css' ) ) {
 				self::prepare_css();
 				AssetCombiner::on_page();
+				// The extras visitors don't get change the head too (WordPress's emoji styles sit
+				// between stylesheets and end a run to combine), so the renderer doesn't get them either.
+				if ( Fixes::applies( 'wp_extras' ) ) {
+					self::remove_extras();
+				}
 			}
 			return;
 		}

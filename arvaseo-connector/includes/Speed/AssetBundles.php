@@ -147,6 +147,21 @@ final class AssetBundles {
 	}
 
 	/**
+	 * Whether one file or approved snippet can go into a bundle at all: it can be read, and (CSS)
+	 * its addresses can be moved. A run that couldn't be combined is split around those that can't.
+	 *
+	 * @param array{source:string,url:string,text?:string,id?:string} $part Part.
+	 * @param string                                                  $kind css or js.
+	 */
+	public static function combinable( array $part, string $kind ): bool {
+		if ( ! in_array( $kind, array( 'css', 'js' ), true ) ) {
+			return false;
+		}
+		$asset = self::part( $part, $kind );
+		return null !== $asset && ( 'js' === $kind || null !== self::css( $asset['text'], $asset['url'], $asset['source'] ) );
+	}
+
+	/**
 	 * A validated text part. Local URL resolution never gains an HTTP fallback.
 	 *
 	 * @param array{source:string,url:string,text?:string,id?:string} $part Part.

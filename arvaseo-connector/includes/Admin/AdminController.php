@@ -977,12 +977,16 @@ final class AdminController {
 			if ( isset( $_POST['js_loading_mode'] ) ) {
 				$choices['js_loading_mode'] = sanitize_key( wp_unslash( $_POST['js_loading_mode'] ) );
 			}
+			if ( isset( $_POST['move_jquery_shown'] ) ) {
+				$choices['move_jquery'] = ! empty( $_POST['move_jquery'] );
+			}
 		} elseif ( 'css_delivery' === $fix ) {
 			$fix     = 'critical_css';
 			$choices = array(
 				'ucss_inline'      => ! empty( $_POST['ucss_inline'] ),
 				'ccss_per_url'     => ! empty( $_POST['ccss_per_url'] ),
 				'css_async_inline' => ! empty( $_POST['css_async_inline'] ),
+				'late_icons'       => ! empty( $_POST['late_icons'] ),
 			);
 		} elseif ( in_array( $fix, array( 'combine_inline_css', 'combine_inline_js' ), true ) ) {
 			$field   = $fix . '_ids';

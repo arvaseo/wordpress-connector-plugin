@@ -255,7 +255,7 @@ final class AssetCombiner {
 	 * @param array{start: int, end: int, open: string, tag: string, close: bool, body: string} $token Token.
 	 * @param bool                                                                              $css CSS enabled.
 	 * @param bool                                                                              $js JavaScript enabled.
-	 * @return array{start: int, end: int, open: string, source: string, kind: string, key: string}|null
+	 * @return array{start: int, end: int, open: string, source: string, kind: string, key: string, part: array{source: string, url: string, text?: string, id?: string}}|null
 	 */
 	private static function asset( array $token, bool $css, bool $js ): ?array {
 		$inline = InlineAssets::inspect( $token );
@@ -367,10 +367,15 @@ final class AssetCombiner {
 	}
 
 	/**
-	 * A failed bundle leaves every original byte and resource in place.
+	 * A failed bundle leaves every original byte and resource in place. When it failed because some
+	 * of its files can't be combined (WordPress's block library starts with an @import, for
+	 * instance), the files around them are still combined, in order, and those stay where they
+	 * are: until 2.10.5 one such file left the whole run uncombined, while Arva SEO's renderer,
+	 * whose run that file didn't reach, got a bundle, so the page's stored CSS matched none of
+	 * its stylesheets.
 	 *
-	 * @param array<int, array{start: int, end: int, open: string, source: string, kind: string, key: string}> $run Run.
-	 * @param array<int, array{start: int, length: int, html: string}>                                         $edits Pending edits.
+	 * @param array<int, array{start: int, end: int, open: string, source: string, kind: string, key: string, part: array{source: string, url: string, text?: string, id?: string}}> $run Run.
+	 * @param array<int, array{start: int, length: int, html: string}>                                                                                                               $edits Pending edits.
 	 */
 	private static function finish( array $run, array &$edits ): void {
 		if ( count( $run ) < 2 ) {
@@ -378,6 +383,20 @@ final class AssetCombiner {
 		}
 		$url = AssetBundles::create_parts( array_column( $run, 'part' ), $run[0]['kind'] );
 		if ( null === $url ) {
+			$part = array();
+			$cut  = false;
+			foreach ( $run as $asset ) {
+				if ( AssetBundles::combinable( $asset['part'], $asset['kind'] ) ) {
+					$part[] = $asset;
+					continue;
+				}
+				$cut = true;
+				self::finish( $part, $edits );
+				$part = array();
+			}
+			if ( $cut ) {
+				self::finish( $part, $edits );
+			}
 			return;
 		}
 		$open = 'css' === $run[0]['kind'] ? (string) preg_replace( '/\A<style\b/i', '<link rel="stylesheet"', $run[0]['open'] ) : $run[0]['open']; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- replaces the original approved styles in place.
