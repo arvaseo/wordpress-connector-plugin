@@ -91,8 +91,8 @@ final class LocalFonts {
 			return;
 		}
 		$key = self::key( $src );
-		if ( file_exists( self::dir() . '/' . $key . '.css' ) ) {
-			return; // Copied already (an event scheduled before the copy was ready, or twice).
+		if ( file_exists( self::dir() . '/' . $key . '.css' ) || get_transient( 'arvaseo_connector_fonts_failed_' . $key ) ) {
+			return; // Copied already (an event scheduled before the copy was ready, or twice), or failed today.
 		}
 		$css = self::fetch( self::canonical( $src ), 262144 );
 		if ( null === $css || ! str_contains( $css, '@font-face' ) ) {

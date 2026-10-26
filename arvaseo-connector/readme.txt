@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.7
+Stable tag: 2.10.8
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.10.8 =
+Fixes phone layouts and icons that optimized CSS could break on some themes. Optimized styles are downloaded again automatically, at no cost.
+
 = 2.10.7 =
 Optimized CSS pages still use is no longer deleted on sites with many page types. Compressing many images no longer empties other cache plugins once per image. Saved pages are refilled sooner after a clear. "Move jQuery down the page" also waits for scripts a consent tool holds back.
 
@@ -309,6 +312,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.8 =
+* Fixed: optimized CSS (Load styles faster and Remove unused CSS) lost rules on some themes, because it was saved with everything from a "<" to the next ">" taken out (since 1.6.0; 2.10.0.1 fixed it for 2.10.0). Media queries written as (width<=1023.98px), which many themes use for their phone menu and header, icons drawn with SVG in data: addresses (menu arrows, form icons) and content:"<" lost their rules, sometimes with the rest of the stylesheet. Optimized CSS is now kept exactly as Arva SEO worked it out; a stylesheet whose CSS contains "</style" or a NUL byte loads as it is.
+* Fixed: optimized CSS saved by earlier versions is downloaded again after updating, at no cost and without using page optimizations, at most 10 page types each run, also while both CSS fixes are off. Until then, and when Arva SEO no longer has a page type's results, it keeps its current CSS. A page type no longer tracked (on sites with more than 300) is downloaded again when a page uses its CSS. A download that brings the same CSS no longer clears page caches.
+* Fixed: after a Google Fonts copy failed, downloads already waiting for the same stylesheet tried again that day instead of waiting a day.
 
 = 2.10.7 =
 * Fixed: on a site with more than 300 page types (an Elementor site with many pages, each with its own stylesheet, or "Generate CSS per URL"), 2.10.3 to 2.10.6 deleted the optimized CSS of the page types noted longest ago, even while pages used them; those pages then lost their optimized CSS, were sent again and pushed out the next ones, over and over, each time using a page optimization. Page types now make room by their last use, and their CSS is kept until no page has used it for 30 days.
