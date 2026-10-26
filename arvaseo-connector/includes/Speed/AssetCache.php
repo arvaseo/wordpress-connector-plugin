@@ -59,13 +59,14 @@ final class AssetCache {
 	}
 
 	/**
-	 * A generated file a page uses again: note when, at most hourly.
+	 * A generated file a page uses again: note when, at most hourly (or as often as asked).
 	 *
-	 * @param string $file Generated file.
+	 * @param string $file  Generated file.
+	 * @param int    $every Seconds between two notes.
 	 */
-	public static function used( string $file ): void {
+	public static function used( string $file, int $every = self::TOUCH_EVERY ): void {
 		$time = @filemtime( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a file removed meanwhile is handled.
-		if ( false !== $time && $time < time() - self::TOUCH_EVERY && ! is_link( $file ) ) {
+		if ( false !== $time && $time < time() - $every && ! is_link( $file ) ) {
 			@touch( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- last-use time of our own generated file.
 		}
 	}

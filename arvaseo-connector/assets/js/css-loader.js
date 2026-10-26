@@ -2,46 +2,69 @@
 (function () {
   if (window.__arvaseoCssLoader) return;
   window.__arvaseoCssLoader = true;
-  // The @keyframes names that the styles in use define (not those still waiting, or for print).
-  function keyframes() {
-    var names = {};
-    function walk(rules) {
-      for (var i = 0; i < rules.length; i++) {
-        if (rules[i].type === 7) names[rules[i].name] = true;
-        else if (rules[i].cssRules) walk(rules[i].cssRules);
-      }
+  function rules(sheet) {
+    try {
+      return (sheet && sheet.cssRules) || [];
+    } catch (e) {
+      return []; // Another site's stylesheet can't be read.
     }
+  }
+  // The @keyframes names some rules define, inside @media and @supports too.
+  function names(list, into) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].type === 7) into[list[i].name] = true;
+      else if (list[i].cssRules) names(list[i].cssRules, into);
+    }
+    return into;
+  }
+  // The @keyframes names the styles in use define (not those still waiting, or for print),
+  // worked out once; each stylesheet that arrives adds its own.
+  var defined = null;
+  function inUse() {
+    if (defined) return defined;
+    defined = {};
     var sheets = document.styleSheets || [];
     for (var i = 0; i < sheets.length; i++) {
       try {
         var media = sheets[i].media && sheets[i].media.mediaText;
         if (sheets[i].disabled || (media && window.matchMedia && !window.matchMedia(media).matches)) continue;
-        walk(sheets[i].cssRules || []);
-      } catch (e) {} // Another site's stylesheet can't be read.
+        names(rules(sheets[i]), defined);
+      } catch (e) {}
     }
-    return names;
+    return defined;
   }
   // The page's scripts may have started entrance animations before the full styles arrived
   // (Elementor adds "animated fadeInUp" to what's on screen), and the used CSS couldn't play them.
-  // Animations that start only because those styles arrived would play over content already
-  // shown, so they end at once; endless ones (spinners) and those already running are left alone.
-  function settle(before) {
-    if (!document.getAnimations) return;
+  // Animations that start only because a stylesheet arrived with their keyframes would play over
+  // content already shown, so they end at once. Endless ones (spinners), those already running,
+  // and those whose keyframes were there before (or came from elsewhere) are left alone.
+  function settle(link) {
+    var before = inUse();
+    var arrived = names(rules(link.sheet), {});
+    var fresh = {};
+    var any = false;
+    for (var name in arrived) {
+      if (!before[name]) {
+        fresh[name] = true;
+        any = true;
+      }
+      before[name] = true;
+    }
+    if (!any || !document.getAnimations) return;
     document.getAnimations().forEach(function (animation) {
       try {
-        var name = animation.animationName;
         var time = animation.currentTime;
-        if (name && !before[name] && isFinite(animation.effect.getComputedTiming().endTime) && (time === null || time < 50)) {
+        if (fresh[animation.animationName] && isFinite(animation.effect.getComputedTiming().endTime) && (time === null || time < 50)) {
           animation.finish();
         }
       } catch (e) {}
     });
   }
   function reveal(link) {
-    var before = keyframes();
+    inUse(); // Before this stylesheet is in use.
     link.media = link.getAttribute('data-arvaseo-media') || 'all';
     link.removeAttribute('data-arvaseo-async');
-    settle(before);
+    settle(link);
   }
   document.querySelectorAll('link[data-arvaseo-async]').forEach(function (link) {
     link.addEventListener('load', function () { reveal(link); }, { once: true });
@@ -54,12 +77,9 @@
     if (done) return;
     done = true;
     events.forEach(function (event) { removeEventListener(event, go); });
-    var before = keyframes();
+    inUse(); // Before any full stylesheet is in use.
     document.querySelectorAll('link[data-arvaseo-href]').forEach(function (link) {
-      link.addEventListener('load', function () {
-        settle(before);
-        before = keyframes();
-      }, { once: true });
+      link.addEventListener('load', function () { settle(link); }, { once: true });
       link.href = link.getAttribute('data-arvaseo-href');
       link.media = link.getAttribute('data-arvaseo-media') || 'all';
     });

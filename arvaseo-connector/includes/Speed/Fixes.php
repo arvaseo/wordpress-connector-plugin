@@ -838,13 +838,16 @@ final class Fixes {
 	/**
 	 * What visitors get changed on every page: page caches (Cloudflare here) clear their copies.
 	 *
-	 * @param string $why fix, choices, css, webp, fonts or exclusions.
+	 * @param string $why Someone's change: fix, choices, exclusions, cleared, regenerate, webp,
+	 *                    site or upgrade. Background ones, which can come many in a row: compress,
+	 *                    css, fonts, external_assets. Or assets (unused generated files deleted).
 	 */
 	public static function pages_changed( string $why ): void {
 		/**
 		 * After a change that alters what visitors get on the site's pages.
 		 *
-		 * @param string $why fix, choices, css, webp, fonts or exclusions.
+		 * @param string $why fix, choices, exclusions, cleared, regenerate, webp, site, upgrade,
+		 *                    assets, or a background change: compress, css, fonts, external_assets.
 		 */
 		do_action( 'arvaseo_connector_pages_changed', $why );
 	}

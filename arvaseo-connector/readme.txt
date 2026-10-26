@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.6
+Stable tag: 2.10.7
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -139,7 +139,7 @@ Yes, from 1.7.0, once an administrator ticks "Let Arva SEO switch these fixes" o
 
 Yes, from 2.6.0, with Page caching (off until you turn it on). Each page is saved as ready-made HTML the first time a visitor opens it, and the next visitors get that copy without WordPress running. On Apache and LiteSpeed, rules at the top of .htaccess let the server send it without PHP; the plugin keeps a copy of your .htaccess from before it changed it, which you can download from the Speed page. Elsewhere (nginx, for example) a small advanced-cache.php file sends it before WordPress loads, and the plugin adds `define( 'WP_CACHE', true );` to wp-config.php, or tells you the line to add when it can't.
 
-Turning it on checks your homepage from the server: made once, then served from the cache. If it isn't, everything is taken out again. Signed-in users, visitors with a comment, password or cart, carts, checkouts and account pages, searches, addresses with a query (tracking ones like utm_source are fine) and pages that set a cookie are never cached, nor pages you leave alone. Saved pages are made again after 10 hours; a post's pages are cleared when it changes, and every page when your theme, menus, widgets or a fix change, or when you press Clear the cache (also in the toolbar). Cloudflare's copy is cleared too when it's connected. After clearing, your main pages are refilled in the background, a few a minute. Turn on "A separate copy for phones" only if your theme sends phones different HTML.
+Turning it on checks your homepage from the server: made once, then served from the cache. If it isn't, everything is taken out again. Signed-in users, visitors with a comment, password or cart, carts, checkouts and account pages, searches, addresses with a query (tracking ones like utm_source are fine) and pages that set a cookie are never cached, nor pages you leave alone. Saved pages are made again after 10 hours; a post's pages are cleared when it changes, and every page when your theme, menus, widgets or a fix change, or when you press Clear the cache (also in the toolbar). Cloudflare's copy is cleared too when it's connected. After clearing, your main pages are refilled in the background, a few at a time. Turn on "A separate copy for phones" only if your theme sends phones different HTML.
 
 If WP Rocket, W3 Total Cache or another cache plugin is active, Arva SEO leaves page caching to it. If your host caches pages itself (SiteGround, LiteSpeed Cache, WP Engine, Kinsta, Cloudways), that's kept by default, and you can choose Arva SEO's instead; the card says how to turn the host's cache off. Turning it off, deactivating or deleting the plugin removes the rules, the file, the line it added and the saved pages.
 
@@ -213,6 +213,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.10.7 =
+Optimized CSS pages still use is no longer deleted on sites with many page types. Compressing many images no longer empties other cache plugins once per image. Saved pages are refilled sooner after a clear. "Move jQuery down the page" also waits for scripts a consent tool holds back.
 
 = 2.10.6 =
 With Load styles faster or Remove unused CSS, entrance animations (Elementor's and similar) no longer play a second time when the rest of the styles arrive at the first scroll or tap. Optimized CSS that is still being worked out can no longer be left waiting after an interrupted background run.
@@ -306,6 +309,14 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.10.7 =
+* Fixed: on a site with more than 300 page types (an Elementor site with many pages, each with its own stylesheet, or "Generate CSS per URL"), 2.10.3 to 2.10.6 deleted the optimized CSS of the page types noted longest ago, even while pages used them; those pages then lost their optimized CSS, were sent again and pushed out the next ones, over and over, each time using a page optimization. Page types now make room by their last use, and their CSS is kept until no page has used it for 30 days.
+* Fixed: optimized CSS that finished while visitors' pages noted new page types could lose those page types, which then waited until the next uncached visit. A page type marked ready whose CSS file is gone (a host's clean-up, a migration) is asked for again instead of waiting for good, and CSS files are written in one step.
+* Fixed: since 2.10.5, every background change (each compressed image, each Google Fonts copy, each batch of optimized CSS) emptied the whole page cache of WP Rocket, W3 Total Cache, WP Super Cache and the other cache plugins Arva SEO can clear, with their refills. Background changes now clear those caches and the host's at most once every five minutes, and once more at the end; a change you make clears them straight away.
+* Fixed: Page caching refilled 5 pages per background run, and runs only happen when WordPress makes a page, so on a quiet site cleared pages (and their optimized CSS) could wait hours. A run now refills for up to 10 seconds, and pages queued or cleared again during a run are no longer lost.
+* Fixed: "Move jQuery down the page" no longer moves it past scripts a consent tool holds back (type="text/plain", as Complianz, CookieYes, Cookiebot and others use) that may use jQuery once they're allowed, or past an external script before it that may add scripts (a consent tool or tag manager from another site, or a site file that adds scripts).
+* Changed: when the full stylesheets arrive, only animations whose keyframes came with that stylesheet end at once, and the stylesheets in use are read once instead of at each arrival.
 
 = 2.10.6 =
 * Fixed: with Load styles faster or Remove unused CSS, an entrance animation that a page's scripts start as content comes into view (Elementor's fadeInUp, for one) had no keyframes in the used CSS, so the element appeared without it; then, when the full stylesheets arrived at the visitor's first scroll, tap or key press, every such animation already on screen played again over content the visitor was reading. Animations that start only because the full styles arrived now end at once; endless animations (spinners) and those already running are left alone. Arva SEO's servers will also keep these animations in the used CSS.

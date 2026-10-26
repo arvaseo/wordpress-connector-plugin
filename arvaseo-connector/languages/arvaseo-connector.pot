@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.10.5\n"
+"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.10.7\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T02:30:29+00:00\n"
+"POT-Creation-Date: 2026-10-26T07:19:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: arvaseo-connector\n"
@@ -1507,7 +1507,7 @@ msgid "SEO plugin"
 msgstr ""
 
 #: includes/Admin/views/content.php:198
-#: includes/Speed/CssOptimizer.php:1149
+#: includes/Speed/CssOptimizer.php:1260
 msgid "Homepage"
 msgstr ""
 
@@ -2078,14 +2078,14 @@ msgstr ""
 #: includes/Admin/views/inventory.php:110
 #: includes/Admin/views/speed.php:328
 #: includes/Admin/views/speed.php:1098
-#: includes/Speed/Fixes.php:861
+#: includes/Speed/Fixes.php:864
 msgid "On"
 msgstr ""
 
 #: includes/Admin/views/inventory.php:110
 #: includes/Admin/views/speed.php:330
 #: includes/Admin/views/speed.php:1100
-#: includes/Speed/Fixes.php:859
+#: includes/Speed/Fixes.php:862
 msgid "Off"
 msgstr ""
 
@@ -3226,7 +3226,7 @@ msgstr[1] ""
 #. translators: 1: pages refilled so far, 2: pages to refill.
 #: includes/Admin/views/speed.php:629
 #, php-format
-msgid "Refilling the cache in the background: %1$s of %2$s pages, a few a minute."
+msgid "Refilling the cache in the background: %1$s of %2$s pages, a few at a time."
 msgstr ""
 
 #: includes/Admin/views/speed.php:634
@@ -3258,7 +3258,7 @@ msgid "Refill the cache in the background"
 msgstr ""
 
 #: includes/Admin/views/speed.php:647
-msgid "After it’s cleared, your homepage, latest posts and pages, and main categories are visited a few a minute, so the first visitor gets a fast page too."
+msgid "After it’s cleared, your homepage, latest posts and pages, and main categories are visited in the background, a few at a time, so the first visitor gets a fast page too."
 msgstr ""
 
 #: includes/Admin/views/speed.php:648
@@ -3581,7 +3581,7 @@ msgid "Move jQuery down the page"
 msgstr ""
 
 #: includes/Admin/views/speed.php:981
-msgid "jQuery stops holding up the first paint: it moves from the head to just before the first script that may use it. It stays in the head when something before it may run at any time, such as Google Tag Manager or another async script. Turning this on returns this fix to preview until you check your pages again, including anything a tag manager adds."
+msgid "jQuery stops holding up the first paint: it moves from the head to just before the first script that may use it. It stays in the head when something before it may run at any time and use jQuery: Google Tag Manager or another async script, a consent tool or tag manager loaded from another website, or a script a consent tool holds back until the visitor agrees. Turning this on returns this fix to preview until you check your pages again, including anything a tag manager adds."
 msgstr ""
 
 #: includes/Admin/views/speed.php:983
@@ -4965,22 +4965,22 @@ msgstr ""
 msgid "Couldn’t update this site’s details in Arva SEO."
 msgstr ""
 
-#: includes/Speed/AssetCache.php:115
+#: includes/Speed/AssetCache.php:116
 msgid "another page cache (wp-content/advanced-cache.php)"
 msgstr ""
 
-#: includes/Speed/AssetCache.php:118
+#: includes/Speed/AssetCache.php:119
 msgid "Cloudflare (not connected to Arva SEO)"
 msgstr ""
 
 #. translators: %s: a page cache, such as WP Fastest Cache.
-#: includes/Speed/AssetCache.php:147
+#: includes/Speed/AssetCache.php:148
 #, php-format
 msgid "PageSpeed fixes: unused minified and combined files were kept, because %s may still have saved pages that use them and Arva SEO can’t clear it. Until there’s room, new files keep their original addresses."
 msgstr ""
 
 #. translators: %d: number of files.
-#: includes/Speed/AssetCache.php:161
+#: includes/Speed/AssetCache.php:162
 #, php-format
 msgid "PageSpeed fixes: %d unused minified or combined file was deleted to make room."
 msgid_plural "PageSpeed fixes: %d unused minified or combined files were deleted to make room."
@@ -5030,92 +5030,92 @@ msgid "Cloudflare answered %1$d%2$s"
 msgstr ""
 
 #. translators: %d: number of page types.
-#: includes/Speed/CssOptimizer.php:937
+#: includes/Speed/CssOptimizer.php:1012
 #, php-format
 msgid "PageSpeed fixes: optimized CSS is ready for %d page type."
 msgid_plural "PageSpeed fixes: optimized CSS is ready for %d page types."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Speed/CssOptimizer.php:991
+#: includes/Speed/CssOptimizer.php:1102
 msgid "PageSpeed fixes: optimized CSS will be worked out again."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1088
+#: includes/Speed/CssOptimizer.php:1199
 msgid "This address isn’t on the website connected to Arva SEO."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1123
+#: includes/Speed/CssOptimizer.php:1234
 msgid "Your host’s bot protection blocked Arva SEO from loading the page. Arva SEO now tries again under its own name, ArvaSEO-Bot; if it still fails, ask your host to allow ArvaSEO-Bot."
 msgstr ""
 
 #. translators: %d: HTTP status, such as 503.
-#: includes/Speed/CssOptimizer.php:1127
+#: includes/Speed/CssOptimizer.php:1238
 #, php-format
 msgid "The page answered with a server error (%d)."
 msgstr ""
 
 #. translators: %d: HTTP status, such as 410.
-#: includes/Speed/CssOptimizer.php:1131
+#: includes/Speed/CssOptimizer.php:1242
 #, php-format
 msgid "The page answered with an error (%d)."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1132
+#: includes/Speed/CssOptimizer.php:1243
 msgid "The page didn’t load."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1135
+#: includes/Speed/CssOptimizer.php:1246
 msgid "The page took too long to load."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1136
+#: includes/Speed/CssOptimizer.php:1247
 msgid "The page’s styles are too large to optimize."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1137
+#: includes/Speed/CssOptimizer.php:1248
 msgid "The page loads from an address Arva SEO doesn’t load (a private network)."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1138
+#: includes/Speed/CssOptimizer.php:1249
 msgid "Arva SEO couldn’t work this page out."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1150
+#: includes/Speed/CssOptimizer.php:1261
 msgid "Blog page"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1151
+#: includes/Speed/CssOptimizer.php:1262
 msgid "Not found page"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1152
+#: includes/Speed/CssOptimizer.php:1263
 msgid "Search results"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1153
+#: includes/Speed/CssOptimizer.php:1264
 msgid "Categories"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1154
+#: includes/Speed/CssOptimizer.php:1265
 msgid "Tags"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1155
+#: includes/Speed/CssOptimizer.php:1266
 msgid "Author pages"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1156
+#: includes/Speed/CssOptimizer.php:1267
 msgid "Date archives"
 msgstr ""
 
 #. translators: %s: a post type's name, such as Products.
-#: includes/Speed/CssOptimizer.php:1165
+#: includes/Speed/CssOptimizer.php:1276
 #, php-format
 msgid "%s list"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1171
+#: includes/Speed/CssOptimizer.php:1282
 msgid "Other pages"
 msgstr ""
 
@@ -5438,15 +5438,15 @@ msgstr ""
 msgid "PageSpeed fix choices saved."
 msgstr ""
 
-#: includes/Speed/Fixes.php:860
+#: includes/Speed/Fixes.php:863
 msgid "Trying (only you see it)"
 msgstr ""
 
-#: includes/Speed/Fixes.php:862
+#: includes/Speed/Fixes.php:865
 msgid "Done by another plugin"
 msgstr ""
 
-#: includes/Speed/Fixes.php:863
+#: includes/Speed/Fixes.php:866
 msgid "Not available on this server"
 msgstr ""
 
@@ -5618,93 +5618,93 @@ msgstr ""
 msgid "%1$s and %2$s"
 msgstr ""
 
-#: includes/Speed/PageCache.php:300
-#: includes/Speed/PageCache.php:310
+#: includes/Speed/PageCache.php:363
+#: includes/Speed/PageCache.php:373
 msgid "SiteGround’s dynamic cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:310
+#: includes/Speed/PageCache.php:373
 msgid "In Speed Optimizer → Caching, turn off Dynamic Caching. You can keep the plugin for its other settings."
 msgstr ""
 
-#: includes/Speed/PageCache.php:311
+#: includes/Speed/PageCache.php:374
 msgid "LiteSpeed Cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:311
+#: includes/Speed/PageCache.php:374
 msgid "In LiteSpeed Cache → Cache, set Enable Cache to Off. You can keep the plugin for its other settings."
 msgstr ""
 
-#: includes/Speed/PageCache.php:312
+#: includes/Speed/PageCache.php:375
 msgid "WP Engine’s page cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:312
+#: includes/Speed/PageCache.php:375
 msgid "WP Engine’s cache can’t be turned off from WordPress: ask WP Engine’s support to turn it off for this site. Until then it stays in front of Arva SEO’s."
 msgstr ""
 
-#: includes/Speed/PageCache.php:313
+#: includes/Speed/PageCache.php:376
 msgid "Kinsta’s page cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:313
+#: includes/Speed/PageCache.php:376
 msgid "Kinsta’s cache can’t be turned off from WordPress: ask Kinsta’s support to turn it off for this site. Until then it stays in front of Arva SEO’s."
 msgstr ""
 
-#: includes/Speed/PageCache.php:314
+#: includes/Speed/PageCache.php:377
 msgid "Cloudways’ Varnish cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:314
+#: includes/Speed/PageCache.php:377
 msgid "In Cloudways → your application → Application Settings, turn off Varnish, and turn off Breeze’s page cache."
 msgstr ""
 
 #. translators: %s: the host's cache, such as SiteGround's dynamic cache.
-#: includes/Speed/PageCache.php:349
+#: includes/Speed/PageCache.php:412
 #, php-format
 msgid "Page caching: Arva SEO’s page cache may be used instead of %s."
 msgstr ""
 
 #. translators: %s: the host's cache, such as SiteGround's dynamic cache.
 #. translators: %s: the host's cache.
-#: includes/Speed/PageCache.php:349
-#: includes/Speed/PageCache.php:351
+#: includes/Speed/PageCache.php:412
+#: includes/Speed/PageCache.php:414
 msgid "the host’s cache"
 msgstr ""
 
 #. translators: %s: the host's cache.
-#: includes/Speed/PageCache.php:351
+#: includes/Speed/PageCache.php:414
 #, php-format
 msgid "Page caching: left to %s."
 msgstr ""
 
-#: includes/Speed/PageCache.php:360
+#: includes/Speed/PageCache.php:423
 msgid "Not on a multisite network yet: its sites share one advanced-cache.php file."
 msgstr ""
 
-#: includes/Speed/PageCache.php:364
+#: includes/Speed/PageCache.php:427
 msgid "WordPress can’t write to your wp-content folder, where saved pages go. Ask your host to make it writable."
 msgstr ""
 
-#: includes/Speed/PageCache.php:367
+#: includes/Speed/PageCache.php:430
 msgid "WordPress can’t change your wp-config.php file. Add the line below near the top of it, then turn this on."
 msgstr ""
 
 #. translators: %s: the other cache, such as WP Rocket.
-#: includes/Speed/PageCache.php:513
+#: includes/Speed/PageCache.php:576
 #, php-format
 msgid "Page caching was turned off: %s caches pages now."
 msgstr ""
 
-#: includes/Speed/PageCache.php:555
+#: includes/Speed/PageCache.php:618
 msgid "Page caching choices saved."
 msgstr ""
 
-#: includes/Speed/PageCache.php:723
+#: includes/Speed/PageCache.php:786
 msgid "Page caching: WP_CACHE was turned on in wp-config.php."
 msgstr ""
 
-#: includes/Speed/PageCache.php:1104
+#: includes/Speed/PageCache.php:1167
 msgid "Page caching: every saved page was cleared."
 msgstr ""
 

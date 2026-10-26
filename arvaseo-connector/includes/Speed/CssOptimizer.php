@@ -38,6 +38,16 @@ final class CssOptimizer {
 	/** At most this many page types are kept track of. */
 	private const MAX_ENTRIES = 300;
 
+	/** A stored result's last use (its file's modified time) moves forward at most this often. */
+	private const TOUCH_EVERY = DAY_IN_SECONDS;
+
+	/**
+	 * Results of page types no longer tracked are kept this long after their last use: pages
+	 * still use them (load() reads the file, whatever the index says), and making them again
+	 * would cost page optimizations.
+	 */
+	private const KEEP_UNUSED = 30 * DAY_IN_SECONDS;
+
 	/** External used-CSS copies stay bounded and disposable, like their JSON source results. */
 	private const MAX_USED_BYTES = 500000;
 
@@ -723,23 +733,40 @@ final class CssOptimizer {
 	 * @param array<string, array<string, mixed>> $index Index.
 	 */
 	private static function save_index( array $index ): void {
-		$dropped = array();
 		if ( count( $index ) > self::MAX_ENTRIES ) {
-			uasort( $index, static fn ( $a, $b ) => ( $b['at'] ?? 0 ) <=> ( $a['at'] ?? 0 ) );
-			$dropped = array_keys( array_slice( $index, self::MAX_ENTRIES, null, true ) );
-			$index   = array_slice( $index, 0, self::MAX_ENTRIES, true );
+			// The page types used longest ago go first: by their last use, not by when they were
+			// first noted, so page types in use for months aren't the ones dropped (and of those
+			// used as recently, the one noted first). Their results stay, as pages keep using
+			// them, until prune_results() finds them unused for a while.
+			$order = array();
+			foreach ( $index as $signature => $entry ) {
+				$order[ (string) $signature ] = array( self::last_used( (string) $signature, (int) ( $entry['at'] ?? 0 ) ), (int) ( $entry['at'] ?? 0 ) );
+			}
+			uasort( $order, static fn ( array $a, array $b ): int => $b <=> $a );
+			$index = array_intersect_key( $index, array_slice( $order, 0, self::MAX_ENTRIES, true ) );
 		}
 		update_option( self::INDEX, $index, false );
-		// A page type that is no longer tracked never uses its results again: they'd only fill uploads.
-		foreach ( $dropped as $signature ) {
-			self::delete_result( (string) $signature );
-		}
 	}
 
 	/**
-	 * Delete the stored results of every signature the index no longer has (daily maintenance).
-	 * Earlier versions left them behind when old page types were dropped: hundreds of MB on a
-	 * site whose page types changed often.
+	 * When a page type was last used: when its stored results were last read by a page (their
+	 * file's modified time, moved forward at most daily), or when it was noted.
+	 *
+	 * @param string $signature Signature.
+	 * @param int    $noted     When it was noted.
+	 */
+	private static function last_used( string $signature, int $noted ): int {
+		$time = @filemtime( self::dir() . '/' . $signature . '.json' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a page type without results has no file.
+		return max( $noted, false === $time ? 0 : $time );
+	}
+
+	/**
+	 * Delete the stored results of signatures the index no longer has and no page used for
+	 * KEEP_UNUSED (daily maintenance). Earlier versions left them behind for good when old page
+	 * types were dropped: hundreds of MB on a site whose page types changed often. 2.10.3 to
+	 * 2.10.6 deleted them as soon as their page type was dropped, although pages still used them:
+	 * on a site with more than 300 page types the oldest ones in use lost their CSS, were noted
+	 * again and dropped the next oldest, over and over, each time costing a page optimization.
 	 *
 	 * @return int Files deleted.
 	 */
@@ -748,11 +775,21 @@ final class CssOptimizer {
 		if ( ! is_array( $files ) || is_link( self::dir() ) ) {
 			return 0;
 		}
+		clearstatcache();
+		// Copies left by a write that was cut short (store()).
+		foreach ( glob( self::dir() . '/.*.tmp' ) ?: array() as $temp ) {
+			$time = @filemtime( $temp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a file removed meanwhile is skipped.
+			if ( ! is_link( $temp ) && is_file( $temp ) && false !== $time && $time < time() - HOUR_IN_SECONDS ) {
+				wp_delete_file( $temp );
+			}
+		}
 		$index   = self::index();
+		$before  = time() - self::KEEP_UNUSED;
 		$deleted = 0;
 		foreach ( $files as $file ) {
 			$signature = basename( $file, '.json' );
-			if ( ! isset( $index[ $signature ] ) && self::delete_result( $signature ) ) {
+			$used      = @filemtime( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a file removed meanwhile is skipped.
+			if ( ! isset( $index[ $signature ] ) && false !== $used && $used < $before && self::delete_result( $signature ) ) {
 				++$deleted;
 			}
 		}
@@ -788,13 +825,16 @@ final class CssOptimizer {
 			return; // A missing stylesheet, script or manifest reaches the 404 template too: only pages count.
 		}
 		$index = self::index();
-		if ( isset( $index[ $signature ] ) ) {
+		if ( isset( $index[ $signature ] ) && 'ready' !== $index[ $signature ]['status'] ) {
 			// Still waiting: a sync that was lost (a failed or cancelled run) must not leave it waiting for good.
 			if ( in_array( $index[ $signature ]['status'], array( 'needed', 'requested' ), true ) && ! wp_next_scheduled( self::HOOK ) ) {
 				wp_schedule_single_event( time() + 30, self::HOOK );
 			}
 			return;
 		}
+		// New, or "ready" although its results can't be read (their file was deleted, by a host's
+		// clean-up or a migration that left uploads behind): without this the page type would
+		// wait for good, since nothing else asks for it again.
 		$index[ $signature ] = array(
 			'template' => $template,
 			'url'      => self::current_url(),
@@ -838,7 +878,12 @@ final class CssOptimizer {
 			return null;
 		}
 		$data = json_decode( (string) file_get_contents( $file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
-		return is_array( $data['sheets'] ?? null ) ? $data['sheets'] : null;
+		if ( ! is_array( $data['sheets'] ?? null ) ) {
+			return null;
+		}
+		// Its last use, which decides what goes when there are too many page types (save_index()).
+		AssetCache::used( $file, self::TOUCH_EVERY );
+		return $data['sheets'];
 	}
 
 	/**
@@ -860,7 +905,14 @@ final class CssOptimizer {
 		// The next run is scheduled before any request: a run cut short (a slow download past the
 		// time limit) used to leave page types waiting for good, since pages kept by the page
 		// cache don't note them again.
-		self::schedule_sync( $index );
+		$scheduled = self::schedule_sync( $index );
+		// What this run changes, applied at the end to the index as it is then: pages note new
+		// page types while the requests below run, and saving this run's copy would lose them.
+		$changes = array();
+		$change  = static function ( string $signature, array $fields ) use ( &$index, &$changes ): void {
+			$index[ $signature ]   = array_merge( $index[ $signature ], $fields );
+			$changes[ $signature ] = array_merge( $changes[ $signature ] ?? array(), $fields );
+		};
 
 		$send = array();
 		foreach ( $index as $signature => $entry ) {
@@ -883,9 +935,14 @@ final class CssOptimizer {
 					if ( ! isset( $index[ $signature ] ) ) {
 						continue;
 					}
-					$status                          = (string) ( $row['status'] ?? 'needed' );
-					$index[ $signature ]['status']   = in_array( $status, array( 'queued', 'rendering', 'ready' ), true ) ? 'requested' : $status;
-					$index[ $signature ]['retry_at'] = 'no_allowance' === $status ? self::next_month() : ( time() + DAY_IN_SECONDS );
+					$status = (string) ( $row['status'] ?? 'needed' );
+					$change(
+						$signature,
+						array(
+							'status'   => in_array( $status, array( 'queued', 'rendering', 'ready' ), true ) ? 'requested' : $status,
+							'retry_at' => 'no_allowance' === $status ? self::next_month() : ( time() + DAY_IN_SECONDS ),
+						)
+					);
 					++$out['sent'];
 				}
 				$out['allowance'] = is_array( $response->body['allowance'] ?? null ) ? $response->body['allowance'] : null;
@@ -917,20 +974,36 @@ final class CssOptimizer {
 					continue;
 				}
 				if ( 'ready' === ( $row['status'] ?? '' ) && self::store( $signature, (array) ( $row['sheets'] ?? array() ) ) ) {
-					$index[ $signature ]['status'] = 'ready';
+					$change( $signature, array( 'status' => 'ready' ) );
 					++$out['ready'];
 				} elseif ( 'failed' === ( $row['status'] ?? '' ) ) {
-					$index[ $signature ]['status']       = 'failed';
-					$index[ $signature ]['error']        = substr( (string) ( $row['error_code'] ?? '' ), 0, 40 );
-					$index[ $signature ]['error_status'] = (int) ( $row['error_status'] ?? 0 );
+					$change(
+						$signature,
+						array(
+							'status'       => 'failed',
+							'error'        => substr( (string) ( $row['error_code'] ?? '' ), 0, 40 ),
+							'error_status' => (int) ( $row['error_status'] ?? 0 ),
+						)
+					);
 				}
 			}
 		}
 		if ( null !== $out['allowance'] ) {
 			update_option( 'arvaseo_connector_css_allowance', $out['allowance'] + array( 'at' => time() ), false );
 		}
-		self::save_index( $index );
-		self::schedule_sync( $index );
+		$fresh = self::index();
+		foreach ( $changes as $signature => $fields ) {
+			if ( isset( $fresh[ $signature ] ) ) {
+				$fresh[ $signature ] = array_merge( $fresh[ $signature ], $fields );
+			}
+		}
+		self::save_index( $fresh );
+		if ( self::waiting( $fresh ) ) {
+			self::schedule_sync( $fresh );
+		} elseif ( null !== $scheduled && wp_next_scheduled( self::HOOK ) === $scheduled ) {
+			// Nothing waits any more: the run scheduled at the start of this one isn't needed.
+			wp_unschedule_event( $scheduled, self::HOOK );
+		}
 		if ( $out['ready'] > 0 ) {
 			Fixes::pages_changed( 'css' );
 			AuditLogger::info(
@@ -943,14 +1016,26 @@ final class CssOptimizer {
 	}
 
 	/**
-	 * Another sync in two minutes, while page types wait to be sent or for their results.
+	 * Whether page types wait to be sent or for their results.
 	 *
 	 * @param array<string, array<string, mixed>> $index Index.
 	 */
-	private static function schedule_sync( array $index ): void {
-		if ( array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'] ?? '', array( 'needed', 'requested' ), true ) ) && ! wp_next_scheduled( self::HOOK ) ) {
-			wp_schedule_single_event( time() + 2 * MINUTE_IN_SECONDS, self::HOOK );
+	private static function waiting( array $index ): bool {
+		return array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'] ?? '', array( 'needed', 'requested' ), true ) );
+	}
+
+	/**
+	 * Another sync in two minutes, while page types wait to be sent or for their results.
+	 *
+	 * @param array<string, array<string, mixed>> $index Index.
+	 * @return int|null When the run it scheduled starts, or null when it scheduled none.
+	 */
+	private static function schedule_sync( array $index ): ?int {
+		if ( ! self::waiting( $index ) || false !== wp_next_scheduled( self::HOOK ) ) {
+			return null;
 		}
+		$at = time() + 2 * MINUTE_IN_SECONDS;
+		return true === wp_schedule_single_event( $at, self::HOOK ) ? $at : null;
 	}
 
 	/**
@@ -974,16 +1059,28 @@ final class CssOptimizer {
 			);
 		}
 		$fs = self::filesystem();
-		return null !== $fs && wp_mkdir_p( self::dir() ) && (bool) $fs->put_contents(
-			self::dir() . '/' . $signature . '.json',
-			(string) wp_json_encode(
-				array(
-					'at'     => time(),
-					'sheets' => $clean,
-				)
-			),
-			FS_CHMOD_FILE
+		if ( null === $fs || ! wp_mkdir_p( self::dir() ) || is_link( self::dir() ) ) {
+			return false;
+		}
+		// Written aside, then moved into place: a page reading it meanwhile never gets half a file.
+		$file = self::dir() . '/' . $signature . '.json';
+		$temp = self::dir() . '/.' . $signature . '.' . wp_generate_password( 12, false, false ) . '.tmp';
+		$json = (string) wp_json_encode(
+			array(
+				'at'     => time(),
+				'sheets' => $clean,
+			)
 		);
+		if ( ! $fs->put_contents( $temp, $json, FS_CHMOD_FILE ) ) {
+			$fs->delete( $temp );
+			return false;
+		}
+		// rename() replaces the file in one step; WP_Filesystem::move() deletes it first.
+		if ( @rename( $temp, $file ) || $fs->move( $temp, $file, true ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.rename_rename -- our own file, replaced in one step.
+			return true;
+		}
+		$fs->delete( $temp );
+		return false;
 	}
 
 	/**
@@ -1000,7 +1097,8 @@ final class CssOptimizer {
 			unset( $index[ $signature ]['error'], $index[ $signature ]['retry_at'] );
 		}
 		self::save_index( $index );
-		Fixes::pages_changed( 'css' );
+		// Someone asked for it, and the used-CSS copies saved pages may load are gone: caches clear now.
+		Fixes::pages_changed( 'regenerate' );
 		AuditLogger::info( 'speed.css_regenerate', __( 'PageSpeed fixes: optimized CSS will be worked out again.', 'arvaseo-connector' ) );
 	}
 

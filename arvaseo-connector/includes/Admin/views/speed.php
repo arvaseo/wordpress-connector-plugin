@@ -626,7 +626,7 @@ defined( 'ABSPATH' ) || exit;
 									<li>
 										<?php
 										/* translators: 1: pages refilled so far, 2: pages to refill. */
-										echo esc_html( sprintf( __( 'Refilling the cache in the background: %1$s of %2$s pages, a few a minute.', 'arvaseo-connector' ), number_format_i18n( $arvaseo_preload['done'] ), number_format_i18n( $arvaseo_preload['total'] ) ) );
+										echo esc_html( sprintf( __( 'Refilling the cache in the background: %1$s of %2$s pages, a few at a time.', 'arvaseo-connector' ), number_format_i18n( $arvaseo_preload['done'] ), number_format_i18n( $arvaseo_preload['total'] ) ) );
 										?>
 									</li>
 								<?php endif; ?>
@@ -644,7 +644,7 @@ defined( 'ABSPATH' ) || exit;
 							<?php wp_nonce_field( 'arvaseo_connector_page_cache' ); ?>
 							<fieldset class="arvaseo-checks" style="flex-direction: column; margin: 0 0 12px">
 								<legend class="screen-reader-text"><?php esc_html_e( 'Page caching choices', 'arvaseo-connector' ); ?></legend>
-								<label><input type="checkbox" name="preload" value="1" <?php checked( $arvaseo_pc['preload'] ); ?> /> <span><?php esc_html_e( 'Refill the cache in the background', 'arvaseo-connector' ); ?><br /><span class="arvaseo-hint"><?php esc_html_e( 'After it’s cleared, your homepage, latest posts and pages, and main categories are visited a few a minute, so the first visitor gets a fast page too.', 'arvaseo-connector' ); ?></span></span></label>
+								<label><input type="checkbox" name="preload" value="1" <?php checked( $arvaseo_pc['preload'] ); ?> /> <span><?php esc_html_e( 'Refill the cache in the background', 'arvaseo-connector' ); ?><br /><span class="arvaseo-hint"><?php esc_html_e( 'After it’s cleared, your homepage, latest posts and pages, and main categories are visited in the background, a few at a time, so the first visitor gets a fast page too.', 'arvaseo-connector' ); ?></span></span></label>
 								<label><input type="checkbox" name="phones" value="1" <?php checked( $arvaseo_pc['phones'] ); ?> /> <span><?php esc_html_e( 'A separate copy for phones', 'arvaseo-connector' ); ?><br /><span class="arvaseo-hint"><?php esc_html_e( 'Only for themes or plugins that send phones different HTML (a separate mobile menu or layout). Most themes send the same page and let the screen size decide, so one copy is right and fills twice as fast.', 'arvaseo-connector' ); ?></span></span></label>
 							</fieldset>
 							<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save choices', 'arvaseo-connector' ); ?></button>
@@ -978,7 +978,7 @@ defined( 'ABSPATH' ) || exit;
 							<h4><?php esc_html_e( 'Move jQuery down the page', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="move_jquery_shown" value="1" />
 							<label class="arvaseo-toggle"><input type="checkbox" name="move_jquery" value="1" <?php checked( $arvaseo_stored['move_jquery'] ); ?> /><span class="arvaseo-switch" aria-hidden="true"></span>
-								<span><strong><?php esc_html_e( 'Move jQuery down the page', 'arvaseo-connector' ); ?></strong><br /><span class="arvaseo-hint"><?php esc_html_e( 'jQuery stops holding up the first paint: it moves from the head to just before the first script that may use it. It stays in the head when something before it may run at any time, such as Google Tag Manager or another async script. Turning this on returns this fix to preview until you check your pages again, including anything a tag manager adds.', 'arvaseo-connector' ); ?></span></span>
+								<span><strong><?php esc_html_e( 'Move jQuery down the page', 'arvaseo-connector' ); ?></strong><br /><span class="arvaseo-hint"><?php esc_html_e( 'jQuery stops holding up the first paint: it moves from the head to just before the first script that may use it. It stays in the head when something before it may run at any time and use jQuery: Google Tag Manager or another async script, a consent tool or tag manager loaded from another website, or a script a consent tool holds back until the visitor agrees. Turning this on returns this fix to preview until you check your pages again, including anything a tag manager adds.', 'arvaseo-connector' ); ?></span></span>
 							</label>
 							<h4><?php esc_html_e( 'Leave scripts alone', 'arvaseo-connector' ); ?></h4>
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
