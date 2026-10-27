@@ -51,7 +51,7 @@ final class UninstallService {
 		CronManager::clear_all();
 		// Saved pages in other caches may link to the generated files: clear them while the Cloudflare token is still here.
 		$delete_files = Settings::get( 'delete_data_on_uninstall' ) && \ArvaSEO\Connector\Speed\OtherCaches::clear_before_uninstall();
-		$credentials = TokenStore::credentials();
+		$credentials  = TokenStore::credentials();
 		if ( null !== $credentials ) {
 			// Best effort; the plugin is going away either way.
 			ApiClient::instance()->public_post( '/api/v1/wordpress/revoke', array( 'refresh_token' => $credentials['refresh_token'] ) );
