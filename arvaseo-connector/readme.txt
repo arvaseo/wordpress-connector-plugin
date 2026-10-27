@@ -173,7 +173,7 @@ The connector works with every Arva SEO plan, including Free.
 
 = What happens when I delete the plugin? =
 
-Credentials are always revoked and removed. Settings, logs and delivery records are removed too if you ticked that option in Settings. Posts are never deleted.
+Credentials are always revoked and removed. Settings, logs, delivery records and the files the PageSpeed fixes made are removed too if you ticked that option in Settings; the plugin clears the caches it can reach first, and the files stay if a cache it can't clear may still show pages that use them. Posts are never deleted.
 
 == External services ==
 
