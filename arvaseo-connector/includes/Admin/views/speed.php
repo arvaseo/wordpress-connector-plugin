@@ -485,6 +485,8 @@ defined( 'ABSPATH' ) || exit;
 		</section>
 	<?php endif; ?>
 
+	<p class="arvaseo-hint" id="arvaseo-background" style="margin: 0 0 20px; max-width: 760px"><?php esc_html_e( 'What runs in the background: once a day Arva SEO looks at your homepage’s cache headers. When a change alters what visitors see, it clears the caches it can reach, at most every 15 minutes. Old generated files are deleted a day after the caches were cleared, never one your homepage links to; while a cache Arva SEO can’t clear may keep pages, the folders may grow to twice their usual limit.', 'arvaseo-connector' ); ?></p>
+
 	<div class="arvaseo-between" style="align-items: center">
 		<div class="arvaseo-seg" role="group" aria-label="<?php esc_attr_e( 'Show fixes', 'arvaseo-connector' ); ?>" data-arvaseo-filter hidden>
 			<?php

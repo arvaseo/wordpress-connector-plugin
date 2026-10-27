@@ -18,11 +18,16 @@ defined( 'ABSPATH' ) || exit;
  * are picked up on the regular poll (a signed event makes it immediate) and follow the same rules as
  * this page: a fix that can be tried goes on for everyone only after it's been tried; Defer scripts
  * goes on only here, after its checklist; turning a fix off always works; "use_update" (2.11.0) lets
- * an update that waits for its check go live, except for fixes that go on in WordPress only. Every
- * change is in the Activity Log with the name of the person who asked, and Arva SEO is told what
- * happened.
+ * an update that waits for its check go live, except for fixes that go on in WordPress only. A
+ * "use_update" gives visitors the update the person saw when they asked, and nothing else: the
+ * request names the notes it was about (update), is good for an hour, and is refused when the
+ * administrator kept the previous version after it was asked for. Every change is in the Activity
+ * Log with the name of the person who asked, and Arva SEO is told what happened.
  */
 final class RemoteFixes {
+
+	/** A "use_update" request older than this is not carried out: the update may not be the one the person saw. */
+	public const USE_UPDATE_MAX_AGE = HOUR_IN_SECONDS;
 
 	/**
 	 * Whether Arva SEO may switch the fixes.
@@ -48,7 +53,8 @@ final class RemoteFixes {
 			if ( ! is_array( $request ) || ! is_string( $request['request_id'] ?? null ) || ! preg_match( '/^[0-9A-Za-z]{26}$/', $request['request_id'] ) ) {
 				continue;
 			}
-			$result = self::apply( (string) ( $request['fix'] ?? '' ), (string) ( $request['to'] ?? '' ), self::name( $request['requested_by'] ?? null ) );
+			$update = is_array( $request['update'] ?? null ) ? array_values( array_filter( $request['update'], 'is_string' ) ) : null;
+			$result = self::apply( (string) ( $request['fix'] ?? '' ), (string) ( $request['to'] ?? '' ), self::name( $request['requested_by'] ?? null ), $update, self::time( $request['requested_at'] ?? null ) );
 			$client->site( 'POST', '/speed-fix-requests/' . $request['request_id'] . '/result', $result );
 			++$count;
 		}
@@ -58,15 +64,17 @@ final class RemoteFixes {
 	/**
 	 * Do one switch, by this page's rules.
 	 *
-	 * @param string $id   Fix ID.
-	 * @param string $to   off, trying, on or use_update.
-	 * @param string $name Who asked, in Arva SEO.
+	 * @param string        $id        Fix ID.
+	 * @param string        $to        off, trying, on or use_update.
+	 * @param string        $name      Who asked, in Arva SEO.
+	 * @param string[]|null $update    The ids of the update notes the person saw (use_update); null when the request doesn't say.
+	 * @param int|null      $requested When it was asked for (use_update); null when the request doesn't say.
 	 * @return array{outcome: string, state: string, code: string|null, rev?: int}
 	 */
-	public static function apply( string $id, string $to, string $name ): array {
+	public static function apply( string $id, string $to, string $name, ?array $update = null, ?int $requested = null ): array {
 		$fix = Fixes::all()[ $id ] ?? null;
 		if ( 'use_update' === $to && null !== $fix ) {
-			return self::use_update( $id, $fix, $name );
+			return self::use_update( $id, $fix, $name, $update, $requested );
 		}
 		if ( null === $fix || ! in_array( $to, Fixes::STATES, true ) ) {
 			return self::result( 'refused', $id, 'invalid' );
@@ -107,14 +115,33 @@ final class RemoteFixes {
 	 * "Use it for visitors": an update the administrator has checked in WordPress goes live. Never
 	 * for Defer scripts or the Google tag fix, which are turned on in WordPress only.
 	 *
-	 * @param string               $id   Fix ID.
-	 * @param array<string, mixed> $fix  The fix.
-	 * @param string               $name Who asked, in Arva SEO.
+	 * @param string               $id        Fix ID.
+	 * @param array<string, mixed> $fix       The fix.
+	 * @param string               $name      Who asked, in Arva SEO.
+	 * @param string[]|null        $update    The update notes the person saw.
+	 * @param int|null             $requested When it was asked for.
 	 * @return array{outcome: string, state: string, code: string|null, rev?: int}
 	 */
-	private static function use_update( string $id, array $fix, string $name ): array {
+	private static function use_update( string $id, array $fix, string $name, ?array $update, ?int $requested ): array {
 		if ( in_array( $id, Changes::WORDPRESS_ONLY, true ) ) {
 			return self::result( 'refused', $id, 'in_wordpress_only' );
+		}
+		if ( array() !== Changes::waiting( $id ) ) {
+			if ( null !== $requested && $requested < time() - self::USE_UPDATE_MAX_AGE ) {
+				return self::result( 'refused', $id, 'request_expired' );
+			}
+			// What waits now must be what the person saw, and the administrator must not have kept the previous version since.
+			if ( null !== $requested && Changes::kept_at( $id ) >= $requested ) {
+				return self::result( 'refused', $id, 'update_kept' );
+			}
+			$waiting = array_column( Changes::waiting( $id ), 'id' );
+			if ( null !== $update ) {
+				sort( $update );
+				sort( $waiting );
+				if ( $update !== $waiting ) {
+					return self::result( 'refused', $id, 'update_changed' );
+				}
+			}
 		}
 		$error = Fixes::accept_update( $id );
 		if ( null !== $error ) {
@@ -149,6 +176,16 @@ final class RemoteFixes {
 			'state'   => in_array( $state, array( 'off', 'trying', 'on', 'handled' ), true ) ? $state : 'off',
 			'code'    => null === $code ? null : substr( (string) preg_replace( '/[^a-z_]/', '', $code ), 0, 40 ),
 		);
+	}
+
+	/**
+	 * A time from Arva SEO (ISO 8601), or null.
+	 *
+	 * @param mixed $time The time.
+	 */
+	private static function time( $time ): ?int {
+		$at = is_string( $time ) ? strtotime( $time ) : false;
+		return false === $at ? null : $at;
 	}
 
 	/**

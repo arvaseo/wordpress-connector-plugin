@@ -9,6 +9,7 @@
 namespace ArvaSEO\Connector\Speed;
 
 use ArvaSEO\Connector\Auth\TokenStore;
+use ArvaSEO\Connector\Cron\CronManager;
 use ArvaSEO\Connector\Logging\AuditLogger;
 use ArvaSEO\Connector\Support\Ids;
 
@@ -893,6 +894,26 @@ final class OtherCaches {
 	}
 
 	/**
+	 * The plugin is being deleted with its data: saved pages in other caches may still link to the
+	 * files it made, and the plugin's hooks are not loaded to clear them. Clear every cache that can
+	 * be reached now (Cloudflare through its token too), and say whether the files may be deleted
+	 * with it: not while a cache Arva SEO can't clear is listed, since it may still show pages that
+	 * use them. The files are left in uploads then; nothing uses them once the pages are cleared.
+	 *
+	 * @return bool Whether the generated files may be deleted.
+	 */
+	public static function clear_before_uninstall(): bool {
+		try {
+			if ( Cloudflare::connected() ) {
+				Cloudflare::purge_everything( 'uninstall' );
+			}
+			return array() === self::clear_all( 'uninstall' )['by_hand'];
+		} catch ( \Throwable $error ) {
+			return false;
+		}
+	}
+
+	/**
 	 * An administrator cleared a cache Arva SEO can't reach. Files kept because of it can go after
 	 * an hour (AssetCache), once everything else Arva SEO can clear is cleared again.
 	 *
@@ -1089,7 +1110,8 @@ final class OtherCaches {
 			$ids[] = 'hostinger';
 		}
 		if ( $has( 'x-proxy-cache' ) ) {
-			$ids[] = 'siteground';
+			// nginx's proxy_cache and other hosts send this header too: it is SiteGround's only with another sign of SiteGround.
+			$ids[] = self::siteground_signs() ? 'siteground' : 'proxy-cache';
 		}
 		if ( $has( 'x-kinsta-cache' ) ) {
 			$ids[] = 'kinsta';
@@ -1123,6 +1145,17 @@ final class OtherCaches {
 			'comments' => $comments,
 			'lifetime' => self::lifetime( $seen ),
 		);
+	}
+
+	/**
+	 * Whether the site shows another sign of SiteGround than a header: its folder, its plugin or
+	 * its purge function.
+	 */
+	private static function siteground_signs(): bool {
+		return str_starts_with( self::path(), '/home/customer/www/' )
+			|| in_array( 'sg-cachepress', Fixes::active_plugin_slugs(), true )
+			|| function_exists( 'sg_cachepress_purge_cache' )
+			|| (bool) apply_filters( 'arvaseo_connector_siteground', false );
 	}
 
 	/**
@@ -1266,9 +1299,15 @@ final class OtherCaches {
 	}
 
 	/**
-	 * A plugin was switched on or off.
+	 * A plugin was switched on or off. Not when it is Arva SEO itself being deactivated: its jobs
+	 * were just unscheduled.
+	 *
+	 * @param mixed $plugin The plugin file.
 	 */
-	public static function plugins_changed(): void {
+	public static function plugins_changed( $plugin = '' ): void {
+		if ( CronManager::leaving( $plugin ) ) {
+			return;
+		}
 		self::schedule_registration();
 	}
 

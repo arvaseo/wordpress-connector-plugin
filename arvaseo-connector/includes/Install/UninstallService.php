@@ -49,6 +49,8 @@ final class UninstallService {
 	 */
 	private static function site(): void {
 		CronManager::clear_all();
+		// Saved pages in other caches may link to the generated files: clear them while the Cloudflare token is still here.
+		$delete_files = Settings::get( 'delete_data_on_uninstall' ) && \ArvaSEO\Connector\Speed\OtherCaches::clear_before_uninstall();
 		$credentials = TokenStore::credentials();
 		if ( null !== $credentials ) {
 			// Best effort; the plugin is going away either way.
@@ -67,11 +69,14 @@ final class UninstallService {
 			return;
 		}
 		// Undo can log activity and invalidate caches; finish it before removing tables or options.
-		\ArvaSEO\Connector\Speed\LocalFonts::delete_all();
-		\ArvaSEO\Connector\Speed\AssetMinifier::delete_all();
-		\ArvaSEO\Connector\Speed\AssetBundles::delete_all();
+		// The files pages link to (copies of fonts, minified files, bundles, optimized CSS) go only when every cache that may show such pages was cleared.
+		if ( $delete_files ) {
+			\ArvaSEO\Connector\Speed\LocalFonts::delete_all();
+			\ArvaSEO\Connector\Speed\AssetMinifier::delete_all();
+			\ArvaSEO\Connector\Speed\AssetBundles::delete_all();
+		}
 		\ArvaSEO\Connector\Speed\WebpLibrary::undo();
-		\ArvaSEO\Connector\Speed\CssOptimizer::delete_all();
+		\ArvaSEO\Connector\Speed\CssOptimizer::delete_all( $delete_files );
 		Schema::drop();
 		Capabilities::revoke();
 		SyncState::clear();

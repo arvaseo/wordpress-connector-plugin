@@ -1342,10 +1342,12 @@ final class CssOptimizer {
 
 	/**
 	 * Remove every result and the index (uninstall).
+	 *
+	 * @param bool $files Also delete the folder, with the optimized CSS copies saved pages link to. False: the folder stays, since a cache that was not cleared may still show pages using them.
 	 */
-	public static function delete_all(): void {
+	public static function delete_all( bool $files = true ): void {
 		$fs = self::filesystem();
-		if ( null !== $fs && $fs->is_dir( self::dir() ) ) {
+		if ( $files && null !== $fs && $fs->is_dir( self::dir() ) ) {
 			$fs->rmdir( self::dir(), true );
 		}
 		delete_option( self::INDEX );

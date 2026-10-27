@@ -94,7 +94,12 @@ final class Changes {
 	/** Fixes that go on in WordPress only: "Use it for visitors" isn't offered from Arva SEO. */
 	public const WORDPRESS_ONLY = array( 'defer_scripts', 'delay_google_tag' );
 
-	/** The date old revisions of the 2.11.0 updates are retired at the earliest: 90 days after the planned release. */
+	/**
+	 * The date old revisions of the 2.11.0 updates are retired at the earliest: 90 days after the
+	 * planned release. The plugin can't count the releases that follow, so the help says "at least
+	 * 90 days, and not before this date" (D4 asked for two more releases or 90 days, whichever is
+	 * later): check this date again at the release step, and move it if 2.12.0 and 2.13.0 slip.
+	 */
 	private const KEEP_2_11 = '2027-03-08';
 
 	/**
@@ -306,14 +311,14 @@ final class Changes {
 			'2.11.0-image-purge'          => __( 'Caches are cleared when compression changes an image.', 'arvaseo-connector' ),
 			'2.11.0-combine-first'        => __( 'With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free.', 'arvaseo-connector' ),
 			'2.11.0-css-every-stylesheet' => __( 'Optimized styles now also reach stylesheets whose names use capital letters (Elementor’s entrance animations, some Google Fonts) and stylesheets a theme prints more than once, so fewer of them hold the page up.', 'arvaseo-connector' ),
-			'2.11.0-cleanups'             => __( 'Unused generated files are cleaned up after a week unused (Google Fonts copies after 30 days), never while another cache may still use them.', 'arvaseo-connector' ),
+			'2.11.0-cleanups'             => __( 'Old generated files (unused for a week, Google Fonts copies for 30 days) are cleaned up once enough have piled up or a folder is nearly full: the caches are cleared first and the files deleted a day later, never while another cache may still use them. While a cache Arva SEO can’t clear may keep pages, the folders may grow to twice their usual limit.', 'arvaseo-connector' ),
 			'2.11.0-combine-around'       => __( 'Files next to one that can’t be combined are now combined around it, in the same order. This applies to stylesheets and scripts.', 'arvaseo-connector' ),
 			'2.11.0-renderer-extras'      => __( 'Arva SEO’s renderer now gets your pages without the WordPress extras you removed, as visitors do.', 'arvaseo-connector' ),
 			'2.11.0-jquery-choice'        => __( 'New option under Defer scripts: Move jQuery down the page. It’s off until you turn it on.', 'arvaseo-connector' ),
 			'2.11.0-late-icons-choice'    => __( 'New option under Load styles faster: Load icon fonts after the page. It’s off until you turn it on.', 'arvaseo-connector' ),
 			'2.11.0-animations'           => __( 'Entrance animations no longer play a second time when the rest of the styles arrive.', 'arvaseo-connector' ),
 			'2.11.0-tracking'             => __( 'Visitors arriving from Google Ads, Facebook, Mailchimp and similar links get the saved page too.', 'arvaseo-connector' ),
-			'2.11.0-more-caches'          => __( 'Arva SEO now also clears WP-Optimize’s, NitroPack’s and Cloudflare’s (official plugin) caches when your pages change, at most every 15 minutes.', 'arvaseo-connector' ),
+			'2.11.0-more-caches'          => __( 'Arva SEO now clears more caches when your pages change, at most every 15 minutes: WP Rocket, W3 Total Cache, WP Super Cache, WP Fastest Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper, WP-Optimize, NitroPack, Proxy Cache Purge, Cloudflare’s official plugin and LiteSpeed’s server cache.', 'arvaseo-connector' ),
 		);
 	}
 
@@ -515,7 +520,16 @@ final class Changes {
 	 * @param string $fix Fix ID.
 	 */
 	public static function is_kept( string $fix ): bool {
-		return (int) ( self::row( $fix )['kept'] ?? 0 ) > 0;
+		return self::kept_at( $fix ) > 0;
+	}
+
+	/**
+	 * When the administrator chose to keep this fix's previous version (a time), or 0.
+	 *
+	 * @param string $fix Fix ID.
+	 */
+	public static function kept_at( string $fix ): int {
+		return (int) ( self::row( $fix )['kept'] ?? 0 );
 	}
 
 	/**

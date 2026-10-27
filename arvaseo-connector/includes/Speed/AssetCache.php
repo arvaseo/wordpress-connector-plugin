@@ -32,6 +32,12 @@ defined( 'ABSPATH' ) || exit;
  * - While a cache Arva SEO can't clear may keep pages (OtherCaches::blockers()), only files unused
  *   for 90 days go, and the folders may grow to twice their limits. Pressing "I've cleared it" for
  *   that cache lets the files it was the reason for go, an hour later.
+ * - The clear is worth it only when the deletion will happen. Nothing is cleared unless the live
+ *   homepage can be read now (or was looked at in the last two days), because the deletion needs
+ *   it; a homepage that can't be read is tried again after a day, and after a deletion gave up on
+ *   it, after a week. The daily clean-up clears the caches only when at least 20 files can go or a
+ *   folder is four fifths full, and at most once a week (a full folder: once a day). Files the
+ *   homepage links to never count.
  */
 final class AssetCache {
 
@@ -51,6 +57,29 @@ final class AssetCache {
 
 	/** A file's last use is only recorded this closely (a day for Google Fonts copies). */
 	private const SLACK = DAY_IN_SECONDS;
+
+	/** The daily clean-up clears every cache only for at least this many files to go... */
+	public const WORTH = 20;
+
+	/** ...or when a folder holds this share of the files or bytes it may. */
+	private const CROWDED = 0.8;
+
+	/** What a folder may hold before any doubling (AssetMinifier, AssetBundles; optimized CSS copies may hold a few more). */
+	private const FOLDER_FILES = 250;
+
+	private const FOLDER_BYTES = 33554432;
+
+	/** The daily clean-up clears every cache at most this often. */
+	private const MARK_EVERY = WEEK_IN_SECONDS;
+
+	/** A clean-up asked for by a full folder, at most this often. */
+	private const MARK_EVERY_FULL = DAY_IN_SECONDS;
+
+	/** A homepage that can't be read is looked at again after this long. */
+	private const UNREADABLE_WAIT = DAY_IN_SECONDS;
+
+	/** After a deletion gave up on an unreadable homepage, nothing is cleared again for this long. */
+	private const GAVE_UP_WAIT = WEEK_IN_SECONDS;
 
 	/** When the last clean-up ran (not autoloaded). */
 	public const LAST = 'arvaseo_connector_asset_cache_rotated';
@@ -73,7 +102,7 @@ final class AssetCache {
 	}
 
 	/**
-	 * The scheduled clean-up.
+	 * The scheduled clean-up (a folder had no room).
 	 */
 	public static function scheduled(): void {
 		self::rotate();
@@ -196,22 +225,25 @@ final class AssetCache {
 	}
 
 	/**
-	 * What the folders hold that is old enough to go, and what is kept only because of a cache
-	 * that can't be cleared.
+	 * What the folders hold that is old enough to go, what is kept only because of a cache that
+	 * can't be cleared, and whether a folder is nearly full.
 	 *
-	 * @return array{go: int, kept_files: int, kept_bytes: int}
+	 * @param string[]|null $linked File names the live homepage links to: they never go, so they
+	 *                              aren't counted. Null: count everything.
+	 * @return array{go: int, kept_files: int, kept_bytes: int, crowded: bool}
 	 */
-	private static function scan(): array {
+	private static function scan( ?array $linked = null ): array {
 		$out   = array(
 			'go'         => 0,
 			'kept_files' => 0,
 			'kept_bytes' => 0,
+			'crowded'    => false,
 		);
 		$rules = array(
-			array( array( AssetMinifier::directory(), AssetBundles::directory(), CssOptimizer::used_directory() ), self::unused_after(), array( '*.css', '*.js' ) ),
-			array( array( LocalFonts::directory() ), LocalFonts::UNUSED_AFTER, array( '*.css' ) ),
+			array( array( AssetMinifier::directory(), AssetBundles::directory(), CssOptimizer::used_directory() ), self::unused_after(), array( '*.css', '*.js' ), true ),
+			array( array( LocalFonts::directory() ), LocalFonts::UNUSED_AFTER, array( '*.css' ), false ),
 		);
-		foreach ( $rules as list( $dirs, $normal, $patterns ) ) {
+		foreach ( $rules as list( $dirs, $normal, $patterns, $limited ) ) {
 			$ready   = time() - $normal;
 			$allowed = self::unused_before( $normal );
 			foreach ( $dirs as $dir ) {
@@ -222,17 +254,26 @@ final class AssetCache {
 				foreach ( $patterns as $pattern ) {
 					$files = array_merge( $files, glob( $dir . '/' . $pattern ) ?: array() );
 				}
+				$held = 0;
 				foreach ( $files as $file ) {
 					$time = is_link( $file ) || ! is_file( $file ) ? false : @filemtime( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a file removed meanwhile is skipped.
 					if ( false === $time ) {
+						continue;
+					}
+					$size  = (int) @filesize( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- our own generated file.
+					$held += $size;
+					if ( null !== $linked && in_array( basename( $file ), $linked, true ) ) {
 						continue;
 					}
 					if ( $time < $allowed ) {
 						++$out['go'];
 					} elseif ( $time < $ready ) {
 						++$out['kept_files'];
-						$out['kept_bytes'] += (int) @filesize( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- our own generated file.
+						$out['kept_bytes'] += $size;
 					}
+				}
+				if ( $limited && ( count( $files ) >= self::CROWDED * self::FOLDER_FILES || $held >= self::CROWDED * self::FOLDER_BYTES ) ) {
+					$out['crowded'] = true;
 				}
 			}
 		}
@@ -242,7 +283,7 @@ final class AssetCache {
 	/**
 	 * What's stored.
 	 *
-	 * @return array{mark: int|null, tries: int, kept: array{files: int, bytes: int, since: int, names: string}|null, swept: array{at: int, files: int}|null}
+	 * @return array{mark: int|null, marked: int|null, retry_after: int|null, tries: int, kept: array{files: int, bytes: int, since: int, names: string}|null, swept: array{at: int, files: int}|null}
 	 */
 	public static function state(): array {
 		$saved = get_option( self::STATE, array() );
@@ -250,15 +291,17 @@ final class AssetCache {
 		$kept  = is_array( $saved['kept'] ?? null ) ? $saved['kept'] : null;
 		$swept = is_array( $saved['swept'] ?? null ) ? $saved['swept'] : null;
 		return array(
-			'mark'  => is_int( $saved['mark'] ?? null ) ? $saved['mark'] : null,
-			'tries' => (int) ( $saved['tries'] ?? 0 ),
-			'kept'  => null === $kept ? null : array(
+			'mark'        => is_int( $saved['mark'] ?? null ) ? $saved['mark'] : null,
+			'marked'      => is_int( $saved['marked'] ?? null ) ? $saved['marked'] : null,
+			'retry_after' => is_int( $saved['retry_after'] ?? null ) ? $saved['retry_after'] : null,
+			'tries'       => (int) ( $saved['tries'] ?? 0 ),
+			'kept'        => null === $kept ? null : array(
 				'files' => (int) ( $kept['files'] ?? 0 ),
 				'bytes' => (int) ( $kept['bytes'] ?? 0 ),
 				'since' => (int) ( $kept['since'] ?? 0 ),
 				'names' => (string) ( $kept['names'] ?? '' ),
 			),
-			'swept' => null === $swept ? null : array(
+			'swept'       => null === $swept ? null : array(
 				'at'    => (int) ( $swept['at'] ?? 0 ),
 				'files' => (int) ( $swept['files'] ?? 0 ),
 			),
@@ -285,13 +328,15 @@ final class AssetCache {
 	}
 
 	/**
-	 * The clean-up (a full folder, or the daily maintenance): when files are old enough to go,
-	 * clear every cache Arva SEO can reach now, and delete them a day later. A clean-up that finds
-	 * a clear waiting for its day does the deletion once it is due.
+	 * The clean-up (a full folder, or the daily maintenance): when files are old enough to go and
+	 * the deletion can happen, clear every cache Arva SEO can reach now, and delete them a day
+	 * later. A clean-up that finds a clear waiting for its day does the deletion once it is due.
 	 *
+	 * @param bool $daily The daily maintenance: it clears the caches only when it is worth it
+	 *                    (WORTH files, or a nearly full folder) and at most once a week.
 	 * @return int Files deleted by this run.
 	 */
-	public static function rotate(): int {
+	public static function rotate( bool $daily = false ): int {
 		update_option( self::LAST, time(), false );
 		$state = self::state();
 		if ( null !== $state['mark'] ) {
@@ -300,15 +345,69 @@ final class AssetCache {
 		$scan = self::scan();
 		self::remember_kept( $scan );
 		if ( $scan['go'] > 0 ) {
-			self::mark( self::GRACE );
+			self::begin( $daily ? 'daily' : 'full', self::GRACE );
 		}
 		return 0;
 	}
 
 	/**
+	 * Mark (clear every cache, schedule the deletion) when the deletion can happen and the clear is
+	 * worth it. A clear that no deletion follows would empty every cache again and again for nothing.
+	 *
+	 * @param string $why   daily (the daily maintenance), full (a folder had no room) or asked (someone said they cleared a cache).
+	 * @param int    $after Seconds until the deletion.
+	 */
+	private static function begin( string $why, int $after ): void {
+		$now   = time();
+		$state = self::state();
+		if ( 'asked' !== $why ) {
+			if ( null !== $state['retry_after'] && $state['retry_after'] > $now ) {
+				return;
+			}
+			$every = 'daily' === $why ? self::MARK_EVERY : self::MARK_EVERY_FULL;
+			if ( null !== $state['marked'] && $state['marked'] > $now - $every ) {
+				return;
+			}
+		}
+		$linked = self::linked_files();
+		if ( null === $linked ) {
+			// The deletion would give up on a homepage it can't read: no clear for it.
+			self::save_state( array( 'retry_after' => $now + self::UNREADABLE_WAIT ) );
+			return;
+		}
+		$scan = self::scan( $linked );
+		if ( 0 === $scan['go'] || ( 'daily' === $why && $scan['go'] < self::WORTH && ! $scan['crowded'] ) ) {
+			return;
+		}
+		self::mark( $after );
+	}
+
+	/**
+	 * The generated files the live homepage links to; where it can't be read, the last daily look
+	 * at it (two days old at most) stands in. Null when neither is there.
+	 *
+	 * @return string[]|null
+	 */
+	private static function linked_files(): ?array {
+		$linked = OtherCaches::homepage_files();
+		if ( null !== $linked ) {
+			return $linked;
+		}
+		$header = OtherCaches::state()['header'];
+		if ( null === $header['at'] || $header['at'] <= time() - 2 * DAY_IN_SECONDS ) {
+			return null;
+		}
+		$linked = $header['linked'];
+		foreach ( $header['linked'] as $name ) {
+			$linked[] = (string) preg_replace( '/\.css$/', '', $name );
+		}
+		return $linked;
+	}
+
+	/**
 	 * Remember (and log, once) what is kept because of a cache Arva SEO can't clear.
 	 *
-	 * @param array{go: int, kept_files: int, kept_bytes: int} $scan What scan() found.
+	 * @param array{go: int, kept_files: int, kept_bytes: int, crowded: bool} $scan What scan() found.
 	 */
 	private static function remember_kept( array $scan ): void {
 		$blockers = self::cleanup_blocker();
@@ -350,8 +449,10 @@ final class AssetCache {
 	private static function mark( int $after ): void {
 		self::save_state(
 			array(
-				'mark'  => time(),
-				'tries' => 0,
+				'mark'        => time(),
+				'marked'      => time(),
+				'retry_after' => null,
+				'tries'       => 0,
 			)
 		);
 		wp_clear_scheduled_hook( self::HOOK_SWEEP );
@@ -381,7 +482,7 @@ final class AssetCache {
 		$scan = self::scan();
 		self::remember_kept( $scan );
 		if ( $scan['go'] > 0 ) {
-			self::mark( HOUR_IN_SECONDS );
+			self::begin( 'asked', HOUR_IN_SECONDS );
 		}
 	}
 
@@ -389,7 +490,7 @@ final class AssetCache {
 	 * The deletion a day after the clear: minified copies, bundles, optimized CSS copies and
 	 * Google Fonts copies last used before the mark and unused for as long as the rule says, never
 	 * one the live homepage links to. Where the homepage can't be read, nothing is deleted, and it
-	 * is tried again in an hour (three times).
+	 * is tried again in an hour (three times); then nothing is cleared again for a week.
 	 *
 	 * @return int Files deleted.
 	 */
@@ -398,24 +499,20 @@ final class AssetCache {
 		if ( null === $state['mark'] ) {
 			return 0;
 		}
-		$linked = OtherCaches::homepage_files();
-		if ( null === $linked ) {
-			// The homepage can't be read from here: the last daily look is the next best thing.
-			$header = OtherCaches::state()['header'];
-			if ( null !== $header['at'] && $header['at'] > time() - 2 * DAY_IN_SECONDS ) {
-				$linked = $header['linked'];
-				foreach ( $header['linked'] as $name ) {
-					$linked[] = (string) preg_replace( '/\.css$/', '', $name );
-				}
-			}
-		}
+		$linked = self::linked_files();
 		if ( null === $linked ) {
 			if ( $state['tries'] < 2 ) {
 				self::save_state( array( 'tries' => $state['tries'] + 1 ) );
 				wp_schedule_single_event( time() + HOUR_IN_SECONDS, self::HOOK_SWEEP );
 			} else {
-				// Marked again by the next clean-up.
-				self::save_state( array( 'mark' => null ) );
+				// Given up. The caches were cleared for nothing, so the next clean-up waits a week before it clears them again.
+				self::save_state(
+					array(
+						'mark'        => null,
+						'retry_after' => time() + self::GAVE_UP_WAIT,
+						'tries'       => 0,
+					)
+				);
 			}
 			return 0;
 		}
@@ -427,9 +524,10 @@ final class AssetCache {
 		wp_clear_scheduled_hook( self::HOOK_SWEEP );
 		self::save_state(
 			array(
-				'mark'  => null,
-				'tries' => 0,
-				'swept' => array(
+				'mark'        => null,
+				'retry_after' => null,
+				'tries'       => 0,
+				'swept'       => array(
 					'at'    => time(),
 					'files' => $removed,
 				),

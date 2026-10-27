@@ -174,7 +174,7 @@ defined( 'ABSPATH' ) || exit;
 						<?php endforeach; ?>
 					</select>
 				</div>
-				<div class="arvaseo-field"><?php $arvaseo_toggle( 'delete_data_on_uninstall', __( 'When the plugin is deleted, also delete its settings, logs and delivery records', 'arvaseo-connector' ), __( 'The connection is always removed and revoked on delete. Posts created from Arva SEO are never deleted.', 'arvaseo-connector' ) ); ?></div>
+				<div class="arvaseo-field"><?php $arvaseo_toggle( 'delete_data_on_uninstall', __( 'When the plugin is deleted, also delete its settings, logs and delivery records', 'arvaseo-connector' ), __( 'The connection is always removed and revoked on delete. Posts created from Arva SEO are never deleted. The files made by the PageSpeed fixes are deleted too, after Arva SEO clears the caches it can reach; if you use a cache it can’t clear, clear it yourself first, or those files stay.', 'arvaseo-connector' ) ); ?></div>
 				<?php $arvaseo_save( __( 'Save settings', 'arvaseo-connector' ) ); ?>
 			</section>
 		</form>
