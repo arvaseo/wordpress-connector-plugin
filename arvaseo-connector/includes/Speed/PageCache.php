@@ -53,7 +53,8 @@ final class PageCache {
 	 */
 	private const BURSTS = array( 'compress', 'css', 'fonts', 'external_assets' );
 
-	private const PURGE_GAP = 5 * MINUTE_IN_SECONDS;
+	/** Since 2.11.0 (the owner's choice): 15 minutes, was 5 in 2.10.7 and 2.10.8. */
+	public const PURGE_GAP = 15 * MINUTE_IN_SECONDS;
 
 	/** The .htaccess block, above WordPress's own. */
 	public const MARKER = 'Arva SEO Page Cache';
@@ -260,9 +261,10 @@ final class PageCache {
 	 *
 	 * Clearing everything costs those caches every saved page (and WP Rocket or W3 Total Cache
 	 * then visit the whole site again), so since 2.10.7 background changes, which come many in a
-	 * row (BURSTS: one per compressed image, for one), clear them at most once every five minutes,
-	 * and once more when the five minutes are up if more came meanwhile. A change someone made
-	 * (a fix, a choice, an exclusion, Clear or Regenerate) still clears them straight away.
+	 * row (BURSTS: one per compressed image, for one), clear them at most once in PURGE_GAP (15
+	 * minutes since 2.11.0, 5 before), and once more when it is up if more came meanwhile. A
+	 * change someone made (a fix, a choice, an exclusion, Clear or Regenerate) still clears them
+	 * straight away and cancels the waiting clear.
 	 *
 	 * @param mixed $why What changed (Fixes::pages_changed()).
 	 */
