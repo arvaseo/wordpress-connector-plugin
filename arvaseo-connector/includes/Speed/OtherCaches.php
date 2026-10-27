@@ -644,7 +644,7 @@ final class OtherCaches {
 				'available' => static fn (): bool => ! self::constant_on( 'WPFC_DISABLE_HOOK_CLEAR_ALL_CACHE' ) && ( function_exists( 'wpfc_clear_all_cache' ) || (bool) has_action( 'wpfc_clear_all_cache' ) ),
 				'clear'     => static function (): void {
 					if ( function_exists( 'wpfc_clear_all_cache' ) ) {
-						call_user_func( 'wpfc_clear_all_cache', false );
+						self::call_function( 'wpfc_clear_all_cache', false );
 						return;
 					}
 					do_action( 'wpfc_clear_all_cache' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WP Fastest Cache's documented purge action.
@@ -709,6 +709,16 @@ final class OtherCaches {
 		}
 		$cache = $plugin->get_page_cache();
 		return is_object( $cache ) ? $cache : null;
+	}
+
+	/**
+	 * Call another plugin's function by name (it exists: the caller checked).
+	 *
+	 * @param string $name         Function name.
+	 * @param mixed  ...$arguments Its arguments.
+	 */
+	private static function call_function( string $name, ...$arguments ): void {
+		call_user_func_array( $name, $arguments );
 	}
 
 	/**
