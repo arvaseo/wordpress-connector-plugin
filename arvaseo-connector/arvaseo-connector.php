@@ -34,6 +34,10 @@ if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
 require_once __DIR__ . '/includes/Autoloader.php';
 \ArvaSEO\Connector\Autoloader::register( __DIR__ . '/includes' );
 
+// The official Cloudflare plugin and Proxy Cache Purge read their lists of "clear everything" actions
+// early, so ours goes on them as this file loads.
+\ArvaSEO\Connector\Speed\OtherCaches::register_filters();
+
 register_activation_hook( __FILE__, array( \ArvaSEO\Connector\Install\Lifecycle::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( \ArvaSEO\Connector\Install\Lifecycle::class, 'deactivate' ) );
 

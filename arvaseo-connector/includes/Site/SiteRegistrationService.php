@@ -84,6 +84,8 @@ final class SiteRegistrationService {
 			'speed_fixes_remote' => \ArvaSEO\Connector\Speed\Fixes::stored()['remote'],
 			// 2.11.0: what updates changed in the fixes this site uses (ids; the app has the notes).
 			'speed_changes'      => \ArvaSEO\Connector\Speed\Changes::for_registration(),
+			// 2.11.0: the page caches and CDNs found in front of the site, which Arva SEO clears and which need a person (names, no pages).
+			'caches'             => \ArvaSEO\Connector\Speed\OtherCaches::for_registration(),
 			'consent'            => PrivacyService::for_registration(),
 		);
 	}

@@ -136,17 +136,45 @@ final class CronManager {
 	}
 
 	/**
-	 * Stop everything (deactivation, uninstall).
+	 * Every scheduled job the plugin has, with or without arguments: the ones above, the Speed
+	 * jobs and the security scan's. wp_unschedule_hook() removes events scheduled with arguments
+	 * too (Google Fonts copies, approved files), which wp_clear_scheduled_hook() without arguments
+	 * leaves behind.
+	 *
+	 * @return string[]
+	 */
+	public static function all_hooks(): array {
+		return array_merge(
+			self::SYNC_HOOKS,
+			array(
+				'arvaseo_connector_maintenance',
+				\ArvaSEO\Connector\Speed\Cloudflare::HOOK,
+				\ArvaSEO\Connector\Speed\AssetCache::HOOK,
+				\ArvaSEO\Connector\Speed\AssetCache::HOOK_SWEEP,
+				\ArvaSEO\Connector\Speed\OtherCaches::HOOK_CLEAR,
+				\ArvaSEO\Connector\Speed\OtherCaches::HOOK_CHECK,
+				\ArvaSEO\Connector\Speed\PageCache::HOOK_PRELOAD,
+				\ArvaSEO\Connector\Speed\PageCache::HOOK_GC,
+				\ArvaSEO\Connector\Speed\CssOptimizer::HOOK,
+				\ArvaSEO\Connector\Speed\ImageCompression::HOOK,
+				\ArvaSEO\Connector\Speed\WebpLibrary::HOOK,
+				\ArvaSEO\Connector\Speed\LocalFonts::HOOK,
+				\ArvaSEO\Connector\Speed\ExternalAssets::HOOK,
+				\ArvaSEO\Connector\Security\Scanner::HOOK,
+				\ArvaSEO\Connector\Security\Scanner::WEEKLY,
+				\ArvaSEO\Connector\Security\DeepScan::HOOK,
+				\ArvaSEO\Connector\Security\FileEdits::HOOK,
+			)
+		);
+	}
+
+	/**
+	 * Stop everything (deactivation, uninstall): no event of the plugin stays in the cron list.
 	 */
 	public static function clear_all(): void {
-		self::clear_sync();
-		wp_clear_scheduled_hook( 'arvaseo_connector_maintenance' );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\Cloudflare::HOOK );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\AssetCache::HOOK );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\PageCache::HOOK_PURGE );
-		wp_unschedule_hook( \ArvaSEO\Connector\Speed\ExternalAssets::HOOK );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::HOOK );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::WEEKLY );
+		foreach ( self::all_hooks() as $hook ) {
+			wp_unschedule_hook( $hook );
+		}
 	}
 
 	/**
@@ -200,8 +228,11 @@ final class CronManager {
 		\ArvaSEO\Connector\Security\Repairs::purge();
 		// Optimized CSS of page types that are no longer tracked.
 		\ArvaSEO\Connector\Speed\CssOptimizer::prune_results();
-		// Google Fonts copies no page used for 30 days.
-		\ArvaSEO\Connector\Speed\LocalFonts::remove_unused();
+		// Generated files no page used for a week (Google Fonts copies, 30 days): the caches are
+		// cleared first and the files deleted a day later (AssetCache), also while no folder is full.
+		\ArvaSEO\Connector\Speed\AssetCache::rotate();
+		// The caches in front of the site, from the homepage's headers.
+		\ArvaSEO\Connector\Speed\OtherCaches::maintain();
 		// Old versions of fixes whose day has come go back to Trying (D4), and old notes go.
 		\ArvaSEO\Connector\Speed\Changes::maintain();
 	}

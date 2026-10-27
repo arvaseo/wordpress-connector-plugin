@@ -39,22 +39,14 @@ final class PageCache {
 
 	public const HOOK_GC = 'arvaseo_connector_page_cache_gc';
 
-	/** The host's and cache plugins' caches, cleared once after a burst of background changes. */
-	public const HOOK_PURGE = 'arvaseo_connector_host_cache_purge';
+	/** The other caches' waiting clear (OtherCaches, since 2.11.0). */
+	public const HOOK_PURGE = OtherCaches::HOOK_CLEAR;
 
-	/** When the host's and cache plugins' caches were last cleared for a background change (not autoloaded). */
-	public const PURGED = 'arvaseo_connector_host_cache_purged';
+	/** When the other caches were last cleared (not autoloaded; OtherCaches). */
+	public const PURGED = OtherCaches::LAST_CLEAR;
 
-	/**
-	 * Changes made in the background, often many in a row: each compressed image, each Google
-	 * Fonts copy, each batch of optimized CSS, each approved file downloaded. The host's and
-	 * cache plugins' caches are cleared at most once in PURGE_GAP for them, and once more at its
-	 * end when more came meanwhile.
-	 */
-	private const BURSTS = array( 'compress', 'css', 'fonts', 'external_assets' );
-
-	/** Since 2.11.0 (the owner's choice): 15 minutes, was 5 in 2.10.7 and 2.10.8. */
-	public const PURGE_GAP = 15 * MINUTE_IN_SECONDS;
+	/** Other caches are cleared at most this often (OtherCaches; 5 minutes in 2.10.7 and 2.10.8). */
+	public const PURGE_GAP = OtherCaches::GAP;
 
 	/** The .htaccess block, above WordPress's own. */
 	public const MARKER = 'Arva SEO Page Cache';
@@ -87,12 +79,6 @@ final class PageCache {
 	/** Hosts' own plugins, which run the host's server cache: people may choose Arva SEO's instead. */
 	public const HOST_PLUGINS = array( 'sg-cachepress', 'litespeed-cache', 'breeze' );
 
-	/** Cache plugins' documented functions that clear every saved page (purge_host_cache()). */
-	private const CLEAR_FUNCTIONS = array( 'wp_cache_clear_cache', 'w3tc_pgcache_flush', 'rocket_clean_domain' );
-
-	/** Cache plugins' documented actions that clear every saved page: WP Fastest Cache, Cache Enabler, Hummingbird, Nginx Helper. */
-	private const CLEAR_HOOKS = array( 'wpfc_clear_all_cache', 'cache_enabler_clear_complete_cache', 'wphb_clear_page_cache', 'rt_nginx_helper_purge_all' );
-
 	/**
 	 * Whether everything was cleared in this request already (a settings page saves several options).
 	 *
@@ -108,9 +94,6 @@ final class PageCache {
 		add_action( 'admin_init', array( self::class, 'step_aside' ) );
 		add_action( self::HOOK_PRELOAD, array( self::class, 'run_preload' ) );
 		add_action( self::HOOK_GC, array( self::class, 'gc' ) );
-		// Whoever caches the pages: a change Arva SEO made to every page clears the host's copy too.
-		add_action( 'arvaseo_connector_pages_changed', array( self::class, 'purge_host_cache' ) );
-		add_action( self::HOOK_PURGE, array( self::class, 'purge_later' ) );
 		if ( ! self::active() ) {
 			return;
 		}
@@ -252,98 +235,12 @@ final class PageCache {
 	}
 
 	/**
-	 * A change here altered every page (2.7.0): clear the host's own cache too, through the API
-	 * its plugin offers (SiteGround's Speed Optimizer, LiteSpeed Cache, WP Engine, Breeze), so
-	 * visitors don't get an old copy for hours. Since 2.10.5 also the cache plugins with a
-	 * documented API to clear everything (WP Super Cache, W3 Total Cache, WP Rocket, WP Fastest
-	 * Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper): their saved pages may use
-	 * minified and combined files that a clean-up deletes.
-	 *
-	 * Clearing everything costs those caches every saved page (and WP Rocket or W3 Total Cache
-	 * then visit the whole site again), so since 2.10.7 background changes, which come many in a
-	 * row (BURSTS: one per compressed image, for one), clear them at most once in PURGE_GAP (15
-	 * minutes since 2.11.0, 5 before), and once more when it is up if more came meanwhile. A
-	 * change someone made (a fix, a choice, an exclusion, Clear or Regenerate) still clears them
-	 * straight away and cancels the waiting clear.
-	 *
-	 * @param mixed $why What changed (Fixes::pages_changed()).
-	 */
-	public static function purge_host_cache( $why = '' ): void {
-		if ( ! in_array( $why, self::BURSTS, true ) ) {
-			// This clear covers the changes that were waiting for the next one.
-			wp_clear_scheduled_hook( self::HOOK_PURGE );
-			update_option( self::PURGED, time(), false );
-			self::purge_everything();
-			return;
-		}
-		$last = (int) get_option( self::PURGED, 0 );
-		if ( $last <= time() - self::PURGE_GAP ) {
-			update_option( self::PURGED, time(), false );
-			self::purge_everything();
-			return;
-		}
-		if ( false === wp_next_scheduled( self::HOOK_PURGE ) ) {
-			wp_schedule_single_event( $last + self::PURGE_GAP, self::HOOK_PURGE );
-		}
-	}
-
-	/**
-	 * The clear that background changes waited for.
-	 */
-	public static function purge_later(): void {
-		update_option( self::PURGED, time(), false );
-		self::purge_everything();
-	}
-
-	/**
-	 * Clear every saved page in the host's cache and the cache plugins Arva SEO can clear.
-	 */
-	private static function purge_everything(): void {
-		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
-			sg_cachepress_purge_cache();
-		}
-		do_action( 'litespeed_purge_all' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- LiteSpeed Cache's documented purge API.
-		do_action( 'breeze_clear_all_cache' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Breeze's documented purge API.
-		$wp_engine = array( 'WpeCommon', 'purge_varnish_cache' );
-		if ( class_exists( 'WpeCommon', false ) && is_callable( $wp_engine ) ) {
-			call_user_func( $wp_engine );
-		}
-		foreach ( self::CLEAR_FUNCTIONS as $function ) {
-			if ( function_exists( $function ) ) {
-				call_user_func( $function );
-			}
-		}
-		foreach ( self::CLEAR_HOOKS as $hook ) {
-			if ( has_action( $hook ) ) {
-				do_action( $hook ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- the cache plugins' documented purge hooks.
-			}
-		}
-		$comet = array( 'comet_cache', 'clear' );
-		if ( class_exists( 'comet_cache', false ) && is_callable( $comet ) ) {
-			call_user_func( $comet );
-		}
-	}
-
-	/**
-	 * Whether Arva SEO clears a cache plugin's saved pages with its own (purge_host_cache()): the
-	 * plugin's documented API to clear everything is there.
+	 * Whether Arva SEO clears a cache plugin's saved pages with the plugin's own call (OtherCaches).
 	 *
 	 * @param string $slug Plugin folder.
 	 */
 	public static function can_clear( string $slug ): bool {
-		$apis = array(
-			'wp-super-cache'          => static fn (): bool => function_exists( 'wp_cache_clear_cache' ),
-			'w3-total-cache'          => static fn (): bool => function_exists( 'w3tc_pgcache_flush' ),
-			'wp-rocket'               => static fn (): bool => function_exists( 'rocket_clean_domain' ),
-			'wp-fastest-cache'        => static fn (): bool => (bool) has_action( 'wpfc_clear_all_cache' ),
-			'cache-enabler'           => static fn (): bool => (bool) has_action( 'cache_enabler_clear_complete_cache' ),
-			'hummingbird-performance' => static fn (): bool => (bool) has_action( 'wphb_clear_page_cache' ),
-			'comet-cache'             => static fn (): bool => class_exists( 'comet_cache', false ) && is_callable( array( 'comet_cache', 'clear' ) ),
-			'sg-cachepress'           => static fn (): bool => function_exists( 'sg_cachepress_purge_cache' ),
-			'litespeed-cache'         => static fn (): bool => (bool) has_action( 'litespeed_purge_all' ),
-			'breeze'                  => static fn (): bool => (bool) has_action( 'breeze_clear_all_cache' ),
-		);
-		return isset( $apis[ $slug ] ) && $apis[ $slug ]();
+		return OtherCaches::can_clear_plugin( $slug );
 	}
 
 	/**
@@ -352,17 +249,12 @@ final class PageCache {
 	 * Without the plugin, visitors can get an old copy of a page for up to 12 hours.
 	 */
 	public static function uncleared_host_cache(): ?string {
-		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
-			return null;
+		foreach ( OtherCaches::found() as $entry ) {
+			if ( 'siteground' === $entry['id'] && 'by_hand' === $entry['clearing'] ) {
+				return $entry['name'];
+			}
 		}
-		// SiteGround's accounts live in /home/customer/www/<domain>/public_html.
-		$siteground = str_starts_with( wp_normalize_path( ABSPATH ), '/home/customer/www/' );
-		/**
-		 * Whether this site is behind SiteGround's dynamic cache, for setups the folder doesn't show.
-		 *
-		 * @param bool $siteground True on SiteGround.
-		 */
-		return (bool) apply_filters( 'arvaseo_connector_siteground', $siteground ) ? __( 'SiteGround’s dynamic cache', 'arvaseo-connector' ) : null;
+		return null;
 	}
 
 	/**
@@ -655,6 +547,50 @@ final class PageCache {
 	}
 
 	/**
+	 * The query parameters that only track where a visitor came from: the list in
+	 * page-cache-serve.php, and the developer's.
+	 *
+	 * @return string[]
+	 */
+	public static function tracking_parameters(): array {
+		return array_values( array_unique( array_merge( arvaseo_connector_page_cache_tracking(), self::ignored_parameters() ) ) );
+	}
+
+	/**
+	 * More query parameters the developer says never change a page. The drop-in runs before
+	 * WordPress, so it can't ask the filter: the answer is written into it when Page caching goes
+	 * on, when the plugin updates and when the Speed page is saved (refresh_dropin()).
+	 *
+	 * @return string[]
+	 */
+	public static function ignored_parameters(): array {
+		/**
+		 * Query parameters that never change what a page looks like, besides the tracking ones Page
+		 * caching already ignores (utm_source, gclid, fbclid, gad_source...): a page with only these
+		 * is served from the saved copy of the page without them.
+		 *
+		 * @param string[] $names Parameter names.
+		 */
+		$names = apply_filters( 'arvaseo_connector_page_cache_ignored_params', array() );
+		$names = array_filter( array_map( 'sanitize_key', is_array( $names ) ? $names : array() ) );
+		return array_values( array_diff( array_unique( $names ), arvaseo_connector_page_cache_tracking() ) );
+	}
+
+	/**
+	 * Write the drop-in again when what it holds has changed: the developer's list of parameters,
+	 * the permalink form, the phone choice. Only this plugin's own drop-in, only while it's on.
+	 */
+	public static function refresh_dropin(): void {
+		if ( ! self::active() || ! self::dropin_is_ours() ) {
+			return;
+		}
+		$current = (string) file_get_contents( self::dropin() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
+		if ( self::dropin_contents() !== $current ) {
+			self::write_dropin();
+		}
+	}
+
+	/**
 	 * The drop-in: it loads page-cache-serve.php from this plugin, with the settings it needs.
 	 */
 	private static function dropin_contents(): string {
@@ -664,6 +600,7 @@ final class PageCache {
 			'phones'  => self::settings()['phones'],
 			'charset' => (string) get_option( 'blog_charset', 'UTF-8' ),
 			'slash'   => self::trailing_slash(),
+			'ignored' => self::ignored_parameters(),
 		);
 		return "<?php\n"
 			. "/**\n"

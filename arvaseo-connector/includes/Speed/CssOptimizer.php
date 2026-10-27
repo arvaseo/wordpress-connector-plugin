@@ -628,16 +628,23 @@ final class CssOptimizer {
 			return null;
 		}
 		if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) === strlen( $css ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated local static copy.
+			// A copy a page uses again records the use, so the clean-up (AssetCache) keeps it.
+			AssetCache::used( $file );
 			return $url;
 		}
 		$files = glob( $dir . '/*.css' );
-		if ( false === $files || count( $files ) >= self::MAX_ENTRIES ) {
+		if ( false === $files ) {
+			return null;
+		}
+		if ( count( $files ) >= AssetCache::limit( self::MAX_ENTRIES ) ) {
+			AssetCache::full();
 			return null;
 		}
 		$bytes = strlen( $css );
 		foreach ( $files as $existing ) {
 			$bytes += (int) filesize( $existing ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- bounded generated cache.
-			if ( $bytes > self::USED_CACHE_BYTES ) {
+			if ( $bytes > AssetCache::limit( self::USED_CACHE_BYTES ) ) {
+				AssetCache::full();
 				return null;
 			}
 		}
@@ -647,6 +654,26 @@ final class CssOptimizer {
 			return null;
 		}
 		return $url;
+	}
+
+	/**
+	 * The folder of used-CSS copies pages link to.
+	 */
+	public static function used_directory(): string {
+		return self::dir() . '/used';
+	}
+
+	/**
+	 * Delete used-CSS copies no page used since a time (AssetCache::sweep(), a day after the caches
+	 * were cleared), never one the live homepage links to.
+	 *
+	 * @param int      $before Last use before this time.
+	 * @param string[] $keep   File names that stay.
+	 * @return int Files deleted.
+	 */
+	public static function remove_unused_copies( int $before, array $keep = array() ): int {
+		$dir = self::used_directory();
+		return is_link( self::dir() ) ? 0 : AssetCache::remove_unused( $dir, $before, $keep );
 	}
 
 	/**
@@ -757,19 +784,30 @@ final class CssOptimizer {
 	}
 
 	/**
+	 * Whether this version knows an index entry's format. A newer version's entries (2.12.0's, after
+	 * a rollback) are kept exactly as they are, and nothing here sends, fetches, counts or changes them.
+	 *
+	 * @param array<string, mixed> $entry An index entry.
+	 */
+	private static function known( array $entry ): bool {
+		return (int) ( $entry['format'] ?? 1 ) <= 1;
+	}
+
+	/**
 	 * Save the index.
 	 *
 	 * @param array<string, array<string, mixed>> $index Index.
 	 */
 	private static function save_index( array $index ): void {
 		if ( count( $index ) > self::MAX_ENTRIES ) {
-			// The page types used longest ago go first: by their last use, not by when they were
-			// first noted, so page types in use for months aren't the ones dropped (and of those
-			// used as recently, the one noted first). Their results stay, as pages keep using
-			// them, until prune_results() finds them unused for a while.
+			// The page types seen longest ago go first: by when a page last used them (seen), not by
+			// when they were first noted, so the homepage that is opened all day isn't the first to
+			// lose its results to a flood of page types noted once (and of those seen as recently,
+			// the one noted first). Their results stay, as pages keep using them, until
+			// prune_results() finds them unused for a while.
 			$order = array();
 			foreach ( $index as $signature => $entry ) {
-				$order[ (string) $signature ] = array( self::last_used( (string) $signature, (int) ( $entry['at'] ?? 0 ) ), (int) ( $entry['at'] ?? 0 ) );
+				$order[ (string) $signature ] = array( self::last_used( (string) $signature, (int) ( $entry['at'] ?? 0 ), (int) ( $entry['seen'] ?? 0 ) ), (int) ( $entry['at'] ?? 0 ) );
 			}
 			uasort( $order, static fn ( array $a, array $b ): int => $b <=> $a );
 			$index = array_intersect_key( $index, array_slice( $order, 0, self::MAX_ENTRIES, true ) );
@@ -778,15 +816,35 @@ final class CssOptimizer {
 	}
 
 	/**
-	 * When a page type was last used: when its stored results were last read by a page (their
-	 * file's modified time, moved forward at most daily), or when it was noted.
+	 * When a page type was last seen: when a page last used its results (recorded hourly at most),
+	 * when its stored results were last read (their file's modified time, moved forward at most
+	 * daily), or when it was noted.
 	 *
 	 * @param string $signature Signature.
 	 * @param int    $noted     When it was noted.
+	 * @param int    $seen      When a page last used it.
 	 */
-	private static function last_used( string $signature, int $noted ): int {
+	private static function last_used( string $signature, int $noted, int $seen = 0 ): int {
 		$time = @filemtime( self::dir() . '/' . $signature . '.json' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a page type without results has no file.
-		return max( $noted, false === $time ? 0 : $time );
+		return max( $noted, $seen, false === $time ? 0 : $time );
+	}
+
+	/**
+	 * A page used a page type's results: note it (at most once an hour per page type), so the page
+	 * types in use aren't the ones dropped when there are too many.
+	 *
+	 * @param string $signature Signature.
+	 */
+	private static function saw( string $signature ): void {
+		$index = self::index();
+		if ( ! isset( $index[ $signature ] ) || self::is_render_request() ) {
+			return;
+		}
+		if ( max( (int) ( $index[ $signature ]['seen'] ?? 0 ), (int) ( $index[ $signature ]['at'] ?? 0 ) ) > time() - HOUR_IN_SECONDS ) {
+			return;
+		}
+		$index[ $signature ]['seen'] = time();
+		self::save_index( $index );
 	}
 
 	/**
@@ -854,6 +912,9 @@ final class CssOptimizer {
 			return; // A missing stylesheet, script or manifest reaches the 404 template too: only pages count.
 		}
 		$index = self::index();
+		if ( isset( $index[ $signature ] ) && ! self::known( $index[ $signature ] ) ) {
+			return; // A newer version's entry (a rollback from 2.12.0): kept as it is, not used here.
+		}
 		if ( isset( $index[ $signature ] ) && 'ready' !== $index[ $signature ]['status'] ) {
 			// Still waiting: a sync that was lost (a failed or cancelled run) must not leave it waiting for good.
 			if ( in_array( $index[ $signature ]['status'], array( 'needed', 'requested', 'redownload' ), true ) && ! wp_next_scheduled( self::HOOK ) ) {
@@ -892,7 +953,7 @@ final class CssOptimizer {
 	public static function current_url(): string {
 		$uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
 		$url = home_url( (string) $uri );
-		return (string) remove_query_arg( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid', 'arvaseo_render', 'arvaseo_note' ), $url );
+		return (string) remove_query_arg( array_merge( PageCache::tracking_parameters(), array( 'arvaseo_render', 'arvaseo_note' ) ), $url );
 	}
 
 	/**
@@ -911,8 +972,13 @@ final class CssOptimizer {
 		if ( ! is_array( $data['sheets'] ?? null ) ) {
 			return null;
 		}
+		if ( (int) ( $data['v'] ?? 1 ) > 1 ) {
+			// Results a newer version saved (a rollback from 2.12.0): kept, not used.
+			return null;
+		}
 		// Its last use, which decides what goes when there are too many page types (save_index()).
 		AssetCache::used( $file, self::TOUCH_EVERY );
+		self::saw( $signature );
 		if ( '' !== $template && true !== ( $data['whole'] ?? null ) ) {
 			self::redownload( $signature, $template );
 		}
@@ -966,7 +1032,7 @@ final class CssOptimizer {
 		$wanted = self::wanted();
 		// Results saved before 2.10.8 may have lost rules (see store()): they're fetched again
 		// first, at no cost, also while both fixes are off, so they're whole when one is turned on.
-		$again = array_keys( array_filter( $index, static fn ( $entry ) => 'redownload' === ( $entry['status'] ?? '' ) ) );
+		$again = array_keys( array_filter( $index, static fn ( $entry ) => 'redownload' === ( $entry['status'] ?? '' ) && self::known( $entry ) ) );
 		if ( ! $wanted && array() === $again ) {
 			return $out;
 		}
@@ -985,6 +1051,9 @@ final class CssOptimizer {
 
 		$send = array();
 		foreach ( $index as $signature => $entry ) {
+			if ( ! self::known( $entry ) ) {
+				continue;
+			}
 			if ( 'needed' === $entry['status'] || ( in_array( $entry['status'], array( 'no_allowance', 'daily_cap' ), true ) && ( $entry['retry_at'] ?? 0 ) <= time() ) ) {
 				$send[] = array(
 					'signature' => (string) $signature,
@@ -1018,7 +1087,7 @@ final class CssOptimizer {
 			}
 		}
 
-		$waiting = array_reverse( array_filter( $index, static fn ( $entry ) => 'requested' === $entry['status'] ), true );
+		$waiting = array_reverse( array_filter( $index, static fn ( $entry ) => 'requested' === $entry['status'] && self::known( $entry ) ), true );
 		uasort( $waiting, static fn ( $a, $b ) => ( $b['at'] ?? 0 ) <=> ( $a['at'] ?? 0 ) );
 		$waiting = $wanted ? array_keys( $waiting ) : array();
 		$started = microtime( true );
@@ -1105,7 +1174,7 @@ final class CssOptimizer {
 	 */
 	private static function waiting( array $index, bool $wanted ): bool {
 		$statuses = $wanted ? array( 'needed', 'requested', 'redownload' ) : array( 'redownload' );
-		return array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'] ?? '', $statuses, true ) );
+		return array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'] ?? '', $statuses, true ) && self::known( $entry ) );
 	}
 
 	/**
@@ -1135,7 +1204,7 @@ final class CssOptimizer {
 		$index = self::index();
 		$count = 0;
 		foreach ( $index as $signature => $entry ) {
-			if ( 'ready' === ( $entry['status'] ?? '' ) ) {
+			if ( 'ready' === ( $entry['status'] ?? '' ) && self::known( $entry ) ) {
 				$index[ $signature ]['status'] = 'redownload';
 				++$count;
 			}
@@ -1220,6 +1289,9 @@ final class CssOptimizer {
 		}
 		$index = self::index();
 		foreach ( $index as $signature => $entry ) {
+			if ( ! self::known( $entry ) ) {
+				continue; // A newer version's entry stays as it is; its results are gone with the folder.
+			}
 			$index[ $signature ]['status'] = 'needed';
 			unset( $index[ $signature ]['error'], $index[ $signature ]['retry_at'] );
 		}
@@ -1295,8 +1367,8 @@ final class CssOptimizer {
 		);
 		foreach ( self::index() as $entry ) {
 			$status = $entry['status'];
-			if ( 'not_a_page' === $status ) {
-				continue;
+			if ( 'not_a_page' === $status || ! self::known( $entry ) ) {
+				continue; // Not a page; or a newer version's entry, kept and not used here.
 			}
 			if ( in_array( $status, array( 'ready', 'redownload' ), true ) ) {
 				++$counts['ready'];
@@ -1319,7 +1391,7 @@ final class CssOptimizer {
 	public static function failures(): array {
 		$out = array();
 		foreach ( self::index() as $entry ) {
-			if ( in_array( $entry['status'], array( 'failed', 'not_this_site' ), true ) ) {
+			if ( in_array( $entry['status'], array( 'failed', 'not_this_site' ), true ) && self::known( $entry ) ) {
 				$out[] = array(
 					'label'  => self::template_label( (string) $entry['template'] ),
 					'url'    => (string) $entry['url'],
@@ -1337,7 +1409,7 @@ final class CssOptimizer {
 		$index = self::index();
 		$count = 0;
 		foreach ( $index as $signature => $entry ) {
-			if ( 'failed' === $entry['status'] ) {
+			if ( 'failed' === $entry['status'] && self::known( $entry ) ) {
 				$index[ $signature ]['status'] = 'needed';
 				unset( $index[ $signature ]['error'], $index[ $signature ]['error_status'] );
 				++$count;

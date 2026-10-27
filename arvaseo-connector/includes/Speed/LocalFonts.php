@@ -34,8 +34,8 @@ final class LocalFonts {
 
 	private const MAX_BYTES = 1048576;
 
-	/** A copy no page used for this long is deleted. */
-	private const UNUSED_AFTER = 30 * DAY_IN_SECONDS;
+	/** A copy no page used for this long is deleted (AssetCache decides when, 2.11.0). */
+	public const UNUSED_AFTER = 30 * DAY_IN_SECONDS;
 
 	/** Google sends WOFF2 to a current browser. */
 	private const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
@@ -140,15 +140,17 @@ final class LocalFonts {
 	}
 
 	/**
-	 * Delete the copies no page used for 30 days (daily maintenance), then have saved pages made
-	 * again. Nothing is deleted while a cache Arva SEO can't clear may keep pages
-	 * (AssetCache::cleanup_blocker()). Only this folder's own copies: never links or other files.
+	 * Delete the copies no page used for 30 days, and for 90 while a cache Arva SEO can't clear may
+	 * keep pages (AssetCache::sweep(), a day after the caches were cleared, passes what to delete
+	 * and what the live homepage links to). Only this folder's own copies: never links or other files.
 	 *
+	 * @param int|null $before Last used before this time; null for the rule as it stands now.
+	 * @param string[] $keep   Names that stay: a copy's name with and without .css.
 	 * @return int Copies deleted.
 	 */
-	public static function remove_unused(): int {
+	public static function remove_unused( ?int $before = null, array $keep = array() ): int {
 		$dir = self::dir();
-		if ( is_link( $dir ) || ! is_dir( $dir ) || null !== AssetCache::cleanup_blocker() ) {
+		if ( is_link( $dir ) || ! is_dir( $dir ) ) {
 			return 0;
 		}
 		$fs = self::filesystem();
@@ -156,10 +158,10 @@ final class LocalFonts {
 			return 0;
 		}
 		clearstatcache();
-		$before  = time() - self::UNUSED_AFTER;
+		$before  = $before ?? AssetCache::unused_before( self::UNUSED_AFTER );
 		$removed = 0;
 		foreach ( (array) scandir( $dir ) as $name ) {
-			if ( ! is_string( $name ) || ! preg_match( '/^([a-f0-9]{16})(\.css)?$/', $name, $m ) ) {
+			if ( ! is_string( $name ) || ! preg_match( '/^([a-f0-9]{16})(\.css)?$/', $name, $m ) || in_array( $name, $keep, true ) || in_array( $m[1], $keep, true ) ) {
 				continue;
 			}
 			$path = $dir . '/' . $name;
@@ -177,7 +179,6 @@ final class LocalFonts {
 			}
 		}
 		if ( $removed > 0 ) {
-			Fixes::pages_changed( 'fonts' );
 			AuditLogger::info(
 				'speed.fonts_cleaned',
 				/* translators: %d: number of font stylesheets. */
@@ -185,6 +186,13 @@ final class LocalFonts {
 			);
 		}
 		return $removed;
+	}
+
+	/**
+	 * The folder the copies are in.
+	 */
+	public static function directory(): string {
+		return self::dir();
 	}
 
 	/**

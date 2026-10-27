@@ -739,7 +739,8 @@ final class Fixes {
 	 * @param array<string, mixed> $choices Choices.
 	 */
 	public static function save_choices( array $choices ): void {
-		$data = self::stored();
+		$data   = self::stored();
+		$before = $data;
 		foreach ( array( 'ucss_inline', 'ccss_per_url', 'css_async_inline' ) as $field ) {
 			if ( array_key_exists( $field, $choices ) ) {
 				$data[ $field ] = (bool) $choices[ $field ];
@@ -819,7 +820,18 @@ final class Fixes {
 		}
 		self::save( $data );
 		Exclusions::reset();
-		if ( array() !== array_diff( array_keys( $choices ), array( 'remote' ) ) ) {
+		// Only a choice that changed what pages look like clears caches: saving the form again as it
+		// was, or ticking the box that lets Arva SEO switch fixes, doesn't (D22).
+		$changed = false;
+		foreach ( $data as $key => $value ) {
+			if ( 'remote' !== $key && ( $before[ $key ] ?? null ) !== $value ) {
+				$changed = true;
+				break;
+			}
+		}
+		// The drop-in holds the developer's list of ignored query parameters and the phone choice.
+		PageCache::refresh_dropin();
+		if ( $changed ) {
 			self::pages_changed( 'choices' );
 		}
 		AuditLogger::info( 'speed.options_saved', __( 'PageSpeed fix choices saved.', 'arvaseo-connector' ), array( 'changed' => array_keys( $choices ) ) );
@@ -847,18 +859,20 @@ final class Fixes {
 	}
 
 	/**
-	 * What visitors get changed on every page: page caches (Cloudflare here) clear their copies.
+	 * What visitors get changed on every page: page caches clear their copies (Arva SEO's own,
+	 * Cloudflare, and the other caches found: OtherCaches clears those at most every 15 minutes).
 	 *
 	 * @param string $why Someone's change: fix, choices, exclusions, cleared, regenerate, webp,
 	 *                    site or upgrade. Background ones, which can come many in a row: compress,
-	 *                    css, fonts, external_assets. Or assets (unused generated files deleted).
+	 *                    css, fonts, external_assets. Or mark (generated files are about to be
+	 *                    deleted, so every cache is cleared first).
 	 */
 	public static function pages_changed( string $why ): void {
 		/**
 		 * After a change that alters what visitors get on the site's pages.
 		 *
 		 * @param string $why fix, choices, exclusions, cleared, regenerate, webp, site, upgrade,
-		 *                    assets, or a background change: compress, css, fonts, external_assets.
+		 *                    mark, or a background change: compress, css, fonts, external_assets.
 		 */
 		do_action( 'arvaseo_connector_pages_changed', $why );
 	}

@@ -398,17 +398,25 @@ final class AssetBundles {
 		foreach ( $files as $file ) {
 			$total += (int) filesize( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static files only.
 		}
-		return count( $files ) < self::MAX_FILES && $total + $bytes <= self::CACHE_BYTES;
+		return count( $files ) < AssetCache::limit( self::MAX_FILES ) && $total + $bytes <= AssetCache::limit( self::CACHE_BYTES );
 	}
 
 	/**
-	 * Delete bundles no page used since a time (AssetCache::rotate(), which then clears page caches).
+	 * Delete bundles no page used since a time (AssetCache::sweep(), a day after the caches were cleared).
 	 *
-	 * @param int $before Last use before this time.
+	 * @param int      $before Last use before this time.
+	 * @param string[] $keep   File names that stay (the ones the live homepage links to).
 	 * @return int Files deleted.
 	 */
-	public static function remove_unused( int $before ): int {
-		return file_exists( self::dir() ) && self::safe_folder() ? AssetCache::remove_unused( self::dir(), $before ) : 0;
+	public static function remove_unused( int $before, array $keep = array() ): int {
+		return file_exists( self::dir() ) && self::safe_folder() ? AssetCache::remove_unused( self::dir(), $before, $keep ) : 0;
+	}
+
+	/**
+	 * The folder the bundles are in.
+	 */
+	public static function directory(): string {
+		return self::dir();
 	}
 
 	/** Uninstall or manual purge only; page caches must be invalidated by the caller. */

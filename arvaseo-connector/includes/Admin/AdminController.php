@@ -81,6 +81,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
 		add_action( 'admin_post_arvaseo_connector_cloudflare', array( self::class, 'cloudflare' ) );
 		add_action( 'admin_post_arvaseo_connector_page_cache', array( self::class, 'page_cache' ) );
+		add_action( 'admin_post_arvaseo_connector_other_caches', array( self::class, 'other_caches' ) );
 		add_action( 'admin_post_arvaseo_connector_security_scan', array( self::class, 'security_scan' ) );
 		add_action( 'admin_post_arvaseo_connector_security_stop', array( self::class, 'security_stop' ) );
 		add_action( 'admin_post_arvaseo_connector_security_ignore', array( self::class, 'security_ignore' ) );
@@ -550,6 +551,8 @@ final class AdminController {
 			'speed_page_cache_on'            => array( 'success', __( 'Page caching is on: your homepage came from the cache when checked. Other pages are saved as visitors open them, and refilled in the background. Run a new PageSpeed test in Arva SEO to see the change.', 'arvaseo-connector' ) ),
 			'speed_page_cache_off'           => array( 'success', __( 'Page caching is off. The saved pages, advanced-cache.php and Arva SEO’s line in wp-config.php were removed.', 'arvaseo-connector' ) ),
 			'speed_page_cache_cleared'       => array( 'success', __( 'Every saved page was cleared. Pages are saved again as visitors open them, and refilled in the background.', 'arvaseo-connector' ) ),
+			'speed_caches_cleared'           => array( 'success', __( 'Every cache Arva SEO can reach was cleared. The ones listed as yours to clear are waiting for you: clear them, then press “I’ve cleared it”.', 'arvaseo-connector' ) ),
+			'speed_cache_handled'            => array( 'success', __( 'Noted. Old files that were kept because of that cache are deleted within an hour, after Arva SEO clears the caches it can reach once more.', 'arvaseo-connector' ) ),
 			'speed_page_cache_ours'          => array( 'success', __( 'You can use Arva SEO’s page cache now. Turn off your host’s cache as it says below, then turn Page caching on.', 'arvaseo-connector' ) ),
 			'speed_page_cache_host'          => array( 'success', __( 'Page caching is left to your host’s cache again.', 'arvaseo-connector' ) ),
 			'speed_dropin_not_written'       => array( 'error', __( 'WordPress couldn’t write the page cache’s files (advanced-cache.php in wp-content, and WP_CACHE in wp-config.php), so nothing changed. Ask your host to make them writable.', 'arvaseo-connector' ) ),
@@ -601,7 +604,7 @@ final class AdminController {
 		if ( isset( $map[ $code ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible arvaseo-own"><p>%2$s</p></div>', esc_attr( $map[ $code ][0] ), esc_html( $map[ $code ][1] ) );
 		}
-		if ( in_array( $code, array( 'speed_on', 'speed_off', 'speed_options_saved', 'speed_css_ready', 'speed_css_regenerate', 'speed_webp_undone', 'speed_page_cache_cleared', 'speed_page_cache_on', 'speed_page_cache_off' ), true ) ) {
+		if ( in_array( $code, array( 'speed_on', 'speed_off', 'speed_options_saved', 'speed_css_ready', 'speed_css_regenerate', 'speed_webp_undone', 'speed_page_cache_cleared', 'speed_caches_cleared', 'speed_page_cache_on', 'speed_page_cache_off' ), true ) ) {
 			self::cloudflare_notice();
 		}
 		if ( TokenStore::unreadable() ) {
@@ -1186,6 +1189,36 @@ final class AdminController {
 		}
 		// phpcs:enable WordPress.Security.NonceVerification
 		self::back_to_fix( 'page_cache', 'speed_invalid' );
+	}
+
+	/**
+	 * Other caches on this site: clear every cache now (from the card or the toolbar), or say a
+	 * cache Arva SEO can't reach was cleared by hand.
+	 */
+	public static function other_caches(): void {
+		self::guard( 'arvaseo_connector_other_caches', Capabilities::MANAGE );
+		// phpcs:disable WordPress.Security.NonceVerification -- checked in guard().
+		$do = isset( $_REQUEST['do'] ) ? sanitize_key( wp_unslash( $_REQUEST['do'] ) ) : '';
+		if ( 'clear' === $do ) {
+			// Arva SEO's own page cache, Cloudflare and every other cache found, at once.
+			Fixes::pages_changed( 'cleared' );
+			$back = wp_get_referer();
+			if ( is_string( $back ) && ! str_contains( $back, 'page=arvaseo-speed' ) ) {
+				// From the toolbar on one of the site's pages: back to it.
+				wp_safe_redirect( $back );
+				exit;
+			}
+			wp_safe_redirect( add_query_arg( 'arvaseo_notice', 'speed_caches_cleared', admin_url( 'admin.php?page=arvaseo-speed' ) ) . '#arvaseo-other-caches' );
+			exit;
+		}
+		if ( 'handled' === $do ) {
+			$cache  = isset( $_POST['cache'] ) ? sanitize_key( wp_unslash( $_POST['cache'] ) ) : '';
+			$notice = \ArvaSEO\Connector\Speed\OtherCaches::mark_handled( $cache ) ? 'speed_cache_handled' : 'speed_invalid';
+			wp_safe_redirect( add_query_arg( 'arvaseo_notice', $notice, admin_url( 'admin.php?page=arvaseo-speed' ) ) . '#arvaseo-other-caches' );
+			exit;
+		}
+		// phpcs:enable WordPress.Security.NonceVerification
+		self::back( 'arvaseo-speed', 'speed_invalid' );
 	}
 
 	/**

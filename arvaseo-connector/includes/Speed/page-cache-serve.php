@@ -25,11 +25,29 @@ if ( ! function_exists( 'arvaseo_connector_page_cache_request' ) ) {
 
 	/**
 	 * Query parameters that only track where a visitor came from: the page is the same without them.
+	 * The list is one place for the page cache and for the page addresses optimized CSS is noted
+	 * under. Generic names such as campaignid and adgroupid are left out on purpose: sites use them
+	 * for their own content (a developer adds more with arvaseo_connector_page_cache_ignored_params).
 	 *
 	 * @return string[]
 	 */
 	function arvaseo_connector_page_cache_tracking(): array {
-		return array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'ttclid', 'twclid', 'li_fat_id', 'mc_cid', 'mc_eid', '_ga', '_gl', 'igshid', 'srsltid', 'ref' );
+		return explode(
+			' ',
+			// utm, and the ad networks' click and campaign IDs.
+			'utm_source utm_medium utm_campaign utm_term utm_content utm_id utm_source_platform utm_creative_format utm_marketing_tactic utm_expid ' .
+			'gclid gbraid wbraid gad_source gad_campaignid gclsrc dclid gadid srsltid ' .
+			'fbclid fb_action_ids fb_action_types fb_source fbadid msclkid ttclid twclid li_fat_id igshid epik yclid ' .
+			// Mailchimp, Klaviyo and HubSpot.
+			'mc_cid mc_eid _ke _kx _hsenc _hsmi ' .
+			'hsa_acc hsa_cam hsa_grp hsa_ad hsa_src hsa_tgt hsa_kw hsa_mt hsa_net hsa_ver ' .
+			// Analytics: Google, Adobe, ShareASale, Matomo and Piwik PRO.
+			'_ga _gl ef_id s_kwcid sscid ' .
+			'mtm_campaign mtm_keyword mtm_source mtm_medium mtm_content mtm_cid mtm_group mtm_placement ' .
+			'pk_campaign pk_kwd pk_keyword pk_source pk_medium pk_content pk_cid ' .
+			// Kept from before: some sites tag their own links with it.
+			'ref'
+		);
 	}
 
 	/**
@@ -43,9 +61,11 @@ if ( ! function_exists( 'arvaseo_connector_page_cache_request' ) ) {
 	 * @param bool                  $phones  Phones get their own copy.
 	 * @param bool                  $slash   The site's addresses end in a slash: the other form
 	 *                                       is left to WordPress, which redirects it.
+	 * @param string[]              $ignored More parameters that never change the page (the
+	 *                                       developer filter's, written into the drop-in).
 	 * @return array{dir: string, file: string, host: string, path: string}|null
 	 */
-	function arvaseo_connector_page_cache_request( array $server, array $cookies, string $root, bool $phones, bool $slash = true ): ?array {
+	function arvaseo_connector_page_cache_request( array $server, array $cookies, string $root, bool $phones, bool $slash = true, array $ignored = array() ): ?array {
 		$method = strtoupper( (string) ( $server['REQUEST_METHOD'] ?? 'GET' ) );
 		if ( ( 'GET' !== $method && 'HEAD' !== $method ) || ! empty( $server['HTTP_AUTHORIZATION'] ) || ! empty( $server['PHP_AUTH_USER'] ) ) {
 			return null;
@@ -60,7 +80,7 @@ if ( ! function_exists( 'arvaseo_connector_page_cache_request' ) ) {
 		$path  = $parts[0];
 		if ( isset( $parts[1] ) && '' !== $parts[1] ) {
 			parse_str( $parts[1], $query );
-			if ( array() !== array_diff( array_keys( $query ), arvaseo_connector_page_cache_tracking() ) ) {
+			if ( array() !== array_diff( array_keys( $query ), arvaseo_connector_page_cache_tracking(), $ignored ) ) {
 				return null;
 			}
 		}
@@ -127,7 +147,7 @@ if ( ! function_exists( 'arvaseo_connector_page_cache_request' ) ) {
 	/**
 	 * Serve the saved page and stop, or start saving this one. Called by the drop-in.
 	 *
-	 * @param array{root: string, ttl: int, phones: bool, charset: string, slash?: bool} $config Written into the drop-in by PageCache.
+	 * @param array{root: string, ttl: int, phones: bool, charset: string, slash?: bool, ignored?: string[]} $config Written into the drop-in by PageCache.
 	 */
 	function arvaseo_connector_page_cache_start( array $config ): void {
 		if ( 'cli' === PHP_SAPI || ( defined( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES' ) && constant( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES' ) ) || ( defined( 'DONOTCACHEPAGE' ) && constant( 'DONOTCACHEPAGE' ) ) ) {
@@ -138,7 +158,7 @@ if ( ! function_exists( 'arvaseo_connector_page_cache_request' ) ) {
 		if ( ! in_array( 'index.php', $scripts, true ) ) {
 			return;
 		}
-		$request = arvaseo_connector_page_cache_request( $_SERVER, $_COOKIE, $config['root'], $config['phones'], $config['slash'] ?? true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- read, checked and never output.
+		$request = arvaseo_connector_page_cache_request( $_SERVER, $_COOKIE, $config['root'], $config['phones'], $config['slash'] ?? true, array_map( 'strval', (array) ( $config['ignored'] ?? array() ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- read, checked and never output.
 		if ( null === $request ) {
 			return;
 		}

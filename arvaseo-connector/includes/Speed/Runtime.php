@@ -91,6 +91,7 @@ final class Runtime {
 		AssetCache::init();
 		CssOptimizer::init();
 		Cloudflare::init();
+		OtherCaches::init();
 		PageCache::init();
 	}
 
@@ -131,6 +132,10 @@ final class Runtime {
 		if ( ! wp_next_scheduled( 'arvaseo_connector_register' ) ) {
 			wp_schedule_single_event( time(), 'arvaseo_connector_register' );
 		}
+		// Which caches are in front of the site (a look at the homepage's headers, soon), and the
+		// drop-in learns the developer's list of ignored query parameters (2.11.0).
+		OtherCaches::check_soon();
+		PageCache::refresh_dropin();
 		foreach ( Fixes::stored()['fixes'] as $fix ) {
 			if ( 'on' === $fix['state'] ) {
 				Fixes::pages_changed( 'upgrade' );
@@ -150,9 +155,12 @@ final class Runtime {
 		if ( ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) || ( defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH ) ) ) {
 			return;
 		}
-		$states = array_map( array( Fixes::class, 'state' ), array_keys( Fixes::all() ) );
-		$trying = count( array_keys( $states, 'trying', true ) );
+		$states         = array_map( array( Fixes::class, 'state' ), array_keys( Fixes::all() ) );
+		$trying         = count( array_keys( $states, 'trying', true ) );
+		$waiting_caches = OtherCaches::waiting();
 		if ( 0 === $trying && ! in_array( 'on', $states, true ) ) {
+			// Every fix is off, but a change just made may still show in a cache that is the administrator's to clear.
+			self::caches_node( $bar, $waiting_caches );
 			return;
 		}
 		$bar->add_node(
@@ -180,6 +188,26 @@ final class Runtime {
 				)
 			);
 		}
+		self::caches_node( $bar, $waiting_caches );
+		if ( OtherCaches::any() ) {
+			$bar->add_node(
+				array(
+					'parent' => 'arvaseo-speed-trying',
+					'id'     => 'arvaseo-other-caches-clear',
+					'title'  => esc_html__( 'Clear every cache now', 'arvaseo-connector' ),
+					'href'   => wp_nonce_url(
+						add_query_arg(
+							array(
+								'action' => 'arvaseo_connector_other_caches',
+								'do'     => 'clear',
+							),
+							admin_url( 'admin-post.php' )
+						),
+						'arvaseo_connector_other_caches'
+					),
+				)
+			);
+		}
 		if ( PageCache::active() ) {
 			$bar->add_node(
 				array(
@@ -200,6 +228,27 @@ final class Runtime {
 			);
 		}
 		Exclusions::toolbar_items( $bar, 'arvaseo-speed-trying' );
+	}
+
+	/**
+	 * The toolbar item that says how many caches are the administrator's to clear.
+	 *
+	 * @param \WP_Admin_Bar                    $bar     The toolbar.
+	 * @param array<int, array<string, mixed>> $waiting Caches to clear by hand since something changed (OtherCaches::waiting()).
+	 */
+	private static function caches_node( $bar, array $waiting ): void {
+		if ( array() === $waiting ) {
+			return;
+		}
+		$bar->add_node(
+			array(
+				'id'    => 'arvaseo-speed-caches',
+				/* translators: %d: number of caches the administrator has to clear. */
+				'title' => esc_html( sprintf( _n( 'Arva SEO: clear %d cache yourself', 'Arva SEO: clear %d caches yourself', count( $waiting ), 'arvaseo-connector' ), count( $waiting ) ) ),
+				'href'  => admin_url( 'admin.php?page=arvaseo-speed#arvaseo-other-caches' ),
+				'meta'  => array( 'title' => esc_attr( OtherPlugins::names( array_column( $waiting, 'name' ) ) ) ),
+			)
+		);
 	}
 
 	/**
