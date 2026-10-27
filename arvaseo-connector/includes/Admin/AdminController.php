@@ -538,7 +538,7 @@ final class AdminController {
 			'speed_unavailable'              => array( 'error', __( 'This fix isn’t available on this server.', 'arvaseo-connector' ) ),
 			'speed_try_first'                => array( 'error', __( 'Try Defer scripts first, check your important pages, then turn it on.', 'arvaseo-connector' ) ),
 			'speed_check_pages'              => array( 'error', __( 'Tick each page you checked while trying Defer scripts before you turn it on.', 'arvaseo-connector' ) ),
-			'speed_use_update'               => array( 'success', __( 'Your visitors now get the updated version. Pages that were saved are cleared and saved again as visitors open them. Run a new PageSpeed test in Arva SEO to see the change.', 'arvaseo-connector' ) ),
+			'speed_use_update'               => array( 'success', __( 'Your visitors now get the updated version. Pages that were saved are cleared and saved again as visitors open them; other caches are cleared at most every 15 minutes, so give them a little time. Run a new PageSpeed test in Arva SEO to see the change.', 'arvaseo-connector' ) ),
 			'speed_keep_previous'            => array( 'success', __( 'Kept. Your visitors, and you while you’re signed in, keep the version you checked. You can use the update whenever you’re ready, until the day the earlier version is retired.', 'arvaseo-connector' ) ),
 			'speed_no_update'                => array( 'info', __( 'There is no update waiting for that fix.', 'arvaseo-connector' ) ),
 			'speed_webp_started'             => array( 'success', __( 'Converting your existing images in the background. You can leave this page; come back to see how far it got.', 'arvaseo-connector' ) ),
