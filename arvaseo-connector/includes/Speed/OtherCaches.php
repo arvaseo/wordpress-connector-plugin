@@ -87,7 +87,7 @@ final class OtherCaches {
 		'wp-super-cache'          => array( 'wp-super-cache', 'WP Super Cache', 'function', 'wp_cache_clear_cache' ),
 		'w3-total-cache'          => array( 'w3-total-cache', 'W3 Total Cache', 'function', 'w3tc_pgcache_flush' ),
 		'wp-rocket'               => array( 'wp-rocket', 'WP Rocket', 'function', 'rocket_clean_domain' ),
-		'wp-fastest-cache'        => array( 'wp-fastest-cache', 'WP Fastest Cache', 'action', 'wpfc_clear_all_cache' ),
+		'wp-fastest-cache'        => array( 'wp-fastest-cache', 'WP Fastest Cache', 'function', 'wpfc_clear_all_cache' ),
 		'cache-enabler'           => array( 'cache-enabler', 'Cache Enabler', 'action', 'cache_enabler_clear_complete_cache' ),
 		'hummingbird-performance' => array( 'hummingbird', 'Hummingbird', 'action', 'wphb_clear_page_cache' ),
 		'comet-cache'             => array( 'comet-cache', 'Comet Cache', 'method', 'comet_cache' ),
@@ -369,7 +369,7 @@ final class OtherCaches {
 			$put(
 				$available
 					? self::entry( $id, $name, 'plugin', 'auto', array( 'plugin' ) )
-					: self::entry( $id, $name, 'plugin', 'by_hand', array( 'plugin' ), self::plugin_how( $name ), $name )
+					: self::entry( $id, $name, 'plugin', 'by_hand', array( 'plugin' ), self::plugin_how( $name, 'wp-fastest-cache' === $id && self::constant_on( 'WPFC_DISABLE_HOOK_CLEAR_ALL_CACHE' ) ), $name )
 			);
 		}
 		// The rest, until each one's trigger is verified.
@@ -543,6 +543,16 @@ final class OtherCaches {
 	}
 
 	/**
+	 * Whether a constant is defined and on (WPFC_DISABLE_HOOK_CLEAR_ALL_CACHE). The same filter as
+	 * constant() lets a setup that can't define it say so.
+	 *
+	 * @param string $name Constant name.
+	 */
+	private static function constant_on( string $name ): bool {
+		return ( defined( $name ) && (bool) constant( $name ) ) || (bool) apply_filters( 'arvaseo_connector_host_constant', false, $name );
+	}
+
+	/**
 	 * Where WordPress is on the server, as hosts' folders show it (SiteGround: /home/customer/www/,
 	 * Hostinger: /home/u123456789/domains/).
 	 */
@@ -583,11 +593,17 @@ final class OtherCaches {
 	/**
 	 * What to do for a cache plugin there's no way into.
 	 *
-	 * @param string $name Plugin name.
+	 * @param string $name     Plugin name.
+	 * @param bool   $switched Its clearing from other plugins is switched off in wp-config.php.
 	 */
-	private static function plugin_how( string $name ): string {
+	private static function plugin_how( string $name, bool $switched = false ): string {
 		/* translators: %s: a cache plugin's name. */
-		return sprintf( __( 'Open %s and use its button that clears every saved page.', 'arvaseo-connector' ), $name );
+		$how = sprintf( __( 'Open %s and use its button that clears every saved page.', 'arvaseo-connector' ), $name );
+		if ( $switched ) {
+			/* translators: %s: how to clear the plugin's cache by hand. */
+			return sprintf( __( 'Clearing it from other plugins is switched off in wp-config.php (WPFC_DISABLE_HOOK_CLEAR_ALL_CACHE). %s', 'arvaseo-connector' ), $how );
+		}
+		return $how;
 	}
 
 	// ----- The ways in -------------------------------------------------------------------------
@@ -620,7 +636,20 @@ final class OtherCaches {
 			'wp-super-cache'   => $function( 'wp_cache_clear_cache' ),
 			'w3-total-cache'   => $function( 'w3tc_pgcache_flush' ),
 			'wp-rocket'        => $function( 'rocket_clean_domain' ),
-			'wp-fastest-cache' => $action( 'wpfc_clear_all_cache' ),
+			// WP Fastest Cache's own function (it fires its wpfc_clear_all_cache action). The constant
+			// WPFC_DISABLE_HOOK_CLEAR_ALL_CACHE switches that function off for everyone but not the action
+			// behind it (checked against 1.5.3's source), so with the constant set the cache is the
+			// owner's to clear and nothing is fired.
+			'wp-fastest-cache' => array(
+				'available' => static fn (): bool => ! self::constant_on( 'WPFC_DISABLE_HOOK_CLEAR_ALL_CACHE' ) && ( function_exists( 'wpfc_clear_all_cache' ) || (bool) has_action( 'wpfc_clear_all_cache' ) ),
+				'clear'     => static function (): void {
+					if ( function_exists( 'wpfc_clear_all_cache' ) ) {
+						call_user_func( 'wpfc_clear_all_cache', false );
+						return;
+					}
+					do_action( 'wpfc_clear_all_cache' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WP Fastest Cache's documented purge action.
+				},
+			),
 			'cache-enabler'    => $action( 'cache_enabler_clear_complete_cache' ),
 			'hummingbird'      => $action( 'wphb_clear_page_cache' ),
 			'comet-cache'      => $method( 'comet_cache', 'clear' ),
