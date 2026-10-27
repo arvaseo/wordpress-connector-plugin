@@ -118,7 +118,8 @@ final class RemoteFixes {
 		}
 		$error = Fixes::accept_update( $id );
 		if ( null !== $error ) {
-			return self::result( 'refused', $id, $error );
+			// Arva SEO's name for it, the same as its own answer when it can tell beforehand.
+			return self::result( 'refused', $id, 'no_update' === $error ? 'no_update_waiting' : $error );
 		}
 		AuditLogger::info(
 			'speed.update_used_remotely',

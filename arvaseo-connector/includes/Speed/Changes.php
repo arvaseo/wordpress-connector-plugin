@@ -61,6 +61,9 @@ final class Changes {
 	/** The entries listed in the option, at most. */
 	public const MAX_RECORDED = 20;
 
+	/** The rows of speed_changes in the site's details, at most (what Arva SEO accepts). */
+	public const MAX_REPORTED = 20;
+
 	/** Entries nobody waits on leave the list after this long. */
 	public const RECORD_DAYS = 180;
 
@@ -78,6 +81,14 @@ final class Changes {
 	 */
 	public const LINKED = array(
 		array( 'critical_css', 'unused_css' ),
+	);
+
+	/** How Arva SEO names the kinds. */
+	private const WIRE_KINDS = array(
+		self::NOTICE => 'notice',
+		self::OPTION => 'new_option',
+		self::UPDATE => 'update_to_check',
+		self::BACK   => 'back_to_trying',
 	);
 
 	/** Fixes that go on in WordPress only: "Use it for visitors" isn't offered from Arva SEO. */
@@ -523,9 +534,8 @@ final class Changes {
 	}
 
 	/**
-	 * When a fix's approved revision is retired (D4): the later of each waiting entry's date and
-	 * 90 days after the site was told about it; the earliest of those, since the approved revision
-	 * is the oldest one. Null when nothing waits.
+	 * When a fix's approved revision is retired (D4): the earliest of its waiting entries' days,
+	 * since the approved revision is the oldest one. Null when nothing waits.
 	 *
 	 * @param string $fix Fix ID.
 	 * @return int|null Unix time.
@@ -533,30 +543,21 @@ final class Changes {
 	public static function retire_at( string $fix ): ?int {
 		$times = array();
 		foreach ( self::waiting( $fix ) as $entry ) {
-			$told    = self::recorded_at( $entry['id'] ) ?? time();
-			$times[] = max( (int) strtotime( (string) $entry['keep_until'] . ' 00:00:00 UTC' ), $told + self::KEEP_DAYS * DAY_IN_SECONDS );
+			$times[] = self::entry_retire_at( $entry );
 		}
 		return array() === $times ? null : min( $times );
 	}
 
 	/**
-	 * What Arva SEO is told about a fix's waiting update, or null when none waits.
+	 * The day an update entry's previous revision is retired (D4): the later of its date and 90
+	 * days after the site was told about it.
 	 *
-	 * @param string $fix Fix ID.
-	 * @return array{entries: string[], since: string, keep_until: string, kept: bool}|null
+	 * @param array{id: string, keep_until: string|null} $entry Entry.
+	 * @return int Unix time.
 	 */
-	public static function report_for( string $fix ): ?array {
-		$waiting = self::waiting( $fix );
-		if ( array() === $waiting || null !== Fixes::handled_by( $fix ) ) {
-			return null;
-		}
-		$told = array_map( static fn ( array $entry ): int => self::recorded_at( $entry['id'] ) ?? time(), $waiting );
-		return array(
-			'entries'    => array_column( $waiting, 'id' ),
-			'since'      => Ids::iso( min( $told ) ),
-			'keep_until' => gmdate( 'Y-m-d', (int) self::retire_at( $fix ) ),
-			'kept'       => self::is_kept( $fix ),
-		);
+	private static function entry_retire_at( array $entry ): int {
+		$told = self::recorded_at( $entry['id'] ) ?? time();
+		return max( (int) strtotime( (string) $entry['keep_until'] . ' 00:00:00 UTC' ), $told + self::KEEP_DAYS * DAY_IN_SECONDS );
 	}
 
 	// ----- What was recorded -----------------------------------------------------------------
@@ -609,25 +610,108 @@ final class Changes {
 	}
 
 	/**
-	 * The entries as Arva SEO receives them with the site's details.
+	 * The changes as Arva SEO receives them with the site's details (speed_changes): at most 20
+	 * rows, ids only (Arva SEO keeps the notes). A row says where one change stands for the fixes
+	 * it names, so one change can come twice, once per status:
 	 *
-	 * @return array<int, array{id: string, kind: string, fixes: string[], at: string, done: string|null}>
+	 * - id: the entry's id (2.11.0-combine-first);
+	 * - status: waiting (visitors still get the version the administrator approved), kept (the
+	 *   administrator chose to keep it), used (visitors get the update) or applied (a notice, a new
+	 *   option or a fix sent back to Trying: nothing to decide);
+	 * - kind: notice, new_option, update_to_check or back_to_trying;
+	 * - fixes: the fixes the status is for (empty: any fix that is on);
+	 * - since: when the site was told about it;
+	 * - keep_until (waiting and kept): the day the previous version is retired, as a time.
+	 *
+	 * What waits comes first, then what was used, then notices (the newest of those when over 20).
+	 *
+	 * @return list<array{id: string, status: string, kind: string, fixes: string[], since: string, keep_until?: string}>
 	 */
 	public static function for_registration(): array {
 		$known = array_column( self::entries(), null, 'id' );
-		$rows  = array();
+		$rows  = array(
+			'waiting' => array(),
+			'kept'    => array(),
+			'used'    => array(),
+			'applied' => array(),
+		);
 		foreach ( self::recorded() as $item ) {
-			$entry  = $known[ $item['id'] ] ?? null;
-			$fixes  = null === $entry || array( '*' ) === $entry['fixes'] ? array() : $entry['fixes'];
-			$rows[] = array(
-				'id'    => $item['id'],
-				'kind'  => $entry['kind'] ?? self::NOTICE,
-				'fixes' => array_values( $fixes ),
-				'at'    => Ids::iso( $item['at'] ),
-				'done'  => $item['done'] ?? null,
+			$entry = $known[ $item['id'] ] ?? null;
+			$since = Ids::iso( $item['at'] );
+			if ( null === $entry || self::UPDATE !== $entry['kind'] ) {
+				$rows['applied'][] = array(
+					'id'     => $item['id'],
+					'status' => 'applied',
+					'kind'   => self::WIRE_KINDS[ $entry['kind'] ?? self::NOTICE ],
+					'fixes'  => null === $entry || array( '*' ) === $entry['fixes'] ? array() : array_values( $entry['fixes'] ),
+					'since'  => $since,
+				);
+				continue;
+			}
+			$stands = array(
+				'waiting' => array(),
+				'kept'    => array(),
+				'used'    => array(),
 			);
+			foreach ( $entry['fixes'] as $fix ) {
+				$status = self::standing( $entry, (string) $fix, $item['at'] );
+				if ( null !== $status ) {
+					$stands[ $status ][] = $fix;
+				}
+			}
+			foreach ( $stands as $status => $fixes ) {
+				if ( array() === $fixes ) {
+					continue;
+				}
+				$row = array(
+					'id'     => $item['id'],
+					'status' => $status,
+					'kind'   => self::WIRE_KINDS[ self::UPDATE ],
+					'fixes'  => $fixes,
+					'since'  => $since,
+				);
+				if ( 'used' !== $status ) {
+					$row['keep_until'] = Ids::iso( self::entry_retire_at( $entry ) );
+				}
+				$rows[ $status ][] = $row;
+			}
 		}
-		return $rows;
+		$head = array_slice( array_merge( $rows['waiting'], $rows['kept'] ), 0, self::MAX_REPORTED );
+		$room = self::MAX_REPORTED - count( $head );
+		$used = self::newest( $rows['used'], $room );
+		return array_merge( $head, $used, self::newest( $rows['applied'], $room - count( $used ) ) );
+	}
+
+	/**
+	 * Where an update entry stands for a fix: waiting or kept while visitors don't get it yet,
+	 * used once they do, and null when it never concerned the fix (off, tried, done by another
+	 * plugin, or switched on after the site was told).
+	 *
+	 * @param array{id: string, rev: int|null} $entry Update entry.
+	 * @param string                           $fix   Fix ID.
+	 * @param int                              $told  When the site was told about the entry.
+	 * @return string|null waiting, kept or used.
+	 */
+	private static function standing( array $entry, string $fix, int $told ): ?string {
+		if ( 'on' !== self::raw_state( $fix ) || null !== Fixes::handled_by( $fix ) ) {
+			return null;
+		}
+		if ( (int) $entry['rev'] > self::approved_rev( $fix ) ) {
+			return self::is_kept( $fix ) ? 'kept' : 'waiting';
+		}
+		$since = strtotime( (string) ( self::row( $fix )['since'] ?? '' ) );
+		return false !== $since && $since > $told ? null : 'used';
+	}
+
+	/**
+	 * The last rows of a list, at most $room of them.
+	 *
+	 * @param array<int, array<string, mixed>> $rows Rows, oldest first.
+	 * @param int                              $room How many fit.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function newest( array $rows, int $room ): array {
+		return $room <= 0 ? array() : array_slice( $rows, -$room );
 	}
 
 	/**

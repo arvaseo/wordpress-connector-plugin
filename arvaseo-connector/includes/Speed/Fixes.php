@@ -894,12 +894,11 @@ final class Fixes {
 	}
 
 	/**
-	 * The states as Arva SEO receives them with the site's details.
+	 * The states as Arva SEO receives them with the site's details (speed_fixes): exactly these
+	 * four fields, since Arva SEO refuses any other. What updates changed, and which wait for a
+	 * check, goes in speed_changes (Changes::for_registration()).
 	 *
-	 * "rev" is the revision visitors get (1.. up to the newest the plugin has); "update" says what
-	 * an update the administrator hasn't checked yet is, or is null.
-	 *
-	 * @return array<int, array{id: string, state: string, since: string|null, handled_by: string|null, rev: int, update: array{entries: string[], since: string, keep_until: string, kept: bool}|null}>
+	 * @return array<int, array{id: string, state: string, since: string|null, handled_by: string|null}>
 	 */
 	public static function for_registration(): array {
 		$stored = self::stored();
@@ -912,8 +911,6 @@ final class Fixes {
 				'state'      => 'unavailable' === $state ? 'off' : $state,
 				'since'      => in_array( $state, array( 'on', 'trying' ), true ) ? $stored['fixes'][ $id ]['since'] : null,
 				'handled_by' => $handled,
-				'rev'        => 'on' === $stored['fixes'][ $id ]['state'] ? $stored['fixes'][ $id ]['rev'] : Changes::latest_rev( $id ),
-				'update'     => Changes::report_for( $id ),
 			);
 		}
 		return $rows;
