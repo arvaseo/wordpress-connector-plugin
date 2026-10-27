@@ -202,5 +202,7 @@ final class CronManager {
 		\ArvaSEO\Connector\Speed\CssOptimizer::prune_results();
 		// Google Fonts copies no page used for 30 days.
 		\ArvaSEO\Connector\Speed\LocalFonts::remove_unused();
+		// Old versions of fixes whose day has come go back to Trying (D4), and old notes go.
+		\ArvaSEO\Connector\Speed\Changes::maintain();
 	}
 }

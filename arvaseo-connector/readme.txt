@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.8
+Stable tag: 2.11.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -87,6 +87,10 @@ Yes. Arva SEO → Speed has separate Combine CSS and Combine JavaScript controls
 = Does the plugin change my site? =
 
 Only in the ways you switch on. PageSpeed fixes change how your pages load, only after you turn each one on, and turning it off undoes it. Website Health and the security scan are read-only: they report, and every finding is a recommendation. Arva SEO can only create or update posts it sent, within your publishing mode, and, if you allow it in Settings, change the SEO title and meta description of published content in Yoast SEO or Rank Math.
+
+= What happens to the fixes I use when the plugin updates? =
+
+Nothing changes silently. An update that only adds an option (off until you turn it on) or only makes a fix do less is applied, and Arva SEO → Speed lists it under "What changed". An update that could make a page work differently for visitors waits for you: your visitors keep the version you checked, you see the new one while you're signed in, and the fix shows "Update to check" with three choices: use it for visitors, keep the previous version, or turn the fix off. The earlier version stays at least 90 days. Before it is retired, a connected site is reminded in Arva SEO; when the day comes, the fix goes back to being tried so you can check the new version.
 
 = Is the security scan a firewall or a malware cleaner? =
 
@@ -175,7 +179,7 @@ Credentials are always revoked and removed. Settings, logs and delivery records 
 
 Connecting to Arva SEO (https://arvaseo.com) is optional and starts only when an administrator connects the site. Local fixes work without an account. The optional features below contact their listed services only when you enable or use them.
 
-* **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, and your data-sharing choice.
+* **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, the revision of each (which version of the fix visitors get), any update to a fix that waits for your check, which of the plugin's update notes applied to this site (their ids), and your data-sharing choice.
 * **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
 * **Security scan results (off by default, a separate choice):** after each scan, when an administrator agreed to share them, each open problem's kind, severity, a key, the file's path inside the site and its SHA-256 fingerprint, and for suspicious code the pattern's name, line and the start of that line, with how many files were checked. Never the files themselves.
 * **Security feed (only when connected):** once a day the plugin downloads Arva SEO's security feed from api.arvaseo.com (fingerprints of known malware and of files found safe, PHP's latest versions, new patterns), sending only the version it has.
@@ -213,6 +217,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.11.0 =
+Updates that change how a fix you use works now wait for your check: visitors keep the version you checked until you choose "Use it for visitors", and you see the new one while signed in. Everything else that changed is listed on the Speed page.
 
 = 2.10.8 =
 Fixes phone layouts and icons that optimized CSS could break on some themes. Optimized styles are downloaded again automatically, at no cost.
@@ -312,6 +319,26 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.11.0 =
+* New: updates that could make a page work differently for visitors of a site where a fix is on no longer change it silently. Each fix keeps a revision: visitors get the revision the administrator approved, and an "Update to check" card on Speed says what changed. While you're signed in you see the new revision, so you can open your important pages; "Use it for visitors" makes it live for everyone, "Keep the previous version" leaves it, and "Turn the fix off" turns it off. A toolbar item and one dismissible notice count the updates to check. The earlier version stays for at least 90 days, with a reminder before it is retired, and then the fix goes back to being tried.
+* New: updating from 2.10.0 or 2.10.0.1 keeps what you approved. Fixes that are on keep the 2.10.0 behaviour of "Load styles faster" and "Remove unused CSS" (generating from the enqueued styles when Combine CSS is on, and matching optimized styles by name only) and of Combine CSS and Combine JavaScript (one file that can't be combined leaves the whole run alone) until you use the update. Updating from 2.10.6 or later counts what that version already did as used.
+* New: the choices you had not saved are written with the defaults they had in the version you updated from, so a later change of a default only reaches new installs. Choices added since 2.10.0 start off.
+* New: from 2.11.0, Arva SEO and the AI connector can press "Use it for visitors" where you allow switching fixes remotely (never for Defer scripts), and a remote "turn on" for a fix with an update to check says so instead of changing nothing.
+* New: Speed lists what changed in this update, with the notes for new options and for changes that only make fixes do less. The site's details sent to Arva SEO now include the revision of each fix, any update waiting, and which of these notes applied (ids only).
+* Changed: the version that last ran is read before it is overwritten, and the upgrade runs under a lock, so a request that arrives half way keeps the revisions visitors approved.
+* Listed under What changed on Speed, for the fixes you use (an update waits for your check only while its fix is on):
+* Update to check: With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free.
+* Update to check: Optimized styles now also reach stylesheets whose names use capital letters (Elementor’s entrance animations, some Google Fonts) and stylesheets a theme prints more than once, so fewer of them hold the page up.
+* Update to check: Files next to one that can’t be combined are now combined around it, in the same order. This applies to stylesheets and scripts.
+* Option: New option under Defer scripts: Move jQuery down the page. It’s off until you turn it on.
+* Option: New option under Load styles faster: Load icon fonts after the page. It’s off until you turn it on.
+* Notice: Arva SEO’s renderer now gets your pages without the WordPress extras you removed, as visitors do.
+* Notice: Entrance animations no longer play a second time when the rest of the styles arrive.
+* Notice: Unused generated files are cleaned up after a week unused (Google Fonts copies after 30 days), never while another cache may still use them.
+* Notice: Caches are cleared when compression changes an image.
+* Notice: Visitors arriving from Google Ads, Facebook, Mailchimp and similar links get the saved page too.
+* Notice: Arva SEO now also clears WP-Optimize’s, NitroPack’s and Cloudflare’s (official plugin) caches when your pages change, at most every 15 minutes.
 
 = 2.10.8 =
 * Fixed: optimized CSS (Load styles faster and Remove unused CSS) lost rules on some themes, because it was saved with everything from a "<" to the next ">" taken out (since 1.6.0; 2.10.0.1 fixed it for 2.10.0). Media queries written as (width<=1023.98px), which many themes use for their phone menu and header, icons drawn with SVG in data: addresses (menu arrows, form icons) and content:"<" lost their rules, sometimes with the rest of the stylesheet. Optimized CSS is now kept exactly as Arva SEO worked it out; a stylesheet whose CSS contains "</style" or a NUL byte loads as it is.

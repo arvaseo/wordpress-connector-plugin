@@ -222,8 +222,11 @@ final class CssOptimizer {
 		}
 		$excluded = Fixes::stored()['css_exclude'];
 		$usable   = array();
+		$every    = Changes::pipeline_uses( array( 'critical_css', 'unused_css' ), Changes::CSS_EVERY_STYLESHEET );
 		foreach ( $sheets as $handle => $key ) {
-			$sheet = self::stored_sheet( $stored, $handle . '-css', $key, static fn ( string $href ): string => self::content_key( $href, null ), false );
+			$sheet = $every
+				? self::stored_sheet( $stored, $handle . '-css', $key, static fn ( string $href ): string => self::content_key( $href, null ), false )
+				: self::earlier_sheet( $stored, (string) $handle );
 			if ( null !== $sheet && ! in_array( $handle, $excluded, true ) ) {
 				$usable[ $handle ] = $sheet;
 			}
@@ -242,9 +245,14 @@ final class CssOptimizer {
 		}
 	}
 
-	/** Whether CSS must be combined before its generated CSS can be selected. */
+	/**
+	 * Whether CSS must be combined before its generated CSS can be selected: with Combine CSS on,
+	 * from revision 2 of the CSS fixes (2.10.2). An administrator who approved an earlier revision
+	 * keeps the original path for visitors, and for Arva SEO's renderer, until they use the update:
+	 * generation from the styles WordPress enqueued, whatever Combine CSS does to them afterwards.
+	 */
 	public static function combined_mode(): bool {
-		return Fixes::applies( 'combine_css' );
+		return Fixes::applies( 'combine_css' ) && Changes::pipeline_uses( array( 'critical_css', 'unused_css' ), Changes::CSS_COMBINE_FIRST );
 	}
 
 	/**
@@ -435,6 +443,27 @@ final class CssOptimizer {
 			return $asset['url'] . '|' . self::content_key( $asset['url'], null );
 		}
 		return $href;
+	}
+
+	/**
+	 * The stored result for a handle as 2.10.2 and earlier found it (revision 1 and 2 of the CSS
+	 * fixes), for an administrator who hasn't approved the update yet: only by id, which was stored
+	 * in lower case (sanitize_key), so a handle with capital letters never found its result, and
+	 * never by address. The last of several results for one id is used.
+	 *
+	 * @param array<int, array<string, mixed>> $stored The page type's stored sheets.
+	 * @param string                           $handle The style handle.
+	 * @return array<string, mixed>|null
+	 */
+	private static function earlier_sheet( array $stored, string $handle ): ?array {
+		$found = null;
+		foreach ( $stored as $sheet ) {
+			$name = preg_replace( '/-css$/', '', sanitize_key( (string) ( $sheet['id'] ?? '' ) ) );
+			if ( is_string( $name ) && $name === $handle ) {
+				$found = $sheet;
+			}
+		}
+		return $found;
 	}
 
 	/**

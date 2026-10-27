@@ -383,6 +383,10 @@ final class AssetCombiner {
 		}
 		$url = AssetBundles::create_parts( array_column( $run, 'part' ), $run[0]['kind'] );
 		if ( null === $url ) {
+			// Until revision 2 (2.10.5) one file that can't be combined left the whole run as it is.
+			if ( ! Fixes::uses( 'css' === $run[0]['kind'] ? 'combine_css' : 'combine_js', Changes::COMBINE_AROUND ) ) {
+				return;
+			}
 			$part = array();
 			$cut  = false;
 			foreach ( $run as $asset ) {

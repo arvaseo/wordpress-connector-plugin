@@ -8,6 +8,7 @@
 use ArvaSEO\Connector\Admin\AdminController;
 use ArvaSEO\Connector\Auth\TokenStore;
 use ArvaSEO\Connector\Health\AssessmentService;
+use ArvaSEO\Connector\Speed\Changes;
 use ArvaSEO\Connector\Speed\Cloudflare;
 use ArvaSEO\Connector\Speed\Exclusions;
 use ArvaSEO\Connector\Privacy\PrivacyService;
@@ -71,6 +72,10 @@ defined( 'ABSPATH' ) || exit;
 		$arvaseo_states[ $arvaseo_id ] = Fixes::state( $arvaseo_id );
 	}
 	$arvaseo_trying = array_keys( $arvaseo_states, 'trying', true );
+	// Updates that wait for the administrator's check (visitors keep what was approved), and what changed.
+	$arvaseo_waiting = Changes::waiting_fixes( true );
+	$arvaseo_changed = Changes::notes_for_site();
+	$arvaseo_day     = static fn ( int $at ): string => wp_date( get_option( 'date_format' ), $at );
 
 	// What the CSS, WebP and image compression rows show, once for the page.
 	$arvaseo_css       = \ArvaSEO\Connector\Speed\CssOptimizer::counts();
@@ -319,6 +324,61 @@ defined( 'ABSPATH' ) || exit;
 		</div>
 	<?php endif; ?>
 
+	<?php
+	$arvaseo_unchecked = array_diff_key( $arvaseo_waiting, array_flip( array_filter( array_keys( $arvaseo_waiting ), array( Changes::class, 'is_kept' ) ) ) );
+	if ( array() !== $arvaseo_unchecked ) :
+		?>
+		<div class="arvaseo-trybar" role="status" id="arvaseo-updates">
+			<?php echo AdminController::icon( 'eye', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG. ?>
+			<div>
+				<strong>
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: %d: number of fixes. */
+							_n( '%d fix you use has an update to check.', '%d fixes you use have an update to check.', count( $arvaseo_unchecked ), 'arvaseo-connector' ),
+							count( $arvaseo_unchecked )
+						)
+					);
+					?>
+				</strong>
+				<?php esc_html_e( 'Your visitors still get the versions you checked. While you’re signed in you see the new ones: open your important pages, then choose on each fix below.', 'arvaseo-connector' ); ?>
+			</div>
+			<a class="arvaseo-btn arvaseo-btn--sm" href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View your site', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
+		</div>
+	<?php endif; ?>
+
+	<?php if ( array() !== $arvaseo_changed ) : ?>
+		<section class="arvaseo-card" aria-labelledby="arvaseo-changed-heading">
+		<details class="arvaseo-more" id="arvaseo-what-changed" <?php echo array() !== $arvaseo_unchecked ? 'open' : ''; ?>>
+			<summary id="arvaseo-changed-heading"><?php esc_html_e( 'What changed when Arva SEO updated', 'arvaseo-connector' ); ?></summary>
+			<div class="arvaseo-more-in">
+				<?php foreach ( $arvaseo_changed as $arvaseo_change ) : ?>
+					<p>
+						<strong><?php echo esc_html( $arvaseo_change['version'] ); ?></strong>
+						<?php
+						$arvaseo_kinds = array(
+							Changes::UPDATE => __( 'Update to check', 'arvaseo-connector' ),
+							Changes::OPTION => __( 'New option', 'arvaseo-connector' ),
+							Changes::BACK   => __( 'Back to trying', 'arvaseo-connector' ),
+						);
+						if ( isset( $arvaseo_kinds[ $arvaseo_change['kind'] ] ) ) {
+							echo AdminController::badge( Changes::UPDATE === $arvaseo_change['kind'] ? 'warn' : 'acc', $arvaseo_kinds[ $arvaseo_change['kind'] ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+						}
+						echo ' ' . esc_html( $arvaseo_change['note'] );
+						if ( 'used' === $arvaseo_change['done'] ) {
+							echo ' ' . esc_html__( 'Your visitors use it.', 'arvaseo-connector' );
+						} elseif ( 'retired' === $arvaseo_change['done'] ) {
+							echo ' ' . esc_html__( 'The earlier version is no longer available: the fix went back to trying.', 'arvaseo-connector' );
+						}
+						?>
+					</p>
+				<?php endforeach; ?>
+			</div>
+		</details>
+		</section>
+	<?php endif; ?>
+
 	<div class="arvaseo-between" style="align-items: center">
 		<div class="arvaseo-seg" role="group" aria-label="<?php esc_attr_e( 'Show fixes', 'arvaseo-connector' ); ?>" data-arvaseo-filter hidden>
 			<?php
@@ -376,6 +436,11 @@ defined( 'ABSPATH' ) || exit;
 			if ( isset( $arvaseo_needed[ $arvaseo_id ] ) ) {
 				echo AdminController::badge( 'acc', __( 'Asked for by your latest test', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
 			}
+			if ( isset( $arvaseo_waiting[ $arvaseo_id ] ) && 'on' === $arvaseo_state ) {
+				echo Changes::is_kept( $arvaseo_id )
+					? AdminController::badge( 'neutral', __( 'Keeping the previous version', 'arvaseo-connector' ) ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+					: AdminController::badge( 'warn', __( 'Update to check', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
+			}
 			?>
 			<?php if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) : ?>
 				<span class="arvaseo-fix-risk arvaseo-fix-risk--<?php echo esc_attr( $arvaseo_fix['risk'] ); ?>">
@@ -385,6 +450,55 @@ defined( 'ABSPATH' ) || exit;
 			<?php endif; ?>
 		</div>
 		<p class="arvaseo-fix-desc"><?php echo esc_html( $arvaseo_fix['what'] ); ?></p>
+
+			<?php if ( isset( $arvaseo_waiting[ $arvaseo_id ] ) && 'on' === $arvaseo_state ) : ?>
+				<?php
+				$arvaseo_notes  = Changes::notes();
+				$arvaseo_kept   = Changes::is_kept( $arvaseo_id );
+				$arvaseo_retire = (int) Changes::retire_at( $arvaseo_id );
+				?>
+			<div class="arvaseo-extra arvaseo-extra--warn" id="<?php echo esc_attr( 'arvaseo-update-' . $arvaseo_id ); ?>">
+				<p>
+					<strong>
+						<?php
+						/* translators: %s: plugin version. */
+						echo esc_html( sprintf( __( 'Updated in %s:', 'arvaseo-connector' ), Changes::announced_in( $arvaseo_waiting[ $arvaseo_id ][0]['id'] ) ) );
+						?>
+					</strong>
+					<?php echo esc_html( implode( ' ', array_map( static fn ( array $arvaseo_entry ): string => $arvaseo_notes[ $arvaseo_entry['id'] ] ?? '', $arvaseo_waiting[ $arvaseo_id ] ) ) ); ?>
+				</p>
+				<p>
+					<?php
+					if ( $arvaseo_kept ) {
+						/* translators: %s: date. */
+						echo esc_html( sprintf( __( 'You’re keeping the version you checked. Your visitors, and you while you’re signed in, get it until %s; after that this fix goes back to being tried so you can check the new one.', 'arvaseo-connector' ), $arvaseo_day( $arvaseo_retire ) ) );
+					} elseif ( null !== $arvaseo_since ) {
+						/* translators: %s: date. */
+						echo esc_html( sprintf( __( 'Your visitors still get the version you checked on %s. While you’re signed in you see the new one: open your important pages, then choose.', 'arvaseo-connector' ), $arvaseo_day( (int) strtotime( $arvaseo_since ) ) ) );
+					} else {
+						esc_html_e( 'Your visitors still get the version you checked before. While you’re signed in you see the new one: open your important pages, then choose.', 'arvaseo-connector' );
+					}
+					?>
+				</p>
+				<?php if ( ! $arvaseo_kept ) : ?>
+					<p class="arvaseo-hint">
+						<?php
+						/* translators: %s: date. */
+						echo esc_html( sprintf( __( 'The earlier version stays available until %s, then this fix goes back to being tried.', 'arvaseo-connector' ), $arvaseo_day( $arvaseo_retire ) ) );
+						?>
+					</p>
+				<?php endif; ?>
+				<div class="arvaseo-row">
+					<?php
+					$arvaseo_button( $arvaseo_id, 'use_update', __( 'Use it for visitors', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--pri' );
+					if ( ! $arvaseo_kept ) {
+						$arvaseo_button( $arvaseo_id, 'keep_previous', __( 'Keep the previous version', 'arvaseo-connector' ) );
+					}
+					$arvaseo_button( $arvaseo_id, 'off', __( 'Turn the fix off', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--ghost' );
+					?>
+				</div>
+			</div>
+		<?php endif; ?>
 
 			<?php // What needs attention stays in view; the rest waits under Details. ?>
 			<?php if ( in_array( $arvaseo_id, array( 'defer_scripts', 'delay_scripts' ), true ) && 'on' === Cloudflare::details()['rocket_loader'] ) : ?>

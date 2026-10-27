@@ -82,6 +82,8 @@ final class SiteRegistrationService {
 			'speed_fixes'        => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
 			// 1.7.0: an administrator lets Arva SEO switch the fixes.
 			'speed_fixes_remote' => \ArvaSEO\Connector\Speed\Fixes::stored()['remote'],
+			// 2.11.0: what updates changed in the fixes this site uses (ids; the app has the notes).
+			'speed_changes'      => \ArvaSEO\Connector\Speed\Changes::for_registration(),
 			'consent'            => PrivacyService::for_registration(),
 		);
 	}

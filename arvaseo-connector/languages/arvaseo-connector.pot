@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.10.8\n"
+"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.11.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T14:43:51+00:00\n"
+"POT-Creation-Date: 2026-10-27T15:27:25+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: arvaseo-connector\n"
@@ -26,9 +26,9 @@ msgstr ""
 
 #. Author of the plugin
 #: arvaseo-connector.php
-#: includes/Admin/AdminController.php:165
-#: includes/Admin/AdminController.php:166
-#: includes/Admin/AdminController.php:243
+#: includes/Admin/AdminController.php:172
+#: includes/Admin/AdminController.php:173
+#: includes/Admin/AdminController.php:250
 msgid "Arva SEO"
 msgstr ""
 
@@ -41,137 +41,138 @@ msgstr ""
 msgid "Arva SEO – Speed Booster & Security Scanner needs PHP 8.1 or newer. Ask your host to update PHP; the plugin is not running."
 msgstr ""
 
-#: includes/Admin/AdminController.php:200
+#: includes/Admin/AdminController.php:207
 msgid "Overview"
 msgstr ""
 
-#: includes/Admin/AdminController.php:200
+#: includes/Admin/AdminController.php:207
 msgid "Get started"
 msgstr ""
 
-#: includes/Admin/AdminController.php:201
-#: includes/Admin/AdminController.php:1205
-#: includes/Admin/AdminController.php:1284
+#: includes/Admin/AdminController.php:208
+#: includes/Admin/AdminController.php:1224
+#: includes/Admin/AdminController.php:1370
 #: includes/Admin/views/connection.php:211
 msgid "Speed"
 msgstr ""
 
-#: includes/Admin/AdminController.php:202
+#: includes/Admin/AdminController.php:209
 msgid "Content"
 msgstr ""
 
-#: includes/Admin/AdminController.php:203
+#: includes/Admin/AdminController.php:210
 msgid "Health"
 msgstr ""
 
-#: includes/Admin/AdminController.php:204
+#: includes/Admin/AdminController.php:211
 #: includes/Admin/views/connection.php:367
 msgid "Activity"
 msgstr ""
 
-#: includes/Admin/AdminController.php:205
-#: includes/Admin/AdminController.php:309
+#: includes/Admin/AdminController.php:212
+#: includes/Admin/AdminController.php:316
 #: includes/Security/Findings.php:44
 msgid "Settings"
 msgstr ""
 
-#: includes/Admin/AdminController.php:206
+#: includes/Admin/AdminController.php:213
 msgid "Plugin list"
 msgstr ""
 
-#: includes/Admin/AdminController.php:207
+#: includes/Admin/AdminController.php:214
 #: includes/Admin/views/settings.php:216
 msgid "Diagnostics and data sharing"
 msgstr ""
 
-#: includes/Admin/AdminController.php:218
+#: includes/Admin/AdminController.php:225
 msgid "You don’t have permission to view this page."
 msgstr ""
 
-#: includes/Admin/AdminController.php:244
+#: includes/Admin/AdminController.php:251
 msgid "Speed Booster & Security Scanner"
 msgstr ""
 
-#: includes/Admin/AdminController.php:247
+#: includes/Admin/AdminController.php:254
 msgid "Reconnect needed"
 msgstr ""
 
-#: includes/Admin/AdminController.php:249
+#: includes/Admin/AdminController.php:256
 msgid "Connected to Arva SEO"
 msgstr ""
 
-#: includes/Admin/AdminController.php:251
+#: includes/Admin/AdminController.php:258
 msgid "Not connected"
 msgstr ""
 
-#: includes/Admin/AdminController.php:257
+#: includes/Admin/AdminController.php:264
 msgid "Open Arva SEO"
 msgstr ""
 
-#: includes/Admin/AdminController.php:259
+#: includes/Admin/AdminController.php:266
 #: includes/Admin/views/health.php:119
 #: includes/Admin/views/security.php:258
 #: includes/Admin/views/security.php:348
-#: includes/Admin/views/speed.php:209
-#: includes/Admin/views/speed.php:318
-#: includes/Admin/views/speed.php:422
-#: includes/Admin/views/speed.php:900
+#: includes/Admin/views/speed.php:214
+#: includes/Admin/views/speed.php:323
+#: includes/Admin/views/speed.php:347
+#: includes/Admin/views/speed.php:536
+#: includes/Admin/views/speed.php:1014
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: includes/Admin/AdminController.php:262
+#: includes/Admin/AdminController.php:269
 #: includes/Admin/views/connection.php:76
 #: includes/Admin/views/connection.php:94
 #: includes/Admin/views/settings.php:254
 msgid "Connect to Arva SEO"
 msgstr ""
 
-#: includes/Admin/AdminController.php:268
+#: includes/Admin/AdminController.php:275
 msgid "Arva SEO sections"
 msgstr ""
 
 #. translators: %d: number of things that need the administrator.
-#: includes/Admin/AdminController.php:281
+#: includes/Admin/AdminController.php:288
 #, php-format
 msgid "%d thing needs you"
 msgid_plural "%d things need you"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/AdminController.php:298
+#: includes/Admin/AdminController.php:305
 msgid "How this website is doing, and what needs you. Nothing here changes your site until you choose to."
 msgstr ""
 
-#: includes/Admin/AdminController.php:299
+#: includes/Admin/AdminController.php:306
 msgid "Fix what Google’s PageSpeed test finds, one switch at a time. Every fix is off until you turn it on, most can be tried first where only you see them, and turning one off puts your pages back as they were. Your theme files and content are never changed; the few fixes that add files say so."
 msgstr ""
 
-#: includes/Admin/AdminController.php:300
+#: includes/Admin/AdminController.php:307
 msgid "Posts sent from Arva SEO arrive here, and the SEO titles your team approves are written to your SEO plugin, only as far as you allow."
 msgstr ""
 
-#: includes/Admin/AdminController.php:301
+#: includes/Admin/AdminController.php:308
 msgid "What the security scan and the daily check found on this website, and how to fix it. Nothing changes on your site unless you choose a repair, which can be undone; snoozing, assigning or accepting a finding happens in Arva SEO."
 msgstr ""
 
-#: includes/Admin/AdminController.php:302
+#: includes/Admin/AdminController.php:309
 msgid "Everything the plugin did, and who asked. No keys, codes, content or personal data are kept."
 msgstr ""
 
-#: includes/Admin/AdminController.php:303
+#: includes/Admin/AdminController.php:310
 msgid "You decide how far Arva SEO may go on this website. Every setting starts at the safest choice."
 msgstr ""
 
-#: includes/Admin/AdminController.php:304
+#: includes/Admin/AdminController.php:311
 msgid "The plugins and themes on this site, and exactly what is shared about them with Arva SEO."
 msgstr ""
 
-#: includes/Admin/AdminController.php:305
+#: includes/Admin/AdminController.php:312
 msgid "What to share with support if something isn’t working, and what this site shares with Arva SEO."
 msgstr ""
 
 #. translators: %d: number of security problems.
-#: includes/Admin/AdminController.php:343
+#: includes/Admin/AdminController.php:350
 #, php-format
 msgid "%d serious security problem"
 msgid_plural "%d serious security problems"
@@ -179,619 +180,647 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of security problems.
-#: includes/Admin/AdminController.php:345
+#: includes/Admin/AdminController.php:352
 #, php-format
 msgid "%d security problem to look at"
 msgid_plural "%d security problems to look at"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/AdminController.php:346
+#: includes/Admin/AdminController.php:353
 msgid "See what it found, why it matters and how to fix it."
 msgstr ""
 
-#: includes/Admin/AdminController.php:348
+#: includes/Admin/AdminController.php:355
 msgid "Open the results"
 msgstr ""
 
-#: includes/Admin/AdminController.php:353
+#: includes/Admin/AdminController.php:360
 #: includes/Admin/views/connection.php:76
 #: includes/Admin/views/connection.php:94
 msgid "Reconnect to Arva SEO"
 msgstr ""
 
-#: includes/Admin/AdminController.php:353
+#: includes/Admin/AdminController.php:360
 msgid "The connection stopped working, so nothing is sent or received until you connect again."
 msgstr ""
 
-#: includes/Admin/AdminController.php:353
+#: includes/Admin/AdminController.php:360
 #: includes/Admin/views/connection.php:46
 msgid "Reconnect"
 msgstr ""
 
-#: includes/Admin/AdminController.php:357
-#: includes/Admin/views/speed.php:1074
+#: includes/Admin/AdminController.php:364
+#: includes/Admin/views/speed.php:1188
 msgid "Cloudflare refused the saved token"
 msgstr ""
 
-#: includes/Admin/AdminController.php:357
+#: includes/Admin/AdminController.php:364
 msgid "Its copy of your pages isn’t cleared any more, so visitors may get old pages after a change. Connect it again with a working token."
 msgstr ""
 
-#: includes/Admin/AdminController.php:357
+#: includes/Admin/AdminController.php:364
 msgid "Fix Cloudflare"
 msgstr ""
 
-#: includes/Admin/AdminController.php:359
+#: includes/Admin/AdminController.php:366
 msgid "Rocket Loader is on in Cloudflare"
 msgstr ""
 
-#: includes/Admin/AdminController.php:359
+#: includes/Admin/AdminController.php:366
 msgid "It changes how scripts load, as Defer scripts and Delay chat widgets do here. Use one or the other, or menus and forms may stop working."
 msgstr ""
 
-#: includes/Admin/AdminController.php:359
-#: includes/Admin/AdminController.php:383
+#: includes/Admin/AdminController.php:366
+#: includes/Admin/AdminController.php:390
 #: includes/Admin/views/connection.php:238
 msgid "Open Speed"
 msgstr ""
 
-#: includes/Admin/AdminController.php:361
-#: includes/Admin/views/speed.php:1131
+#: includes/Admin/AdminController.php:368
+#: includes/Admin/views/speed.php:1245
 msgid "This website is behind Cloudflare"
 msgstr ""
 
-#: includes/Admin/AdminController.php:361
+#: includes/Admin/AdminController.php:368
 msgid "Connect Cloudflare, so visitors and your next PageSpeed test get a fix as soon as you turn it on."
 msgstr ""
 
-#: includes/Admin/AdminController.php:361
-#: includes/Admin/views/speed.php:1134
-#: includes/Admin/views/speed.php:1153
+#: includes/Admin/AdminController.php:368
+#: includes/Admin/views/speed.php:1248
+#: includes/Admin/views/speed.php:1267
 msgid "Connect Cloudflare"
 msgstr ""
 
 #. translators: %s: plugin names.
-#: includes/Admin/AdminController.php:369
+#: includes/Admin/AdminController.php:376
 #, php-format
 msgid "%s does some of the same speed fixes"
 msgid_plural "%s do some of the same speed fixes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/AdminController.php:370
+#: includes/Admin/AdminController.php:377
 msgid "Two plugins changing how the same things load can break pages. Choose which one does each job."
 msgstr ""
 
-#: includes/Admin/AdminController.php:372
-#: includes/Admin/AdminController.php:814
+#: includes/Admin/AdminController.php:379
+#: includes/Admin/AdminController.php:824
 msgid "Review on Speed"
 msgstr ""
 
-#: includes/Admin/AdminController.php:379
+#: includes/Admin/AdminController.php:386
 #: includes/Admin/views/content.php:42
 msgid "Choose who posts content from Arva SEO"
 msgstr ""
 
-#: includes/Admin/AdminController.php:379
+#: includes/Admin/AdminController.php:386
 msgid "Drafts sent from Arva SEO can’t be saved until you pick the WordPress user they’re created as."
 msgstr ""
 
-#: includes/Admin/AdminController.php:379
+#: includes/Admin/AdminController.php:386
 #: includes/Admin/views/content.php:44
 msgid "Choose an author"
 msgstr ""
 
-#: includes/Admin/AdminController.php:383
+#: includes/Admin/AdminController.php:390
 msgid "You’re trying a speed fix"
 msgid_plural "You’re trying speed fixes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/AdminController.php:383
+#: includes/Admin/AdminController.php:390
 msgid "Only you see it. Check your pages, then turn it on for everyone or stop trying."
 msgstr ""
 
 #. translators: %d: number of speed fixes.
-#: includes/Admin/AdminController.php:391
+#: includes/Admin/AdminController.php:398
 #, php-format
 msgid "Your latest PageSpeed test asks for %d fix"
 msgid_plural "Your latest PageSpeed test asks for %d fixes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/AdminController.php:394
+#: includes/Admin/AdminController.php:401
 msgid "Review the fix"
 msgid_plural "Review the fixes"
 msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of critical Website Health results.
-#: includes/Admin/AdminController.php:403
+#: includes/Admin/AdminController.php:410
 #, php-format
 msgid "%d critical Website Health result"
 msgid_plural "%d critical Website Health results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/AdminController.php:404
+#: includes/Admin/AdminController.php:411
 msgid "See what’s wrong and how to fix it."
 msgstr ""
 
-#: includes/Admin/AdminController.php:406
+#: includes/Admin/AdminController.php:413
 #: includes/Admin/views/connection.php:267
 msgid "Open Health"
 msgstr ""
 
-#: includes/Admin/AdminController.php:492
+#: includes/Admin/AdminController.php:499
 msgid "Sent to Arva SEO: your homepage, your main page types and any that failed before. Optimized CSS is usually ready within a few minutes; this page checks by itself while it’s open."
 msgstr ""
 
-#: includes/Admin/AdminController.php:493
+#: includes/Admin/AdminController.php:500
 msgid "The optimized CSS will be worked out again, each page type using a page optimization. This page checks by itself while it’s open."
 msgstr ""
 
-#: includes/Admin/AdminController.php:494
+#: includes/Admin/AdminController.php:501
 msgid "New optimized CSS is ready."
 msgstr ""
 
-#: includes/Admin/AdminController.php:495
+#: includes/Admin/AdminController.php:502
 msgid "Nothing new yet. Arva SEO is still working on it; this page checks by itself while it’s open."
 msgstr ""
 
-#: includes/Admin/AdminController.php:506
+#: includes/Admin/AdminController.php:513
 msgid "Connected to Arva SEO. The first plugin inventory and health check are queued and will run in the background."
 msgstr ""
 
-#: includes/Admin/AdminController.php:507
+#: includes/Admin/AdminController.php:514
 msgid "Connected to Arva SEO, but the site’s details couldn’t be sent yet. They will be retried automatically."
 msgstr ""
 
-#: includes/Admin/AdminController.php:508
+#: includes/Admin/AdminController.php:515
 msgid "Connecting was cancelled. Nothing was changed."
 msgstr ""
 
-#: includes/Admin/AdminController.php:509
+#: includes/Admin/AdminController.php:516
 msgid "That connection reply didn’t match a connection started from this site by you, or it expired after 10 minutes. Start again."
 msgstr ""
 
-#: includes/Admin/AdminController.php:510
+#: includes/Admin/AdminController.php:517
 msgid "Arva SEO returned an invalid connection code. Start again."
 msgstr ""
 
-#: includes/Admin/AdminController.php:511
+#: includes/Admin/AdminController.php:518
 msgid "Arva SEO didn’t accept the connection (the code may have expired or been used). Start again; if it keeps happening, Activity shows what went wrong."
 msgstr ""
 
-#: includes/Admin/AdminController.php:516
+#: includes/Admin/AdminController.php:523
 msgid "Disconnected. The credentials were removed from this site and revoked at Arva SEO, and synchronisation stopped."
 msgstr ""
 
-#: includes/Admin/AdminController.php:517
+#: includes/Admin/AdminController.php:524
 msgid "The connection works."
 msgstr ""
 
-#: includes/Admin/AdminController.php:518
+#: includes/Admin/AdminController.php:525
 msgid "The connection test failed. Activity shows what went wrong."
 msgstr ""
 
-#: includes/Admin/AdminController.php:519
+#: includes/Admin/AdminController.php:526
 msgid "Plugin inventory sync finished. See the result below."
 msgstr ""
 
-#: includes/Admin/AdminController.php:520
+#: includes/Admin/AdminController.php:527
 msgid "Website recheck queued. Checks run in the background and can take a minute; refresh this page to see the results."
 msgstr ""
 
-#: includes/Admin/AdminController.php:521
+#: includes/Admin/AdminController.php:528
 #: includes/Cron/PollingService.php:125
 msgid "Checked Arva SEO for content."
 msgstr ""
 
-#: includes/Admin/AdminController.php:522
+#: includes/Admin/AdminController.php:529
 msgid "Your data-sharing choice was saved."
 msgstr ""
 
-#: includes/Admin/AdminController.php:523
+#: includes/Admin/AdminController.php:530
 msgid "Tick the box to agree to share this data, or connect without it."
 msgstr ""
 
-#: includes/Admin/AdminController.php:524
+#: includes/Admin/AdminController.php:531
 msgid "Trying it: only you see the change while you’re signed in. Open your website to check it, then turn it on."
 msgstr ""
 
-#: includes/Admin/AdminController.php:525
+#: includes/Admin/AdminController.php:532
 msgid "Turned on for every visitor. Run a new PageSpeed test in Arva SEO to see the change. If you use a page cache, clear it."
 msgstr ""
 
-#: includes/Admin/AdminController.php:526
+#: includes/Admin/AdminController.php:533
 msgid "Turned off. Your pages are back to how they were. If you use a page cache, clear it."
 msgstr ""
 
-#: includes/Admin/AdminController.php:527
+#: includes/Admin/AdminController.php:534
 msgid "Your choices were saved."
 msgstr ""
 
-#: includes/Admin/AdminController.php:528
+#: includes/Admin/AdminController.php:535
 msgid "That fix or setting doesn’t exist."
 msgstr ""
 
-#: includes/Admin/AdminController.php:529
+#: includes/Admin/AdminController.php:536
 msgid "Another speed plugin already does this. Use its setting instead."
 msgstr ""
 
-#: includes/Admin/AdminController.php:530
+#: includes/Admin/AdminController.php:537
 msgid "This fix isn’t available on this server."
 msgstr ""
 
-#: includes/Admin/AdminController.php:531
+#: includes/Admin/AdminController.php:538
 msgid "Try Defer scripts first, check your important pages, then turn it on."
 msgstr ""
 
-#: includes/Admin/AdminController.php:532
+#: includes/Admin/AdminController.php:539
 msgid "Tick each page you checked while trying Defer scripts before you turn it on."
 msgstr ""
 
-#: includes/Admin/AdminController.php:533
-msgid "Converting your existing images in the background. You can leave this page; come back to see how far it got."
-msgstr ""
-
-#: includes/Admin/AdminController.php:534
-msgid "Stopped. Images converted so far keep their WebP copies; Continue picks up where it stopped."
-msgstr ""
-
-#: includes/Admin/AdminController.php:535
-msgid "The WebP copies of your existing images were removed. Pages show the originals again."
-msgstr ""
-
-#: includes/Admin/AdminController.php:536
-#: includes/Admin/views/speed.php:868
-msgid "Turn on New uploads as WebP first."
-msgstr ""
-
-#: includes/Admin/AdminController.php:537
-msgid "WordPress couldn’t write to your .htaccess file, so nothing changed. Ask your host to make it writable."
-msgstr ""
-
-#: includes/Admin/AdminController.php:538
-msgid "Your site couldn’t be checked from your server (some hosts block this), so the rules were taken out again to be safe. Nothing changed. Your host can add them for you: they’re listed on the card."
-msgstr ""
-
-#: includes/Admin/AdminController.php:539
-msgid "Your server answered with an error once the rules were in, so they were taken out straight away. Your site is as before. Your host can say which rule it doesn’t allow."
-msgstr ""
-
 #: includes/Admin/AdminController.php:540
-msgid "Page caching is on: your homepage came from the cache when checked. Other pages are saved as visitors open them, and refilled in the background. Run a new PageSpeed test in Arva SEO to see the change."
+msgid "Your visitors now get the updated version. Pages that were saved are cleared and saved again as visitors open them. Run a new PageSpeed test in Arva SEO to see the change."
 msgstr ""
 
 #: includes/Admin/AdminController.php:541
-msgid "Page caching is off. The saved pages, advanced-cache.php and Arva SEO’s line in wp-config.php were removed."
+msgid "Kept. Your visitors, and you while you’re signed in, keep the version you checked. You can use the update whenever you’re ready, until the day the earlier version is retired."
 msgstr ""
 
 #: includes/Admin/AdminController.php:542
-msgid "Every saved page was cleared. Pages are saved again as visitors open them, and refilled in the background."
+msgid "There is no update waiting for that fix."
 msgstr ""
 
 #: includes/Admin/AdminController.php:543
-msgid "You can use Arva SEO’s page cache now. Turn off your host’s cache as it says below, then turn Page caching on."
+msgid "Converting your existing images in the background. You can leave this page; come back to see how far it got."
 msgstr ""
 
 #: includes/Admin/AdminController.php:544
-msgid "Page caching is left to your host’s cache again."
+msgid "Stopped. Images converted so far keep their WebP copies; Continue picks up where it stopped."
 msgstr ""
 
 #: includes/Admin/AdminController.php:545
-msgid "WordPress couldn’t write the page cache’s files (advanced-cache.php in wp-content, and WP_CACHE in wp-config.php), so nothing changed. Ask your host to make them writable."
+msgid "The WebP copies of your existing images were removed. Pages show the originals again."
 msgstr ""
 
 #: includes/Admin/AdminController.php:546
-msgid "Your homepage couldn’t be checked from your server (some hosts block this), so page caching was taken out again to be safe. Your site is as before."
+#: includes/Admin/views/speed.php:982
+msgid "Turn on New uploads as WebP first."
 msgstr ""
 
 #: includes/Admin/AdminController.php:547
-msgid "Your server answered with an error once page caching was set up, so everything was taken out straight away. Your site is as before."
+msgid "WordPress couldn’t write to your .htaccess file, so nothing changed. Ask your host to make it writable."
 msgstr ""
 
 #: includes/Admin/AdminController.php:548
-msgid "Your homepage didn’t answer normally when checked from your server (it redirects or shows an error), so it can’t be cached. Page caching was taken out again."
+msgid "Your site couldn’t be checked from your server (some hosts block this), so the rules were taken out again to be safe. Nothing changed. Your host can add them for you: they’re listed on the card."
 msgstr ""
 
 #: includes/Admin/AdminController.php:549
-msgid "Your homepage sets a cookie for every visitor, so it can’t be cached: visitors would share it. A plugin or your theme sets it. Page caching was taken out again."
+msgid "Your server answered with an error once the rules were in, so they were taken out straight away. Your site is as before. Your host can say which rule it doesn’t allow."
 msgstr ""
 
 #: includes/Admin/AdminController.php:550
-msgid "Your homepage asks not to be cached (a plugin or your host sends a no-cache header), so page caching was taken out again."
+msgid "Page caching is on: your homepage came from the cache when checked. Other pages are saved as visitors open them, and refilled in the background. Run a new PageSpeed test in Arva SEO to see the change."
 msgstr ""
 
 #: includes/Admin/AdminController.php:551
-msgid "Your homepage wasn’t served from the cache when checked, so page caching was taken out again. Your site is as before."
+msgid "Page caching is off. The saved pages, advanced-cache.php and Arva SEO’s line in wp-config.php were removed."
 msgstr ""
 
 #: includes/Admin/AdminController.php:552
-msgid "WordPress didn’t load the page cache when checked: another line in wp-config.php may turn WP_CACHE off, or your host loads its own. Page caching was taken out again."
+msgid "Every saved page was cleared. Pages are saved again as visitors open them, and refilled in the background."
 msgstr ""
 
 #: includes/Admin/AdminController.php:553
-msgid "Your host’s own page cache answered before Arva SEO’s could, so it couldn’t be checked. Turn off the host’s cache first, as Page caching says, then try again."
+msgid "You can use Arva SEO’s page cache now. Turn off your host’s cache as it says below, then turn Page caching on."
 msgstr ""
 
 #: includes/Admin/AdminController.php:554
-msgid "Cloudflare is connected. From now on its copy of your pages is cleared whenever a change here affects what visitors get."
+msgid "Page caching is left to your host’s cache again."
 msgstr ""
 
 #: includes/Admin/AdminController.php:555
-msgid "That doesn’t look like a Cloudflare API token. Copy the token Cloudflare showed when you created it (not the Global API Key)."
+msgid "WordPress couldn’t write the page cache’s files (advanced-cache.php in wp-content, and WP_CACHE in wp-config.php), so nothing changed. Ask your host to make them writable."
 msgstr ""
 
 #: includes/Admin/AdminController.php:556
-msgid "Cloudflare didn’t accept that token. Check that it’s active and has Zone: Read and Cache Purge for this website’s domain."
+msgid "Your homepage couldn’t be checked from your server (some hosts block this), so page caching was taken out again to be safe. Your site is as before."
 msgstr ""
 
 #: includes/Admin/AdminController.php:557
-msgid "The token works, but it can’t see this website’s domain. Give it access to the zone (Zone Resources) for this domain, or check that the domain is on Cloudflare."
+msgid "Your server answered with an error once page caching was set up, so everything was taken out straight away. Your site is as before."
 msgstr ""
 
 #: includes/Admin/AdminController.php:558
-msgid "Cloudflare couldn’t be reached from your server. Try again in a minute; if it keeps happening, your host may block outgoing connections."
+msgid "Your homepage didn’t answer normally when checked from your server (it redirects or shows an error), so it can’t be cached. Page caching was taken out again."
 msgstr ""
 
 #: includes/Admin/AdminController.php:559
-msgid "Cloudflare’s copy of every page was cleared. Visitors get the current pages from now on."
+msgid "Your homepage sets a cookie for every visitor, so it can’t be cached: visitors would share it. A plugin or your theme sets it. Page caching was taken out again."
 msgstr ""
 
 #: includes/Admin/AdminController.php:560
-msgid "Cloudflare didn’t clear its copy. The card below says what it answered."
+msgid "Your homepage asks not to be cached (a plugin or your host sends a no-cache header), so page caching was taken out again."
 msgstr ""
 
 #: includes/Admin/AdminController.php:561
-msgid "Checked with Cloudflare."
+msgid "Your homepage wasn’t served from the cache when checked, so page caching was taken out again. Your site is as before."
 msgstr ""
 
 #: includes/Admin/AdminController.php:562
-msgid "Your Cloudflare choice was saved."
+msgid "WordPress didn’t load the page cache when checked: another line in wp-config.php may turn WP_CACHE off, or your host loads its own. Page caching was taken out again."
 msgstr ""
 
 #: includes/Admin/AdminController.php:563
-msgid "Cloudflare is disconnected and its token was removed from this site. Nothing is cleared from now on."
+msgid "Your host’s own page cache answered before Arva SEO’s could, so it couldn’t be checked. Turn off the host’s cache first, as Page caching says, then try again."
 msgstr ""
 
 #: includes/Admin/AdminController.php:564
-msgid "The security scan started. It runs in the background in small batches; you can leave this page and come back."
+msgid "Cloudflare is connected. From now on its copy of your pages is cleared whenever a change here affects what visitors get."
 msgstr ""
 
 #: includes/Admin/AdminController.php:565
-msgid "A security scan is already running."
+msgid "That doesn’t look like a Cloudflare API token. Copy the token Cloudflare showed when you created it (not the Global API Key)."
 msgstr ""
 
 #: includes/Admin/AdminController.php:566
-msgid "The security scan stopped. The results of the previous scan are still shown."
+msgid "Cloudflare didn’t accept that token. Check that it’s active and has Zone: Read and Cache Purge for this website’s domain."
 msgstr ""
 
 #: includes/Admin/AdminController.php:567
-msgid "Marked as expected. It’s hidden from now on, unless the file changes."
+msgid "The token works, but it can’t see this website’s domain. Give it access to the zone (Zone Resources) for this domain, or check that the domain is on Cloudflare."
 msgstr ""
 
 #: includes/Admin/AdminController.php:568
-msgid "It’s shown again."
+msgid "Cloudflare couldn’t be reached from your server. Try again in a minute; if it keeps happening, your host may block outgoing connections."
 msgstr ""
 
 #: includes/Admin/AdminController.php:569
-msgid "The deep scan started. It sends the files in the background; you can leave this page and come back."
+msgid "Cloudflare’s copy of every page was cleared. Visitors get the current pages from now on."
 msgstr ""
 
 #: includes/Admin/AdminController.php:570
-msgid "A deep scan is already running, or deep scans aren’t allowed here yet."
+msgid "Cloudflare didn’t clear its copy. The card below says what it answered."
 msgstr ""
 
 #: includes/Admin/AdminController.php:571
-msgid "The deep scan stopped. Nothing more is sent."
+msgid "Checked with Cloudflare."
 msgstr ""
 
 #: includes/Admin/AdminController.php:572
-msgid "Deep scans send their results the same way as the security scan: share the scan’s results first."
+msgid "Your Cloudflare choice was saved."
 msgstr ""
 
 #: includes/Admin/AdminController.php:573
-msgid "Done. It can be undone for 30 days under Changes made here."
+msgid "Cloudflare is disconnected and its token was removed from this site. Nothing is cleared from now on."
 msgstr ""
 
 #: includes/Admin/AdminController.php:574
-#: includes/Admin/AdminController.php:580
-msgid "Nothing was changed."
+msgid "The security scan started. It runs in the background in small batches; you can leave this page and come back."
 msgstr ""
 
 #: includes/Admin/AdminController.php:575
-msgid "Compressing your media library started. It runs in the background, a few images at a time; you can leave this page."
+msgid "A security scan is already running."
 msgstr ""
 
 #: includes/Admin/AdminController.php:576
-msgid "Stopped. Images already compressed stay that way; Continue carries on from here."
+msgid "The security scan stopped. The results of the previous scan are still shown."
 msgstr ""
 
 #: includes/Admin/AdminController.php:577
-msgid "Putting the original images back in the background. Files changed since they were compressed stay as they are."
+msgid "Marked as expected. It’s hidden from now on, unless the file changes."
 msgstr ""
 
 #: includes/Admin/AdminController.php:578
+msgid "It’s shown again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:579
+msgid "The deep scan started. It sends the files in the background; you can leave this page and come back."
+msgstr ""
+
+#: includes/Admin/AdminController.php:580
+msgid "A deep scan is already running, or deep scans aren’t allowed here yet."
+msgstr ""
+
+#: includes/Admin/AdminController.php:581
+msgid "The deep scan stopped. Nothing more is sent."
+msgstr ""
+
+#: includes/Admin/AdminController.php:582
+msgid "Deep scans send their results the same way as the security scan: share the scan’s results first."
+msgstr ""
+
+#: includes/Admin/AdminController.php:583
+msgid "Done. It can be undone for 30 days under Changes made here."
+msgstr ""
+
+#: includes/Admin/AdminController.php:584
+#: includes/Admin/AdminController.php:590
+msgid "Nothing was changed."
+msgstr ""
+
+#: includes/Admin/AdminController.php:585
+msgid "Compressing your media library started. It runs in the background, a few images at a time; you can leave this page."
+msgstr ""
+
+#: includes/Admin/AdminController.php:586
+msgid "Stopped. Images already compressed stay that way; Continue carries on from here."
+msgstr ""
+
+#: includes/Admin/AdminController.php:587
+msgid "Putting the original images back in the background. Files changed since they were compressed stay as they are."
+msgstr ""
+
+#: includes/Admin/AdminController.php:588
 #: includes/Admin/views/speed-image-library.php:53
 msgid "Turn on Compress images first."
 msgstr ""
 
-#: includes/Admin/AdminController.php:579
+#: includes/Admin/AdminController.php:589
 msgid "The plugin was deactivated."
 msgstr ""
 
-#: includes/Admin/AdminController.php:581
+#: includes/Admin/AdminController.php:591
 msgid "Kept. Arva SEO leaves those fixes to them, and asks again if another speed plugin is activated."
 msgstr ""
 
-#: includes/Admin/AdminController.php:598
+#: includes/Admin/AdminController.php:608
 msgid "The saved Arva SEO credentials can’t be read (the site’s security keys or ARVASEO_CONNECTOR_ENCRYPTION_KEY changed). Disconnect and connect again."
 msgstr ""
 
-#: includes/Admin/AdminController.php:625
+#: includes/Admin/AdminController.php:635
 msgid "You don’t have permission to connect this site."
 msgstr ""
 
-#: includes/Admin/AdminController.php:658
+#: includes/Admin/AdminController.php:668
 msgid "Connection tested."
 msgstr ""
 
-#: includes/Admin/AdminController.php:702
+#: includes/Admin/AdminController.php:712
 msgid "A security finding was marked as expected."
 msgstr ""
 
-#: includes/Admin/AdminController.php:702
+#: includes/Admin/AdminController.php:712
 msgid "A security finding is shown again."
 msgstr ""
 
-#: includes/Admin/AdminController.php:720
+#: includes/Admin/AdminController.php:730
 msgid "Deep scans allowed."
 msgstr ""
 
-#: includes/Admin/AdminController.php:720
+#: includes/Admin/AdminController.php:730
 msgid "Deep scans no longer allowed."
 msgstr ""
 
 #. translators: %s: plugin names.
-#: includes/Admin/AdminController.php:809
+#: includes/Admin/AdminController.php:819
 #, php-format
 msgid "Arva SEO: %s does some of the same speed fixes. Two plugins changing how the same things load can break pages, so choose which one does each job."
 msgid_plural "Arva SEO: %s do some of the same speed fixes. Two plugins changing how the same things load can break pages, so choose which one does each job."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/AdminController.php:875
+#: includes/Admin/AdminController.php:885
 msgid "Website recheck requested."
 msgstr ""
 
-#: includes/Admin/AdminController.php:896
+#: includes/Admin/AdminController.php:906
 msgid "Consent to share plugin inventory and Website Health given."
 msgstr ""
 
-#: includes/Admin/AdminController.php:899
+#: includes/Admin/AdminController.php:909
 msgid "Consent withdrawn: no inventory or health data will be sent."
 msgstr ""
 
-#: includes/Admin/AdminController.php:916
+#: includes/Admin/AdminController.php:926
 msgid "Consent to share the security scan’s results given."
 msgstr ""
 
-#: includes/Admin/AdminController.php:916
+#: includes/Admin/AdminController.php:926
 msgid "Consent to share the security scan’s results withdrawn."
 msgstr ""
 
-#: includes/Admin/AdminController.php:930
+#: includes/Admin/AdminController.php:940
 msgid "Diagnostics downloaded."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1089
+#: includes/Admin/AdminController.php:1108
 msgid "Arva SEO’s servers may compress images."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1089
+#: includes/Admin/AdminController.php:1108
 msgid "Arva SEO’s servers no longer compress images."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1137
+#: includes/Admin/AdminController.php:1156
 msgid "Page caching: cleared by hand."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1160
+#: includes/Admin/AdminController.php:1179
 msgid "The .htaccess backup was downloaded."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1182
+#: includes/Admin/AdminController.php:1201
 msgid "Cloudflare’s copy of your pages is cleared within a minute."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1185
+#: includes/Admin/AdminController.php:1204
 msgid "Cloudflare’s copy of your pages was cleared too, so visitors get the change straight away."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1186
+#: includes/Admin/AdminController.php:1205
 msgid "Cloudflare’s copy of your pages couldn’t be cleared. The Cloudflare card below says why; you can clear it there."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1203
+#: includes/Admin/AdminController.php:1222
 msgid "Arva SEO: Defer scripts is on. If something stopped working on your site, such as a menu, slider, form or checkout, turn it off or leave that script alone."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1254
-msgid "Copied."
-msgstr ""
-
-#: includes/Admin/AdminController.php:1255
-msgid "Replace this file with WordPress.org’s official copy? The current file is kept for 30 days, so you can undo it."
-msgstr ""
-
-#: includes/Admin/AdminController.php:1256
-msgid "Deactivate this plugin? Its settings stay, so you can activate it again from the Plugins page. Clear any page cache afterwards."
-msgstr ""
-
-#: includes/Admin/AdminController.php:1257
-msgid "Put the original images back? Files changed since they were compressed stay as they are."
-msgstr ""
-
-#: includes/Admin/AdminController.php:1258
-msgid "Move this file to quarantine, where it can’t run? It’s kept for 30 days, so you can undo it. If you’re not sure what it does, back up your site first."
-msgstr ""
-
+#. translators: 1: plugin version, 2: number of fixes.
 #: includes/Admin/AdminController.php:1259
-msgid "Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again."
-msgstr ""
-
-#: includes/Admin/AdminController.php:1260
-msgid "Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?"
-msgstr ""
-
-#: includes/Admin/AdminController.php:1261
-msgid "With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?"
-msgstr ""
-
-#: includes/Admin/AdminController.php:1262
-msgid "With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?"
-msgstr ""
-
-#: includes/Admin/AdminController.php:1263
-msgid "Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?"
-msgstr ""
-
-#: includes/Admin/AdminController.php:1264
-msgid "This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?"
-msgstr ""
+#, php-format
+msgid "Arva SEO %1$s changed %2$d fix you use. Your visitors keep what you checked until you say so. Check it."
+msgid_plural "Arva SEO %1$s changed %2$d fixes you use. Your visitors keep what you checked until you say so. Check them."
+msgstr[0] ""
+msgstr[1] ""
 
 #: includes/Admin/AdminController.php:1265
-msgid "Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance."
-msgstr ""
-
-#: includes/Admin/AdminController.php:1266
-msgid "Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later."
+msgid "Check on Speed"
 msgstr ""
 
 #: includes/Admin/AdminController.php:1267
+msgid "Dismiss"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1340
+msgid "Copied."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1341
+msgid "Replace this file with WordPress.org’s official copy? The current file is kept for 30 days, so you can undo it."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1342
+msgid "Deactivate this plugin? Its settings stay, so you can activate it again from the Plugins page. Clear any page cache afterwards."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1343
+msgid "Put the original images back? Files changed since they were compressed stay as they are."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1344
+msgid "Move this file to quarantine, where it can’t run? It’s kept for 30 days, so you can undo it. If you’re not sure what it does, back up your site first."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1345
+msgid "Disconnect this site from Arva SEO? Credentials are removed and revoked, and nothing more is sent or received until you connect again."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1346
+msgid "Full publishing lets Arva SEO users publish posts on this site immediately, within the default author’s permissions. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1347
+msgid "With this on, content sent again from Arva SEO replaces edits made here in WordPress (a revision is kept). Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1348
+msgid "With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1349
+msgid "Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1350
+msgid "This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?"
+msgstr ""
+
+#: includes/Admin/AdminController.php:1351
+msgid "Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1352
+msgid "Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later."
+msgstr ""
+
+#: includes/Admin/AdminController.php:1353
 msgid "Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here."
 msgstr ""
 
-#: includes/Admin/AdminController.php:1326
+#: includes/Admin/AdminController.php:1412
 msgid "Never"
 msgstr ""
 
-#: includes/Admin/AdminController.php:1330
+#: includes/Admin/AdminController.php:1416
 #: includes/Admin/views/inventory.php:36
-#: includes/Admin/views/speed.php:1102
+#: includes/Admin/views/speed.php:1216
 msgid "Unknown"
 msgstr ""
 
 #. translators: 1: date and time, 2: relative time such as "5 mins".
-#: includes/Admin/AdminController.php:1333
+#: includes/Admin/AdminController.php:1419
 #, php-format
 msgid "%1$s (%2$s ago)"
 msgstr ""
 
-#: includes/Admin/AdminController.php:1344
+#: includes/Admin/AdminController.php:1430
 #: includes/Speed/Exclusions.php:658
 msgid "You don’t have permission to do that."
 msgstr ""
@@ -845,7 +874,7 @@ msgid "What happened"
 msgstr ""
 
 #: includes/Admin/views/activity.php:68
-#: includes/Admin/views/speed.php:510
+#: includes/Admin/views/speed.php:624
 msgid "Details"
 msgstr ""
 
@@ -1507,7 +1536,7 @@ msgid "SEO plugin"
 msgstr ""
 
 #: includes/Admin/views/content.php:198
-#: includes/Speed/CssOptimizer.php:1358
+#: includes/Speed/CssOptimizer.php:1387
 msgid "Homepage"
 msgstr ""
 
@@ -2014,7 +2043,7 @@ msgid "Last attempt"
 msgstr ""
 
 #: includes/Admin/views/inventory.php:62
-#: includes/Admin/views/speed.php:1088
+#: includes/Admin/views/speed.php:1202
 msgid "Failed"
 msgstr ""
 
@@ -2076,16 +2105,16 @@ msgid "Not applicable"
 msgstr ""
 
 #: includes/Admin/views/inventory.php:110
-#: includes/Admin/views/speed.php:328
-#: includes/Admin/views/speed.php:1098
-#: includes/Speed/Fixes.php:864
+#: includes/Admin/views/speed.php:388
+#: includes/Admin/views/speed.php:1212
+#: includes/Speed/Fixes.php:875
 msgid "On"
 msgstr ""
 
 #: includes/Admin/views/inventory.php:110
-#: includes/Admin/views/speed.php:330
-#: includes/Admin/views/speed.php:1100
-#: includes/Speed/Fixes.php:862
+#: includes/Admin/views/speed.php:390
+#: includes/Admin/views/speed.php:1214
+#: includes/Speed/Fixes.php:873
 msgid "Off"
 msgstr ""
 
@@ -2172,7 +2201,7 @@ msgstr ""
 #: includes/Admin/views/security.php:137
 #: includes/Admin/views/security.php:254
 #: includes/Admin/views/speed-image-library.php:44
-#: includes/Admin/views/speed.php:859
+#: includes/Admin/views/speed.php:973
 msgid "Stop"
 msgstr ""
 
@@ -2759,7 +2788,7 @@ msgid "Putting the originals back…"
 msgstr ""
 
 #: includes/Admin/views/speed-image-library.php:43
-#: includes/Admin/views/speed.php:858
+#: includes/Admin/views/speed.php:972
 msgid "Continue"
 msgstr ""
 
@@ -2775,448 +2804,530 @@ msgstr ""
 msgid "Restore the originals"
 msgstr ""
 
-#: includes/Admin/views/speed.php:49
+#: includes/Admin/views/speed.php:50
 msgid "The emoji script and styles"
 msgstr ""
 
-#: includes/Admin/views/speed.php:49
+#: includes/Admin/views/speed.php:50
 msgid "Browsers show emoji by themselves."
 msgstr ""
 
-#: includes/Admin/views/speed.php:50
+#: includes/Admin/views/speed.php:51
 msgid "The embed discovery script"
 msgstr ""
 
-#: includes/Admin/views/speed.php:50
+#: includes/Admin/views/speed.php:51
 msgid "Lets other websites embed your posts as cards. Embedding videos and posts on your site still works."
 msgstr ""
 
-#: includes/Admin/views/speed.php:51
+#: includes/Admin/views/speed.php:52
 msgid "Dashicons for visitors"
 msgstr ""
 
-#: includes/Admin/views/speed.php:51
+#: includes/Admin/views/speed.php:52
 msgid "The dashboard’s icon font. Leave it on if your theme shows these icons to visitors."
 msgstr ""
 
-#: includes/Admin/views/speed.php:52
+#: includes/Admin/views/speed.php:53
 msgid "jQuery Migrate"
 msgstr ""
 
-#: includes/Admin/views/speed.php:52
+#: includes/Admin/views/speed.php:53
 msgid "Helps old plugins with new jQuery. Only remove it if you’ve checked your site works without it."
 msgstr ""
 
-#: includes/Admin/views/speed.php:53
+#: includes/Admin/views/speed.php:54
 msgid "Block styles on pages without blocks"
 msgstr ""
 
-#: includes/Admin/views/speed.php:53
+#: includes/Admin/views/speed.php:54
 msgid "Classic themes only. Leave it on if you use block widgets."
 msgstr ""
 
-#: includes/Admin/views/speed.php:56
+#: includes/Admin/views/speed.php:57
 msgid "The main content appears faster."
 msgstr ""
 
-#: includes/Admin/views/speed.php:57
+#: includes/Admin/views/speed.php:58
 msgid "Nothing jumps around while it loads."
 msgstr ""
 
-#: includes/Admin/views/speed.php:58
+#: includes/Admin/views/speed.php:59
 msgid "Widgets and videos load when someone needs them."
 msgstr ""
 
-#: includes/Admin/views/speed.php:59
+#: includes/Admin/views/speed.php:60
 msgid "Less to download on every visit."
 msgstr ""
 
-#: includes/Admin/views/speed.php:114
+#: includes/Admin/views/speed.php:119
 msgid "Your .htaccess backup"
 msgstr ""
 
 #. translators: 1: date and time of the original copy, 2: date and time of the latest copy.
-#: includes/Admin/views/speed.php:119
+#: includes/Admin/views/speed.php:124
 #, php-format
 msgid "Arva SEO keeps a copy of your .htaccess file from before it first changed it (%1$s), and from before its latest change (%2$s)."
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/speed.php:121
+#: includes/Admin/views/speed.php:126
 #, php-format
 msgid "Arva SEO keeps a copy of your .htaccess file from before it first changed it (%s)."
 msgstr ""
 
-#: includes/Admin/views/speed.php:125
+#: includes/Admin/views/speed.php:130
 msgid "Download the original"
 msgstr ""
 
-#: includes/Admin/views/speed.php:126
+#: includes/Admin/views/speed.php:131
 msgid "Download the latest copy"
 msgstr ""
 
-#: includes/Admin/views/speed.php:169
+#: includes/Admin/views/speed.php:174
 msgid "Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again."
 msgstr ""
 
-#: includes/Admin/views/speed.php:176
-#: includes/Admin/views/speed.php:192
+#: includes/Admin/views/speed.php:181
+#: includes/Admin/views/speed.php:197
 msgid "Your latest PageSpeed test"
 msgstr ""
 
-#: includes/Admin/views/speed.php:177
+#: includes/Admin/views/speed.php:182
 msgid "No test yet"
 msgstr ""
 
-#: includes/Admin/views/speed.php:182
+#: includes/Admin/views/speed.php:187
 msgid "Run a PageSpeed test of your homepage in Arva SEO (PageSpeed, on phones). This page then shows which of these fixes it needs. The fixes work either way."
 msgstr ""
 
-#: includes/Admin/views/speed.php:183
+#: includes/Admin/views/speed.php:188
 msgid "Connect to Arva SEO and test your homepage there to see which of these fixes it needs. The fixes work without connecting."
 msgstr ""
 
 #. translators: %s: PageSpeed score.
-#: includes/Admin/views/speed.php:196
+#: includes/Admin/views/speed.php:201
 #, php-format
 msgid "Performance %s out of 100 on phones"
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/speed.php:202
+#: includes/Admin/views/speed.php:207
 #, php-format
 msgid "Tested %s in Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/speed.php:209
+#: includes/Admin/views/speed.php:214
 msgid "Run a new test in Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/speed.php:215
+#: includes/Admin/views/speed.php:220
 msgid "None of the problems it found are ones these fixes address. Arva SEO’s PageSpeed page has the steps for the rest."
 msgstr ""
 
-#: includes/Admin/views/speed.php:217
+#: includes/Admin/views/speed.php:222
 msgid "This test asks for:"
 msgstr ""
 
 #. translators: 1: fix state, 2: Lighthouse audit names.
-#: includes/Admin/views/speed.php:224
+#: includes/Admin/views/speed.php:229
 #, php-format
 msgid "(%1$s; fixes %2$s)"
 msgstr ""
 
 #. translators: %s: plugin names.
-#: includes/Admin/views/speed.php:244
+#: includes/Admin/views/speed.php:249
 #, php-format
 msgid "Arva SEO leaves the fixes %s can do to them."
 msgstr ""
 
-#: includes/Admin/views/speed.php:247
+#: includes/Admin/views/speed.php:252
 msgid "Review"
 msgstr ""
 
-#: includes/Admin/views/speed.php:251
+#: includes/Admin/views/speed.php:256
 msgid "Other speed plugins"
 msgstr ""
 
 #. translators: %s: plugin name.
-#: includes/Admin/views/speed.php:257
+#: includes/Admin/views/speed.php:262
 #, php-format
 msgid "%s does some of the same jobs"
 msgstr ""
 
 #. translators: %d: number of plugins.
-#: includes/Admin/views/speed.php:259
+#: includes/Admin/views/speed.php:264
 #, php-format
 msgid "%d other speed plugins do some of the same jobs"
 msgstr ""
 
-#: includes/Admin/views/speed.php:263
+#: includes/Admin/views/speed.php:268
 msgid "Two plugins changing how the same things load can break pages or undo each other’s work. Deactivate one to use Arva SEO’s fixes instead, or keep it and Arva SEO leaves those fixes to it."
 msgstr ""
 
-#: includes/Admin/views/speed.php:270
+#: includes/Admin/views/speed.php:275
 msgid "Does the same as:"
 msgstr ""
 
-#: includes/Admin/views/speed.php:281
+#: includes/Admin/views/speed.php:286
 msgid "On for the whole network: a network administrator can deactivate it."
 msgstr ""
 
 #. translators: %s: plugin name.
-#: includes/Admin/views/speed.php:290
+#: includes/Admin/views/speed.php:295
 #, php-format
 msgid "Deactivate %s"
 msgstr ""
 
-#: includes/Admin/views/speed.php:300
+#: includes/Admin/views/speed.php:305
 msgid "Keep it"
 msgstr ""
 
-#: includes/Admin/views/speed.php:300
+#: includes/Admin/views/speed.php:305
 msgid "Keep them"
 msgstr ""
 
-#: includes/Admin/views/speed.php:301
+#: includes/Admin/views/speed.php:306
 msgid "Deactivating keeps the plugin’s settings, so you can activate it again from Plugins."
 msgstr ""
 
 #. translators: %s: names of the fixes being tried.
-#: includes/Admin/views/speed.php:313
+#: includes/Admin/views/speed.php:318
 #, php-format
 msgid "You’re trying %s."
 msgstr ""
 
-#: includes/Admin/views/speed.php:316
+#: includes/Admin/views/speed.php:321
 msgid "Only you see the change while you’re signed in. Visit a few pages, then turn it on for everyone or stop trying."
 msgstr ""
 
-#: includes/Admin/views/speed.php:318
+#: includes/Admin/views/speed.php:323
+#: includes/Admin/views/speed.php:347
 msgid "View your site"
 msgstr ""
 
-#: includes/Admin/views/speed.php:323
-msgid "Show fixes"
+#. translators: %d: number of fixes.
+#: includes/Admin/views/speed.php:339
+#, php-format
+msgid "%d fix you use has an update to check."
+msgid_plural "%d fixes you use have an update to check."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/views/speed.php:345
+msgid "Your visitors still get the versions you checked. While you’re signed in you see the new ones: open your important pages, then choose on each fix below."
 msgstr ""
 
-#: includes/Admin/views/speed.php:326
-msgid "All"
+#: includes/Admin/views/speed.php:354
+msgid "What changed when Arva SEO updated"
 msgstr ""
 
-#: includes/Admin/views/speed.php:327
-msgid "Asked for by the test"
+#: includes/Admin/views/speed.php:361
+#: includes/Admin/views/speed.php:442
+msgid "Update to check"
 msgstr ""
 
-#: includes/Admin/views/speed.php:329
-msgid "Trying"
+#: includes/Admin/views/speed.php:362
+msgid "New option"
 msgstr ""
 
-#: includes/Admin/views/speed.php:340
-msgid "Safe fixes only change how things load. Fixes marked “Check your pages” can affect how your site works, so try them first."
+#: includes/Admin/views/speed.php:363
+msgid "Back to trying"
+msgstr ""
+
+#: includes/Admin/views/speed.php:370
+msgid "Your visitors use it."
 msgstr ""
 
 #: includes/Admin/views/speed.php:372
+msgid "The earlier version is no longer available: the fix went back to trying."
+msgstr ""
+
+#: includes/Admin/views/speed.php:383
+msgid "Show fixes"
+msgstr ""
+
+#: includes/Admin/views/speed.php:386
+msgid "All"
+msgstr ""
+
+#: includes/Admin/views/speed.php:387
+msgid "Asked for by the test"
+msgstr ""
+
+#: includes/Admin/views/speed.php:389
+msgid "Trying"
+msgstr ""
+
+#: includes/Admin/views/speed.php:400
+msgid "Safe fixes only change how things load. Fixes marked “Check your pages” can affect how your site works, so try them first."
+msgstr ""
+
+#: includes/Admin/views/speed.php:432
 msgid "Done by your host"
 msgstr ""
 
-#: includes/Admin/views/speed.php:377
+#: includes/Admin/views/speed.php:437
 msgid "Asked for by your latest test"
 msgstr ""
 
-#: includes/Admin/views/speed.php:383
+#: includes/Admin/views/speed.php:441
+msgid "Keeping the previous version"
+msgstr ""
+
+#: includes/Admin/views/speed.php:448
 msgid "Check your pages"
 msgstr ""
 
-#: includes/Admin/views/speed.php:383
+#: includes/Admin/views/speed.php:448
 msgid "Safe"
 msgstr ""
 
-#: includes/Admin/views/speed.php:391
+#. translators: %s: plugin version.
+#: includes/Admin/views/speed.php:465
+#, php-format
+msgid "Updated in %s:"
+msgstr ""
+
+#. translators: %s: date.
+#: includes/Admin/views/speed.php:474
+#, php-format
+msgid "You’re keeping the version you checked. Your visitors, and you while you’re signed in, get it until %s; after that this fix goes back to being tried so you can check the new one."
+msgstr ""
+
+#. translators: %s: date.
+#: includes/Admin/views/speed.php:477
+#, php-format
+msgid "Your visitors still get the version you checked on %s. While you’re signed in you see the new one: open your important pages, then choose."
+msgstr ""
+
+#: includes/Admin/views/speed.php:479
+msgid "Your visitors still get the version you checked before. While you’re signed in you see the new one: open your important pages, then choose."
+msgstr ""
+
+#. translators: %s: date.
+#: includes/Admin/views/speed.php:487
+#, php-format
+msgid "The earlier version stays available until %s, then this fix goes back to being tried."
+msgstr ""
+
+#: includes/Admin/views/speed.php:493
+msgid "Use it for visitors"
+msgstr ""
+
+#: includes/Admin/views/speed.php:495
+msgid "Keep the previous version"
+msgstr ""
+
+#: includes/Admin/views/speed.php:497
+msgid "Turn the fix off"
+msgstr ""
+
+#: includes/Admin/views/speed.php:505
 msgid "Rocket Loader is on in Cloudflare and also changes how scripts load. Use one or the other."
 msgstr ""
 
-#: includes/Admin/views/speed.php:391
+#: includes/Admin/views/speed.php:505
 msgid "See Cloudflare"
 msgstr ""
 
 #. translators: %s: the host's cache, such as SiteGround's dynamic cache.
-#: includes/Admin/views/speed.php:398
+#: includes/Admin/views/speed.php:512
 #, php-format
 msgid "%s already caches your pages on your host’s servers, so Arva SEO leaves page caching to it and pages aren’t cached twice. Keeping it is usually best."
 msgstr ""
 
-#: includes/Admin/views/speed.php:401
+#: includes/Admin/views/speed.php:515
 msgid "Use Arva SEO’s page cache instead"
 msgstr ""
 
 #. translators: %s: plugin name.
-#: includes/Admin/views/speed.php:408
+#: includes/Admin/views/speed.php:522
 #, php-format
 msgid "%s can do this, so Arva SEO leaves it to that plugin and your pages aren’t processed twice."
 msgstr ""
 
-#: includes/Admin/views/speed.php:410
+#: includes/Admin/views/speed.php:524
 msgid "Use Arva SEO’s instead"
 msgstr ""
 
-#: includes/Admin/views/speed.php:413
+#: includes/Admin/views/speed.php:527
 msgid "Remove Arva SEO’s rules"
 msgstr ""
 
-#: includes/Admin/views/speed.php:421
+#: includes/Admin/views/speed.php:535
 msgid "Trying it: only you see the change while you’re signed in. Visitors see your site as before."
 msgstr ""
 
-#: includes/Admin/views/speed.php:422
+#: includes/Admin/views/speed.php:536
 msgid "Open your homepage"
 msgstr ""
 
 #. translators: 1: the host's cache, 2: how to turn it off.
-#: includes/Admin/views/speed.php:431
+#: includes/Admin/views/speed.php:545
 #, php-format
 msgid "You chose Arva SEO’s page cache over %1$s. Turn the host’s cache off so pages aren’t cached twice. %2$s"
 msgstr ""
 
 #. translators: %s: the host's cache.
-#: includes/Admin/views/speed.php:437
+#: includes/Admin/views/speed.php:551
 #, php-format
 msgid "Leave it to %s"
 msgstr ""
 
 #. translators: %s: the host's cache, such as SiteGround's dynamic cache.
-#: includes/Admin/views/speed.php:447
+#: includes/Admin/views/speed.php:561
 #, php-format
 msgid "%s keeps its own copy of your pages, in front of WordPress, and nothing here can clear it when a page changes, so visitors can see an old copy for up to 12 hours. Install SiteGround’s Speed Optimizer plugin (you can turn its caching options off): Arva SEO then clears that copy whenever your pages change. Until then, clear it in Site Tools → Speed → Caching after a change."
 msgstr ""
 
-#: includes/Admin/views/speed.php:453
+#: includes/Admin/views/speed.php:567
 msgid "The page cache isn’t running: its advanced-cache.php file in wp-content was removed or replaced, perhaps by another plugin. Turn this off and on again to set it up again."
 msgstr ""
 
-#: includes/Admin/views/speed.php:456
+#: includes/Admin/views/speed.php:570
 msgid "The rules aren’t in your .htaccess file any more: another plugin or your host may have rewritten it. Turn this off and on again to add them back."
 msgstr ""
 
 #. translators: %d: page types waiting for next month's page optimizations.
-#: includes/Admin/views/speed.php:463
+#: includes/Admin/views/speed.php:577
 #, php-format
 msgid "%d page type waits for next month’s page optimizations; it loads its normal styles until then."
 msgid_plural "%d page types wait for next month’s page optimizations; they load their normal styles until then."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:467
+#: includes/Admin/views/speed.php:581
 msgid "More page optimizations"
 msgstr ""
 
-#: includes/Admin/views/speed.php:490
+#: includes/Admin/views/speed.php:604
 msgid "Try it"
 msgstr ""
 
-#: includes/Admin/views/speed.php:493
+#: includes/Admin/views/speed.php:607
 msgid "Turn it on after the checks below."
 msgstr ""
 
-#: includes/Admin/views/speed.php:498
-#: includes/Admin/views/speed.php:544
+#: includes/Admin/views/speed.php:612
+#: includes/Admin/views/speed.php:658
 msgid "Turn on for everyone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:498
+#: includes/Admin/views/speed.php:612
 msgid "Turn on"
 msgstr ""
 
-#: includes/Admin/views/speed.php:504
+#: includes/Admin/views/speed.php:618
 msgid "Stop trying"
 msgstr ""
 
-#: includes/Admin/views/speed.php:504
+#: includes/Admin/views/speed.php:618
 msgid "Turn off"
 msgstr ""
 
-#: includes/Admin/views/speed.php:510
+#: includes/Admin/views/speed.php:624
 msgid "Details and options"
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/speed.php:515
+#: includes/Admin/views/speed.php:629
 #, php-format
 msgid "On since %s."
 msgstr ""
 
-#: includes/Admin/views/speed.php:526
+#: includes/Admin/views/speed.php:640
 msgid "Choose specific images in the Media Library"
 msgstr ""
 
-#: includes/Admin/views/speed.php:526
+#: includes/Admin/views/speed.php:640
 msgid "Local compression uses no credits. Consented cloud compression uses your image allowance only when it makes an image smaller."
 msgstr ""
 
-#: includes/Admin/views/speed.php:528
+#: includes/Admin/views/speed.php:642
 msgid "Original backups are currently disabled. Enable Keep the originals below before compressing if you want to restore these images later."
 msgstr ""
 
-#: includes/Admin/views/speed.php:539
+#: includes/Admin/views/speed.php:653
 msgid "Before turning it on for everyone, check these while trying it:"
 msgstr ""
 
-#: includes/Admin/views/speed.php:540
+#: includes/Admin/views/speed.php:654
 msgid "My homepage looks and works as before"
 msgstr ""
 
-#: includes/Admin/views/speed.php:541
+#: includes/Admin/views/speed.php:655
 msgid "Contact or booking forms, and the checkout if I sell online, still work"
 msgstr ""
 
-#: includes/Admin/views/speed.php:542
+#: includes/Admin/views/speed.php:656
 msgid "Menus, sliders, pop-ups and chat still work, on a phone too"
 msgstr ""
 
-#: includes/Admin/views/speed.php:551
+#: includes/Admin/views/speed.php:665
 msgid "Fixes in PageSpeed:"
 msgstr ""
 
-#: includes/Admin/views/speed.php:562
+#: includes/Admin/views/speed.php:676
 msgid "Check your pages: it can affect how parts of your site work. Try it first."
 msgstr ""
 
-#: includes/Admin/views/speed.php:563
+#: includes/Admin/views/speed.php:677
 msgid "Changes your server’s settings for every visitor at once. Check your important pages after turning it on."
 msgstr ""
 
-#: includes/Admin/views/speed.php:569
+#: includes/Admin/views/speed.php:683
 msgid "Safe: it only changes how things load, not what visitors see."
 msgstr ""
 
-#: includes/Admin/views/speed.php:574
+#: includes/Admin/views/speed.php:688
 msgid "The line for wp-config.php"
 msgstr ""
 
-#: includes/Admin/views/speed.php:575
+#: includes/Admin/views/speed.php:689
 msgid "Above the line that says “That’s all, stop editing!”:"
 msgstr ""
 
-#: includes/Admin/views/speed.php:582
+#: includes/Admin/views/speed.php:696
 msgid "The rules for your host"
 msgstr ""
 
-#: includes/Admin/views/speed.php:583
+#: includes/Admin/views/speed.php:697
 msgid "nginx:"
 msgstr ""
 
-#: includes/Admin/views/speed.php:585
+#: includes/Admin/views/speed.php:699
 msgid "Apache or LiteSpeed (.htaccess):"
 msgstr ""
 
 #. translators: %s: milliseconds.
-#: includes/Admin/views/speed.php:604
+#: includes/Admin/views/speed.php:718
 #, php-format
 msgid "%s ms"
 msgstr ""
 
 #. translators: %s: seconds.
-#: includes/Admin/views/speed.php:606
+#: includes/Admin/views/speed.php:720
 #, php-format
 msgid "%s s"
 msgstr ""
 
 #. translators: 1: time to make the homepage, such as 640 ms, 2: time from the cache.
-#: includes/Admin/views/speed.php:608
+#: includes/Admin/views/speed.php:722
 #, php-format
 msgid "Checked: your homepage took %1$s to make, and %2$s from the cache (asked for from your server)."
 msgstr ""
 
-#: includes/Admin/views/speed.php:612
+#: includes/Admin/views/speed.php:726
 msgid "Your server sends saved pages itself, through rules in .htaccess, without starting PHP."
 msgstr ""
 
-#: includes/Admin/views/speed.php:612
+#: includes/Admin/views/speed.php:726
 msgid "Saved pages are sent before WordPress loads (advanced-cache.php in wp-content)."
 msgstr ""
 
 #. translators: 1: number of pages, 2: their size, such as 4 MB.
-#: includes/Admin/views/speed.php:618
+#: includes/Admin/views/speed.php:732
 #, php-format
 msgid "%1$s page in the cache (%2$s). Each is made again after 10 hours, or when it changes."
 msgid_plural "%1$s pages in the cache (%2$s). Each is made again after 10 hours, or when it changes."
@@ -3224,130 +3335,130 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: pages refilled so far, 2: pages to refill.
-#: includes/Admin/views/speed.php:629
+#: includes/Admin/views/speed.php:743
 #, php-format
 msgid "Refilling the cache in the background: %1$s of %2$s pages, a few at a time."
 msgstr ""
 
-#: includes/Admin/views/speed.php:634
+#: includes/Admin/views/speed.php:748
 msgid "Clear the cache"
 msgstr ""
 
-#: includes/Admin/views/speed.php:634
+#: includes/Admin/views/speed.php:748
 msgid "Also in the toolbar on your site’s pages. Cloudflare’s copy is cleared too, when it’s connected."
 msgstr ""
 
-#: includes/Admin/views/speed.php:637
+#: includes/Admin/views/speed.php:751
 msgid "Never cached"
 msgstr ""
 
-#: includes/Admin/views/speed.php:638
+#: includes/Admin/views/speed.php:752
 msgid "Signed-in users, visitors with a comment, a password or items in their cart, carts, checkouts and account pages, searches and addresses with a query (tracking ones like utm_source are fine), and any page that sets a cookie or asks not to be cached. Pages you leave alone below aren’t cached either."
 msgstr ""
 
-#: includes/Admin/views/speed.php:641
+#: includes/Admin/views/speed.php:755
 msgid "Choices"
 msgstr ""
 
-#: includes/Admin/views/speed.php:646
+#: includes/Admin/views/speed.php:760
 msgid "Page caching choices"
 msgstr ""
 
-#: includes/Admin/views/speed.php:647
+#: includes/Admin/views/speed.php:761
 msgid "Refill the cache in the background"
 msgstr ""
 
-#: includes/Admin/views/speed.php:647
+#: includes/Admin/views/speed.php:761
 msgid "After it’s cleared, your homepage, latest posts and pages, and main categories are visited in the background, a few at a time, so the first visitor gets a fast page too."
 msgstr ""
 
-#: includes/Admin/views/speed.php:648
+#: includes/Admin/views/speed.php:762
 msgid "A separate copy for phones"
 msgstr ""
 
-#: includes/Admin/views/speed.php:648
+#: includes/Admin/views/speed.php:762
 msgid "Only for themes or plugins that send phones different HTML (a separate mobile menu or layout). Most themes send the same page and let the screen size decide, so one copy is right and fills twice as fast."
 msgstr ""
 
-#: includes/Admin/views/speed.php:650
-#: includes/Admin/views/speed.php:722
+#: includes/Admin/views/speed.php:764
+#: includes/Admin/views/speed.php:836
 msgid "Save choices"
 msgstr ""
 
-#: includes/Admin/views/speed.php:659
+#: includes/Admin/views/speed.php:773
 msgid "Checked: images, fonts, styles and scripts now stay in browsers for a year."
 msgstr ""
 
-#: includes/Admin/views/speed.php:659
+#: includes/Admin/views/speed.php:773
 msgid "Your server didn’t add the cache lifetimes. Ask your host to turn on mod_expires."
 msgstr ""
 
 #. translators: %s: compression method, such as br or gzip.
-#: includes/Admin/views/speed.php:665
+#: includes/Admin/views/speed.php:779
 #, php-format
 msgid "Checked: pages are sent compressed (%s)."
 msgstr ""
 
-#: includes/Admin/views/speed.php:666
+#: includes/Admin/views/speed.php:780
 msgid "Pages weren’t compressed when checked from your server. Your host may compress them further along (a CDN, for example); if PageSpeed still asks for it, ask your host to turn on mod_deflate or Brotli."
 msgstr ""
 
-#: includes/Admin/views/speed.php:673
+#: includes/Admin/views/speed.php:787
 msgid "The rules it adds"
 msgstr ""
 
-#: includes/Admin/views/speed.php:674
+#: includes/Admin/views/speed.php:788
 msgid "If you edit your theme’s files by hand, visitors may see the old version for a while; WordPress and plugins add a version to their files, so their updates show straight away."
 msgstr ""
 
-#: includes/Admin/views/speed.php:686
+#: includes/Admin/views/speed.php:800
 msgid "External service addresses, one per line"
 msgstr ""
 
-#: includes/Admin/views/speed.php:688
+#: includes/Admin/views/speed.php:802
 msgid "Save the addresses, then try or turn on this fix. Only public HTTPS origins are kept. Paths, query strings and fragments are removed; credentials, local addresses and custom ports are rejected. An empty list adds no connections."
 msgstr ""
 
-#: includes/Admin/views/speed.php:690
+#: includes/Admin/views/speed.php:804
 msgid "Use anonymous connections for these origins (web fonts or CORS resources)"
 msgstr ""
 
-#: includes/Admin/views/speed.php:691
+#: includes/Admin/views/speed.php:805
 msgid "Leave this unticked for ordinary third-party scripts. Google Fonts connections are already added by Faster Google Fonts when needed."
 msgstr ""
 
-#: includes/Admin/views/speed.php:693
+#: includes/Admin/views/speed.php:807
 msgid "Save addresses"
 msgstr ""
 
-#: includes/Admin/views/speed.php:703
+#: includes/Admin/views/speed.php:817
 msgid "Leave these files alone, one handle per line"
 msgstr ""
 
-#: includes/Admin/views/speed.php:705
+#: includes/Admin/views/speed.php:819
 msgid "CSS exclusions are shared with optimized CSS and CSS combining; script exclusions are shared with Defer scripts and JavaScript combining. Minification and combining are separate options. Unsupported files keep their original delivery."
 msgstr ""
 
-#: includes/Admin/views/speed.php:706
+#: includes/Admin/views/speed.php:820
 msgid "Save exclusions"
 msgstr ""
 
-#: includes/Admin/views/speed.php:712
+#: includes/Admin/views/speed.php:826
 msgid "Choose what to remove"
 msgstr ""
 
-#: includes/Admin/views/speed.php:717
+#: includes/Admin/views/speed.php:831
 msgid "Remove these"
 msgstr ""
 
 #. translators: 1: page types with optimized CSS, 2: page types waiting.
-#: includes/Admin/views/speed.php:731
+#: includes/Admin/views/speed.php:845
 #, php-format
 msgid "Optimized CSS for %1$d page types; %2$d waiting."
 msgstr ""
 
 #. translators: %d: page types that couldn't be optimized.
-#: includes/Admin/views/speed.php:738
+#: includes/Admin/views/speed.php:852
 #, php-format
 msgid "%d couldn’t be optimized."
 msgid_plural "%d couldn’t be optimized."
@@ -3355,412 +3466,412 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: page optimizations used, 2: page optimizations included this month.
-#: includes/Admin/views/speed.php:744
+#: includes/Admin/views/speed.php:858
 #, php-format
 msgid "Page optimizations this month: %1$d of %2$d."
 msgstr ""
 
-#: includes/Admin/views/speed.php:752
+#: includes/Admin/views/speed.php:866
 msgid "Optimized CSS: work it out again, or leave stylesheets alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:756
+#: includes/Admin/views/speed.php:870
 msgid "Each public page address and its stylesheets get separate critical and used CSS. New page results use page optimizations; clearing the page cache does not regenerate CSS."
 msgstr ""
 
-#: includes/Admin/views/speed.php:758
+#: includes/Admin/views/speed.php:872
 msgid "Pages are grouped by type (homepage, page, post, product, category…) and by their stylesheets; each group uses one page optimization. A stylesheet that changes, after a theme or plugin update, makes a new group; clearing your cache costs nothing."
 msgstr ""
 
-#: includes/Admin/views/speed.php:765
+#: includes/Admin/views/speed.php:879
 msgid "Optimize now"
 msgstr ""
 
-#: includes/Admin/views/speed.php:766
+#: includes/Admin/views/speed.php:880
 msgid "Check for results"
 msgstr ""
 
-#: includes/Admin/views/speed.php:767
+#: includes/Admin/views/speed.php:881
 msgid "Regenerate"
 msgstr ""
 
 #. translators: %d: page types being optimized.
-#: includes/Admin/views/speed.php:789
+#: includes/Admin/views/speed.php:903
 #, php-format
 msgid "Being optimized: %d page type. This page checks every 20 seconds and updates when it’s done."
 msgid_plural "Being optimized: %d page types. This page checks every 20 seconds and updates when they’re done."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:796
+#: includes/Admin/views/speed.php:910
 msgid "Couldn’t be optimized"
 msgstr ""
 
-#: includes/Admin/views/speed.php:806
+#: includes/Admin/views/speed.php:920
 msgid "Optimize now tries these again. They load as before in the meantime."
 msgstr ""
 
-#: includes/Admin/views/speed.php:813
+#: includes/Admin/views/speed.php:927
 msgid "Leave these stylesheets alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:814
+#: includes/Admin/views/speed.php:928
 msgid "One stylesheet name (handle) per line; they load as before. Both CSS fixes share this list."
 msgstr ""
 
-#: includes/Admin/views/speed.php:816
-#: includes/Admin/views/speed.php:928
-#: includes/Admin/views/speed.php:942
-#: includes/Admin/views/speed.php:965
-#: includes/Admin/views/speed.php:1029
-#: includes/Admin/views/speed.php:1121
-#: includes/Admin/views/speed.php:1238
+#: includes/Admin/views/speed.php:930
+#: includes/Admin/views/speed.php:1042
+#: includes/Admin/views/speed.php:1056
+#: includes/Admin/views/speed.php:1079
+#: includes/Admin/views/speed.php:1143
+#: includes/Admin/views/speed.php:1235
+#: includes/Admin/views/speed.php:1352
 msgid "Save"
 msgstr ""
 
-#: includes/Admin/views/speed.php:818
+#: includes/Admin/views/speed.php:932
 msgid "Arva SEO loads your public pages like a visitor, as a phone and as a computer, to see which styles they use. Only page addresses are sent, never content or visitor data."
 msgstr ""
 
-#: includes/Admin/views/speed.php:824
+#: includes/Admin/views/speed.php:938
 msgid "Convert your existing images too"
 msgstr ""
 
-#: includes/Admin/views/speed.php:825
+#: includes/Admin/views/speed.php:939
 msgid "Each JPEG and PNG in your media library, and each of its sizes, gets a WebP copy beside it, kept only when it’s smaller. Your originals stay as they are, and Undo removes every copy. It runs in the background, a few images at a time."
 msgstr ""
 
 #. translators: 1: images done, 2: all images, 3: space saved, such as 2 MB.
-#: includes/Admin/views/speed.php:832
+#: includes/Admin/views/speed.php:946
 #, php-format
 msgid "%1$d of %2$d images, %3$s smaller so far."
 msgstr ""
 
-#: includes/Admin/views/speed.php:837
+#: includes/Admin/views/speed.php:951
 msgid "Converting…"
 msgstr ""
 
-#: includes/Admin/views/speed.php:858
+#: includes/Admin/views/speed.php:972
 msgid "Convert images added since"
 msgstr ""
 
-#: includes/Admin/views/speed.php:858
+#: includes/Admin/views/speed.php:972
 msgid "Convert existing images"
 msgstr ""
 
-#: includes/Admin/views/speed.php:860
+#: includes/Admin/views/speed.php:974
 msgid "Undo: remove the copies"
 msgstr ""
 
-#: includes/Admin/views/speed.php:879
+#: includes/Admin/views/speed.php:993
 msgid "On this server. Connect to Arva SEO to have its servers compress images more strongly (100 a month on the Free plan)."
 msgstr ""
 
-#: includes/Admin/views/speed.php:881
+#: includes/Admin/views/speed.php:995
 msgid "On this server. Arva SEO’s servers compress images more strongly once you allow it below."
 msgstr ""
 
 #. translators: %s: date, such as November 1.
-#: includes/Admin/views/speed.php:884
+#: includes/Admin/views/speed.php:998
 #, php-format
 msgid "No image compressions left this month on Arva SEO’s servers, so this server compresses images until %s."
 msgstr ""
 
-#: includes/Admin/views/speed.php:886
+#: includes/Admin/views/speed.php:1000
 msgid "Arva SEO’s servers didn’t answer a moment ago, so images wait a few minutes for them."
 msgstr ""
 
 #. translators: 1: compressions left this month, 2: included a month, 3: compressions in top-ups.
-#: includes/Admin/views/speed.php:891
+#: includes/Admin/views/speed.php:1005
 #, php-format
 msgid "On Arva SEO’s servers: %1$s of %2$s image compressions left this month, and %3$s in top-ups."
 msgstr ""
 
 #. translators: 1: compressions left this month, 2: included a month.
-#: includes/Admin/views/speed.php:893
+#: includes/Admin/views/speed.php:1007
 #, php-format
 msgid "On Arva SEO’s servers: %1$s of %2$s image compressions left this month."
 msgstr ""
 
-#: includes/Admin/views/speed.php:896
+#: includes/Admin/views/speed.php:1010
 msgid "On Arva SEO’s servers. Each image counts once, with all its sizes, and only when it gets at least 5% smaller."
 msgstr ""
 
-#: includes/Admin/views/speed.php:900
+#: includes/Admin/views/speed.php:1014
 msgid "Get more image compressions"
 msgstr ""
 
 #. translators: 1: number of images, 2: space saved, such as 12 MB.
-#: includes/Admin/views/speed.php:907
+#: includes/Admin/views/speed.php:1021
 #, php-format
 msgid "%1$s image compressed so far, %2$s smaller."
 msgid_plural "%1$s images compressed so far, %2$s smaller."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:914
+#: includes/Admin/views/speed.php:1028
 msgid "Where images are compressed, and the originals"
 msgstr ""
 
-#: includes/Admin/views/speed.php:920
+#: includes/Admin/views/speed.php:1034
 msgid "Use Arva SEO’s servers"
 msgstr ""
 
-#: includes/Admin/views/speed.php:920
+#: includes/Admin/views/speed.php:1034
 msgid "Each image and its sizes are sent to Arva SEO, compressed more strongly than this server can, sent back and deleted from Arva SEO straight away. Each image counts once against your plan’s monthly image compressions, and only when it gets at least 5% smaller. When none are left, this server carries on."
 msgstr ""
 
-#: includes/Admin/views/speed.php:923
+#: includes/Admin/views/speed.php:1037
 msgid "To use Arva SEO’s servers, share data with Arva SEO first (Settings → Diagnostics and data sharing)."
 msgstr ""
 
-#: includes/Admin/views/speed.php:926
+#: includes/Admin/views/speed.php:1040
 msgid "Keep the originals"
 msgstr ""
 
-#: includes/Admin/views/speed.php:926
+#: includes/Admin/views/speed.php:1040
 msgid "A copy of each original is kept in wp-content/arvaseo-originals, so Restore can put it back. Turn this off to save disk space: images compressed after that can’t be put back."
 msgstr ""
 
-#: includes/Admin/views/speed.php:934
+#: includes/Admin/views/speed.php:1048
 msgid "The widgets it delays, and others to delay"
 msgstr ""
 
-#: includes/Admin/views/speed.php:938
+#: includes/Admin/views/speed.php:1052
 msgid "Tawk.to, Crisp, Intercom, LiveChat, Tidio, Zendesk, Drift and HubSpot chat; Hotjar and Microsoft Clarity; Facebook, X (Twitter) and Pinterest widgets; Elfsight widgets. Only scripts your theme or plugins add the WordPress way can be delayed."
 msgstr ""
 
-#: includes/Admin/views/speed.php:939
+#: includes/Admin/views/speed.php:1053
 msgid "Also delay these scripts"
 msgstr ""
 
-#: includes/Admin/views/speed.php:940
+#: includes/Admin/views/speed.php:1054
 msgid "One per line: a script name (handle) or part of its file address. A script that other scripts need is never delayed. To keep a widget loading straight away on some pages, leave those pages alone below."
 msgstr ""
 
-#: includes/Admin/views/speed.php:948
-#: includes/Admin/views/speed.php:953
+#: includes/Admin/views/speed.php:1062
+#: includes/Admin/views/speed.php:1067
 msgid "Serve them from your site"
 msgstr ""
 
-#: includes/Admin/views/speed.php:953
+#: includes/Admin/views/speed.php:1067
 msgid "Copies of the fonts your pages use are kept in your uploads folder and used instead of Google’s, so browsers don’t connect to Google for them (better for privacy too). Each copy is made in the background the first time a page needs it; until then Google’s fonts are used."
 msgstr ""
 
 #. translators: %d: number of Google Fonts stylesheets copied.
-#: includes/Admin/views/speed.php:959
+#: includes/Admin/views/speed.php:1073
 #, php-format
 msgid "%d font stylesheet is served from your site."
 msgid_plural "%d font stylesheets are served from your site."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:971
+#: includes/Admin/views/speed.php:1085
 msgid "JavaScript loading mode"
 msgstr ""
 
-#: includes/Admin/views/speed.php:972
+#: includes/Admin/views/speed.php:1086
 msgid "Deferred runs supported scripts after HTML is parsed. Delayed waits for the first interaction. Dependencies, consent tools, measurement scripts and your exclusions load as before. Changing a public mode returns this fix to preview until you check your pages again."
 msgstr ""
 
-#: includes/Admin/views/speed.php:974
+#: includes/Admin/views/speed.php:1088
 msgid "When JavaScript loads"
 msgstr ""
 
-#: includes/Admin/views/speed.php:975
+#: includes/Admin/views/speed.php:1089
 msgid "Deferred"
 msgstr ""
 
-#: includes/Admin/views/speed.php:976
+#: includes/Admin/views/speed.php:1090
 msgid "Delayed"
 msgstr ""
 
-#: includes/Admin/views/speed.php:978
-#: includes/Admin/views/speed.php:981
+#: includes/Admin/views/speed.php:1092
+#: includes/Admin/views/speed.php:1095
 msgid "Move jQuery down the page"
 msgstr ""
 
-#: includes/Admin/views/speed.php:981
+#: includes/Admin/views/speed.php:1095
 msgid "jQuery stops holding up the first paint: it moves from the head to just before the first script that may use it. It stays in the head when something before it may run at any time and use jQuery: Google Tag Manager or another async script, a consent tool or tag manager loaded from another website, or a script a consent tool holds back until the visitor agrees. Turning this on returns this fix to preview until you check your pages again, including anything a tag manager adds."
 msgstr ""
 
-#: includes/Admin/views/speed.php:983
+#: includes/Admin/views/speed.php:1097
 msgid "Leave scripts alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:988
+#: includes/Admin/views/speed.php:1102
 msgid "Open your homepage while trying it: the scripts it defers are listed here, so you can leave one alone if something stops working."
 msgstr ""
 
-#: includes/Admin/views/speed.php:990
+#: includes/Admin/views/speed.php:1104
 msgid "Scripts it deferred on the last page you opened while trying it:"
 msgstr ""
 
-#: includes/Admin/views/speed.php:996
+#: includes/Admin/views/speed.php:1110
 msgid "Left alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:999
+#: includes/Admin/views/speed.php:1113
 msgid "Leave alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1006
+#: includes/Admin/views/speed.php:1120
 msgid "Leave these scripts alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1007
+#: includes/Admin/views/speed.php:1121
 msgid "One per line: a script name (handle), such as one from the list above, or part of its file address, such as booking.js or /plugins/contact-form-7/. Consent or cookie tools are always left alone, and jQuery is never deferred; while it moves down the page, list jquery-core to keep it in the head."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1015
+#: includes/Admin/views/speed.php:1129
 msgid "Leave every script from a plugin alone"
 msgstr ""
 
 #. translators: %d: number of plugins chosen.
-#: includes/Admin/views/speed.php:1017
+#: includes/Admin/views/speed.php:1131
 #, php-format
 msgid "Leave every script from a plugin alone (%d chosen)"
 msgid_plural "Leave every script from a plugin alone (%d chosen)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:1022
+#: includes/Admin/views/speed.php:1136
 msgid "Plugins whose scripts Defer scripts leaves alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1036
+#: includes/Admin/views/speed.php:1150
 msgid "Leave a page, image or video alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1036
+#: includes/Admin/views/speed.php:1150
 msgid "Leave a page alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1048
+#: includes/Admin/views/speed.php:1162
 msgid "Cloudflare"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1048
+#: includes/Admin/views/speed.php:1162
 msgid "Visitors get your changes straight away."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1065
+#: includes/Admin/views/speed.php:1179
 msgid "Cloudflare is connected"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1067
+#: includes/Admin/views/speed.php:1181
 msgid "Cloudflare’s copy of every page is cleared when a fix goes on or off for visitors, when your choices here change, and when new optimized CSS, WebP copies or local fonts are ready."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1069
+#: includes/Admin/views/speed.php:1183
 msgid "Clear Cloudflare’s copy now"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1075
+#: includes/Admin/views/speed.php:1189
 msgid "It may have been deleted, have expired or lost a permission. Disconnect, then connect again with a new token."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1080
+#: includes/Admin/views/speed.php:1194
 msgid "Last cleared"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1083
+#: includes/Admin/views/speed.php:1197
 msgid "Not yet"
 msgstr ""
 
 #. translators: %d: number of pages.
-#: includes/Admin/views/speed.php:1086
+#: includes/Admin/views/speed.php:1200
 msgid "Every page"
 msgstr ""
 
 #. translators: %d: number of pages.
-#: includes/Admin/views/speed.php:1086
+#: includes/Admin/views/speed.php:1200
 #, php-format
 msgid "%d page"
 msgid_plural "%d pages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:1095
+#: includes/Admin/views/speed.php:1209
 msgid "Rocket Loader"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1103
+#: includes/Admin/views/speed.php:1217
 msgid "Give the token Zone Settings: Read to check it."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1107
+#: includes/Admin/views/speed.php:1221
 msgid "Checked"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1110
+#: includes/Admin/views/speed.php:1224
 msgid "Rocket Loader changes how scripts load, as Defer scripts and Delay chat widgets and trackers do here. Using both can stop menus, forms or checkouts working. Keep the fixes here and turn Rocket Loader off in your Cloudflare dashboard, or turn these fixes off."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1119
+#: includes/Admin/views/speed.php:1233
 msgid "Also clear a post’s pages when it’s published, updated or unpublished"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1119
+#: includes/Admin/views/speed.php:1233
 msgid "The post, the homepage, the blog page, the feed and its category and tag pages. Leave this off if Cloudflare’s own plugin already does it."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1125
+#: includes/Admin/views/speed.php:1239
 msgid "Check again"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1126
+#: includes/Admin/views/speed.php:1240
 msgid "Disconnect Cloudflare"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1130
+#: includes/Admin/views/speed.php:1244
 msgid "Seen in front of this website"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1130
+#: includes/Admin/views/speed.php:1244
 msgid "Optional"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1131
+#: includes/Admin/views/speed.php:1245
 msgid "Using Cloudflare?"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1132
+#: includes/Admin/views/speed.php:1246
 msgid "Cloudflare can keep copies of your pages. Connect it here and those copies are cleared whenever a change here affects what visitors get, so visitors and your next PageSpeed test see a fix as soon as you turn it on. It works without an Arva SEO account. Only page addresses are sent, to Cloudflare."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1141
+#: includes/Admin/views/speed.php:1255
 msgid "In your Cloudflare dashboard, open My Profile → API Tokens → Create Token → Create Custom Token."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1142
+#: includes/Admin/views/speed.php:1256
 msgid "Permissions: Zone → Zone → Read, Zone → Cache Purge → Purge, and Zone → Zone Settings → Read (so Rocket Loader can be checked)."
 msgstr ""
 
 #. translators: %s: this website's domain.
-#: includes/Admin/views/speed.php:1146
+#: includes/Admin/views/speed.php:1260
 #, php-format
 msgid "Zone Resources: Include → Specific zone → %s. Create the token and paste it below."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1150
+#: includes/Admin/views/speed.php:1264
 msgid "Cloudflare API token"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1152
+#: includes/Admin/views/speed.php:1266
 msgid "Kept encrypted on this site and only ever sent to Cloudflare. A token, not the Global API Key."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1160
+#: includes/Admin/views/speed.php:1274
 msgid "Leave things alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1160
+#: includes/Admin/views/speed.php:1274
 msgid "If a fix stops something working on part of your site, leave that part alone instead of turning the fix off everywhere."
 msgstr ""
 
 #. translators: %d: number of page addresses.
-#: includes/Admin/views/speed.php:1167
+#: includes/Admin/views/speed.php:1281
 #, php-format
 msgid "%d page address"
 msgid_plural "%d page addresses"
@@ -3768,7 +3879,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of posts and pages.
-#: includes/Admin/views/speed.php:1169
+#: includes/Admin/views/speed.php:1283
 #, php-format
 msgid "%d post or page by its tick box"
 msgid_plural "%d posts and pages by their tick box"
@@ -3776,112 +3887,112 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of images, videos and maps.
-#: includes/Admin/views/speed.php:1171
+#: includes/Admin/views/speed.php:1285
 #, php-format
 msgid "%d image, video or map"
 msgid_plural "%d images, videos or maps"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:1180
+#: includes/Admin/views/speed.php:1294
 msgid "Nothing is left alone: every fix that’s on runs on every page."
 msgstr ""
 
 #. translators: %s: what is left alone, such as "2 page addresses and 3 images, videos or maps".
-#: includes/Admin/views/speed.php:1182
+#: includes/Admin/views/speed.php:1296
 #, php-format
 msgid "Left alone: %s."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1193
+#: includes/Admin/views/speed.php:1307
 msgid "Pages"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1194
+#: includes/Admin/views/speed.php:1308
 msgid "No fix runs on these. One address per line, the part after your domain, such as /contact/. A * matches anything: /shop/* is every page under /shop/. You can also tick “Leave this page alone” when you edit a post or page, or use Arva SEO in the toolbar while you view any page."
 msgstr ""
 
 #. translators: %d: number of posts and pages.
-#: includes/Admin/views/speed.php:1200
+#: includes/Admin/views/speed.php:1314
 #, php-format
 msgid "%d post or page is left alone by its own tick box."
 msgid_plural "%d posts and pages are left alone by their own tick box."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Admin/views/speed.php:1206
+#: includes/Admin/views/speed.php:1320
 msgid "Leave cart, checkout and account pages alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1206
+#: includes/Admin/views/speed.php:1320
 msgid "Recommended: payment and account forms often need their scripts loaded in order."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1210
+#: includes/Admin/views/speed.php:1324
 msgid "Images, videos and maps"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1211
+#: includes/Admin/views/speed.php:1325
 msgid "One per line: a CSS class starting with a dot (.hero-slide), an id starting with # (#main-banner), or part of the file’s address (logo.svg, vimeo.com). Lazy-load, Add missing image sizes and Click-to-play videos leave these alone. A block’s Additional CSS class counts for everything inside the block; in older content, put the class on the image itself."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1213
+#: includes/Admin/views/speed.php:1327
 msgid "Images loaded straight away"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1215
+#: includes/Admin/views/speed.php:1329
 msgid "How many images at the top of each page Lazy-load never delays. 3 suits most sites; raise it if a slider at the top shows its slides late."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1219
+#: includes/Admin/views/speed.php:1333
 msgid "Save what to leave alone"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1221
+#: includes/Admin/views/speed.php:1335
 msgid "Scripts are left alone on the Defer scripts row."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1222
+#: includes/Admin/views/speed.php:1336
 msgid "Go to Defer scripts"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1228
+#: includes/Admin/views/speed.php:1342
 msgid "Switching from Arva SEO"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1236
+#: includes/Admin/views/speed.php:1350
 msgid "Let Arva SEO switch these fixes"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1236
+#: includes/Admin/views/speed.php:1350
 msgid "People who manage this website in Arva SEO can try, turn on and turn off these fixes from its PageSpeed results, by the same rules as this page: a fix that can be tried goes on for everyone only after it’s been tried, Defer scripts goes on only here, and turning a fix off always works. Every change is in Activity with who asked."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1244
+#: includes/Admin/views/speed.php:1358
 msgid "For developers"
 msgstr ""
 
-#: includes/Admin/views/speed.php:1247
+#: includes/Admin/views/speed.php:1361
 msgid "(bool $applies, string $fix_id): turn a fix off for any page condition."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1248
+#: includes/Admin/views/speed.php:1362
 msgid "(bool $defer, string $handle, string $src): leave a script alone."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1249
+#: includes/Admin/views/speed.php:1363
 msgid "(bool $optimize, string $fix_id, string $tag, array $attributes): leave an image or frame alone."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1250
+#: includes/Admin/views/speed.php:1364
 msgid "(string $why), an action: a change here altered what visitors get on every page, so a page cache can clear its copies."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1252
+#: includes/Admin/views/speed.php:1366
 msgid "Lazy-load also leaves alone images marked skip-lazy or no-lazy, as other speed plugins do, and every fix leaves alone an element with the data-arvaseo-skip attribute."
 msgstr ""
 
-#: includes/Admin/views/speed.php:1256
+#: includes/Admin/views/speed.php:1370
 msgid "Arva SEO can cache pages and minify supported local CSS and JavaScript. Use one optimizer for each job; when another active plugin handles it, Arva SEO leaves that fix alone. If you use a page cache other than Cloudflare, clear it after changing a fix here. In an emergency, add define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true ); to wp-config.php to switch every fix off."
 msgstr ""
 
@@ -4987,6 +5098,86 @@ msgid_plural "PageSpeed fixes: %d unused minified or combined files were deleted
 msgstr[0] ""
 msgstr[1] ""
 
+#: includes/Speed/Changes.php:282
+msgid "This version changed how a fix you use works."
+msgstr ""
+
+#: includes/Speed/Changes.php:295
+msgid "Caches are cleared when compression changes an image."
+msgstr ""
+
+#: includes/Speed/Changes.php:296
+msgid "With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free."
+msgstr ""
+
+#: includes/Speed/Changes.php:297
+msgid "Optimized styles now also reach stylesheets whose names use capital letters (Elementor’s entrance animations, some Google Fonts) and stylesheets a theme prints more than once, so fewer of them hold the page up."
+msgstr ""
+
+#: includes/Speed/Changes.php:298
+msgid "Unused generated files are cleaned up after a week unused (Google Fonts copies after 30 days), never while another cache may still use them."
+msgstr ""
+
+#: includes/Speed/Changes.php:299
+msgid "Files next to one that can’t be combined are now combined around it, in the same order. This applies to stylesheets and scripts."
+msgstr ""
+
+#: includes/Speed/Changes.php:300
+msgid "Arva SEO’s renderer now gets your pages without the WordPress extras you removed, as visitors do."
+msgstr ""
+
+#: includes/Speed/Changes.php:301
+msgid "New option under Defer scripts: Move jQuery down the page. It’s off until you turn it on."
+msgstr ""
+
+#: includes/Speed/Changes.php:302
+msgid "New option under Load styles faster: Load icon fonts after the page. It’s off until you turn it on."
+msgstr ""
+
+#: includes/Speed/Changes.php:303
+msgid "Entrance animations no longer play a second time when the rest of the styles arrive."
+msgstr ""
+
+#: includes/Speed/Changes.php:304
+msgid "Visitors arriving from Google Ads, Facebook, Mailchimp and similar links get the saved page too."
+msgstr ""
+
+#: includes/Speed/Changes.php:305
+msgid "Arva SEO now also clears WP-Optimize’s, NitroPack’s and Cloudflare’s (official plugin) caches when your pages change, at most every 15 minutes."
+msgstr ""
+
+#. translators: %s: names of the fixes.
+#: includes/Speed/Changes.php:704
+#, php-format
+msgid "PageSpeed fixes updated for visitors: %s."
+msgstr ""
+
+#. translators: %s: names of the fixes.
+#: includes/Speed/Changes.php:737
+#, php-format
+msgid "PageSpeed fixes keep the version you checked: %s."
+msgstr ""
+
+#. translators: %d: number of fixes.
+#: includes/Speed/Changes.php:851
+#, php-format
+msgid "Arva SEO changed %d PageSpeed fix you use. Visitors keep the version you checked until you choose."
+msgid_plural "Arva SEO changed %d PageSpeed fixes you use. Visitors keep the versions you checked until you choose."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: names of the fixes.
+#: includes/Speed/Changes.php:1046
+#, php-format
+msgid "PageSpeed fixes went back to being tried because the earlier version of them is no longer available: %s. Check your pages, then turn them on again."
+msgstr ""
+
+#. translators: %s: names of the fixes.
+#: includes/Speed/Changes.php:1054
+#, php-format
+msgid "PageSpeed fixes now use their newest version, because the earlier version of them is no longer available: %s."
+msgstr ""
+
 #. translators: %s: the Cloudflare zone (a domain).
 #: includes/Speed/Cloudflare.php:193
 #, php-format
@@ -5030,92 +5221,92 @@ msgid "Cloudflare answered %1$d%2$s"
 msgstr ""
 
 #. translators: %d: number of page types.
-#: includes/Speed/CssOptimizer.php:1064
+#: includes/Speed/CssOptimizer.php:1093
 #, php-format
 msgid "PageSpeed fixes: optimized CSS is ready for %d page type."
 msgid_plural "PageSpeed fixes: optimized CSS is ready for %d page types."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Speed/CssOptimizer.php:1200
+#: includes/Speed/CssOptimizer.php:1229
 msgid "PageSpeed fixes: optimized CSS will be worked out again."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1297
+#: includes/Speed/CssOptimizer.php:1326
 msgid "This address isn’t on the website connected to Arva SEO."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1332
+#: includes/Speed/CssOptimizer.php:1361
 msgid "Your host’s bot protection blocked Arva SEO from loading the page. Arva SEO now tries again under its own name, ArvaSEO-Bot; if it still fails, ask your host to allow ArvaSEO-Bot."
 msgstr ""
 
 #. translators: %d: HTTP status, such as 503.
-#: includes/Speed/CssOptimizer.php:1336
+#: includes/Speed/CssOptimizer.php:1365
 #, php-format
 msgid "The page answered with a server error (%d)."
 msgstr ""
 
 #. translators: %d: HTTP status, such as 410.
-#: includes/Speed/CssOptimizer.php:1340
+#: includes/Speed/CssOptimizer.php:1369
 #, php-format
 msgid "The page answered with an error (%d)."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1341
+#: includes/Speed/CssOptimizer.php:1370
 msgid "The page didn’t load."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1344
+#: includes/Speed/CssOptimizer.php:1373
 msgid "The page took too long to load."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1345
+#: includes/Speed/CssOptimizer.php:1374
 msgid "The page’s styles are too large to optimize."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1346
+#: includes/Speed/CssOptimizer.php:1375
 msgid "The page loads from an address Arva SEO doesn’t load (a private network)."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1347
+#: includes/Speed/CssOptimizer.php:1376
 msgid "Arva SEO couldn’t work this page out."
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1359
+#: includes/Speed/CssOptimizer.php:1388
 msgid "Blog page"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1360
+#: includes/Speed/CssOptimizer.php:1389
 msgid "Not found page"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1361
+#: includes/Speed/CssOptimizer.php:1390
 msgid "Search results"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1362
+#: includes/Speed/CssOptimizer.php:1391
 msgid "Categories"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1363
+#: includes/Speed/CssOptimizer.php:1392
 msgid "Tags"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1364
+#: includes/Speed/CssOptimizer.php:1393
 msgid "Author pages"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1365
+#: includes/Speed/CssOptimizer.php:1394
 msgid "Date archives"
 msgstr ""
 
 #. translators: %s: a post type's name, such as Products.
-#: includes/Speed/CssOptimizer.php:1374
+#: includes/Speed/CssOptimizer.php:1403
 #, php-format
 msgid "%s list"
 msgstr ""
 
-#: includes/Speed/CssOptimizer.php:1380
+#: includes/Speed/CssOptimizer.php:1409
 msgid "Other pages"
 msgstr ""
 
@@ -5412,41 +5603,41 @@ msgstr ""
 msgid "Smaller files"
 msgstr ""
 
-#: includes/Speed/Fixes.php:561
+#: includes/Speed/Fixes.php:565
 msgid "This server’s image library can’t make WebP images. Ask your host to enable WebP in Imagick or GD."
 msgstr ""
 
-#: includes/Speed/Fixes.php:570
+#: includes/Speed/Fixes.php:574
 msgid "Connect to Arva SEO first: these styles are worked out on Arva SEO’s servers, using the page optimizations in your plan."
 msgstr ""
 
-#: includes/Speed/Fixes.php:664
+#: includes/Speed/Fixes.php:668
 msgid "PageSpeed fix “Page caching” wasn’t turned on: your homepage wasn’t served from the cache when checked, so everything was taken out again."
 msgstr ""
 
-#: includes/Speed/Fixes.php:679
+#: includes/Speed/Fixes.php:683
 msgid "PageSpeed fix “Browser caching and compression” wasn’t turned on: the site didn’t answer normally with the rules, so they were taken out again."
 msgstr ""
 
 #. translators: 1: fix name, 2: new state (off, trying, on).
-#: includes/Speed/Fixes.php:706
+#: includes/Speed/Fixes.php:715
 #, php-format
 msgid "PageSpeed fix “%1$s”: %2$s."
 msgstr ""
 
-#: includes/Speed/Fixes.php:816
+#: includes/Speed/Fixes.php:825
 msgid "PageSpeed fix choices saved."
 msgstr ""
 
-#: includes/Speed/Fixes.php:863
+#: includes/Speed/Fixes.php:874
 msgid "Trying (only you see it)"
 msgstr ""
 
-#: includes/Speed/Fixes.php:865
+#: includes/Speed/Fixes.php:876
 msgid "Done by another plugin"
 msgstr ""
 
-#: includes/Speed/Fixes.php:866
+#: includes/Speed/Fixes.php:877
 msgid "Not available on this server"
 msgstr ""
 
@@ -5618,136 +5809,154 @@ msgstr ""
 msgid "%1$s and %2$s"
 msgstr ""
 
-#: includes/Speed/PageCache.php:363
-#: includes/Speed/PageCache.php:373
+#: includes/Speed/PageCache.php:365
+#: includes/Speed/PageCache.php:375
 msgid "SiteGround’s dynamic cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:373
+#: includes/Speed/PageCache.php:375
 msgid "In Speed Optimizer → Caching, turn off Dynamic Caching. You can keep the plugin for its other settings."
 msgstr ""
 
-#: includes/Speed/PageCache.php:374
+#: includes/Speed/PageCache.php:376
 msgid "LiteSpeed Cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:374
+#: includes/Speed/PageCache.php:376
 msgid "In LiteSpeed Cache → Cache, set Enable Cache to Off. You can keep the plugin for its other settings."
 msgstr ""
 
-#: includes/Speed/PageCache.php:375
+#: includes/Speed/PageCache.php:377
 msgid "WP Engine’s page cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:375
+#: includes/Speed/PageCache.php:377
 msgid "WP Engine’s cache can’t be turned off from WordPress: ask WP Engine’s support to turn it off for this site. Until then it stays in front of Arva SEO’s."
 msgstr ""
 
-#: includes/Speed/PageCache.php:376
+#: includes/Speed/PageCache.php:378
 msgid "Kinsta’s page cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:376
+#: includes/Speed/PageCache.php:378
 msgid "Kinsta’s cache can’t be turned off from WordPress: ask Kinsta’s support to turn it off for this site. Until then it stays in front of Arva SEO’s."
 msgstr ""
 
-#: includes/Speed/PageCache.php:377
+#: includes/Speed/PageCache.php:379
 msgid "Cloudways’ Varnish cache"
 msgstr ""
 
-#: includes/Speed/PageCache.php:377
+#: includes/Speed/PageCache.php:379
 msgid "In Cloudways → your application → Application Settings, turn off Varnish, and turn off Breeze’s page cache."
 msgstr ""
 
 #. translators: %s: the host's cache, such as SiteGround's dynamic cache.
-#: includes/Speed/PageCache.php:412
+#: includes/Speed/PageCache.php:414
 #, php-format
 msgid "Page caching: Arva SEO’s page cache may be used instead of %s."
 msgstr ""
 
 #. translators: %s: the host's cache, such as SiteGround's dynamic cache.
 #. translators: %s: the host's cache.
-#: includes/Speed/PageCache.php:412
 #: includes/Speed/PageCache.php:414
+#: includes/Speed/PageCache.php:416
 msgid "the host’s cache"
 msgstr ""
 
 #. translators: %s: the host's cache.
-#: includes/Speed/PageCache.php:414
+#: includes/Speed/PageCache.php:416
 #, php-format
 msgid "Page caching: left to %s."
 msgstr ""
 
-#: includes/Speed/PageCache.php:423
+#: includes/Speed/PageCache.php:425
 msgid "Not on a multisite network yet: its sites share one advanced-cache.php file."
 msgstr ""
 
-#: includes/Speed/PageCache.php:427
+#: includes/Speed/PageCache.php:429
 msgid "WordPress can’t write to your wp-content folder, where saved pages go. Ask your host to make it writable."
 msgstr ""
 
-#: includes/Speed/PageCache.php:430
+#: includes/Speed/PageCache.php:432
 msgid "WordPress can’t change your wp-config.php file. Add the line below near the top of it, then turn this on."
 msgstr ""
 
 #. translators: %s: the other cache, such as WP Rocket.
-#: includes/Speed/PageCache.php:576
+#: includes/Speed/PageCache.php:578
 #, php-format
 msgid "Page caching was turned off: %s caches pages now."
 msgstr ""
 
-#: includes/Speed/PageCache.php:618
+#: includes/Speed/PageCache.php:620
 msgid "Page caching choices saved."
 msgstr ""
 
-#: includes/Speed/PageCache.php:786
+#: includes/Speed/PageCache.php:788
 msgid "Page caching: WP_CACHE was turned on in wp-config.php."
 msgstr ""
 
-#: includes/Speed/PageCache.php:1167
+#: includes/Speed/PageCache.php:1169
 msgid "Page caching: every saved page was cleared."
 msgstr ""
 
 #. translators: 1: fix name, 2: new state, 3: person's name.
-#: includes/Speed/RemoteFixes.php:84
+#: includes/Speed/RemoteFixes.php:93
 #, php-format
 msgid "PageSpeed fix “%1$s”: %2$s, asked for in Arva SEO by %3$s."
 msgstr ""
 
-#: includes/Speed/RemoteFixes.php:121
+#. translators: 1: fix name, 2: person's name.
+#: includes/Speed/RemoteFixes.php:127
+#, php-format
+msgid "PageSpeed fix “%1$s”: the update goes live for visitors, asked for in Arva SEO by %2$s."
+msgstr ""
+
+#: includes/Speed/RemoteFixes.php:160
 msgid "someone on your team"
 msgstr ""
 
 #. translators: %d: number of fixes being tried.
-#: includes/Speed/Runtime.php:146
+#: includes/Speed/Runtime.php:164
 #, php-format
 msgid "Arva SEO: trying %d PageSpeed fix"
 msgid_plural "Arva SEO: trying %d PageSpeed fixes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Speed/Runtime.php:147
+#: includes/Speed/Runtime.php:165
 msgid "Arva SEO: PageSpeed fixes"
 msgstr ""
 
-#: includes/Speed/Runtime.php:150
+#: includes/Speed/Runtime.php:168
 msgid "Only you see the fixes you’re trying while signed in. Visitors see your site as before."
 msgstr ""
 
-#: includes/Speed/Runtime.php:150
+#: includes/Speed/Runtime.php:168
 msgid "PageSpeed fixes are on for your visitors."
 msgstr ""
 
-#: includes/Speed/Runtime.php:158
+#. translators: %d: number of fixes with an update to check.
+#: includes/Speed/Runtime.php:177
+#, php-format
+msgid "Arva SEO: %d update to check"
+msgid_plural "Arva SEO: %d updates to check"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Speed/Runtime.php:179
+msgid "Your visitors still get the version you checked. While you’re signed in you see the new one: open your important pages, then choose."
+msgstr ""
+
+#: includes/Speed/Runtime.php:188
 msgid "Clear the page cache"
 msgstr ""
 
-#: includes/Speed/Runtime.php:507
+#: includes/Speed/Runtime.php:538
 msgid "YouTube video"
 msgstr ""
 
 #. translators: %s: the video's title.
-#: includes/Speed/Runtime.php:519
+#: includes/Speed/Runtime.php:550
 #, php-format
 msgid "Play video: %s"
 msgstr ""

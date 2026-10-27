@@ -423,7 +423,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[]}
+	 * @return array{fixes: array<string, array{state: string, since: string|null, rev: int, kept: int}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[], changes: list<array{id: string, at: int, done?: string}>}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -435,6 +435,9 @@ final class Fixes {
 			$fixes[ $id ] = array(
 				'state' => $state,
 				'since' => is_string( $row['since'] ?? null ) ? $row['since'] : null,
+				// The revision visitors get, and when the administrator chose to keep the previous one (Changes).
+				'rev'   => Changes::approved_rev( $id ),
+				'kept'  => is_int( $row['kept'] ?? null ) ? max( 0, $row['kept'] ) : 0,
 			);
 		}
 		$extras = array();
@@ -463,6 +466,7 @@ final class Fixes {
 			'combine_inline_css_ids' => self::inline_approvals( $saved['combine_inline_css_ids'] ?? array() ),
 			'combine_inline_js_ids'  => self::inline_approvals( $saved['combine_inline_js_ids'] ?? array() ),
 			'external_asset_urls'    => ExternalAssets::normalize_urls( $saved['external_asset_urls'] ?? array() ),
+			'changes'                => Changes::clean( $saved['changes'] ?? array() ),
 			'delay_scripts'          => self::strings( $saved['delay_scripts'] ?? array() ),
 			'css_exclude'            => self::strings( $saved['css_exclude'] ?? array() ),
 			'dns_prefetch_origins'   => ResourceHints::normalize( $saved['dns_prefetch_origins'] ?? array(), 10 ),
@@ -509,7 +513,7 @@ final class Fixes {
 	 *
 	 * @param array<string, mixed> $data The stored() shape.
 	 */
-	private static function save( array $data ): void {
+	public static function save( array $data ): void {
 		update_option( self::OPTION, $data, true );
 		// Arva SEO learns the new states with the site's details (scheduled right away).
 		wp_schedule_single_event( time(), 'arvaseo_connector_register' );
@@ -691,10 +695,15 @@ final class Fixes {
 				$data['server_check'] = null;
 			}
 		}
-		$from                 = $data['fixes'][ $id ]['state'];
+		$from = $data['fixes'][ $id ]['state'];
+		// A fix that stays on keeps the revision visitors approved; one that is tried, turned off or
+		// turned on after trying has the newest, since that's what was checked.
+		$stays                = 'on' === $from && 'on' === $state;
 		$data['fixes'][ $id ] = array(
 			'state' => $state,
 			'since' => $from === $state ? $data['fixes'][ $id ]['since'] : Ids::iso(),
+			'rev'   => $stays ? $data['fixes'][ $id ]['rev'] : Changes::latest_rev( $id ),
+			'kept'  => $stays ? $data['fixes'][ $id ]['kept'] : 0,
 		);
 		self::save( $data );
 		if ( ( 'on' === $from ) !== ( 'on' === $state ) ) {
@@ -828,6 +837,8 @@ final class Fixes {
 			$data['fixes']['defer_scripts'] = array(
 				'state' => 'trying',
 				'since' => gmdate( 'c' ),
+				'rev'   => Changes::latest_rev( 'defer_scripts' ),
+				'kept'  => 0,
 			);
 			$data['defer_checked_at']       = null;
 			$data['defer_on_at']            = null;
@@ -871,7 +882,10 @@ final class Fixes {
 	/**
 	 * The states as Arva SEO receives them with the site's details.
 	 *
-	 * @return array<int, array{id: string, state: string, since: string|null, handled_by: string|null}>
+	 * "rev" is the revision visitors get (1.. up to the newest the plugin has); "update" says what
+	 * an update the administrator hasn't checked yet is, or is null.
+	 *
+	 * @return array<int, array{id: string, state: string, since: string|null, handled_by: string|null, rev: int, update: array{entries: string[], since: string, keep_until: string, kept: bool}|null}>
 	 */
 	public static function for_registration(): array {
 		$stored = self::stored();
@@ -884,9 +898,43 @@ final class Fixes {
 				'state'      => 'unavailable' === $state ? 'off' : $state,
 				'since'      => in_array( $state, array( 'on', 'trying' ), true ) ? $stored['fixes'][ $id ]['since'] : null,
 				'handled_by' => $handled,
+				'rev'        => 'on' === $stored['fixes'][ $id ]['state'] ? $stored['fixes'][ $id ]['rev'] : Changes::latest_rev( $id ),
+				'update'     => Changes::report_for( $id ),
 			);
 		}
 		return $rows;
+	}
+
+	/**
+	 * Whether this request gets revision $rev of a fix, or a later one. New code paths sit behind
+	 * this, and the old ones stay for sites that haven't approved the update yet (see Changes).
+	 *
+	 * @param string $id  Fix ID.
+	 * @param int    $rev Revision.
+	 */
+	public static function uses( string $id, int $rev ): bool {
+		return Changes::effective_rev( $id ) >= $rev;
+	}
+
+	/**
+	 * "Use it for visitors": an update the administrator checked goes live for everyone.
+	 *
+	 * @param string $id      Fix ID.
+	 * @param bool   $checked Defer scripts: the checklist was ticked.
+	 * @return string|null Why not (invalid, no_update, handled or check_pages), or null when it did.
+	 */
+	public static function accept_update( string $id, bool $checked = false ): ?string {
+		return Changes::accept( $id, $checked );
+	}
+
+	/**
+	 * "Keep the previous version": visitors stay on what was approved until it is retired.
+	 *
+	 * @param string $id Fix ID.
+	 * @return string|null Why not (invalid or no_update), or null when it was kept.
+	 */
+	public static function keep_previous( string $id ): ?string {
+		return Changes::keep( $id );
 	}
 
 	/**

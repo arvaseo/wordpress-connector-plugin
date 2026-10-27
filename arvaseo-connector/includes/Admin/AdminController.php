@@ -21,6 +21,7 @@ use ArvaSEO\Connector\Inventory\PluginInventoryService;
 use ArvaSEO\Connector\Logging\AuditLogger;
 use ArvaSEO\Connector\Privacy\PrivacyService;
 use ArvaSEO\Connector\Settings;
+use ArvaSEO\Connector\Speed\Changes;
 use ArvaSEO\Connector\Speed\Cloudflare;
 use ArvaSEO\Connector\Speed\Fixes;
 use ArvaSEO\Connector\Speed\OtherPlugins;
@@ -49,6 +50,9 @@ final class AdminController {
 		'arvaseo-inventory'   => array( 'Plugin list', Capabilities::SYNC_INVENTORY, 'inventory', 'arvaseo-settings' ),
 		'arvaseo-diagnostics' => array( 'Diagnostics and data sharing', Capabilities::MANAGE, 'diagnostics', 'arvaseo-settings' ),
 	);
+
+	/** Which set of fixes the dismissed "updates to check" notice was about (updates_key()). */
+	public const UPDATES_DISMISSED = 'arvaseo_connector_speed_updates_dismissed';
 
 	/**
 	 * Hooks.
@@ -89,7 +93,9 @@ final class AdminController {
 		add_action( 'wp_ajax_arvaseo_connector_css_progress', array( self::class, 'css_progress' ) );
 		add_action( 'admin_post_arvaseo_connector_deactivate_other', array( self::class, 'deactivate_other' ) );
 		add_action( 'admin_post_arvaseo_connector_keep_others', array( self::class, 'keep_others' ) );
+		add_action( 'admin_post_arvaseo_connector_dismiss_updates', array( self::class, 'dismiss_updates' ) );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
+		add_action( 'admin_notices', array( self::class, 'updates_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
 		add_action( 'in_admin_header', array( self::class, 'quiet_notices' ), PHP_INT_MAX );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
@@ -110,6 +116,7 @@ final class AdminController {
 		}
 		add_action( 'admin_notices', array( self::class, 'recovery_notice' ), 1 );
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
+		add_action( 'admin_notices', array( self::class, 'updates_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
 	}
 
@@ -530,6 +537,9 @@ final class AdminController {
 			'speed_unavailable'              => array( 'error', __( 'This fix isn’t available on this server.', 'arvaseo-connector' ) ),
 			'speed_try_first'                => array( 'error', __( 'Try Defer scripts first, check your important pages, then turn it on.', 'arvaseo-connector' ) ),
 			'speed_check_pages'              => array( 'error', __( 'Tick each page you checked while trying Defer scripts before you turn it on.', 'arvaseo-connector' ) ),
+			'speed_use_update'               => array( 'success', __( 'Your visitors now get the updated version. Pages that were saved are cleared and saved again as visitors open them. Run a new PageSpeed test in Arva SEO to see the change.', 'arvaseo-connector' ) ),
+			'speed_keep_previous'            => array( 'success', __( 'Kept. Your visitors, and you while you’re signed in, keep the version you checked. You can use the update whenever you’re ready, until the day the earlier version is retired.', 'arvaseo-connector' ) ),
+			'speed_no_update'                => array( 'info', __( 'There is no update waiting for that fix.', 'arvaseo-connector' ) ),
 			'speed_webp_started'             => array( 'success', __( 'Converting your existing images in the background. You can leave this page; come back to see how far it got.', 'arvaseo-connector' ) ),
 			'speed_webp_stopped'             => array( 'success', __( 'Stopped. Images converted so far keep their WebP copies; Continue picks up where it stopped.', 'arvaseo-connector' ) ),
 			'speed_webp_undone'              => array( 'success', __( 'The WebP copies of your existing images were removed. Pages show the originals again.', 'arvaseo-connector' ) ),
@@ -947,7 +957,16 @@ final class AdminController {
 		$to      = isset( $_POST['to'] ) ? sanitize_key( wp_unslash( $_POST['to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		$pages   = isset( $_POST['checked'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['checked'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard().
 		$checked = array() === array_diff( array( 'home', 'forms', 'menus' ), $pages );
-		$error   = Fixes::set( $fix, $to, $checked );
+		if ( 'use_update' === $to ) {
+			// An update that waited for the administrator's check goes live for visitors.
+			$error = Fixes::accept_update( $fix, $checked );
+			self::back_to_fix( $fix, null === $error ? 'speed_use_update' : 'speed_' . $error );
+		}
+		if ( 'keep_previous' === $to ) {
+			$error = Fixes::keep_previous( $fix );
+			self::back_to_fix( $fix, null === $error ? 'speed_keep_previous' : 'speed_' . $error );
+		}
+		$error = Fixes::set( $fix, $to, $checked );
 		if ( null === $error && 'page_cache' === $fix ) {
 			self::back_to_fix( $fix, 'speed_page_cache_' . ( 'on' === $to ? 'on' : 'off' ) );
 		}
@@ -1204,6 +1223,73 @@ final class AdminController {
 			esc_url( admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( 'defer_scripts' ) ) ),
 			esc_html__( 'Speed', 'arvaseo-connector' )
 		);
+	}
+
+	/**
+	 * One notice per release, on the Plugins screen and Arva SEO's screens other than Speed (where
+	 * the fixes show their own): fixes whose update waits for the administrator's check. Dismissing
+	 * it hides it until a different set of fixes waits.
+	 */
+	public static function updates_notice(): void {
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
+			return;
+		}
+		$waiting = Changes::waiting_fixes();
+		if ( array() === $waiting || get_option( self::UPDATES_DISMISSED ) === self::updates_key( $waiting ) ) {
+			return;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$page   = self::current_page();
+		if ( 'arvaseo-speed' === $page || ( '' === $page && ( null === $screen || 'plugins' !== $screen->id ) ) ) {
+			return;
+		}
+		$count   = count( $waiting );
+		$version = '';
+		foreach ( $waiting as $entries ) {
+			foreach ( $entries as $entry ) {
+				$version = Changes::announced_in( $entry['id'] );
+			}
+		}
+		$dismiss = wp_nonce_url( add_query_arg( 'action', 'arvaseo_connector_dismiss_updates', admin_url( 'admin-post.php' ) ), 'arvaseo_connector_dismiss_updates' );
+		printf(
+			'<div class="notice notice-warning arvaseo-own"><p>%1$s <a href="%2$s">%3$s</a> <a href="%4$s">%5$s</a></p></div>',
+			esc_html(
+				sprintf(
+					/* translators: 1: plugin version, 2: number of fixes. */
+					_n( 'Arva SEO %1$s changed %2$d fix you use. Your visitors keep what you checked until you say so. Check it.', 'Arva SEO %1$s changed %2$d fixes you use. Your visitors keep what you checked until you say so. Check them.', $count, 'arvaseo-connector' ),
+					$version,
+					$count
+				)
+			),
+			esc_url( admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( (string) array_key_first( $waiting ) ) ) ),
+			esc_html__( 'Check on Speed', 'arvaseo-connector' ),
+			esc_url( $dismiss ),
+			esc_html__( 'Dismiss', 'arvaseo-connector' )
+		);
+	}
+
+	/**
+	 * A short key for the fixes that wait, so the dismissed notice comes back when others do.
+	 *
+	 * @param array<string, mixed> $waiting Changes::waiting_fixes().
+	 */
+	public static function updates_key( array $waiting ): string {
+		$keys = array();
+		foreach ( $waiting as $fix => $entries ) {
+			$keys[] = $fix . ':' . implode( ',', array_column( (array) $entries, 'id' ) );
+		}
+		sort( $keys );
+		return substr( md5( implode( '|', $keys ) ), 0, 12 );
+	}
+
+	/**
+	 * Hide the notice about updates to check, until different fixes wait.
+	 */
+	public static function dismiss_updates(): void {
+		self::guard( 'arvaseo_connector_dismiss_updates', Capabilities::MANAGE );
+		update_option( self::UPDATES_DISMISSED, self::updates_key( Changes::waiting_fixes() ), false );
+		wp_safe_redirect( wp_get_referer() ?: admin_url( 'admin.php?page=arvaseo-speed' ) );
+		exit;
 	}
 
 	/**

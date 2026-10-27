@@ -7,6 +7,8 @@
 
 namespace ArvaSEO\Connector\Speed;
 
+use ArvaSEO\Connector\Support\Lock;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -93,16 +95,32 @@ final class Runtime {
 	}
 
 	/**
-	 * A new plugin version must not keep serving HTML produced by the old speed code.
-	 * Settings and generated CSS are preserved; only cached pages are invalidated once.
+	 * A new plugin version must not keep serving HTML produced by the old speed code, and must not
+	 * change what an administrator approved without telling them. Settings and generated CSS are
+	 * preserved; cached pages are invalidated once.
+	 *
+	 * The version that last ran is read first and overwritten last: the changes (Changes::upgrade)
+	 * need it, and a request that arrives while another one upgrades, or after one that stopped half
+	 * way, still sees it, so every fix keeps the revision visitors approved until the rows are written.
 	 */
 	public static function upgrade(): void {
-		$option   = 'arvaseo_connector_speed_version';
-		$previous = get_option( $option );
-		if ( ARVASEO_CONNECTOR_VERSION === $previous ) {
+		$option = Changes::VERSION_OPTION;
+		if ( ARVASEO_CONNECTOR_VERSION === Changes::version() ) {
 			return;
 		}
-		update_option( $option, ARVASEO_CONNECTOR_VERSION, false );
+		if ( ! Lock::acquire( Changes::LOCK, MINUTE_IN_SECONDS ) ) {
+			return;
+		}
+		try {
+			$previous = get_option( $option );
+			if ( ARVASEO_CONNECTOR_VERSION === $previous ) {
+				return; // Another request finished it while this one waited for the lock.
+			}
+			Changes::upgrade( $previous );
+			update_option( $option, ARVASEO_CONNECTOR_VERSION, false );
+		} finally {
+			Lock::release( Changes::LOCK );
+		}
 		// Optimized CSS saved by 1.6.0 to 2.10.7 may have lost rules (CssOptimizer::store()): it's
 		// downloaded again, free, and each file is used until then. 2.10.0.1 (the WordPress.org
 		// hotfix) kept it whole and downloaded what earlier versions saved already.
@@ -150,6 +168,18 @@ final class Runtime {
 				'meta'  => array( 'title' => $trying > 0 ? __( 'Only you see the fixes you’re trying while signed in. Visitors see your site as before.', 'arvaseo-connector' ) : __( 'PageSpeed fixes are on for your visitors.', 'arvaseo-connector' ) ),
 			)
 		);
+		$updates = Changes::waiting_count();
+		if ( $updates > 0 ) {
+			$bar->add_node(
+				array(
+					'id'    => 'arvaseo-speed-updates',
+					/* translators: %d: number of fixes with an update to check. */
+					'title' => esc_html( sprintf( _n( 'Arva SEO: %d update to check', 'Arva SEO: %d updates to check', $updates, 'arvaseo-connector' ), $updates ) ),
+					'href'  => admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( (string) array_key_first( Changes::waiting_fixes() ) ) ),
+					'meta'  => array( 'title' => __( 'Your visitors still get the version you checked. While you’re signed in you see the new one: open your important pages, then choose.', 'arvaseo-connector' ) ),
+				)
+			);
+		}
 		if ( PageCache::active() ) {
 			$bar->add_node(
 				array(
@@ -185,7 +215,8 @@ final class Runtime {
 		// Render the same prepared CSS as visitors, without generated CSS or unrelated fixes.
 		if ( CssOptimizer::is_render_request() ) {
 			CssOptimizer::serve_original();
-			if ( Fixes::applies( 'combine_css' ) ) {
+			// Combined first from revision 2 (2.10.2); an approved earlier revision gets the original page.
+			if ( CssOptimizer::combined_mode() ) {
 				self::prepare_css();
 				AssetCombiner::on_page();
 				// The extras visitors don't get change the head too (WordPress's emoji styles sit
