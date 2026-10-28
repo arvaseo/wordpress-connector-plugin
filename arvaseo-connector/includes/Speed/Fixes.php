@@ -97,7 +97,7 @@ final class Fixes {
 			),
 			'critical_css'     => array(
 				'title'      => __( 'Load styles faster', 'arvaseo-connector' ),
-				'what'       => __( 'The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan.', 'arvaseo-connector' ),
+				'what'       => __( 'The styles each page needs for its first screen go straight into the page, and your theme’s and plugins’ stylesheets load without holding it up. Arva SEO works them out on its servers once for each type of page, using the page optimizations in your plan. You can also let icon fonts that a theme or widget prints into the page itself (Font Awesome and similar) load once the page has loaded.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'check',
 				'audits'     => array(
@@ -122,7 +122,7 @@ final class Fixes {
 			),
 			'defer_scripts'    => array(
 				'title'      => __( 'Defer scripts', 'arvaseo-connector' ),
-				'what'       => __( 'Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery, consent tools and any scripts you list are left alone.', 'arvaseo-connector' ),
+				'what'       => __( 'Scripts in the page’s head load in the background and run once the page has been read, instead of holding it up. jQuery isn’t deferred, and consent tools and any scripts you list are left alone. You can also let jQuery move down the page, to just before the first script that may use it.', 'arvaseo-connector' ),
 				'group'      => 'sooner',
 				'risk'       => 'check',
 				'audits'     => array(
@@ -222,7 +222,7 @@ final class Fixes {
 			),
 			'combine_css'      => array(
 				'title'      => __( 'Combine CSS', 'arvaseo-connector' ),
-				'what'       => __( 'Combines adjacent compatible local stylesheets into one cached file, preserving their order and image or font addresses. Inline styles, different media rules and styles managed by Critical CSS or Remove unused CSS stay separate. Try it and check your pages; fewer files do not always make a site faster.', 'arvaseo-connector' ),
+				'what'       => __( 'Combines adjacent compatible local stylesheets into one cached file, preserving their order and image or font addresses. When Critical CSS or Remove unused CSS is enabled, compatible files are combined first, then their optimized styles are generated. Unapproved inline styles and incompatible media rules stay separate. Try it and check your pages; fewer files do not always make a site faster.', 'arvaseo-connector' ),
 				'group'      => 'smaller',
 				'risk'       => 'check',
 				'audits'     => array(),
@@ -423,7 +423,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[]}
+	 * @return array{fixes: array<string, array{state: string, since: string|null, rev: int, kept: int}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[], changes: list<array{id: string, at: int, done?: string}>}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -435,6 +435,9 @@ final class Fixes {
 			$fixes[ $id ] = array(
 				'state' => $state,
 				'since' => is_string( $row['since'] ?? null ) ? $row['since'] : null,
+				// The revision visitors get, and when the administrator chose to keep the previous one (Changes).
+				'rev'   => Changes::approved_rev( $id ),
+				'kept'  => is_int( $row['kept'] ?? null ) ? max( 0, $row['kept'] ) : 0,
 			);
 		}
 		$extras = array();
@@ -457,9 +460,13 @@ final class Fixes {
 			'ccss_per_url'           => (bool) ( $saved['ccss_per_url'] ?? false ),
 			'css_async_inline'       => (bool) ( $saved['css_async_inline'] ?? true ),
 			'js_loading_mode'        => 'delayed' === ( $saved['js_loading_mode'] ?? '' ) ? 'delayed' : 'deferred',
+			// 2.10.5: both start off, so updating never changes what an administrator already checked.
+			'move_jquery'            => (bool) ( $saved['move_jquery'] ?? false ),
+			'late_icons'             => (bool) ( $saved['late_icons'] ?? false ),
 			'combine_inline_css_ids' => self::inline_approvals( $saved['combine_inline_css_ids'] ?? array() ),
 			'combine_inline_js_ids'  => self::inline_approvals( $saved['combine_inline_js_ids'] ?? array() ),
 			'external_asset_urls'    => ExternalAssets::normalize_urls( $saved['external_asset_urls'] ?? array() ),
+			'changes'                => Changes::clean( $saved['changes'] ?? array() ),
 			'delay_scripts'          => self::strings( $saved['delay_scripts'] ?? array() ),
 			'css_exclude'            => self::strings( $saved['css_exclude'] ?? array() ),
 			'dns_prefetch_origins'   => ResourceHints::normalize( $saved['dns_prefetch_origins'] ?? array(), 10 ),
@@ -506,7 +513,7 @@ final class Fixes {
 	 *
 	 * @param array<string, mixed> $data The stored() shape.
 	 */
-	private static function save( array $data ): void {
+	public static function save( array $data ): void {
 		update_option( self::OPTION, $data, true );
 		// Arva SEO learns the new states with the site's details (scheduled right away).
 		wp_schedule_single_event( time(), 'arvaseo_connector_register' );
@@ -688,10 +695,15 @@ final class Fixes {
 				$data['server_check'] = null;
 			}
 		}
-		$from                 = $data['fixes'][ $id ]['state'];
+		$from = $data['fixes'][ $id ]['state'];
+		// A fix that stays on keeps the revision visitors approved; one that is tried, turned off or
+		// turned on after trying has the newest, since that's what was checked.
+		$stays                = 'on' === $from && 'on' === $state;
 		$data['fixes'][ $id ] = array(
 			'state' => $state,
 			'since' => $from === $state ? $data['fixes'][ $id ]['since'] : Ids::iso(),
+			'rev'   => $stays ? $data['fixes'][ $id ]['rev'] : Changes::latest_rev( $id ),
+			'kept'  => $stays ? $data['fixes'][ $id ]['kept'] : 0,
 		);
 		self::save( $data );
 		if ( ( 'on' === $from ) !== ( 'on' === $state ) ) {
@@ -720,12 +732,15 @@ final class Fixes {
 	 * - shop_pages: leave shop pages alone (Defer scripts);
 	 * - eager_images: images at the top of each page that load straight away;
 	 * - fonts_local: Faster Google Fonts serves copies from the site;
-	 * - delay_scripts: text box of scripts Delay chat widgets and trackers also delays.
+	 * - delay_scripts: text box of scripts Delay chat widgets and trackers also delays;
+	 * - move_jquery: Defer scripts moves jQuery out of the head (turning it on goes back to trying);
+	 * - late_icons: Load styles faster loads icon libraries printed into the page after it.
 	 *
 	 * @param array<string, mixed> $choices Choices.
 	 */
 	public static function save_choices( array $choices ): void {
-		$data = self::stored();
+		$data   = self::stored();
+		$before = $data;
 		foreach ( array( 'ucss_inline', 'ccss_per_url', 'css_async_inline' ) as $field ) {
 			if ( array_key_exists( $field, $choices ) ) {
 				$data[ $field ] = (bool) $choices[ $field ];
@@ -733,15 +748,21 @@ final class Fixes {
 		}
 		if ( array_key_exists( 'js_loading_mode', $choices ) ) {
 			$mode = 'delayed' === $choices['js_loading_mode'] ? 'delayed' : 'deferred';
-			if ( $mode !== $data['js_loading_mode'] && 'on' === $data['fixes']['defer_scripts']['state'] ) {
-				$data['fixes']['defer_scripts'] = array(
-					'state' => 'trying',
-					'since' => gmdate( 'c' ),
-				);
-				$data['defer_checked_at']       = null;
-				$data['defer_on_at']            = null;
+			if ( $mode !== $data['js_loading_mode'] ) {
+				$data = self::check_defer_again( $data );
 			}
 			$data['js_loading_mode'] = $mode;
+		}
+		if ( array_key_exists( 'move_jquery', $choices ) ) {
+			$move = (bool) $choices['move_jquery'];
+			if ( $move && ! $data['move_jquery'] ) {
+				// What runs before jQuery changes: the administrator checks their pages again first.
+				$data = self::check_defer_again( $data );
+			}
+			$data['move_jquery'] = $move;
+		}
+		if ( array_key_exists( 'late_icons', $choices ) ) {
+			$data['late_icons'] = (bool) $choices['late_icons'];
 		}
 		foreach ( array( 'combine_inline_css_ids', 'combine_inline_js_ids' ) as $field ) {
 			if ( array_key_exists( $field, $choices ) ) {
@@ -799,22 +820,59 @@ final class Fixes {
 		}
 		self::save( $data );
 		Exclusions::reset();
-		if ( array() !== array_diff( array_keys( $choices ), array( 'remote' ) ) ) {
+		// Only a choice that changed what pages look like clears caches: saving the form again as it
+		// was, or ticking the box that lets Arva SEO switch fixes, doesn't (D22).
+		$changed = false;
+		foreach ( $data as $key => $value ) {
+			if ( 'remote' !== $key && ( $before[ $key ] ?? null ) !== $value ) {
+				$changed = true;
+				break;
+			}
+		}
+		// The drop-in holds the developer's list of ignored query parameters and the phone choice.
+		PageCache::refresh_dropin();
+		if ( $changed ) {
 			self::pages_changed( 'choices' );
 		}
 		AuditLogger::info( 'speed.options_saved', __( 'PageSpeed fix choices saved.', 'arvaseo-connector' ), array( 'changed' => array_keys( $choices ) ) );
 	}
 
 	/**
-	 * What visitors get changed on every page: page caches (Cloudflare here) clear their copies.
+	 * Defer scripts changes what it does: while it's on for visitors, it goes back to being tried,
+	 * so the administrator checks their important pages again before visitors get the change.
 	 *
-	 * @param string $why fix, choices, css, webp, fonts or exclusions.
+	 * @param array<string, mixed> $data The stored() shape.
+	 * @return array<string, mixed>
+	 */
+	private static function check_defer_again( array $data ): array {
+		if ( 'on' === $data['fixes']['defer_scripts']['state'] ) {
+			$data['fixes']['defer_scripts'] = array(
+				'state' => 'trying',
+				'since' => gmdate( 'c' ),
+				'rev'   => Changes::latest_rev( 'defer_scripts' ),
+				'kept'  => 0,
+			);
+			$data['defer_checked_at']       = null;
+			$data['defer_on_at']            = null;
+		}
+		return $data;
+	}
+
+	/**
+	 * What visitors get changed on every page: page caches clear their copies (Arva SEO's own,
+	 * Cloudflare, and the other caches found: OtherCaches clears those at most every 15 minutes).
+	 *
+	 * @param string $why Someone's change: fix, choices, exclusions, cleared, regenerate, webp,
+	 *                    site or upgrade. Background ones, which can come many in a row: compress,
+	 *                    css, fonts, external_assets. Or mark (generated files are about to be
+	 *                    deleted, so every cache is cleared first).
 	 */
 	public static function pages_changed( string $why ): void {
 		/**
 		 * After a change that alters what visitors get on the site's pages.
 		 *
-		 * @param string $why fix, choices, css, webp, fonts or exclusions.
+		 * @param string $why fix, choices, exclusions, cleared, regenerate, webp, site, upgrade,
+		 *                    mark, or a background change: compress, css, fonts, external_assets.
 		 */
 		do_action( 'arvaseo_connector_pages_changed', $why );
 	}
@@ -836,7 +894,9 @@ final class Fixes {
 	}
 
 	/**
-	 * The states as Arva SEO receives them with the site's details.
+	 * The states as Arva SEO receives them with the site's details (speed_fixes): exactly these
+	 * four fields, since Arva SEO refuses any other. What updates changed, and which wait for a
+	 * check, goes in speed_changes (Changes::for_registration()).
 	 *
 	 * @return array<int, array{id: string, state: string, since: string|null, handled_by: string|null}>
 	 */
@@ -854,6 +914,38 @@ final class Fixes {
 			);
 		}
 		return $rows;
+	}
+
+	/**
+	 * Whether this request gets revision $rev of a fix, or a later one. New code paths sit behind
+	 * this, and the old ones stay for sites that haven't approved the update yet (see Changes).
+	 *
+	 * @param string $id  Fix ID.
+	 * @param int    $rev Revision.
+	 */
+	public static function uses( string $id, int $rev ): bool {
+		return Changes::effective_rev( $id ) >= $rev;
+	}
+
+	/**
+	 * "Use it for visitors": an update the administrator checked goes live for everyone.
+	 *
+	 * @param string $id      Fix ID.
+	 * @param bool   $checked Defer scripts: the checklist was ticked.
+	 * @return string|null Why not (invalid, no_update, handled or check_pages), or null when it did.
+	 */
+	public static function accept_update( string $id, bool $checked = false ): ?string {
+		return Changes::accept( $id, $checked );
+	}
+
+	/**
+	 * "Keep the previous version": visitors stay on what was approved until it is retired.
+	 *
+	 * @param string $id Fix ID.
+	 * @return string|null Why not (invalid or no_update), or null when it was kept.
+	 */
+	public static function keep_previous( string $id ): ?string {
+		return Changes::keep( $id );
 	}
 
 	/**

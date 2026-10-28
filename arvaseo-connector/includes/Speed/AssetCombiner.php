@@ -31,9 +31,15 @@ final class AssetCombiner {
 		self::$buffer_started = ob_start( array( self::class, 'capture' ) );
 	}
 
-	/** Inline changes use this same complete-response buffer, including when combining is off. */
+	/** Inline changes, moving jQuery and late icon libraries use this same complete-response buffer, including when combining is off. */
 	private static function wanted(): bool {
-		foreach ( array( 'combine_css', 'combine_js', 'minify_inline_css', 'minify_inline_js', 'combine_inline_css', 'combine_inline_js', 'font_display_swap' ) as $fix ) {
+		if ( HeadScripts::wanted() || IconStyles::wanted() ) {
+			return true;
+		}
+		$fixes = CssOptimizer::is_render_request()
+			? array( 'combine_css', 'minify_inline_css', 'combine_inline_css', 'font_display_swap' )
+			: array( 'combine_css', 'combine_js', 'minify_inline_css', 'minify_inline_js', 'combine_inline_css', 'combine_inline_js', 'font_display_swap' );
+		foreach ( $fixes as $fix ) {
 			if ( Fixes::applies( $fix ) ) {
 				return true;
 			}
@@ -68,10 +74,17 @@ final class AssetCombiner {
 	 * @param string $html Final page HTML, after other asset filters.
 	 */
 	public static function filter( string $html ): string {
-		$css = Fixes::applies( 'combine_css' );
-		$js  = Fixes::applies( 'combine_js' );
+		$rendering = CssOptimizer::is_render_request();
+		$css       = Fixes::applies( 'combine_css' );
+		$js        = ! $rendering && Fixes::applies( 'combine_js' );
 		if ( ! self::wanted() || strlen( $html ) > self::MAX_HTML || ! preg_match( '~\A(?:\xEF\xBB\xBF)?\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b~i', $html ) || false === stripos( $html, '</html>' ) || self::restricted_html( $html ) ) {
 			return $html;
+		}
+		if ( HeadScripts::wanted() ) {
+			$html = HeadScripts::move( $html );
+		}
+		if ( IconStyles::wanted() ) {
+			$html = IconStyles::defer( $html );
 		}
 		InlineAssets::prepare( $html );
 		$position     = 0;
@@ -85,7 +98,7 @@ final class AssetCombiner {
 				return $html;
 			}
 			$asset    = self::asset( $token, $css, $js );
-			$minified = InlineAssets::minify( $token );
+			$minified = ! $rendering || 'style' === $token['tag'] ? InlineAssets::minify( $token ) : null;
 			if ( null !== $minified ) {
 				$inline_edits[] = array(
 					'start'  => $token['start'],
@@ -119,7 +132,7 @@ final class AssetCombiner {
 		foreach ( array_reverse( $edits ) as $edit ) {
 			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
 		}
-		return $html;
+		return CssOptimizer::combined_html( $html );
 	}
 
 
@@ -242,11 +255,15 @@ final class AssetCombiner {
 	 * @param array{start: int, end: int, open: string, tag: string, close: bool, body: string} $token Token.
 	 * @param bool                                                                              $css CSS enabled.
 	 * @param bool                                                                              $js JavaScript enabled.
-	 * @return array{start: int, end: int, open: string, source: string, kind: string, key: string}|null
+	 * @return array{start: int, end: int, open: string, source: string, kind: string, key: string, part: array{source: string, url: string, text?: string, id?: string}}|null
 	 */
 	private static function asset( array $token, bool $css, bool $js ): ?array {
 		$inline = InlineAssets::inspect( $token );
 		if ( null !== $inline && ( 'css' === $inline['kind'] ? $css : $js ) && InlineAssets::approved( $inline['id'], $inline['text'], $inline['kind'] ) ) {
+			$handle = (string) preg_replace( '/-inline-css$/', '', $inline['id'] );
+			if ( 'css' === $inline['kind'] && CssOptimizer::signed_in_only( $handle, wp_styles()->registered[ $handle ] ?? null ) ) {
+				return null;
+			}
 			$tags = new \WP_HTML_Tag_Processor( $token['open'] );
 			$tags->next_tag();
 			$key = array( $inline['kind'], strtolower( (string) $tags->get_attribute( 'type' ) ), (string) $tags->get_attribute( 'nonce' ) );
@@ -288,6 +305,9 @@ final class AssetCombiner {
 		$registry = 'css' === $kind ? wp_styles() : wp_scripts();
 		$item     = $registry->registered[ $handle ] ?? null;
 		if ( null === $item || ! is_string( $item->src ) || '' === $item->src ) {
+			return null;
+		}
+		if ( 'css' === $kind && CssOptimizer::signed_in_only( $handle, $item ) ) {
 			return null;
 		}
 		if ( ! InlineAssets::registered_safe( $handle, $kind, $registry ) ) {
@@ -347,10 +367,15 @@ final class AssetCombiner {
 	}
 
 	/**
-	 * A failed bundle leaves every original byte and resource in place.
+	 * A failed bundle leaves every original byte and resource in place. When it failed because some
+	 * of its files can't be combined (WordPress's block library starts with an @import, for
+	 * instance), the files around them are still combined, in order, and those stay where they
+	 * are: until 2.10.5 one such file left the whole run uncombined, while Arva SEO's renderer,
+	 * whose run that file didn't reach, got a bundle, so the page's stored CSS matched none of
+	 * its stylesheets.
 	 *
-	 * @param array<int, array{start: int, end: int, open: string, source: string, kind: string, key: string}> $run Run.
-	 * @param array<int, array{start: int, length: int, html: string}>                                         $edits Pending edits.
+	 * @param array<int, array{start: int, end: int, open: string, source: string, kind: string, key: string, part: array{source: string, url: string, text?: string, id?: string}}> $run Run.
+	 * @param array<int, array{start: int, length: int, html: string}>                                                                                                               $edits Pending edits.
 	 */
 	private static function finish( array $run, array &$edits ): void {
 		if ( count( $run ) < 2 ) {
@@ -358,6 +383,24 @@ final class AssetCombiner {
 		}
 		$url = AssetBundles::create_parts( array_column( $run, 'part' ), $run[0]['kind'] );
 		if ( null === $url ) {
+			// Until revision 2 (2.10.5) one file that can't be combined left the whole run as it is.
+			if ( ! Fixes::uses( 'css' === $run[0]['kind'] ? 'combine_css' : 'combine_js', Changes::COMBINE_AROUND ) ) {
+				return;
+			}
+			$part = array();
+			$cut  = false;
+			foreach ( $run as $asset ) {
+				if ( AssetBundles::combinable( $asset['part'], $asset['kind'] ) ) {
+					$part[] = $asset;
+					continue;
+				}
+				$cut = true;
+				self::finish( $part, $edits );
+				$part = array();
+			}
+			if ( $cut ) {
+				self::finish( $part, $edits );
+			}
 			return;
 		}
 		$open = 'css' === $run[0]['kind'] ? (string) preg_replace( '/\A<style\b/i', '<link rel="stylesheet"', $run[0]['open'] ) : $run[0]['open']; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- replaces the original approved styles in place.

@@ -22,7 +22,7 @@ require_once __DIR__ . '/page-cache-serve.php';
  *   WordPress makes is handed to capture() at the end, which saves it when anyone may see it.
  * - On Apache and LiteSpeed, rules at the top of .htaccess send saved pages without PHP at all.
  *   .htaccess is backed up first (ServerRules::backup()), and the backup can be downloaded.
- * - Pages are cleared when they change, and refilled in the background, a few a minute.
+ * - Pages are cleared when they change, and refilled in the background, a few at a time.
  * - Turning it on checks the homepage from the server: made once, then served from the cache.
  *   If it isn't, everything is taken out again and the site is as before.
  */
@@ -39,6 +39,15 @@ final class PageCache {
 
 	public const HOOK_GC = 'arvaseo_connector_page_cache_gc';
 
+	/** The other caches' waiting clear (OtherCaches, since 2.11.0). */
+	public const HOOK_PURGE = OtherCaches::HOOK_CLEAR;
+
+	/** When the other caches were last cleared (not autoloaded; OtherCaches). */
+	public const PURGED = OtherCaches::LAST_CLEAR;
+
+	/** Other caches are cleared at most this often (OtherCaches; 5 minutes in 2.10.7 and 2.10.8). */
+	public const PURGE_GAP = OtherCaches::GAP;
+
 	/** The .htaccess block, above WordPress's own. */
 	public const MARKER = 'Arva SEO Page Cache';
 
@@ -51,8 +60,16 @@ final class PageCache {
 	/** How long a saved page is kept before it's made again: 10 hours. */
 	public const TTL = 36000;
 
-	/** Pages refilled each minute, and at most this many in one go. */
+	/** Pages refilled in one batch, and at most this many in one go. */
 	public const PRELOAD_BATCH = 5;
+
+	/**
+	 * Seconds one background run keeps refilling, batch after batch (at least one batch). WP-Cron
+	 * runs only when WordPress makes a page, and saved pages don't, so on a quiet site "a batch
+	 * a minute" was a batch whenever someone opened a page that wasn't saved: pages waited hours
+	 * after a clear, and so did their page types for optimized CSS.
+	 */
+	private const PRELOAD_SECONDS = 10;
 
 	public const PRELOAD_MAX = 400;
 
@@ -77,8 +94,6 @@ final class PageCache {
 		add_action( 'admin_init', array( self::class, 'step_aside' ) );
 		add_action( self::HOOK_PRELOAD, array( self::class, 'run_preload' ) );
 		add_action( self::HOOK_GC, array( self::class, 'gc' ) );
-		// Whoever caches the pages: a change Arva SEO made to every page clears the host's copy too.
-		add_action( 'arvaseo_connector_pages_changed', array( self::class, 'purge_host_cache' ) );
 		if ( ! self::active() ) {
 			return;
 		}
@@ -220,20 +235,12 @@ final class PageCache {
 	}
 
 	/**
-	 * A change here altered every page (2.7.0): clear the host's own cache too, through the API
-	 * its plugin offers (SiteGround's Speed Optimizer, LiteSpeed Cache, WP Engine, Breeze), so
-	 * visitors don't get an old copy for hours.
+	 * Whether Arva SEO clears a cache plugin's saved pages with the plugin's own call (OtherCaches).
+	 *
+	 * @param string $slug Plugin folder.
 	 */
-	public static function purge_host_cache(): void {
-		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
-			sg_cachepress_purge_cache();
-		}
-		do_action( 'litespeed_purge_all' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- LiteSpeed Cache's documented purge API.
-		do_action( 'breeze_clear_all_cache' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Breeze's documented purge API.
-		$wp_engine = array( 'WpeCommon', 'purge_varnish_cache' );
-		if ( class_exists( 'WpeCommon', false ) && is_callable( $wp_engine ) ) {
-			call_user_func( $wp_engine );
-		}
+	public static function can_clear( string $slug ): bool {
+		return OtherCaches::can_clear_plugin( $slug );
 	}
 
 	/**
@@ -242,17 +249,12 @@ final class PageCache {
 	 * Without the plugin, visitors can get an old copy of a page for up to 12 hours.
 	 */
 	public static function uncleared_host_cache(): ?string {
-		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
-			return null;
+		foreach ( OtherCaches::found() as $entry ) {
+			if ( 'siteground' === $entry['id'] && 'by_hand' === $entry['clearing'] ) {
+				return $entry['name'];
+			}
 		}
-		// SiteGround's accounts live in /home/customer/www/<domain>/public_html.
-		$siteground = str_starts_with( wp_normalize_path( ABSPATH ), '/home/customer/www/' );
-		/**
-		 * Whether this site is behind SiteGround's dynamic cache, for setups the folder doesn't show.
-		 *
-		 * @param bool $siteground True on SiteGround.
-		 */
-		return (bool) apply_filters( 'arvaseo_connector_siteground', $siteground ) ? __( 'SiteGround’s dynamic cache', 'arvaseo-connector' ) : null;
+		return null;
 	}
 
 	/**
@@ -545,6 +547,50 @@ final class PageCache {
 	}
 
 	/**
+	 * The query parameters that only track where a visitor came from: the list in
+	 * page-cache-serve.php, and the developer's.
+	 *
+	 * @return string[]
+	 */
+	public static function tracking_parameters(): array {
+		return array_values( array_unique( array_merge( arvaseo_connector_page_cache_tracking(), self::ignored_parameters() ) ) );
+	}
+
+	/**
+	 * More query parameters the developer says never change a page. The drop-in runs before
+	 * WordPress, so it can't ask the filter: the answer is written into it when Page caching goes
+	 * on, when the plugin updates and when the Speed page is saved (refresh_dropin()).
+	 *
+	 * @return string[]
+	 */
+	public static function ignored_parameters(): array {
+		/**
+		 * Query parameters that never change what a page looks like, besides the tracking ones Page
+		 * caching already ignores (utm_source, gclid, fbclid, gad_source...): a page with only these
+		 * is served from the saved copy of the page without them.
+		 *
+		 * @param string[] $names Parameter names.
+		 */
+		$names = apply_filters( 'arvaseo_connector_page_cache_ignored_params', array() );
+		$names = array_filter( array_map( 'sanitize_key', is_array( $names ) ? $names : array() ) );
+		return array_values( array_diff( array_unique( $names ), arvaseo_connector_page_cache_tracking() ) );
+	}
+
+	/**
+	 * Write the drop-in again when what it holds has changed: the developer's list of parameters,
+	 * the permalink form, the phone choice. Only this plugin's own drop-in, only while it's on.
+	 */
+	public static function refresh_dropin(): void {
+		if ( ! self::active() || ! self::dropin_is_ours() ) {
+			return;
+		}
+		$current = (string) file_get_contents( self::dropin() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
+		if ( self::dropin_contents() !== $current ) {
+			self::write_dropin();
+		}
+	}
+
+	/**
 	 * The drop-in: it loads page-cache-serve.php from this plugin, with the settings it needs.
 	 */
 	private static function dropin_contents(): string {
@@ -554,6 +600,7 @@ final class PageCache {
 			'phones'  => self::settings()['phones'],
 			'charset' => (string) get_option( 'blog_charset', 'UTF-8' ),
 			'slash'   => self::trailing_slash(),
+			'ignored' => self::ignored_parameters(),
 		);
 		return "<?php\n"
 			. "/**\n"
@@ -1246,6 +1293,8 @@ final class PageCache {
 				'queue' => array(),
 				'total' => 0,
 				'done'  => 0,
+				// A new round: a run under way doesn't count its pages as done (they were cleared again).
+				'gen'   => self::preload_state()['gen'] + 1,
 			),
 			false
 		);
@@ -1273,6 +1322,7 @@ final class PageCache {
 				'queue' => $queue,
 				'total' => max( $state['total'], $state['done'] + count( $queue ) ),
 				'done'  => $state['done'],
+				'gen'   => $state['gen'],
 			),
 			false
 		);
@@ -1284,7 +1334,7 @@ final class PageCache {
 	/**
 	 * What's waiting to be refilled.
 	 *
-	 * @return array{queue: string[], total: int, done: int}
+	 * @return array{queue: string[], total: int, done: int, gen: int}
 	 */
 	public static function preload_state(): array {
 		$saved = get_option( self::PRELOAD, array() );
@@ -1293,13 +1343,19 @@ final class PageCache {
 			'queue' => array_values( array_filter( (array) ( $saved['queue'] ?? array() ), 'is_string' ) ),
 			'total' => (int) ( $saved['total'] ?? 0 ),
 			'done'  => (int) ( $saved['done'] ?? 0 ),
+			'gen'   => (int) ( $saved['gen'] ?? 0 ),
 		);
 	}
 
 	/**
-	 * The background job: visit the next few pages like a visitor (and like a phone, when phones
-	 * have their own copy), so they're saved before anyone asks for them. Runs again in a minute
-	 * while pages are waiting.
+	 * The background job: visit the next pages like a visitor (and like a phone, when phones have
+	 * their own copy), so they're saved before anyone asks for them, a few at a time for up to
+	 * PRELOAD_SECONDS. Runs again in a minute while pages are waiting.
+	 *
+	 * The list is read again after each batch, and only that batch's pages are taken off it:
+	 * until 2.10.6 the run saved the list it had read at its start, so pages queued meanwhile were
+	 * lost, and so was a whole new list when everything was cleared during the run (optimized CSS
+	 * arriving clears every saved page). Pages visited before such a clear stay on the new list.
 	 */
 	public static function run_preload(): void {
 		if ( ! self::active() || ! self::settings()['preload'] ) {
@@ -1308,31 +1364,43 @@ final class PageCache {
 		if ( ! Lock::acquire( 'page_cache_preload', 5 * MINUTE_IN_SECONDS ) ) {
 			return;
 		}
-		$state  = self::preload_state();
-		$batch  = array_slice( $state['queue'], 0, self::PRELOAD_BATCH );
 		$phones = self::settings()['phones'];
-		foreach ( $batch as $url ) {
-			$https = 'https' === wp_parse_url( $url, PHP_URL_SCHEME );
-			foreach ( $phones ? array( false, true ) : array( false ) as $mobile ) {
-				$parts = wp_parse_url( $url );
-				$host  = arvaseo_connector_page_cache_host( (string) ( $parts['host'] ?? '' ) . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' ) );
-				$path  = arvaseo_connector_page_cache_path( (string) ( $parts['path'] ?? '/' ) );
-				if ( null === $host || null === $path || is_file( self::dir() . '/' . $host . $path . arvaseo_connector_page_cache_name( $https, $mobile ) ) ) {
-					continue;
+		$start  = microtime( true );
+		/**
+		 * How many seconds one background run keeps refilling saved pages (at least one batch).
+		 *
+		 * @param int $seconds Ten by default.
+		 */
+		$seconds = (int) apply_filters( 'arvaseo_connector_page_cache_preload_seconds', self::PRELOAD_SECONDS );
+		do {
+			$state = self::preload_state();
+			$batch = array_slice( $state['queue'], 0, self::PRELOAD_BATCH );
+			foreach ( $batch as $url ) {
+				$https = 'https' === wp_parse_url( $url, PHP_URL_SCHEME );
+				foreach ( $phones ? array( false, true ) : array( false ) as $mobile ) {
+					$parts = wp_parse_url( $url );
+					$host  = arvaseo_connector_page_cache_host( (string) ( $parts['host'] ?? '' ) . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' ) );
+					$path  = arvaseo_connector_page_cache_path( (string) ( $parts['path'] ?? '/' ) );
+					if ( null === $host || null === $path || is_file( self::dir() . '/' . $host . $path . arvaseo_connector_page_cache_name( $https, $mobile ) ) ) {
+						continue;
+					}
+					self::fetch( $url, $mobile ? 'Mozilla/5.0 (Linux; Android 14; Mobile) ArvaSEO-PageCache/' . ARVASEO_CONNECTOR_VERSION : '' );
 				}
-				self::fetch( $url, $mobile ? 'Mozilla/5.0 (Linux; Android 14; Mobile) ArvaSEO-PageCache/' . ARVASEO_CONNECTOR_VERSION : '' );
 			}
-		}
-		$left = array_slice( $state['queue'], count( $batch ) );
-		update_option(
-			self::PRELOAD,
-			array(
-				'queue' => $left,
-				'total' => $state['total'],
-				'done'  => $state['done'] + count( $batch ),
-			),
-			false
-		);
+			$now  = self::preload_state();
+			$same = $now['gen'] === $state['gen'];
+			$left = $same ? array_values( array_diff( $now['queue'], $batch ) ) : $now['queue'];
+			update_option(
+				self::PRELOAD,
+				array(
+					'queue' => $left,
+					'total' => $now['total'],
+					'done'  => $now['done'] + ( $same ? count( array_intersect( $batch, $now['queue'] ) ) : 0 ),
+					'gen'   => $now['gen'],
+				),
+				false
+			);
+		} while ( array() !== $left && array() !== $batch && microtime( true ) - $start < $seconds );
 		Lock::release( 'page_cache_preload' );
 		if ( array() !== $left ) {
 			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, self::HOOK_PRELOAD );

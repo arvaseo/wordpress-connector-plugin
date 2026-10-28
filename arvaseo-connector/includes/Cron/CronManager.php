@@ -62,6 +62,9 @@ final class CronManager {
 		);
 		add_action( 'arvaseo_connector_maintenance', array( self::class, 'maintenance' ) );
 
+		// Last of everything that hears about Arva SEO being deactivated: no job it scheduled meanwhile stays.
+		add_action( 'deactivated_plugin', array( self::class, 'after_leaving' ), 99, 2 );
+
 		// Plugin and theme changes: refresh the inventory soon (debounced).
 		foreach ( array( 'activated_plugin', 'deactivated_plugin', 'deleted_plugin', 'switch_theme', 'upgrader_process_complete' ) as $hook ) {
 			add_action( $hook, array( self::class, 'inventory_changed' ) );
@@ -136,15 +139,45 @@ final class CronManager {
 	}
 
 	/**
-	 * Stop everything (deactivation, uninstall).
+	 * Every scheduled job the plugin has, with or without arguments: the ones above, the Speed
+	 * jobs and the security scan's. wp_unschedule_hook() removes events scheduled with arguments
+	 * too (Google Fonts copies, approved files), which wp_clear_scheduled_hook() without arguments
+	 * leaves behind.
+	 *
+	 * @return string[]
+	 */
+	public static function all_hooks(): array {
+		return array_merge(
+			self::SYNC_HOOKS,
+			array(
+				'arvaseo_connector_maintenance',
+				\ArvaSEO\Connector\Speed\Cloudflare::HOOK,
+				\ArvaSEO\Connector\Speed\AssetCache::HOOK,
+				\ArvaSEO\Connector\Speed\AssetCache::HOOK_SWEEP,
+				\ArvaSEO\Connector\Speed\OtherCaches::HOOK_CLEAR,
+				\ArvaSEO\Connector\Speed\OtherCaches::HOOK_CHECK,
+				\ArvaSEO\Connector\Speed\PageCache::HOOK_PRELOAD,
+				\ArvaSEO\Connector\Speed\PageCache::HOOK_GC,
+				\ArvaSEO\Connector\Speed\CssOptimizer::HOOK,
+				\ArvaSEO\Connector\Speed\ImageCompression::HOOK,
+				\ArvaSEO\Connector\Speed\WebpLibrary::HOOK,
+				\ArvaSEO\Connector\Speed\LocalFonts::HOOK,
+				\ArvaSEO\Connector\Speed\ExternalAssets::HOOK,
+				\ArvaSEO\Connector\Security\Scanner::HOOK,
+				\ArvaSEO\Connector\Security\Scanner::WEEKLY,
+				\ArvaSEO\Connector\Security\DeepScan::HOOK,
+				\ArvaSEO\Connector\Security\FileEdits::HOOK,
+			)
+		);
+	}
+
+	/**
+	 * Stop everything (deactivation, uninstall): no event of the plugin stays in the cron list.
 	 */
 	public static function clear_all(): void {
-		self::clear_sync();
-		wp_clear_scheduled_hook( 'arvaseo_connector_maintenance' );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Speed\Cloudflare::HOOK );
-		wp_unschedule_hook( \ArvaSEO\Connector\Speed\ExternalAssets::HOOK );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::HOOK );
-		wp_clear_scheduled_hook( \ArvaSEO\Connector\Security\Scanner::WEEKLY );
+		foreach ( self::all_hooks() as $hook ) {
+			wp_unschedule_hook( $hook );
+		}
 	}
 
 	/**
@@ -166,9 +199,54 @@ final class CronManager {
 	}
 
 	/**
-	 * A plugin or theme changed.
+	 * Whether this call is Arva SEO itself being deactivated or deleted. WordPress fires
+	 * deactivated_plugin right after deactivate_{plugin} in the same request, and by then every job
+	 * the plugin had was unscheduled: nothing may schedule another one.
+	 *
+	 * @param mixed $plugin The plugin file the hook passes (plugins only).
 	 */
-	public static function inventory_changed(): void {
+	public static function leaving( $plugin ): bool {
+		return is_string( $plugin )
+			&& plugin_basename( ARVASEO_CONNECTOR_FILE ) === $plugin
+			&& in_array( current_action(), array( 'deactivated_plugin', 'deleted_plugin' ), true );
+	}
+
+	/**
+	 * Arva SEO was deactivated: whatever other hooks of the same moment scheduled (a Cloudflare
+	 * clear waiting for its gap, a registration) goes too, so no event of the plugin is left.
+	 *
+	 * @param mixed $plugin       The plugin file.
+	 * @param mixed $network_wide Deactivated for the whole network.
+	 */
+	public static function after_leaving( $plugin, $network_wide = false ): void {
+		if ( ! self::leaving( $plugin ) ) {
+			return;
+		}
+		if ( is_multisite() && $network_wide ) {
+			foreach ( get_sites(
+				array(
+					'fields' => 'ids',
+					'number' => 0,
+				)
+			) as $site_id ) {
+				switch_to_blog( (int) $site_id );
+				self::clear_all();
+				restore_current_blog();
+			}
+			return;
+		}
+		self::clear_all();
+	}
+
+	/**
+	 * A plugin or theme changed.
+	 *
+	 * @param mixed $plugin The plugin file (plugin hooks), the new theme's name or the upgrader.
+	 */
+	public static function inventory_changed( $plugin = '' ): void {
+		if ( self::leaving( $plugin ) ) {
+			return;
+		}
 		if ( TokenStore::is_connected() ) {
 			$next = wp_next_scheduled( 'arvaseo_connector_inventory' );
 			if ( false === $next || $next > time() + 5 * MINUTE_IN_SECONDS ) {
@@ -196,5 +274,15 @@ final class CronManager {
 		// phpcs:enable
 		// Repairs can be undone for 30 days; after that their kept copies are deleted.
 		\ArvaSEO\Connector\Security\Repairs::purge();
+		// Optimized CSS of page types that are no longer tracked.
+		\ArvaSEO\Connector\Speed\CssOptimizer::prune_results();
+		// Generated files no page used for a week (Google Fonts copies, 30 days): the caches are
+		// cleared first and the files deleted a day later (AssetCache), also while no folder is full,
+		// but only when enough files can go or a folder is nearly full, and at most once a week.
+		\ArvaSEO\Connector\Speed\AssetCache::rotate( true );
+		// The caches in front of the site, from the homepage's headers.
+		\ArvaSEO\Connector\Speed\OtherCaches::maintain();
+		// Old versions of fixes whose day has come go back to Trying (D4), and old notes go.
+		\ArvaSEO\Connector\Speed\Changes::maintain();
 	}
 }

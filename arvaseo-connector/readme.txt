@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.10.0.1
+Stable tag: 2.11.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,7 +20,7 @@ Arva SEO → Speed explains each fix and the PageSpeed (Lighthouse) problems it 
 
 * **Page caching:** serve saved HTML without running WordPress, through .htaccess or PHP. Signed-in users, personal pages, carts and checkouts are excluded. Cached pages are cleared when relevant content or settings change.
 * **Images and layout:** prioritize featured images and the homepage image identified by a connected PageSpeed test; lazy-load images, videos and maps below the first few images; add missing media-library image dimensions and the mobile viewport tag when needed.
-* **Critical and used CSS:** Load styles faster supplies first-screen styles; Remove unused CSS supplies the styles a page uses, with full stylesheets available on interaction. Arva SEO generates these on its servers using your plan's page optimizations. Choose generation by page type or URL, inline or cached-file used CSS, and an inline or external asynchronous loader. Original styles load until suitable results are ready.
+* **Critical and used CSS:** Load styles faster supplies first-screen styles; Remove unused CSS supplies the styles a page uses, with full stylesheets available on interaction. When Combine CSS is on, compatible styles are combined first; both results are generated from those same combined files. Arva SEO generates these on its servers using your plan's page optimizations. Choose generation by page type or URL, inline or cached-file used CSS, and an inline or external asynchronous loader. Original styles load until suitable results are ready.
 * **CSS and JavaScript minification:** smaller cached copies of supported local files, plus separate controls for minifying inline style blocks and classic scripts in their existing tags. Unsupported files and code stay unchanged.
 * **CSS and JavaScript combining:** bundle compatible neighboring files in order. Optional inline combining requires approval of an exact public static snippet; a changed snippet stops matching its approval. External combining requires exact approved public HTTPS URLs and background caching. Incompatible scripts, integrity-protected resources and managed critical/used CSS stay separate. Fewer requests do not always improve performance.
 * **Script loading:** defer supported scripts until HTML is parsed, or delay supported independent classic scripts until interaction. Dependencies, consent tools, protected measurement scripts and your exclusions are retained. Changing a public loading mode returns it to preview; enabling it requires checking your important pages.
@@ -86,7 +86,11 @@ Yes. Arva SEO → Speed has separate Combine CSS and Combine JavaScript controls
 
 = Does the plugin change my site? =
 
-Only in the ways you switch on. PageSpeed fixes change how your pages load, only after you turn each one on, and turning it off undoes it. Website Health and the security scan are read-only: they report, and every finding is a recommendation. Arva SEO can only create or update posts it sent, within your publishing mode, and, if you allow it in Settings, change the SEO title and meta description of published content in Yoast SEO or Rank Math.
+Only in the ways you switch on. PageSpeed fixes change how your pages load, only after you turn each one on, and turning it off undoes it. When a change alters what visitors see, the plugin also clears the page caches it can reach (cache plugins, your host's cache, Cloudflare) at most every 15 minutes, and once a day it asks your own site for its homepage, as a visitor would, to read its cache headers and find the caches in front of it. Website Health and the security scan are read-only: they report, and every finding is a recommendation. Arva SEO can only create or update posts it sent, within your publishing mode, and, if you allow it in Settings, change the SEO title and meta description of published content in Yoast SEO or Rank Math.
+
+= What happens to the fixes I use when the plugin updates? =
+
+Nothing changes silently. An update that only adds an option (off until you turn it on) or only makes a fix do less is applied, and Arva SEO → Speed lists it under "What changed". An update that could make a page work differently for visitors waits for you: your visitors keep the version you checked, you see the new one while you're signed in, and the fix shows "Update to check" with three choices: use it for visitors, keep the previous version, or turn the fix off. The earlier version stays at least 90 days. Before it is retired, a connected site is reminded in Arva SEO; when the day comes, the fix goes back to being tried so you can check the new version.
 
 = Is the security scan a firewall or a malware cleaner? =
 
@@ -108,7 +112,7 @@ From 2.7.0, with that consent given again for the new fields (the Health page as
 
 = Can a PageSpeed fix break my site? =
 
-Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Delay chat widgets and trackers, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. Page caching and Browser caching and compression change your server's settings, so they can't be tried first; they check your site straight away instead (see below). If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. Arva SEO's own page cache clears itself when a fix changes; if you use another page cache, clear it after changing a fix.
+Most only add or change attributes on images and links, and visitors see the same page. Defer scripts, Delay chat widgets and trackers, Click-to-play videos and Remove unused WordPress extras can affect how some sites work, so try them first and check your important pages. Page caching and Browser caching and compression change your server's settings, so they can't be tried first; they check your site straight away instead (see below). If something stops working, leave that page, script or image alone (see the next question) or turn the fix off on the same page. In an emergency, add `define( 'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES', true );` to wp-config.php to switch every fix off. Arva SEO's own page cache clears itself when a fix changes, and so do the other caches it can reach (Arva SEO → Speed → Other caches on this site lists them); a cache it can't reach, such as a host's CDN, is listed there with how to clear it.
 
 = Does it work with Cloudflare? =
 
@@ -139,7 +143,7 @@ Yes, from 1.7.0, once an administrator ticks "Let Arva SEO switch these fixes" o
 
 Yes, from 2.6.0, with Page caching (off until you turn it on). Each page is saved as ready-made HTML the first time a visitor opens it, and the next visitors get that copy without WordPress running. On Apache and LiteSpeed, rules at the top of .htaccess let the server send it without PHP; the plugin keeps a copy of your .htaccess from before it changed it, which you can download from the Speed page. Elsewhere (nginx, for example) a small advanced-cache.php file sends it before WordPress loads, and the plugin adds `define( 'WP_CACHE', true );` to wp-config.php, or tells you the line to add when it can't.
 
-Turning it on checks your homepage from the server: made once, then served from the cache. If it isn't, everything is taken out again. Signed-in users, visitors with a comment, password or cart, carts, checkouts and account pages, searches, addresses with a query (tracking ones like utm_source are fine) and pages that set a cookie are never cached, nor pages you leave alone. Saved pages are made again after 10 hours; a post's pages are cleared when it changes, and every page when your theme, menus, widgets or a fix change, or when you press Clear the cache (also in the toolbar). Cloudflare's copy is cleared too when it's connected. After clearing, your main pages are refilled in the background, a few a minute. Turn on "A separate copy for phones" only if your theme sends phones different HTML.
+Turning it on checks your homepage from the server: made once, then served from the cache. If it isn't, everything is taken out again. Signed-in users, visitors with a comment, password or cart, carts, checkouts and account pages, searches, addresses with a query (tracking ones like utm_source are fine) and pages that set a cookie are never cached, nor pages you leave alone. Saved pages are made again after 10 hours; a post's pages are cleared when it changes, and every page when your theme, menus, widgets or a fix change, or when you press Clear the cache (also in the toolbar). Cloudflare's copy is cleared too when it's connected. After clearing, your main pages are refilled in the background, a few at a time. Turn on "A separate copy for phones" only if your theme sends phones different HTML.
 
 If WP Rocket, W3 Total Cache or another cache plugin is active, Arva SEO leaves page caching to it. If your host caches pages itself (SiteGround, LiteSpeed Cache, WP Engine, Kinsta, Cloudways), that's kept by default, and you can choose Arva SEO's instead; the card says how to turn the host's cache off. Turning it off, deactivating or deleting the plugin removes the rules, the file, the line it added and the saved pages.
 
@@ -169,13 +173,14 @@ The connector works with every Arva SEO plan, including Free.
 
 = What happens when I delete the plugin? =
 
-Credentials are always revoked and removed. Settings, logs and delivery records are removed too if you ticked that option in Settings. Posts are never deleted.
+Credentials are always revoked and removed. Settings, logs, delivery records and the files the PageSpeed fixes made are removed too if you ticked that option in Settings; the plugin clears the caches it can reach first, and the files stay if a cache it can't clear may still show pages that use them. Posts are never deleted.
 
 == External services ==
 
 Connecting to Arva SEO (https://arvaseo.com) is optional and starts only when an administrator connects the site. Local fixes work without an account. The optional features below contact their listed services only when you enable or use them.
 
-* **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, and your data-sharing choice.
+* **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, which of the plugin's update notes applied to this site (their ids and dates) and, for an update to a fix you use, whether it waits for your check, you kept the previous version or visitors get it, which page caches and CDNs the plugin found in front of the site (their names, whether the plugin clears them or you do, how you clear the ones that are yours, when each was last cleared, and how many old generated files are kept because of them), and your data-sharing choice.
+* **Cache check (once a day, no account needed; the request goes only to your own site):** the plugin requests your own homepage from your own server, as a visitor would, without cookies or a login, reads a fixed list of its response headers (for example cf-cache-status, x-litespeed-cache, age and cache-control) and the comments cache plugins leave in the page, and keeps only the names of the caches it found. When the site is connected, those names are sent with the site's details (see above). Also, when it clears a LiteSpeed server cache from a command line or scheduled task, it asks your site for a page that answers with LiteSpeed's purge header.
 * **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
 * **Security scan results (off by default, a separate choice):** after each scan, when an administrator agreed to share them, each open problem's kind, severity, a key, the file's path inside the site and its SHA-256 fingerprint, and for suspicious code the pattern's name, line and the start of that line, with how many files were checked. Never the files themselves.
 * **Security feed (only when connected):** once a day the plugin downloads Arva SEO's security feed from api.arvaseo.com (fingerprints of known malware and of files found safe, PHP's latest versions, new patterns), sending only the version it has.
@@ -214,8 +219,32 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
-= 2.10.0.1 =
+= 2.11.0 =
+Updates that change how a fix you use works now wait for your check: visitors keep the version you checked until you choose "Use it for visitors". Arva SEO also clears more caches and lists the ones you must clear yourself. See Speed.
+
+= 2.10.8 =
 Fixes phone layouts and icons that optimized CSS could break on some themes. Optimized styles are downloaded again automatically, at no cost.
+
+= 2.10.7 =
+Optimized CSS pages still use is no longer deleted on sites with many page types. Compressing many images no longer empties other cache plugins once per image. Saved pages are refilled sooner after a clear. "Move jQuery down the page" also waits for scripts a consent tool holds back.
+
+= 2.10.6 =
+With Load styles faster or Remove unused CSS, entrance animations (Elementor's and similar) no longer play a second time when the rest of the styles arrive at the first scroll or tap. Optimized CSS that is still being worked out can no longer be left waiting after an interrupted background run.
+
+= 2.10.5 =
+Moving jQuery down the page and loading icon fonts late are now choices you turn on (Defer scripts, Load styles faster). The clean-up of minified and combined files no longer deletes files another page cache may still use.
+
+= 2.10.4 =
+Icon fonts that a theme or widget prints into the page itself (Font Awesome and similar) load once the page has loaded instead of holding it up, while Load styles faster or Remove unused CSS is on. Faster Google Fonts served from your site now works with themes that add the time to font addresses.
+
+= 2.10.3 =
+Generated CSS now reaches stylesheets with capital letters in their names (Elementor's entrance animations, some themes' fonts) and the same file printed under several names, so they stop blocking the first paint. Defer scripts moves WordPress's jQuery from the head to just before the first script that may use it. Full minified/combined folders clean up unused files instead of stopping for good, and scripts versioned with the time no longer get a new copy on every page view.
+
+= 2.10.2 =
+Combines enabled CSS groups before generating critical and used CSS. Generation and delivery use the same stylesheet groups; changed combined files get fresh results, while full styles remain available until matching results are ready. Timestamp-only cache busters on verified static local CSS reuse the same minified files, bundles and generated results instead of using another page optimization on each visit.
+
+= 2.10.1 =
+Clears connected page and CDN caches after image compression changes files, so cached pages do not keep links to replaced WebP copies. Original-image backups and existing compression settings are preserved.
 
 = 2.10.0 =
 Adds advanced inline/external CSS and JS controls, CSS delivery choices, delayed loading mode, font-display swap, and Media Library compression actions. New switches start Off; existing delivery defaults are retained. Review approved public resources and preview changes before turning them on.
@@ -292,11 +321,70 @@ New PageSpeed fixes, each off until you turn it on. Nothing changes on your site
 
 == Changelog ==
 
-= 2.10.0.1 =
-* Fixed: optimized CSS (Load styles faster and Remove unused CSS) lost rules on some themes, because it was saved with everything from a "<" to the next ">" taken out (since 1.6.0). Media queries written as (width<=1023.98px), which many themes use for their phone menu and header, icons drawn with SVG in data: addresses (menu arrows, form icons) and content:"<" lost their rules, sometimes with the rest of the stylesheet. Optimized CSS is now kept exactly as Arva SEO worked it out; a stylesheet whose CSS contains a closing style tag or a NUL byte loads as it is.
-* Fixed: optimized CSS saved by earlier versions is downloaded again after updating, at no cost and without using page optimizations, at most 10 page types each run. Until then, and when Arva SEO no longer has a page type's results, it keeps its current CSS.
-* Fixed: an optimized CSS sync cut short by a slow download could leave page types waiting until a new page type was found. The next sync is now scheduled before any request.
-* Fixed: Faster Google Fonts, "Serve them from your site", named each copy after the full address, so a theme that adds v=time() to its Google Fonts addresses got a new download on every page view, a copy that was never used, and page caches cleared again with each copy. Cache busters (v, ver) no longer name copies, one download is scheduled per stylesheet and a copy is never made twice; existing copies keep their names. After a copy fails, downloads already waiting also wait a day. css2 addresses naming several families get their own copy instead of sharing their last family's.
+= 2.11.0 =
+* New: updates that change how a fix you use works no longer reach your visitors silently. Visitors keep the version you checked; you see the new one while signed in, and an "Update to check" card on Speed lets you "Use it for visitors", "Keep the previous version" or "Turn the fix off". A toolbar item and one notice count them. The earlier version is kept at least 90 days, with a reminder before it is retired.
+* New: updating from 2.10.0 keeps what you approved: fixes that are on keep 2.10.0's Load styles faster, Remove unused CSS and Combine behaviour until you use the update, and choices you had not saved keep the defaults they had. Sites that already ran an earlier 2.10 build keep what it did.
+* New: Arva SEO and the AI connector can press "Use it for visitors" where you allow switching fixes remotely (never for Defer scripts). The site's details sent to Arva SEO say which update notes applied (their ids and dates) and where each update stands (waiting, kept or used).
+* Listed under What changed on Speed, for the fixes you use (an update waits for your check only while its fix is on):
+* Update to check: With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free.
+* Update to check: Optimized styles now also reach stylesheets whose names use capital letters (Elementor’s entrance animations, some Google Fonts) and stylesheets a theme prints more than once, so fewer of them hold the page up.
+* Update to check: Files next to one that can’t be combined are now combined around it, in the same order. This applies to stylesheets and scripts.
+* Option: New option under Defer scripts: Move jQuery down the page. It’s off until you turn it on.
+* Option: New option under Load styles faster: Load icon fonts after the page. It’s off until you turn it on.
+* Notice: Arva SEO’s renderer now gets your pages without the WordPress extras you removed, as visitors do.
+* Notice: Entrance animations no longer play a second time when the rest of the styles arrive.
+* Notice: Old generated files (unused for a week, Google Fonts copies for 30 days) are cleaned up once enough have piled up or a folder is nearly full: the caches are cleared first and the files deleted a day later, never while another cache may still use them. While a cache Arva SEO can’t clear may keep pages, the folders may grow to twice their usual limit.
+* Notice: Caches are cleared when compression changes an image.
+* Notice: Visitors arriving from Google Ads, Facebook, Mailchimp and similar links get the saved page too.
+* Notice: Arva SEO now clears more caches when your pages change, at most every 15 minutes: WP Rocket, W3 Total Cache, WP Super Cache, WP Fastest Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper, WP-Optimize, NitroPack, Proxy Cache Purge, Cloudflare’s official plugin and LiteSpeed’s server cache.
+* New: Other caches on this site (Speed). Once a day Arva SEO asks your own homepage for its cache headers, and with your plugins and host it finds the caches in front of your site. It clears those it can and lists those that are yours, with how. "Clear every cache now" is there and in the toolbar; "I've cleared it" tells Arva SEO you cleared one of yours. The site's details sent to Arva SEO name them and how to clear yours (never a page or a visitor).
+* New: Hostinger's CDN, Kinsta, Cloudways' Varnish, Pantheon, SpinupWP and a few cache plugins are listed as yours to clear, with how.
+* Changed: other caches are cleared only for changes visitors see that Arva SEO makes, at most every 15 minutes. Theme, menu and widget changes are left to the cache plugins; saving choices you didn't change clears nothing.
+* Changed: under a cache Arva SEO can't clear, only files unused for 90 days go, until you press "I've cleared it". Optimized CSS copies are cleaned up too. Cloudflare holds this back only when it keeps your pages and isn't connected. Deleting the plugin with its data clears the caches it can reach first and keeps the files while one it can't may still show pages.
+* Changed: the list of tracking parameters Page caching ignores is longer (gad_source, hsa_*, mtm_* and more; ref stays), and optimized CSS is noted under the same address. Developers add more with the arvaseo_connector_page_cache_ignored_params filter.
+* Changed: with more than 300 page types, the ones seen longest ago lose their optimized CSS first. Results saved by a newer version are kept and not used.
+* Fixed: deactivating or deleting the plugin leaves no scheduled job behind.
+
+= 2.10.8 =
+* Fixed: optimized CSS (Load styles faster and Remove unused CSS) lost rules on some themes, because it was saved with everything from a "<" to the next ">" taken out (since 1.6.0; 2.10.0.1 fixed it for 2.10.0). Media queries written as (width<=1023.98px), which many themes use for their phone menu and header, icons drawn with SVG in data: addresses (menu arrows, form icons) and content:"<" lost their rules, sometimes with the rest of the stylesheet. Optimized CSS is now kept exactly as Arva SEO worked it out; a stylesheet whose CSS contains "</style" or a NUL byte loads as it is.
+* Fixed: optimized CSS saved by earlier versions is downloaded again after updating, at no cost and without using page optimizations, at most 10 page types each run, also while both CSS fixes are off. Until then, and when Arva SEO no longer has a page type's results, it keeps its current CSS. A page type no longer tracked (on sites with more than 300) is downloaded again when a page uses its CSS. A download that brings the same CSS no longer clears page caches.
+* Fixed: after a Google Fonts copy failed, downloads already waiting for the same stylesheet tried again that day instead of waiting a day.
+
+= 2.10.7 =
+* Fixed: on a site with more than 300 page types (an Elementor site with many pages, each with its own stylesheet, or "Generate CSS per URL"), 2.10.3 to 2.10.6 deleted the optimized CSS of the page types noted longest ago, even while pages used them; those pages then lost their optimized CSS, were sent again and pushed out the next ones, over and over, each time using a page optimization. Page types now make room by their last use, and their CSS is kept until no page has used it for 30 days.
+* Fixed: optimized CSS that finished while visitors' pages noted new page types could lose those page types, which then waited until the next uncached visit. A page type marked ready whose CSS file is gone (a host's clean-up, a migration) is asked for again instead of waiting for good, and CSS files are written in one step.
+* Fixed: since 2.10.5, every background change (each compressed image, each Google Fonts copy, each batch of optimized CSS) emptied the whole page cache of WP Rocket, W3 Total Cache, WP Super Cache and the other cache plugins Arva SEO can clear, with their refills. Background changes now clear those caches and the host's at most once every five minutes, and once more at the end; a change you make clears them straight away.
+* Fixed: Page caching refilled 5 pages per background run, and runs only happen when WordPress makes a page, so on a quiet site cleared pages (and their optimized CSS) could wait hours. A run now refills for up to 10 seconds, and pages queued or cleared again during a run are no longer lost.
+* Fixed: "Move jQuery down the page" no longer moves it past scripts a consent tool holds back (type="text/plain", as Complianz, CookieYes, Cookiebot and others use) that may use jQuery once they're allowed, or past an external script before it that may add scripts (a consent tool or tag manager from another site, or a site file that adds scripts).
+* Changed: when the full stylesheets arrive, only animations whose keyframes came with that stylesheet end at once, and the stylesheets in use are read once instead of at each arrival.
+
+= 2.10.6 =
+* Fixed: with Load styles faster or Remove unused CSS, an entrance animation that a page's scripts start as content comes into view (Elementor's fadeInUp, for one) had no keyframes in the used CSS, so the element appeared without it; then, when the full stylesheets arrived at the visitor's first scroll, tap or key press, every such animation already on screen played again over content the visitor was reading. Animations that start only because the full styles arrived now end at once; endless animations (spinners) and those already running are left alone. Arva SEO's servers will also keep these animations in the used CSS.
+* Fixed: a background run that fetches optimized CSS and was cut short (a slow download past PHP's time limit) left the page types it was working on waiting until a page that wasn't in the page cache was visited, while every visitor got the cached pages without optimized CSS. The next run is now scheduled before the downloads start.
+
+= 2.10.5 =
+* Changed: moving jQuery out of the head (2.10.3) is now a choice of its own under Defer scripts, "Move jQuery down the page", off until an administrator turns it on. Updating no longer changes what Defer scripts does on sites where it was already checked and on, and turning the choice on returns Defer scripts to preview until the pages are checked again.
+* Fixed: with jQuery moved down, an async script or an inline loader before it in the head (Google Tag Manager's snippet, whose Custom HTML tags often call jQuery) could run before jQuery and fail with "jQuery is not defined". jQuery now stays in the head when anything before it may run at a time of its own and use it: an async script, an inline script that adds scripts or mentions jQuery, or an event handler that mentions it. Google's gtag.js doesn't count; developers can name others with the arvaseo_connector_script_without_jquery filter.
+* Changed: loading icon fonts after the page (2.10.4) is now a choice under Load styles faster and Remove unused CSS, "Load icon fonts after the page", off until an administrator turns it on, because those icons show a moment later and text next to them can move.
+* Fixed: the clean-up of full minified and combined folders (2.10.3) deleted files that pages saved by another cache could still use: WP Super Cache, Cache Enabler, WP Fastest Cache, W3 Total Cache and similar kept serving pages pointing at deleted files until they expired. Those with a documented API (WP Super Cache, W3 Total Cache, WP Rocket, WP Fastest Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper) are now cleared with Arva SEO's own when every page changes; while any other page cache may keep pages (another cache plugin or advanced-cache.php, Kinsta's or Cloudways' server cache, SiteGround's without its plugin, Cloudflare without the connection) nothing is deleted. Files are kept for a week after their last use instead of a day.
+* Fixed: Combine CSS left a whole run of adjacent stylesheets uncombined when one of them couldn't be combined (WordPress's block library starts with an @import), while Arva SEO's renderer got a bundle for the files around it, so the stored optimized CSS matched none of them and they stayed render-blocking on posts. The others are now combined around it, in order.
+* Fixed: with Combine CSS on, Arva SEO's renderer got WordPress's emoji styles and the other extras that "Remove unused WordPress extras" takes out for visitors, which split its stylesheets differently from visitors' pages. The renderer now gets the same page.
+* Fixed: Faster Google Fonts, "Serve them from your site", scheduled a download with the full address, cache busters included, so until the first copy was ready a theme adding v=time() scheduled another download on every uncached page view, and each one copied the fonts again and cleared the page caches. One download is scheduled, and a copy that exists is never made again. Copies no page used for 30 days, such as those earlier versions made for each page view, are deleted in the daily maintenance.
+
+= 2.10.4 =
+* Improved: Load styles faster (and Remove unused CSS) left icon font stylesheets that a theme or widget prints into the page itself, outside WordPress's styles, holding the page up: Solace Extra's menu, for example, prints Font Awesome from a CDN for every menu item with a sub-menu, so scripts after it waited for it and its 114 KB font loaded with the first paint. Known icon libraries (Font Awesome, Line Awesome, Bootstrap Icons, Remix Icon, Boxicons, Ionicons, Material Icons and Symbols, Themify, Simple Line Icons) now load once the page has loaded, or at the first interaction if that's sooner, with a noscript copy. Stylesheets from WordPress's queue keep the used-CSS delivery; developers can decide per stylesheet with the arvaseo_connector_late_icon_style filter.
+* Fixed: Faster Google Fonts, "Serve them from your site", named each copy after the full address, so a theme that adds v=time() to its Google Fonts addresses (Solace does) got a new copy on every page view: the copy was never used, a new download was scheduled each time, and each finished copy cleared the page caches again. Cache busters (v, ver) no longer name copies; existing copies keep their names.
+* Fixed: css2 Google Fonts addresses naming several families shared a copy with an address naming only their last family, because repeated family= parameters were collapsed. They now get their own copy.
+
+= 2.10.3 =
+* Fixed: optimized (used/critical) CSS never applied to stylesheets whose handles contain capital letters, such as Elementor's e-animation-fadeInUp or a theme's google-fonts-Inter: their ids were stored in lower case and rejected when combining. They stayed render-blocking. Results saved by earlier versions are matched too.
+* Fixed: a stylesheet printed under several handles (a theme's heading fonts, h1 to h6) only had optimized CSS for the first one, because the renderer keeps one result per address; the others stayed render-blocking. Each copy now uses that result in its own place.
+* Fixed: minified copies and combined bundles were named after a script's full address, so a theme that versions scripts with the time made a new copy on every page view, filling the 250-file folders within hours. Full folders then stopped minifying and combining changed files for good. Cache busters no longer name copies; files record when pages last used them; a full folder now schedules a background clean-up of files no page used for a day, followed by a refresh of saved pages.
+* Fixed: a page type waiting for optimized CSS whose scheduled sync was lost waited forever; its next visit schedules it again. Results of page types no longer tracked are deleted (daily and when the list is trimmed) instead of filling uploads.
+* Improved: Defer scripts moves WordPress's jQuery (jquery-core, jquery-migrate and their inline parts) from the head to just before the first script, inline event handler or asynchronous script of the page, so it no longer blocks the first paint. Nothing moves when something in the head may use it; developers can veto with the arvaseo_connector_move_head_scripts filter.
+
+= 2.10.1 =
+* Fixed: successful image compression now notifies page and connected CDN caches, including when a larger WebP sidecar is removed. Images that do not change do not trigger a purge.
 
 = 2.10.0 =
 * New: inline CSS/JavaScript minification and explicitly approved static inline/external sources in compatible ordered bundles; external files are cached in bounded pinned background requests, never fetched while rendering pages.

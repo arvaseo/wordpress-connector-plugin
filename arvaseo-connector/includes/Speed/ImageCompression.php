@@ -471,6 +471,9 @@ final class ImageCompression {
 				),
 				false
 			);
+			// Other requests can refill cached pages between attachments in this batch.
+			PageCache::reset();
+			Fixes::pages_changed( 'compress' );
 		}
 		return $saved;
 	}

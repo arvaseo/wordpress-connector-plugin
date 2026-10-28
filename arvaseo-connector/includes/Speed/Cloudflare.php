@@ -46,6 +46,12 @@ final class Cloudflare {
 	private const GAP = 20;
 
 	/**
+	 * Changes made in the background, often many in a row (one per compressed image): Cloudflare
+	 * is cleared at most as often as the other caches for them (OtherCaches::GAP, 15 minutes).
+	 */
+	private const BURSTS = array( 'compress', 'css', 'fonts', 'external_assets' );
+
+	/**
 	 * Hooks.
 	 */
 	public static function init(): void {
@@ -59,31 +65,32 @@ final class Cloudflare {
 	/**
 	 * The stored details.
 	 *
-	 * @return array{zone_id: string|null, zone_name: string|null, connected_at: string|null, seen_at: string|null, rocket_loader: string|null, checked_at: string|null, posts: bool, refused: bool, last: array{at: string, what: string, count: int, ok: bool, error: string|null}|null, queue: string[], everything: bool, everything_at: int}
+	 * @return array{zone_id: string|null, zone_name: string|null, connected_at: string|null, seen_at: string|null, rocket_loader: string|null, checked_at: string|null, posts: bool, refused: bool, last: array{at: string, what: string, count: int, ok: bool, error: string|null}|null, queue: string[], everything: bool, everything_at: int, everything_due: int}
 	 */
 	public static function details(): array {
 		$saved = get_option( self::OPTION, array() );
 		$saved = is_array( $saved ) ? $saved : array();
 		$last  = is_array( $saved['last'] ?? null ) ? $saved['last'] : null;
 		return array(
-			'zone_id'       => is_string( $saved['zone_id'] ?? null ) ? $saved['zone_id'] : null,
-			'zone_name'     => is_string( $saved['zone_name'] ?? null ) ? $saved['zone_name'] : null,
-			'connected_at'  => is_string( $saved['connected_at'] ?? null ) ? $saved['connected_at'] : null,
-			'seen_at'       => is_string( $saved['seen_at'] ?? null ) ? $saved['seen_at'] : null,
-			'rocket_loader' => in_array( $saved['rocket_loader'] ?? null, array( 'on', 'off' ), true ) ? $saved['rocket_loader'] : null,
-			'checked_at'    => is_string( $saved['checked_at'] ?? null ) ? $saved['checked_at'] : null,
-			'posts'         => (bool) ( $saved['posts'] ?? true ),
-			'refused'       => (bool) ( $saved['refused'] ?? false ),
-			'last'          => null === $last ? null : array(
+			'zone_id'        => is_string( $saved['zone_id'] ?? null ) ? $saved['zone_id'] : null,
+			'zone_name'      => is_string( $saved['zone_name'] ?? null ) ? $saved['zone_name'] : null,
+			'connected_at'   => is_string( $saved['connected_at'] ?? null ) ? $saved['connected_at'] : null,
+			'seen_at'        => is_string( $saved['seen_at'] ?? null ) ? $saved['seen_at'] : null,
+			'rocket_loader'  => in_array( $saved['rocket_loader'] ?? null, array( 'on', 'off' ), true ) ? $saved['rocket_loader'] : null,
+			'checked_at'     => is_string( $saved['checked_at'] ?? null ) ? $saved['checked_at'] : null,
+			'posts'          => (bool) ( $saved['posts'] ?? true ),
+			'refused'        => (bool) ( $saved['refused'] ?? false ),
+			'last'           => null === $last ? null : array(
 				'at'    => (string) ( $last['at'] ?? '' ),
 				'what'  => 'pages' === ( $last['what'] ?? '' ) ? 'pages' : 'everything',
 				'count' => (int) ( $last['count'] ?? 0 ),
 				'ok'    => (bool) ( $last['ok'] ?? false ),
 				'error' => is_string( $last['error'] ?? null ) ? $last['error'] : null,
 			),
-			'queue'         => array_values( array_filter( (array) ( $saved['queue'] ?? array() ), 'is_string' ) ),
-			'everything'    => (bool) ( $saved['everything'] ?? false ),
-			'everything_at' => (int) ( $saved['everything_at'] ?? 0 ),
+			'queue'          => array_values( array_filter( (array) ( $saved['queue'] ?? array() ), 'is_string' ) ),
+			'everything'     => (bool) ( $saved['everything'] ?? false ),
+			'everything_at'  => (int) ( $saved['everything_at'] ?? 0 ),
+			'everything_due' => (int) ( $saved['everything_due'] ?? 0 ),
 		);
 	}
 
@@ -202,15 +209,16 @@ final class Cloudflare {
 		wp_clear_scheduled_hook( self::HOOK );
 		self::update(
 			array(
-				'zone_id'       => null,
-				'zone_name'     => null,
-				'connected_at'  => null,
-				'rocket_loader' => null,
-				'checked_at'    => null,
-				'refused'       => false,
-				'last'          => null,
-				'queue'         => array(),
-				'everything'    => false,
+				'zone_id'        => null,
+				'zone_name'      => null,
+				'connected_at'   => null,
+				'rocket_loader'  => null,
+				'checked_at'     => null,
+				'refused'        => false,
+				'last'           => null,
+				'queue'          => array(),
+				'everything'     => false,
+				'everything_due' => 0,
 			)
 		);
 		AuditLogger::info( 'cloudflare.disconnected', __( 'Cloudflare disconnected. Its token was removed from this site.', 'arvaseo-connector' ) );
@@ -241,7 +249,9 @@ final class Cloudflare {
 	}
 
 	/**
-	 * Visitors get something new on every page: clear everything, at most once every GAP seconds.
+	 * Visitors get something new on every page: clear everything, at most once every GAP seconds,
+	 * and for changes made in the background (BURSTS) at most every 15 minutes. A change that
+	 * comes meanwhile waits for one clear when the gap is up, the earliest of the gaps asked for.
 	 *
 	 * @param string $why What changed (fix, choices, css, webp, fonts, exclusions).
 	 */
@@ -249,13 +259,24 @@ final class Cloudflare {
 		if ( ! self::connected() ) {
 			return;
 		}
-		$wait = self::details()['everything_at'] + self::GAP - time();
+		$why     = is_string( $why ) ? $why : '';
+		$details = self::details();
+		$due     = $details['everything_at'] + ( in_array( $why, self::BURSTS, true ) ? OtherCaches::GAP : self::GAP );
+		if ( $details['everything'] && $details['everything_due'] > 0 ) {
+			$due = min( $due, $details['everything_due'] );
+		}
+		$wait = $due - time();
 		if ( $wait > 0 ) {
-			self::update( array( 'everything' => true ) );
+			self::update(
+				array(
+					'everything'     => true,
+					'everything_due' => $due,
+				)
+			);
 			CronManager::run_soon( self::HOOK, $wait );
 			return;
 		}
-		self::purge_everything( is_string( $why ) ? $why : '' );
+		self::purge_everything( $why );
 	}
 
 	/**
@@ -354,7 +375,7 @@ final class Cloudflare {
 		}
 		$details = self::details();
 		if ( $details['everything'] ) {
-			$wait = $details['everything_at'] + self::GAP - time();
+			$wait = max( $details['everything_at'] + self::GAP, $details['everything_due'] ) - time();
 			if ( $wait > 0 ) {
 				wp_schedule_single_event( time() + $wait, self::HOOK );
 				return;
@@ -431,9 +452,10 @@ final class Cloudflare {
 		);
 		if ( 'everything' === $what ) {
 			// Every page includes the ones waiting in the queue.
-			$changes['everything']    = false;
-			$changes['everything_at'] = time();
-			$changes['queue']         = array();
+			$changes['everything']     = false;
+			$changes['everything_at']  = time();
+			$changes['everything_due'] = 0;
+			$changes['queue']          = array();
 		}
 		if ( in_array( $answer['status'], array( 401, 403 ), true ) ) {
 			$changes['refused'] = true;

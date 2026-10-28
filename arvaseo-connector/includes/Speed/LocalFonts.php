@@ -17,6 +17,10 @@ defined( 'ABSPATH' ) || exit;
  * the WOFF2 files it names, with their addresses changed to the copies. Until the copy is ready,
  * the page keeps Google's address, so nothing is ever missing. Visitors' browsers then don't
  * connect to Google for fonts at all. Google Fonts are open-source licensed, so copies are allowed.
+ *
+ * A copy pages use is touched at most daily; one no page used for 30 days (a theme's old fonts, or
+ * one of the copies a theme's time() cache buster made before 2.10.4, one per page view) goes in
+ * the daily maintenance, unless a cache Arva SEO can't clear may still have pages using it.
  */
 final class LocalFonts {
 
@@ -29,6 +33,9 @@ final class LocalFonts {
 	private const MAX_FILES = 40;
 
 	private const MAX_BYTES = 1048576;
+
+	/** A copy no page used for this long is deleted (AssetCache decides when, 2.11.0). */
+	public const UNUSED_AFTER = 30 * DAY_IN_SECONDS;
 
 	/** Google sends WOFF2 to a current browser. */
 	private const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
@@ -50,6 +57,10 @@ final class LocalFonts {
 		$key  = self::key( $src );
 		$file = self::dir() . '/' . $key . '.css';
 		if ( file_exists( $file ) ) {
+			$time = @filemtime( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a copy removed meanwhile is handled.
+			if ( false !== $time && $time < time() - DAY_IN_SECONDS && ! is_link( $file ) ) {
+				@touch( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_touch -- last-use time of our own copy.
+			}
 			return self::url() . '/' . $key . '.css';
 		}
 		// Scheduled without its cache busters: a theme's v=time() would otherwise schedule another
@@ -129,6 +140,62 @@ final class LocalFonts {
 	}
 
 	/**
+	 * Delete the copies no page used for 30 days, and for 90 while a cache Arva SEO can't clear may
+	 * keep pages (AssetCache::sweep(), a day after the caches were cleared, passes what to delete
+	 * and what the live homepage links to). Only this folder's own copies: never links or other files.
+	 *
+	 * @param int|null $before Last used before this time; null for the rule as it stands now.
+	 * @param string[] $keep   Names that stay: a copy's name with and without .css.
+	 * @return int Copies deleted.
+	 */
+	public static function remove_unused( ?int $before = null, array $keep = array() ): int {
+		$dir = self::dir();
+		if ( is_link( $dir ) || ! is_dir( $dir ) ) {
+			return 0;
+		}
+		$fs = self::filesystem();
+		if ( null === $fs ) {
+			return 0;
+		}
+		clearstatcache();
+		$before  = $before ?? AssetCache::unused_before( self::UNUSED_AFTER );
+		$removed = 0;
+		foreach ( (array) scandir( $dir ) as $name ) {
+			if ( ! is_string( $name ) || ! preg_match( '/^([a-f0-9]{16})(\.css)?$/', $name, $m ) || in_array( $name, $keep, true ) || in_array( $m[1], $keep, true ) ) {
+				continue;
+			}
+			$path = $dir . '/' . $name;
+			$css  = $dir . '/' . $m[1] . '.css';
+			if ( is_link( $path ) || ( isset( $m[2] ) && ! is_file( $path ) ) || ( ! isset( $m[2] ) && ! is_dir( $path ) ) ) {
+				continue;
+			}
+			// A copy goes with its stylesheet's last use; a folder without one (a failed copy) with its own age.
+			$used = is_file( $css ) && ! is_link( $css ) ? filemtime( $css ) : filemtime( $path );
+			if ( false === $used || $used >= $before ) {
+				continue;
+			}
+			if ( isset( $m[2] ) ? $fs->delete( $path ) : $fs->rmdir( $path, true ) ) {
+				$removed += isset( $m[2] ) ? 1 : 0;
+			}
+		}
+		if ( $removed > 0 ) {
+			AuditLogger::info(
+				'speed.fonts_cleaned',
+				/* translators: %d: number of font stylesheets. */
+				sprintf( _n( 'PageSpeed fixes: %d copy of Google Fonts that no page used for 30 days was deleted.', 'PageSpeed fixes: %d copies of Google Fonts that no page used for 30 days were deleted.', $removed, 'arvaseo-connector' ), $removed )
+			);
+		}
+		return $removed;
+	}
+
+	/**
+	 * The folder the copies are in.
+	 */
+	public static function directory(): string {
+		return self::dir();
+	}
+
+	/**
 	 * Remove every copy (uninstall, or when asked).
 	 */
 	public static function delete_all(): void {
@@ -163,7 +230,7 @@ final class LocalFonts {
 		$pairs = '' === $query ? array() : explode( '&', $query );
 		$names = array_map( static fn ( string $pair ): string => strtolower( rawurldecode( explode( '=', $pair, 2 )[0] ) ), $pairs );
 		if ( count( $names ) === count( array_unique( $names ) ) ) {
-			// One of each: the name 2.10.0 and earlier gave it without a cache buster, so existing copies stay in use.
+			// One of each: the name 2.10.3 and earlier gave it without a cache buster, so existing copies stay in use.
 			return substr( md5( (string) remove_query_arg( array( 'display', 'ver', 'v' ), $url ) ), 0, 16 );
 		}
 		$kept = array();

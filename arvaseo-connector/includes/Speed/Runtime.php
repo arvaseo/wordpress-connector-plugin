@@ -7,6 +7,8 @@
 
 namespace ArvaSEO\Connector\Speed;
 
+use ArvaSEO\Connector\Support\Lock;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -86,31 +88,54 @@ final class Runtime {
 		ImageCompression::init();
 		MediaLibraryCompression::init();
 		ExternalAssets::init();
+		AssetCache::init();
 		CssOptimizer::init();
 		Cloudflare::init();
+		OtherCaches::init();
 		PageCache::init();
 	}
 
 	/**
-	 * A new plugin version must not keep serving HTML produced by the old speed code.
-	 * Settings and generated CSS are preserved; only cached pages are invalidated once.
+	 * A new plugin version must not keep serving HTML produced by the old speed code, and must not
+	 * change what an administrator approved without telling them. Settings and generated CSS are
+	 * preserved; cached pages are invalidated once.
+	 *
+	 * The version that last ran is read first and overwritten last: the changes (Changes::upgrade)
+	 * need it, and a request that arrives while another one upgrades, or after one that stopped half
+	 * way, still sees it, so every fix keeps the revision visitors approved until the rows are written.
 	 */
 	public static function upgrade(): void {
-		$option   = 'arvaseo_connector_speed_version';
-		$previous = get_option( $option );
-		if ( ARVASEO_CONNECTOR_VERSION === $previous ) {
+		$option = Changes::VERSION_OPTION;
+		if ( ARVASEO_CONNECTOR_VERSION === Changes::version() ) {
 			return;
 		}
-		update_option( $option, ARVASEO_CONNECTOR_VERSION, false );
-		// Optimized CSS saved by 1.6.0 to 2.10.0 (and the 2.10.1+ builds) may have lost rules
-		// (CssOptimizer::store()): it's downloaded again, free, and each file is used until then.
-		if ( ! is_string( $previous ) || version_compare( $previous, '2.11.0', '<' ) ) {
+		if ( ! Lock::acquire( Changes::LOCK, MINUTE_IN_SECONDS ) ) {
+			return;
+		}
+		try {
+			$previous = get_option( $option );
+			if ( ARVASEO_CONNECTOR_VERSION === $previous ) {
+				return; // Another request finished it while this one waited for the lock.
+			}
+			Changes::upgrade( $previous );
+			update_option( $option, ARVASEO_CONNECTOR_VERSION, false );
+		} finally {
+			Lock::release( Changes::LOCK );
+		}
+		// Optimized CSS saved by 1.6.0 to 2.10.7 may have lost rules (CssOptimizer::store()): it's
+		// downloaded again, free, and each file is used until then. 2.10.0.1 (the WordPress.org
+		// hotfix) kept it whole and downloaded what earlier versions saved already.
+		if ( ! is_string( $previous ) || ( version_compare( $previous, '2.10.8', '<' ) && '2.10.0.1' !== $previous ) ) {
 			CssOptimizer::redownload_all();
 		}
 		// Report new capabilities promptly so Arva SEO does not keep showing an older plugin.
 		if ( ! wp_next_scheduled( 'arvaseo_connector_register' ) ) {
 			wp_schedule_single_event( time(), 'arvaseo_connector_register' );
 		}
+		// Which caches are in front of the site (a look at the homepage's headers, soon), and the
+		// drop-in learns the developer's list of ignored query parameters (2.11.0).
+		OtherCaches::check_soon();
+		PageCache::refresh_dropin();
 		foreach ( Fixes::stored()['fixes'] as $fix ) {
 			if ( 'on' === $fix['state'] ) {
 				Fixes::pages_changed( 'upgrade' );
@@ -130,9 +155,12 @@ final class Runtime {
 		if ( ! current_user_can( \ArvaSEO\Connector\Install\Capabilities::MANAGE ) || ( defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH ) ) ) {
 			return;
 		}
-		$states = array_map( array( Fixes::class, 'state' ), array_keys( Fixes::all() ) );
-		$trying = count( array_keys( $states, 'trying', true ) );
+		$states         = array_map( array( Fixes::class, 'state' ), array_keys( Fixes::all() ) );
+		$trying         = count( array_keys( $states, 'trying', true ) );
+		$waiting_caches = OtherCaches::waiting();
 		if ( 0 === $trying && ! in_array( 'on', $states, true ) ) {
+			// Every fix is off, but a change just made may still show in a cache that is the administrator's to clear.
+			self::caches_node( $bar, $waiting_caches );
 			return;
 		}
 		$bar->add_node(
@@ -148,6 +176,38 @@ final class Runtime {
 				'meta'  => array( 'title' => $trying > 0 ? __( 'Only you see the fixes you’re trying while signed in. Visitors see your site as before.', 'arvaseo-connector' ) : __( 'PageSpeed fixes are on for your visitors.', 'arvaseo-connector' ) ),
 			)
 		);
+		$updates = Changes::waiting_count();
+		if ( $updates > 0 ) {
+			$bar->add_node(
+				array(
+					'id'    => 'arvaseo-speed-updates',
+					/* translators: %d: number of fixes with an update to check. */
+					'title' => esc_html( sprintf( _n( 'Arva SEO: %d update to check', 'Arva SEO: %d updates to check', $updates, 'arvaseo-connector' ), $updates ) ),
+					'href'  => admin_url( 'admin.php?page=arvaseo-speed#' . Fixes::anchor( (string) array_key_first( Changes::waiting_fixes() ) ) ),
+					'meta'  => array( 'title' => __( 'Your visitors still get the version you checked. While you’re signed in you see the new one: open your important pages, then choose.', 'arvaseo-connector' ) ),
+				)
+			);
+		}
+		self::caches_node( $bar, $waiting_caches );
+		if ( OtherCaches::any() ) {
+			$bar->add_node(
+				array(
+					'parent' => 'arvaseo-speed-trying',
+					'id'     => 'arvaseo-other-caches-clear',
+					'title'  => esc_html__( 'Clear every cache now', 'arvaseo-connector' ),
+					'href'   => wp_nonce_url(
+						add_query_arg(
+							array(
+								'action' => 'arvaseo_connector_other_caches',
+								'do'     => 'clear',
+							),
+							admin_url( 'admin-post.php' )
+						),
+						'arvaseo_connector_other_caches'
+					),
+				)
+			);
+		}
 		if ( PageCache::active() ) {
 			$bar->add_node(
 				array(
@@ -171,6 +231,27 @@ final class Runtime {
 	}
 
 	/**
+	 * The toolbar item that says how many caches are the administrator's to clear.
+	 *
+	 * @param \WP_Admin_Bar                    $bar     The toolbar.
+	 * @param array<int, array<string, mixed>> $waiting Caches to clear by hand since something changed (OtherCaches::waiting()).
+	 */
+	private static function caches_node( $bar, array $waiting ): void {
+		if ( array() === $waiting ) {
+			return;
+		}
+		$bar->add_node(
+			array(
+				'id'    => 'arvaseo-speed-caches',
+				/* translators: %d: number of caches the administrator has to clear. */
+				'title' => esc_html( sprintf( _n( 'Arva SEO: clear %d cache yourself', 'Arva SEO: clear %d caches yourself', count( $waiting ), 'arvaseo-connector' ), count( $waiting ) ) ),
+				'href'  => admin_url( 'admin.php?page=arvaseo-speed#arvaseo-other-caches' ),
+				'meta'  => array( 'title' => esc_attr( OtherPlugins::names( array_column( $waiting, 'name' ) ) ) ),
+			)
+		);
+	}
+
+	/**
 	 * A page a visitor sees: hook the fixes that apply.
 	 */
 	public static function on_page(): void {
@@ -179,12 +260,22 @@ final class Runtime {
 		}
 		CssOptimizer::reset();
 		AssetMinifier::reset();
-		// Arva SEO's renderer: the page with its original styles, uncached, and none of the fixes.
+		Exclusions::reset();
+		// Render the same prepared CSS as visitors, without generated CSS or unrelated fixes.
 		if ( CssOptimizer::is_render_request() ) {
 			CssOptimizer::serve_original();
+			// Combined first from revision 2 (2.10.2); an approved earlier revision gets the original page.
+			if ( CssOptimizer::combined_mode() ) {
+				self::prepare_css();
+				AssetCombiner::on_page();
+				// The extras visitors don't get change the head too (WordPress's emoji styles sit
+				// between stylesheets and end a run to combine), so the renderer doesn't get them either.
+				if ( Fixes::applies( 'wp_extras' ) ) {
+					self::remove_extras();
+				}
+			}
 			return;
 		}
-		Exclusions::reset();
 		self::$images_seen     = 0;
 		self::$lookups         = 0;
 		self::$main_image_done = false;
@@ -220,16 +311,9 @@ final class Runtime {
 			add_filter( 'embed_oembed_html', array( self::class, 'youtube_facade' ), 20, 2 );
 			add_filter( 'render_block', array( self::class, 'youtube_block' ), 20, 2 );
 		}
+		self::prepare_css();
 		if ( Fixes::applies( 'google_fonts' ) ) {
-			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
 			add_filter( 'wp_resource_hints', array( self::class, 'font_preconnect' ), 20, 2 );
-		} elseif ( Fixes::applies( 'font_display_swap' ) ) {
-			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
-		}
-		// Keep tag attributes, dependencies and order: filter only the selected asset address.
-		// Source: https://developer.wordpress.org/reference/hooks/style_loader_tag/.
-		if ( Fixes::applies( 'minify_css' ) || Fixes::applies( 'font_display_swap' ) ) {
-			add_filter( 'style_loader_tag', array( AssetMinifier::class, 'style_tag' ), 30, 4 );
 		}
 		if ( Fixes::applies( 'minify_js' ) ) {
 			add_filter( 'script_loader_tag', array( AssetMinifier::class, 'script_tag' ), 30, 3 );
@@ -256,6 +340,16 @@ final class Runtime {
 		}
 		if ( Fixes::applies( 'viewport' ) ) {
 			add_action( 'wp_head', array( self::class, 'viewport' ), 0 );
+		}
+	}
+
+	/** The CSS preparation shared by a visitor and the signed generation request. */
+	private static function prepare_css(): void {
+		if ( Fixes::applies( 'google_fonts' ) || Fixes::applies( 'font_display_swap' ) ) {
+			add_filter( 'style_loader_src', array( self::class, 'font_display' ), 20 );
+		}
+		if ( Fixes::applies( 'minify_css' ) || Fixes::applies( 'font_display_swap' ) ) {
+			add_filter( 'style_loader_tag', array( AssetMinifier::class, 'style_tag' ), 30, 4 );
 		}
 	}
 

@@ -98,6 +98,11 @@ final class DiagnosticsService {
 			// The PageSpeed fixes and whether they're all switched off in wp-config.php.
 			'speed_fixes'     => array(
 				'fixes'       => \ArvaSEO\Connector\Speed\Fixes::for_registration(),
+				// What updates changed for this site (ids), as Arva SEO is told.
+				'changes'     => \ArvaSEO\Connector\Speed\Changes::for_registration(),
+				// The caches found in front of the site (names only), and when the homepage's headers were last looked at.
+				'caches'      => \ArvaSEO\Connector\Speed\OtherCaches::for_registration(),
+				'caches_seen' => \ArvaSEO\Connector\Speed\OtherCaches::checked_at(),
 				'kill_switch' => defined( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ) && (bool) constant( \ArvaSEO\Connector\Speed\Fixes::KILL_SWITCH ),
 				'page_cache'  => \ArvaSEO\Connector\Speed\PageCache::diagnostics(),
 				'remote'      => \ArvaSEO\Connector\Speed\Fixes::stored()['remote'],

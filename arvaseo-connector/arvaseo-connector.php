@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Arva SEO – Speed Booster & Security Scanner
  * Description:       PageSpeed fixes you switch on one at a time, each for a named Lighthouse problem and tried first if you like, and a security scan of your files that only reports what it finds. Connects this site to Arva SEO: shares a privacy-minimised plugin inventory and Website Health checks with your consent, shows evidence-backed fix guidance, and receives content you send from Arva SEO within the publishing limits you set here.
- * Version:           2.10.0.1
+ * Version:           2.11.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Arva SEO
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ARVASEO_CONNECTOR_VERSION', '2.10.0.1' );
+define( 'ARVASEO_CONNECTOR_VERSION', '2.11.0' );
 define( 'ARVASEO_CONNECTOR_FILE', __FILE__ );
 define( 'ARVASEO_CONNECTOR_DIR', __DIR__ );
 
@@ -33,6 +33,10 @@ if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
 
 require_once __DIR__ . '/includes/Autoloader.php';
 \ArvaSEO\Connector\Autoloader::register( __DIR__ . '/includes' );
+
+// The official Cloudflare plugin and Proxy Cache Purge read their lists of "clear everything" actions
+// early, so ours goes on them as this file loads.
+\ArvaSEO\Connector\Speed\OtherCaches::register_filters();
 
 register_activation_hook( __FILE__, array( \ArvaSEO\Connector\Install\Lifecycle::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( \ArvaSEO\Connector\Install\Lifecycle::class, 'deactivate' ) );
