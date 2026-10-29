@@ -171,6 +171,7 @@ final class DelayScripts {
 				continue; // JSON data, templates and the like stay as they are.
 			}
 			$tags->set_attribute( 'type', self::TYPE );
+			Runtime::script_delayed( (string) $handle );
 			$address = $tags->get_attribute( 'src' );
 			if ( is_string( $address ) ) {
 				$tags->remove_attribute( 'src' );

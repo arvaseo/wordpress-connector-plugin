@@ -44,6 +44,36 @@
 		} );
 	} );
 
+	// Returning from a preview updates only the script list, keeping edits in the form intact.
+	var deferredList = document.querySelector( '[data-arvaseo-deferred-list][data-refresh="1"]' );
+	if ( deferredList && strings.ajaxUrl && strings.deferredNonce ) {
+		var deferredPending = false;
+		var deferredHtml = null;
+		var refreshDeferred = function () {
+			if ( document.hidden || deferredPending ) {
+				return;
+			}
+			deferredPending = true;
+			var data = new URLSearchParams( {
+				action: 'arvaseo_connector_deferred_scripts',
+				_ajax_nonce: strings.deferredNonce
+			} );
+			fetch( strings.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: data } )
+				.then( function ( response ) { return response.json(); } )
+				.then( function ( response ) {
+					if ( response.success && response.data && typeof response.data.html === 'string' && response.data.html !== deferredHtml ) {
+						deferredHtml = response.data.html;
+						deferredList.innerHTML = deferredHtml;
+					}
+				} )
+				.catch( function () { /* Keep the last list if the request fails. */ } )
+				.finally( function () { deferredPending = false; } );
+		};
+		window.addEventListener( 'focus', refreshDeferred );
+		document.addEventListener( 'visibilitychange', refreshDeferred );
+		window.setInterval( refreshDeferred, 10000 );
+	}
+
 	// Speed: show all fixes, or only those the test asks for, on, being tried or off. Without
 	// JavaScript every fix shows and the filter stays hidden.
 	var filter = document.querySelector( '[data-arvaseo-filter]' );

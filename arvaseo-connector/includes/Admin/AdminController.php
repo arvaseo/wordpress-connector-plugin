@@ -51,6 +51,21 @@ final class AdminController {
 		'arvaseo-diagnostics' => array( 'Diagnostics and data sharing', Capabilities::MANAGE, 'diagnostics', 'arvaseo-settings' ),
 	);
 
+	/** The connected website's PageSpeed page, using the same app origin and project. */
+	public static function pagespeed_url(): string {
+		$connection = TokenStore::connection();
+		$url        = (string) ( $connection['app_url'] ?? '' );
+		$path       = (string) wp_parse_url( $url, PHP_URL_PATH );
+		if ( preg_match( '~^/w/[^/]+/projects/[^/]+/wordpress/?$~', $path ) ) {
+			return substr( $url, 0, strpos( $url, $path ) ) . preg_replace( '~/wordpress/?$~', '/performance', $path );
+		}
+		$workspace = (string) ( $connection['workspace']['id'] ?? '' );
+		$project   = (string) ( $connection['project']['id'] ?? '' );
+		return '' !== $workspace && '' !== $project
+			? rtrim( Config::app_url(), '/' ) . '/w/' . rawurlencode( $workspace ) . '/projects/' . rawurlencode( $project ) . '/performance'
+			: '';
+	}
+
 	/** Which set of fixes the dismissed "updates to check" notice was about (updates_key()). */
 	public const UPDATES_DISMISSED = 'arvaseo_connector_speed_updates_dismissed';
 
@@ -91,6 +106,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_security_repair', array( self::class, 'security_repair' ) );
 		add_action( 'admin_post_arvaseo_connector_security_undo', array( self::class, 'security_undo' ) );
 		add_action( 'wp_ajax_arvaseo_connector_security_progress', array( self::class, 'security_progress' ) );
+		add_action( 'wp_ajax_arvaseo_connector_deferred_scripts', array( self::class, 'deferred_scripts' ) );
 		add_action( 'wp_ajax_arvaseo_connector_css_progress', array( self::class, 'css_progress' ) );
 		add_action( 'admin_post_arvaseo_connector_deactivate_other', array( self::class, 'deactivate_other' ) );
 		add_action( 'admin_post_arvaseo_connector_keep_others', array( self::class, 'keep_others' ) );
@@ -880,6 +896,19 @@ final class AdminController {
 	}
 
 	/**
+	 * Refresh the preview's script list without replacing unsaved exclusion choices.
+	 */
+	public static function deferred_scripts(): void {
+		check_ajax_referer( 'arvaseo_connector_deferred_scripts' );
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
+			wp_send_json_error( null, 403 );
+		}
+		ob_start();
+		require __DIR__ . '/views/deferred-scripts.php';
+		wp_send_json_success( array( 'html' => (string) ob_get_clean() ) );
+	}
+
+	/**
 	 * Recheck the website (runs in the background).
 	 */
 	public static function recheck(): void {
@@ -1386,6 +1415,7 @@ final class AdminController {
 				'confirmCloudflareOff'   => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
 				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
 				'securityNonce'          => wp_create_nonce( 'arvaseo_connector_security_progress' ),
+				'deferredNonce'          => wp_create_nonce( 'arvaseo_connector_deferred_scripts' ),
 				'cssNonce'               => wp_create_nonce( 'arvaseo_connector_css_progress' ),
 				/* translators: 1: what the scan is checking, 2: number of files. */
 			)

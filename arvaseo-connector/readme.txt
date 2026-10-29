@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.11.0
+Stable tag: 2.11.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -219,6 +219,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.11.1 =
+The PageSpeed test button opens the connected website’s PageSpeed page. Recommended fixes are grouped with their statuses. The script list now shows supported delayed scripts and refreshes when you return from trying your homepage.
+
 = 2.11.0 =
 Updates that change how a fix you use works now wait for your check: visitors keep the version you checked until you choose "Use it for visitors". Arva SEO also clears more caches and lists the ones you must clear yourself. See Speed.
 
@@ -320,6 +323,12 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.11.1 =
+* Fix: Run a new test in Arva SEO opens PageSpeed for the connected website.
+* Improved: the latest test’s recommended fixes use the same groups as the fixes below; each status stays beside its fix.
+* Fix: Leave scripts alone lists supported scripts in Delayed mode as well as Deferred mode. The list refreshes when you return from the homepage and while the settings tab is visible, without losing unsaved exclusions.
+* Improved: the script list distinguishes no supported scripts from a homepage that has not been visited while trying the fix.
 
 = 2.11.0 =
 * New: updates that change how a fix you use works no longer reach your visitors silently. Visitors keep the version you checked; you see the new one while signed in, and an "Update to check" card on Speed lets you "Use it for visitors", "Keep the previous version" or "Turn the fix off". A toolbar item and one notice count them. The earlier version is kept at least 90 days, with a reminder before it is retired.

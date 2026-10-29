@@ -25,15 +25,13 @@ defined( 'ABSPATH' ) || exit;
 // Scoped so the view's variables stay local.
 ( static function () {
 
-	$arvaseo_fixes    = Fixes::all();
-	$arvaseo_stored   = Fixes::stored();
-	$arvaseo_test     = AssessmentService::pagespeed_result();
-	$arvaseo_killed   = defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH );
-	$arvaseo_deferred = get_transient( 'arvaseo_connector_deferred' );
-	$arvaseo_deferred = is_array( $arvaseo_deferred ) ? $arvaseo_deferred : array();
-	$arvaseo_plugins  = Exclusions::plugin_choices();
-	$arvaseo_others   = OtherPlugins::active();
-	$arvaseo_keep     = static function ( bool $keep, string $label, string $css_class ): void {
+	$arvaseo_fixes   = Fixes::all();
+	$arvaseo_stored  = Fixes::stored();
+	$arvaseo_test    = AssessmentService::pagespeed_result();
+	$arvaseo_killed  = defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH );
+	$arvaseo_plugins = Exclusions::plugin_choices();
+	$arvaseo_others  = OtherPlugins::active();
+	$arvaseo_keep    = static function ( bool $keep, string $label, string $css_class ): void {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="arvaseo-inline-form">';
 		echo '<input type="hidden" name="action" value="arvaseo_connector_keep_others" />';
 		echo '<input type="hidden" name="keep" value="' . ( $keep ? '1' : '0' ) . '" />';
@@ -41,21 +39,21 @@ defined( 'ABSPATH' ) || exit;
 		echo '<button type="submit" class="' . esc_attr( $css_class ) . '">' . esc_html( $label ) . '</button>';
 		echo '</form>';
 	};
-	$arvaseo_tones    = array(
+	$arvaseo_tones   = array(
 		'off'         => 'neutral',
 		'trying'      => 'warn',
 		'on'          => 'good',
 		'handled'     => 'neutral',
 		'unavailable' => 'neutral',
 	);
-	$arvaseo_extras   = array(
+	$arvaseo_extras  = array(
 		'emoji'          => array( __( 'The emoji script and styles', 'arvaseo-connector' ), __( 'Browsers show emoji by themselves.', 'arvaseo-connector' ) ),
 		'oembed'         => array( __( 'The embed discovery script', 'arvaseo-connector' ), __( 'Lets other websites embed your posts as cards. Embedding videos and posts on your site still works.', 'arvaseo-connector' ) ),
 		'dashicons'      => array( __( 'Dashicons for visitors', 'arvaseo-connector' ), __( 'The dashboard’s icon font. Leave it on if your theme shows these icons to visitors.', 'arvaseo-connector' ) ),
 		'jquery_migrate' => array( __( 'jQuery Migrate', 'arvaseo-connector' ), __( 'Helps old plugins with new jQuery. Only remove it if you’ve checked your site works without it.', 'arvaseo-connector' ) ),
 		'block_css'      => array( __( 'Block styles on pages without blocks', 'arvaseo-connector' ), __( 'Classic themes only. Leave it on if you use block widgets.', 'arvaseo-connector' ) ),
 	);
-	$arvaseo_subs     = array(
+	$arvaseo_subs    = array(
 		'sooner'  => __( 'The main content appears faster.', 'arvaseo-connector' ),
 		'still'   => __( 'Nothing jumps around while it loads.', 'arvaseo-connector' ),
 		'nothing' => __( 'Widgets and videos load when someone needs them.', 'arvaseo-connector' ),
@@ -212,31 +210,47 @@ defined( 'ABSPATH' ) || exit;
 					</div>
 				</div>
 			<?php endif; ?>
-			<?php if ( TokenStore::is_connected() ) : ?>
-				<a class="arvaseo-btn arvaseo-btn--sm" href="<?php echo esc_url( (string) ( TokenStore::connection()['app_url'] ?? '' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Run a new test in Arva SEO', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
+			<?php if ( TokenStore::is_connected() && '' !== AdminController::pagespeed_url() ) : ?>
+				<a class="arvaseo-btn arvaseo-btn--sm" href="<?php echo esc_url( AdminController::pagespeed_url() ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Run a new test in Arva SEO', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
 			<?php endif; ?>
 		</div>
 		<?php if ( null !== $arvaseo_test ) : ?>
-			<div class="arvaseo-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2ded3">
+			<div class="arvaseo-stack arvaseo-speed-recommendations" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2ded3">
 				<?php if ( array() === $arvaseo_needed ) : ?>
 					<span class="arvaseo-muted"><?php esc_html_e( 'None of the problems it found are ones these fixes address. Arva SEO’s PageSpeed page has the steps for the rest.', 'arvaseo-connector' ); ?></span>
 				<?php else : ?>
-					<span class="arvaseo-muted"><?php esc_html_e( 'This test asks for:', 'arvaseo-connector' ); ?></span>
-					<?php foreach ( $arvaseo_needed as $arvaseo_id => $arvaseo_audits ) : ?>
-						<a class="arvaseo-chip arvaseo-chip--acc" href="#<?php echo esc_attr( Fixes::anchor( $arvaseo_id ) ); ?>">
-							<?php echo esc_html( $arvaseo_fixes[ $arvaseo_id ]['title'] ); ?>
-							<span class="screen-reader-text">
-								<?php
-								/* translators: 1: fix state, 2: Lighthouse audit names. */
-								echo esc_html( sprintf( __( '(%1$s; fixes %2$s)', 'arvaseo-connector' ), Fixes::state_label( $arvaseo_states[ $arvaseo_id ] ), implode( ', ', array_unique( array_column( $arvaseo_audits, 'title' ) ) ) ) );
-								?>
-							</span>
-						</a>
-						<?php if ( 'handled' === $arvaseo_states[ $arvaseo_id ] ) : ?>
-							<a class="arvaseo-badge-link" href="#arvaseo-other-plugins"><?php echo AdminController::badge( 'neutral', Fixes::state_label( 'handled' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?></a>
-						<?php else : ?>
-							<?php echo 'off' === $arvaseo_states[ $arvaseo_id ] ? '' : AdminController::badge( $arvaseo_tones[ $arvaseo_states[ $arvaseo_id ] ] ?? 'neutral', Fixes::state_label( $arvaseo_states[ $arvaseo_id ] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?>
-						<?php endif; ?>
+					<p class="arvaseo-muted"><?php esc_html_e( 'This test asks for:', 'arvaseo-connector' ); ?></p>
+					<?php
+					foreach ( Fixes::groups() as $arvaseo_needed_group => $arvaseo_needed_title ) :
+						$arvaseo_group_ids = array_filter( array_keys( $arvaseo_needed ), static fn ( $id ) => $arvaseo_fixes[ $id ]['group'] === $arvaseo_needed_group );
+						if ( array() === $arvaseo_group_ids ) {
+							continue;
+						}
+						?>
+						<div>
+							<h3 class="arvaseo-eyebrow" id="arvaseo-needed-<?php echo esc_attr( $arvaseo_needed_group ); ?>"><?php echo esc_html( $arvaseo_needed_title ); ?></h3>
+							<ul class="arvaseo-row" aria-labelledby="arvaseo-needed-<?php echo esc_attr( $arvaseo_needed_group ); ?>" style="list-style: none; margin: 8px 0 0; padding: 0">
+								<?php foreach ( $arvaseo_group_ids as $arvaseo_id ) : ?>
+									<?php $arvaseo_audits = $arvaseo_needed[ $arvaseo_id ]; ?>
+									<li class="arvaseo-row" style="flex-wrap: nowrap; max-width: 100%; margin: 0">
+										<a class="arvaseo-chip arvaseo-chip--acc" href="#<?php echo esc_attr( Fixes::anchor( $arvaseo_id ) ); ?>">
+											<?php echo esc_html( $arvaseo_fixes[ $arvaseo_id ]['title'] ); ?>
+											<span class="screen-reader-text">
+												<?php
+												/* translators: 1: fix state, 2: Lighthouse audit names. */
+												echo esc_html( sprintf( __( '(%1$s; fixes %2$s)', 'arvaseo-connector' ), Fixes::state_label( $arvaseo_states[ $arvaseo_id ] ), implode( ', ', array_unique( array_column( $arvaseo_audits, 'title' ) ) ) ) );
+												?>
+											</span>
+										</a>
+										<?php if ( 'handled' === $arvaseo_states[ $arvaseo_id ] ) : ?>
+											<a class="arvaseo-badge-link" href="#arvaseo-other-plugins"><?php echo AdminController::badge( 'neutral', Fixes::state_label( 'handled' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?></a>
+										<?php else : ?>
+											<?php echo 'off' === $arvaseo_states[ $arvaseo_id ] ? '' : AdminController::badge( $arvaseo_tones[ $arvaseo_states[ $arvaseo_id ] ] ?? 'neutral', Fixes::state_label( $arvaseo_states[ $arvaseo_id ] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?>
+										<?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
 					<?php endforeach; ?>
 				<?php endif; ?>
 			</div>
@@ -1206,25 +1220,9 @@ defined( 'ABSPATH' ) || exit;
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="defer_scripts" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
-							<?php if ( array() === $arvaseo_deferred && 'trying' === $arvaseo_state ) : ?>
-								<p class="arvaseo-hint"><?php esc_html_e( 'Open your homepage while trying it: the scripts it defers are listed here, so you can leave one alone if something stops working.', 'arvaseo-connector' ); ?></p>
-							<?php elseif ( array() !== $arvaseo_deferred ) : ?>
-								<p><?php esc_html_e( 'Scripts it deferred on the last page you opened while trying it:', 'arvaseo-connector' ); ?></p>
-								<ul class="arvaseo-defer-list">
-									<?php foreach ( $arvaseo_deferred as $arvaseo_handle => $arvaseo_host ) : ?>
-										<li>
-											<code><?php echo esc_html( (string) $arvaseo_handle ); ?></code> <span class="arvaseo-hint"><?php echo esc_html( (string) $arvaseo_host ); ?></span>
-											<?php if ( in_array( (string) $arvaseo_handle, $arvaseo_stored['defer_exclude'], true ) ) : ?>
-												<span class="arvaseo-hint">· <?php esc_html_e( 'Left alone', 'arvaseo-connector' ); ?></span>
-											<?php else : ?>
-												<button type="submit" name="leave_alone" value="<?php echo esc_attr( (string) $arvaseo_handle ); ?>" class="arvaseo-link-btn">
-													<?php esc_html_e( 'Leave alone', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php echo esc_html( (string) $arvaseo_handle ); ?></span>
-												</button>
-											<?php endif; ?>
-										</li>
-									<?php endforeach; ?>
-								</ul>
-							<?php endif; ?>
+							<div data-arvaseo-deferred-list data-refresh="<?php echo 'trying' === $arvaseo_state ? '1' : '0'; ?>" aria-live="polite">
+								<?php require __DIR__ . '/deferred-scripts.php'; ?>
+							</div>
 							<label class="arvaseo-label" for="arvaseo-defer-exclude" style="margin-top: 10px"><?php esc_html_e( 'Leave these scripts alone', 'arvaseo-connector' ); ?></label>
 							<p class="arvaseo-hint"><?php esc_html_e( 'One per line: a script name (handle), such as one from the list above, or part of its file address, such as booking.js or /plugins/contact-form-7/. Consent or cookie tools are always left alone, and jQuery is never deferred; while it moves down the page, list jquery-core to keep it in the head.', 'arvaseo-connector' ); ?></p>
 							<textarea id="arvaseo-defer-exclude" name="defer_exclude" rows="3"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['defer_exclude'] ) ); ?></textarea>

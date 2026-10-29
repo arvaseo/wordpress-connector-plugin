@@ -323,10 +323,12 @@ final class Runtime {
 		}
 		if ( Fixes::applies( 'defer_scripts' ) && 'deferred' === Fixes::stored()['js_loading_mode'] ) {
 			add_action( 'wp_enqueue_scripts', array( self::class, 'defer_scripts' ), PHP_INT_MAX );
-			add_action( 'wp_footer', array( self::class, 'remember_deferred' ), PHP_INT_MAX );
 		}
 		if ( Fixes::applies( 'delay_scripts' ) || ( Fixes::applies( 'defer_scripts' ) && 'delayed' === Fixes::stored()['js_loading_mode'] ) ) {
 			DelayScripts::on_page();
+		}
+		if ( Fixes::applies( 'defer_scripts' ) ) {
+			add_action( 'wp_footer', array( self::class, 'remember_deferred' ), PHP_INT_MAX );
 		}
 		if ( CssOptimizer::wanted() && null === Exclusions::page_reason( 'critical_css' ) ) {
 			CssOptimizer::on_page();
@@ -731,6 +733,17 @@ final class Runtime {
 				continue; // Already in the footer, or already deferred or async.
 			}
 			$scripts->add_data( $handle, 'strategy', 'defer' );
+			self::$deferred[] = $handle;
+		}
+	}
+
+	/**
+	 * Remember a supported script only after its tags have actually been delayed.
+	 *
+	 * @param string $handle WordPress script handle.
+	 */
+	public static function script_delayed( string $handle ): void {
+		if ( Fixes::applies( 'defer_scripts' ) && 'delayed' === Fixes::stored()['js_loading_mode'] && count( self::$deferred ) < 50 && ! in_array( $handle, self::$deferred, true ) ) {
 			self::$deferred[] = $handle;
 		}
 	}
