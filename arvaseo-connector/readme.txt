@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.11.1
+Stable tag: 2.11.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -190,6 +190,7 @@ Connecting to Arva SEO (https://arvaseo.com) is optional and starts only when an
 * **Signed requests from Arva SEO:** api.arvaseo.com may call this site's /wp-json/arvaseo/v1/events endpoint to ask it to check for content or run a recheck sooner.
 * **Featured images (off by default):** only from image hosts you approve.
 * **Combine external CSS/JavaScript (off by default):** only exact public HTTPS asset URLs the administrator approves. The site's server requests those public files in the background, without visitor cookies, account credentials or page content, and keeps bounded six-hour copies for combining. The selected asset host receives the requested address and the server's IP address. Personal, signed, redirected and unsupported responses are not cached. No new files are requested merely because a URL is approved; a page must already use that resource.
+* **PageSpeed tests (only when you request a test):** the plugin sends the public page URL, selected devices and run count to api.arvaseo.com. Arva SEO requests Google PageSpeed Insights, which loads the page; scores and metrics return to WordPress. Each selected device uses one workspace test. Refreshing saved results does not start a test. Google’s privacy policy: https://policies.google.com/privacy
 * **Load styles faster and Remove unused CSS (PageSpeed fixes, off by default, only when connected):** the plugin sends api.arvaseo.com the address of one public page of each type, and Arva SEO's renderer loads it like a visitor to work out its styles; the critical and used CSS come back to this site. Only page addresses are sent. While Arva SEO loads a page, the address carries a short-lived signed parameter so the page is served with its original styles.
 * **Faster Google Fonts, "Serve them from your site" (off by default):** the plugin downloads the Google Fonts stylesheets and font files your pages already use from fonts.googleapis.com and fonts.gstatic.com, once, into your uploads folder, so visitors' browsers no longer connect to Google for them. Google's privacy policy: https://policies.google.com/privacy
 * **Cloudflare (off until you connect it on the Speed page):** with the API token you enter, the plugin asks api.cloudflare.com which zone your site's domain is in, reads the Rocket Loader setting, and asks Cloudflare to clear its cached copy of your pages when they change. Only page addresses and the token are sent. Cloudflare's terms: https://www.cloudflare.com/website-terms/ · Privacy policy: https://www.cloudflare.com/privacypolicy/
@@ -218,6 +219,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.11.2 =
+Adds PageSpeed tests inside WordPress, grouped controls, accurate defer previews, CSS pause details and one-page recovery, plus reviewed asset trials. Existing optimization choices remain; new trials stay off. Check your pages before enabling visitor changes.
 
 = 2.11.1 =
 The PageSpeed test button opens the connected website’s PageSpeed page. Recommended fixes are grouped with their statuses. The script list now shows supported delayed scripts and refreshes when you return from trying your homepage.
@@ -323,6 +327,18 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.11.2 =
+* New: Run mobile and desktop PageSpeed tests inside WordPress, with one or three runs, visible allowance, saved results and score ranges. Refreshing results never starts a paid test.
+* Fix: The Deferred preview list records emitted defer attributes after WordPress resolves dependencies, instead of reporting rejected strategy requests as deferred. Existing jQuery, consent and footer protections remain.
+* Improved: CSS, JavaScript, images and fonts have their own groups. CSS progress identifies waiting pages and change-protection pauses; one-page recovery fetches an existing result free or explicitly requests one render without clearing other results.
+* Improved: Image progress distinguishes cloud savings, local WebP processing and files checked without a saving. Arva SEO server updates bound slow compression tools and preserve originals.
+* New: Shared Critical CSS and Unused CSS quota panel with used/remaining allowance, reset date, stale/exhausted warnings and a read-only refresh. Existing plan limits and CSS generation behavior are unchanged.
+* New: Private, administrator-requested CSS and JavaScript inspection with duplicate, delivery, bundle-member and conservative syntax diagnostics.
+* Optional separate JavaScript exclusions and reviewed AMD, body CSS and jQuery Migrate trials. Existing settings stay in effect. Trials start off and require a matching signed-in preview plus interaction checks before visitors receive them. Changed exclusion policies return the affected fix to Trying.
+* New: Review individual jQuery UMD files for standalone minification, small body stylesheets for full-CSS inlining in place, or jQuery Migrate removal when no queued dependency needs it.
+* Safety: Trials start off, require a matching preview and acknowledged checks, keep explicit dependencies, and fall back to original files when source bytes change. Persistent admin warnings explain compatibility risks.
+* Preserved: jQuery loading order, consent, integrity, module and unsupported AMD safeguards.
 
 = 2.11.1 =
 * Fix: Run a new test in Arva SEO opens PageSpeed for the connected website.

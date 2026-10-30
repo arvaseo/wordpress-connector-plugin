@@ -74,6 +74,13 @@ final class Runtime {
 	private static array $deferred = array();
 
 	/**
+	 * Strategies requested by this fix; pre-existing defer attributes are not attributed to it.
+	 *
+	 * @var array<string,bool>
+	 */
+	private static array $defer_requested = array();
+
+	/**
 	 * Hooks.
 	 */
 	public static function init(): void {
@@ -156,6 +163,7 @@ final class Runtime {
 			return;
 		}
 		$states         = array_map( array( Fixes::class, 'state' ), array_keys( Fixes::all() ) );
+		$states         = array_merge( $states, array_column( SafeAssetTrials::settings(), 'state' ) );
 		$trying         = count( array_keys( $states, 'trying', true ) );
 		$waiting_caches = OtherCaches::waiting();
 		if ( 0 === $trying && ! in_array( 'on', $states, true ) ) {
@@ -258,6 +266,10 @@ final class Runtime {
 		if ( ! self::is_page_request() ) {
 			return;
 		}
+		SafeAssetTrials::reset();
+		AssetDiagnostics::start();
+		SafeAssetTrials::private_preview();
+		add_action( 'wp_enqueue_scripts', array( SafeAssetTrials::class, 'remove_migrate' ), PHP_INT_MAX );
 		CssOptimizer::reset();
 		AssetMinifier::reset();
 		Exclusions::reset();
@@ -280,6 +292,7 @@ final class Runtime {
 		self::$lookups         = 0;
 		self::$main_image_done = false;
 		self::$deferred        = array();
+		self::$defer_requested = array();
 		self::$eager           = Fixes::stored()['eager_images'];
 		$main                  = Fixes::applies( 'lcp_image' ) ? self::report_main() : null;
 		self::$report_image    = null !== $main ? self::image_stem( $main['image'] ) : null;
@@ -323,6 +336,7 @@ final class Runtime {
 		}
 		if ( Fixes::applies( 'defer_scripts' ) && 'deferred' === Fixes::stored()['js_loading_mode'] ) {
 			add_action( 'wp_enqueue_scripts', array( self::class, 'defer_scripts' ), PHP_INT_MAX );
+			add_filter( 'script_loader_tag', array( self::class, 'observe_deferred' ), PHP_INT_MAX, 2 );
 		}
 		if ( Fixes::applies( 'delay_scripts' ) || ( Fixes::applies( 'defer_scripts' ) && 'delayed' === Fixes::stored()['js_loading_mode'] ) ) {
 			DelayScripts::on_page();
@@ -733,8 +747,27 @@ final class Runtime {
 				continue; // Already in the footer, or already deferred or async.
 			}
 			$scripts->add_data( $handle, 'strategy', 'defer' );
-			self::$deferred[] = $handle;
+			self::$defer_requested[ $handle ] = true;
 		}
+	}
+
+	/**
+	 * Record emitted defer attributes, after WordPress resolves dependency safety.
+	 *
+	 * @param string $html Script output.
+	 * @param string $handle Registered script handle.
+	 */
+	public static function observe_deferred( string $html, string $handle ): string {
+		if ( isset( self::$defer_requested[ $handle ] ) && count( self::$deferred ) < 50 && ! in_array( $handle, self::$deferred, true ) ) {
+			$tags = new \WP_HTML_Tag_Processor( $html );
+			while ( $tags->next_tag( array( 'tag_name' => 'SCRIPT' ) ) ) {
+				if ( is_string( $tags->get_attribute( 'src' ) ) && null !== $tags->get_attribute( 'defer' ) ) {
+					self::$deferred[] = $handle;
+					break;
+				}
+			}
+		}
+		return $html;
 	}
 
 	/**

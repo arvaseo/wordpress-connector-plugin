@@ -99,7 +99,7 @@ final class AssetMinifier {
 	 * @return mixed
 	 */
 	public static function script_tag( $tag, $handle, $src = '' ) {
-		if ( ! is_string( $tag ) || ! Fixes::applies( 'minify_js' ) || Exclusions::leaves_script( (string) $handle, (string) $src ) ) {
+		if ( ! is_string( $tag ) || ! Fixes::applies( 'minify_js' ) || Exclusions::leaves_optimization( 'minify_js', (string) $handle, (string) $src ) ) {
 			return $tag;
 		}
 		$tags = new \WP_HTML_Tag_Processor( $tag );
@@ -110,7 +110,7 @@ final class AssetMinifier {
 			}
 			$attribute = DelayScripts::TYPE === $type ? 'data-arvaseo-src' : 'src';
 			$source    = $tags->get_attribute( $attribute );
-			if ( ! is_string( $source ) || Exclusions::leaves_script( (string) $handle, $source ) ) {
+			if ( ! is_string( $source ) || Exclusions::leaves_optimization( 'minify_js', (string) $handle, $source ) ) {
 				continue;
 			}
 			$url = self::local_url( $source, 'js' );
@@ -150,10 +150,10 @@ final class AssetMinifier {
 			return null;
 		}
 		// Moving these scripts changes their resource base; leave them at their original URL.
-		$unsafe = preg_match( '/\b(?:import|export|importScripts)\b|\bnew\s+(?:URL|Worker|SharedWorker)\b|\bdocument\s*(?:\.\s*(?:currentScript|scripts)|\[\s*[\'\"]currentScript)|\bdefine\s*\(/', $text );
-		if ( 'js' === $kind && 0 !== $unsafe ) {
+		if ( 'js' === $kind && null !== self::script_obstacle( $text ) && ! ( SafeAssetTrials::supported_amd( $text ) && SafeAssetTrials::approved( 'amd', $asset['url'], $text ) ) ) {
 			return null;
 		}
+
 		// Moving @imports ahead of @layer order declarations can change the cascade.
 		if ( 'css' === $kind && preg_match( '/@import\b/i', $text ) && preg_match( '/@layer\b/i', $text ) ) {
 			return null;
@@ -182,6 +182,9 @@ final class AssetMinifier {
 			if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) > 0 ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache entry.
 				AssetCache::used( $file );
 				self::$seen[ $key ] = self::url() . '/' . $existing;
+				if ( 'js' === $kind && 'amd' === self::script_obstacle( $text ) ) {
+					SafeAssetTrials::applied( 'amd', hash( 'sha256', $text ), $asset['url'] );
+				}
 				return self::$seen[ $key ];
 			}
 		}
@@ -219,6 +222,9 @@ final class AssetMinifier {
 		}
 		++self::$generated;
 		self::$seen[ $key ] = $url;
+		if ( 'js' === $kind && 'amd' === self::script_obstacle( $text ) ) {
+			SafeAssetTrials::applied( 'amd', hash( 'sha256', $text ), $asset['url'] );
+		}
 		return $url;
 	}
 
@@ -278,6 +284,19 @@ final class AssetMinifier {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Explain the existing relocation guard without changing its eligibility rules.
+	 *
+	 * @param string $text Source bytes, never retained in diagnostics.
+	 */
+	public static function script_obstacle( string $text ): ?string {
+		if ( preg_match( '/\bdefine\s*\(/', $text ) ) {
+			return 'amd';
+		}
+		$unsafe = preg_match( '/\b(?:import|export|importScripts)\b|\bnew\s+(?:URL|Worker|SharedWorker)\b|\bdocument\s*(?:\.\s*(?:currentScript|scripts)|\[\s*[\'\"]currentScript)/', $text );
+		return 0 === $unsafe ? null : 'resource_base';
 	}
 
 	/**

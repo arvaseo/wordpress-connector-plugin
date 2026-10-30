@@ -311,6 +311,33 @@ final class Exclusions {
 	}
 
 	/**
+	 * Separate byte-optimization policy; execution and consent protections remain intact.
+	 *
+	 * @param string $operation minify_js or combine_js.
+	 * @param string $handle Registered handle.
+	 * @param string $src Original source.
+	 */
+	public static function leaves_optimization( string $operation, string $handle, string $src ): bool {
+		if ( ! in_array( $operation, array( 'minify_js', 'combine_js' ), true ) ) {
+			return true;
+		}
+		$stored = Fixes::stored();
+		if ( ! $stored[ $operation . '_separate' ] ) {
+			return self::leaves_script( $handle, $src );
+		}
+		if ( in_array( $handle, Fixes::DEFER_ALWAYS_EXCLUDED, true ) || preg_match( Fixes::DEFER_EXCLUDED_PATTERN, $handle ) ) {
+			return true;
+		}
+		foreach ( $stored[ $operation . '_exclude' ] as $entry ) {
+			if ( $entry === $handle || ( self::is_file_part( $entry ) && false !== stripos( $src, $entry ) ) ) {
+				return true;
+			}
+		}
+		// Preserve integrations which explicitly veto a transformation.
+		return ! (bool) apply_filters( 'arvaseo_connector_defer_script', true, $handle, $src );
+	}
+
+	/**
 	 * The active plugins whose scripts can be left alone: folder => name, Arva SEO's own left out.
 	 *
 	 * @return array<string, string>

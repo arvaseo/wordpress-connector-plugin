@@ -776,7 +776,7 @@ final class CssOptimizer {
 	/**
 	 * The page types known, by signature.
 	 *
-	 * @return array<string, array{template: string, url: string, status: string, at: int, error?: string, error_status?: int, retry_at?: int}>
+	 * @return array<string, array{template: string, url: string, status: string, at: int, error?: string, error_file?: string, error_status?: int, retry_at?: int}>
 	 */
 	public static function index(): array {
 		$index = get_option( self::INDEX, array() );
@@ -953,7 +953,7 @@ final class CssOptimizer {
 	public static function current_url(): string {
 		$uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
 		$url = home_url( (string) $uri );
-		return (string) remove_query_arg( array_merge( PageCache::tracking_parameters(), array( 'arvaseo_render', 'arvaseo_note' ) ), $url );
+		return (string) remove_query_arg( array_merge( PageCache::tracking_parameters(), array( 'arvaseo_render', 'arvaseo_note', AssetDiagnostics::QUERY ) ), $url );
 	}
 
 	/**
@@ -1054,7 +1054,7 @@ final class CssOptimizer {
 			if ( ! self::known( $entry ) ) {
 				continue;
 			}
-			if ( 'needed' === $entry['status'] || ( in_array( $entry['status'], array( 'no_allowance', 'daily_cap' ), true ) && ( $entry['retry_at'] ?? 0 ) <= time() ) ) {
+			if ( 'needed' === $entry['status'] || ( in_array( $entry['status'], array( 'no_allowance', 'daily_cap', 'too_many_changes' ), true ) && ( $entry['retry_at'] ?? 0 ) <= time() ) ) {
 				$send[] = array(
 					'signature' => (string) $signature,
 					'url'       => $entry['url'],
@@ -1077,8 +1077,9 @@ final class CssOptimizer {
 					$change(
 						$signature,
 						array(
-							'status'   => in_array( $status, array( 'queued', 'rendering', 'ready' ), true ) ? 'requested' : $status,
-							'retry_at' => 'no_allowance' === $status ? self::next_month() : ( time() + DAY_IN_SECONDS ),
+							'error_file' => isset( $row['file'] ) && is_string( $row['file'] ) ? substr( sanitize_text_field( $row['file'] ), 0, 500 ) : '',
+							'status'     => in_array( $status, array( 'queued', 'rendering', 'ready' ), true ) ? 'requested' : $status,
+							'retry_at'   => 'no_allowance' === $status ? self::next_month() : ( time() + DAY_IN_SECONDS ),
 						)
 					);
 					++$out['sent'];
@@ -1136,7 +1137,7 @@ final class CssOptimizer {
 			}
 		}
 		if ( null !== $out['allowance'] ) {
-			update_option( 'arvaseo_connector_css_allowance', $out['allowance'] + array( 'at' => time() ), false );
+			CssAllowance::save( $out['allowance'] );
 		}
 		$fresh = self::index();
 		foreach ( $changes as $signature => $fields ) {
@@ -1353,6 +1354,7 @@ final class CssOptimizer {
 		delete_option( self::INDEX );
 		delete_option( 'arvaseo_connector_css_hashes' );
 		delete_option( 'arvaseo_connector_css_allowance' );
+		delete_option( 'arvaseo_connector_css_pauses' );
 	}
 
 	/**
@@ -1374,7 +1376,7 @@ final class CssOptimizer {
 			}
 			if ( in_array( $status, array( 'ready', 'redownload' ), true ) ) {
 				++$counts['ready'];
-			} elseif ( in_array( $status, array( 'needed', 'requested', 'daily_cap' ), true ) ) {
+			} elseif ( in_array( $status, array( 'needed', 'requested', 'daily_cap', 'too_many_changes' ), true ) ) {
 				++$counts['waiting'];
 			} elseif ( 'no_allowance' === $status ) {
 				++$counts['no_allowance'];
@@ -1402,6 +1404,123 @@ final class CssOptimizer {
 			}
 		}
 		return $out;
+	}
+
+	/**
+	 * Local outstanding work; requested does not prove a server render is still running.
+	 *
+	 * @return list<array{signature:string,url:string,status:string,at:int,reason:string}>
+	 */
+	public static function pending_details(): array {
+		$reasons = array(
+			'failed'           => __( 'The last attempt failed. Check the existing result before requesting another render.', 'arvaseo-connector' ),
+			'too_many_changes' => __( 'Paused because the styles changed repeatedly. Original CSS stays available. Check the changing stylesheet before retrying; no render is running for this entry.', 'arvaseo-connector' ),
+			'needed'           => __( 'Waiting to send this stylesheet signature to Arva SEO.', 'arvaseo-connector' ),
+			'requested'        => __( 'Requested; waiting to download and save a matching result. This does not mean the server is still rendering it.', 'arvaseo-connector' ),
+			'redownload'       => __( 'Checking for a complete saved result; the existing styles remain available.', 'arvaseo-connector' ),
+			'daily_cap'        => __( 'Waiting for the daily rendering limit to reset.', 'arvaseo-connector' ),
+			'no_allowance'     => __( 'Waiting for page optimization allowance.', 'arvaseo-connector' ),
+		);
+		$out     = array();
+		foreach ( self::index() as $signature => $entry ) {
+			if ( ! self::known( $entry ) || ! isset( $reasons[ $entry['status'] ] ) ) {
+				continue;
+			}
+			$out[] = array(
+				'signature' => (string) $signature,
+				'url'       => (string) $entry['url'],
+				'status'    => (string) $entry['status'],
+				'at'        => (int) ( $entry['at'] ?? 0 ),
+				'reason'    => $reasons[ $entry['status'] ] . ( ! empty( $entry['error_file'] ) ? ' ' . (string) $entry['error_file'] : '' ),
+			);
+		}
+		usort( $out, static fn ( array $a, array $b ): int => $a['at'] <=> $b['at'] );
+		return $out;
+	}
+
+	/**
+	 * Recover one known page without clearing other results or regenerating the site.
+	 *
+	 * @param string $signature Known stylesheet signature.
+	 * @param bool   $regenerate Explicitly request one new render instead of fetching.
+	 * @param bool   $checked Administrator acknowledged the possible page-optimization charge.
+	 * @param string $request_id Idempotency UUID retained on retries.
+	 */
+	public static function page_action( string $signature, bool $regenerate, bool $checked, string $request_id ): string {
+		if ( ! current_user_can( Capabilities::MANAGE ) || ! TokenStore::is_connected() ) {
+			return 'forbidden';
+		}
+		$index = self::index();
+		$entry = $index[ $signature ] ?? null;
+		if ( ! preg_match( '/^[a-f0-9]{40,64}$/D', $signature ) || ! is_array( $entry ) || ! self::known( $entry ) || ! AssetMinifier::same_origin( $entry['url'], home_url( '/' ) ) ) {
+			return 'invalid';
+		}
+		if ( $regenerate && ( ! $checked || ! wp_is_uuid( $request_id ) ) ) {
+			return 'check';
+		}
+		if ( $regenerate && ! \ArvaSEO\Connector\Support\Lock::acquire( 'css-page-' . sha1( (string) TokenStore::site_id() . $signature ), 300 ) ) {
+			return 'wait';
+		}
+		$client   = ApiClient::instance();
+		$response = $regenerate
+			? $client->site(
+				'POST',
+				'/css-optimizations',
+				array(
+					'items'      => array(
+						array(
+							'signature' => $signature,
+							'url'       => $entry['url'],
+							'template'  => $entry['template'],
+						),
+					),
+					'regenerate' => true,
+					'request_id' => $request_id,
+				)
+			)
+			: $client->site( 'GET', '/css-optimizations?signatures=' . $signature, null, self::FETCH_SECONDS, ApiClient::MAX_RESPONSE_LIMIT );
+		if ( ! $response->ok() ) {
+			return 'unavailable';
+		}
+		if ( is_array( $response->body['allowance'] ?? null ) ) {
+			CssAllowance::save( $response->body['allowance'] );
+		}
+		foreach ( (array) ( $response->body['data'] ?? array() ) as $row ) {
+			if ( ! is_array( $row ) || ( $row['signature'] ?? '' ) !== $signature ) {
+				continue;
+			}
+			$status = (string) ( $row['status'] ?? '' );
+			if ( $regenerate && in_array( $status, array( 'queued', 'rendering', 'ready' ), true ) ) {
+				$fields = array( 'status' => 'requested' );
+			} elseif ( ! $regenerate && 'ready' === $status ) {
+				$fields = self::store( $signature, (array) ( $row['sheets'] ?? array() ) ) ? array( 'status' => 'ready' ) : array(
+					'status' => 'failed',
+					'error'  => 'result_not_saved',
+				);
+			} elseif ( in_array( $status, array( 'failed', 'daily_cap', 'no_allowance', 'too_many_changes' ), true ) ) {
+				$fields = array(
+					'status'   => $status,
+					'error'    => substr( (string) ( $row['error_code'] ?? '' ), 0, 40 ),
+					'retry_at' => time() + DAY_IN_SECONDS,
+				);
+			} else {
+				continue;
+			}
+			$fresh = self::index();
+			if ( ! isset( $fresh[ $signature ] ) ) {
+				return 'invalid';
+			}
+			$fresh[ $signature ] = array_merge( $fresh[ $signature ], $fields );
+			self::save_index( $fresh );
+			if ( 'ready' === $fields['status'] && self::wanted() ) {
+				Fixes::pages_changed( 'css' );
+			}
+			if ( 'requested' === $fields['status'] ) {
+				self::schedule_sync( $fresh, self::wanted() );
+			}
+			return 'ready' === $fields['status'] ? 'updated' : ( 'requested' === $fields['status'] ? 'started' : 'waiting' );
+		}
+		return 'not_ready';
 	}
 
 	/**
@@ -1444,6 +1563,7 @@ final class CssOptimizer {
 				: __( 'The page didn’t load.', 'arvaseo-connector' );
 		}
 		return match ( $code ) {
+			'result_not_saved' => __( 'A result arrived but could not be saved locally. Check the uploads directory permissions and available disk space; original styles remain available.', 'arvaseo-connector' ),
 			'timeout'      => __( 'The page took too long to load.', 'arvaseo-connector' ),
 			'too_large'    => __( 'The page’s styles are too large to optimize.', 'arvaseo-connector' ),
 			'not_allowed'  => __( 'The page loads from an address Arva SEO doesn’t load (a private network).', 'arvaseo-connector' ),

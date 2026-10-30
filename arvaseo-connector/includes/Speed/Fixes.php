@@ -361,16 +361,41 @@ final class Fixes {
 	}
 
 	/**
+	 * Admin-only organization; released optimization definitions and fingerprints stay intact.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public static function display_fixes(): array {
+		$fixes  = self::all();
+		$groups = array(
+			'css'        => array( 'critical_css', 'unused_css', 'minify_css', 'combine_css', 'minify_inline_css', 'combine_inline_css', 'combine_external_css' ),
+			'javascript' => array( 'defer_scripts', 'delay_scripts', 'minify_js', 'combine_js', 'minify_inline_js', 'combine_inline_js', 'combine_external_js' ),
+			'images'     => array( 'lcp_image', 'lazy_media', 'image_dimensions', 'webp_uploads', 'compress_images' ),
+			'fonts'      => array( 'google_fonts', 'font_display_swap' ),
+		);
+		foreach ( $groups as $group => $ids ) {
+			foreach ( $ids as $id ) {
+				$fixes[ $id ]['group'] = $group;
+			}
+		}
+		return $fixes;
+	}
+
+	/**
 	 * The groups, in the words of what visitors notice.
 	 *
 	 * @return array<string, string>
 	 */
 	public static function groups(): array {
 		return array(
-			'sooner'  => __( 'Your page shows sooner', 'arvaseo-connector' ),
-			'still'   => __( 'The page holds still and fits phones', 'arvaseo-connector' ),
-			'nothing' => __( 'Less waiting for things nobody has asked for', 'arvaseo-connector' ),
-			'smaller' => __( 'Smaller files', 'arvaseo-connector' ),
+			'css'        => __( 'CSS and page styling', 'arvaseo-connector' ),
+			'javascript' => __( 'JavaScript and interactions', 'arvaseo-connector' ),
+			'images'     => __( 'Images and media', 'arvaseo-connector' ),
+			'fonts'      => __( 'Fonts', 'arvaseo-connector' ),
+			'sooner'     => __( 'Your page shows sooner', 'arvaseo-connector' ),
+			'still'      => __( 'The page holds still and fits phones', 'arvaseo-connector' ),
+			'nothing'    => __( 'Less waiting for things nobody has asked for', 'arvaseo-connector' ),
+			'smaller'    => __( 'Smaller files', 'arvaseo-connector' ),
 		);
 	}
 
@@ -423,7 +448,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null, rev: int, kept: int}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[], changes: list<array{id: string, at: int, done?: string}>}
+	 * @return array{fixes: array<string, array{state: string, since: string|null, rev: int, kept: int}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, minify_js_separate: bool, combine_js_separate: bool, minify_js_exclude: string[], combine_js_exclude: string[], move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[], changes: list<array{id: string, at: int, done?: string}>}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -460,7 +485,11 @@ final class Fixes {
 			'ccss_per_url'           => (bool) ( $saved['ccss_per_url'] ?? false ),
 			'css_async_inline'       => (bool) ( $saved['css_async_inline'] ?? true ),
 			'js_loading_mode'        => 'delayed' === ( $saved['js_loading_mode'] ?? '' ) ? 'delayed' : 'deferred',
-			// 2.10.5: both start off, so updating never changes what an administrator already checked.
+			// Separate lists are opt-in; existing sites retain their shared exclusions.
+			'minify_js_separate'     => (bool) ( $saved['minify_js_separate'] ?? false ),
+			'combine_js_separate'    => (bool) ( $saved['combine_js_separate'] ?? false ),
+			'minify_js_exclude'      => self::strings( $saved['minify_js_exclude'] ?? array() ),
+			'combine_js_exclude'     => self::strings( $saved['combine_js_exclude'] ?? array() ),
 			'move_jquery'            => (bool) ( $saved['move_jquery'] ?? false ),
 			'late_icons'             => (bool) ( $saved['late_icons'] ?? false ),
 			'combine_inline_css_ids' => self::inline_approvals( $saved['combine_inline_css_ids'] ?? array() ),
@@ -741,6 +770,21 @@ final class Fixes {
 	public static function save_choices( array $choices ): void {
 		$data   = self::stored();
 		$before = $data;
+		// Existing sites inherit the shared exclusions until an administrator opts in.
+		foreach ( array( 'minify_js', 'combine_js' ) as $operation ) {
+			$separate = $operation . '_separate';
+			$exclude  = $operation . '_exclude';
+			if ( array_key_exists( $separate, $choices ) ) {
+				$data[ $separate ] = (bool) $choices[ $separate ];
+			}
+			if ( array_key_exists( $exclude, $choices ) ) {
+				$data[ $exclude ] = Exclusions::script_lines( (string) $choices[ $exclude ] );
+			}
+			if ( ( $data[ $separate ] !== $before[ $separate ] || $data[ $exclude ] !== $before[ $exclude ] ) && 'on' === $data['fixes'][ $operation ]['state'] ) {
+				$data['fixes'][ $operation ]['state'] = 'trying';
+				$data['fixes'][ $operation ]['since'] = gmdate( 'c' );
+			}
+		}
 		foreach ( array( 'ucss_inline', 'ccss_per_url', 'css_async_inline' ) as $field ) {
 			if ( array_key_exists( $field, $choices ) ) {
 				$data[ $field ] = (bool) $choices[ $field ];

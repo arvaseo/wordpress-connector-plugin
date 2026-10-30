@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 // Scoped so the view's variables stay local.
 ( static function () {
 
-	$arvaseo_fixes   = Fixes::all();
+	$arvaseo_fixes   = Fixes::display_fixes();
 	$arvaseo_stored  = Fixes::stored();
 	$arvaseo_test    = AssessmentService::pagespeed_result();
 	$arvaseo_killed  = defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH );
@@ -54,10 +54,14 @@ defined( 'ABSPATH' ) || exit;
 		'block_css'      => array( __( 'Block styles on pages without blocks', 'arvaseo-connector' ), __( 'Classic themes only. Leave it on if you use block widgets.', 'arvaseo-connector' ) ),
 	);
 	$arvaseo_subs    = array(
-		'sooner'  => __( 'The main content appears faster.', 'arvaseo-connector' ),
-		'still'   => __( 'Nothing jumps around while it loads.', 'arvaseo-connector' ),
-		'nothing' => __( 'Widgets and videos load when someone needs them.', 'arvaseo-connector' ),
-		'smaller' => __( 'Less to download on every visit.', 'arvaseo-connector' ),
+		'css'        => __( 'Generate, deliver and reduce styles in one place.', 'arvaseo-connector' ),
+		'javascript' => __( 'Loading order, delays and script size. Check your interactions after changes.', 'arvaseo-connector' ),
+		'images'     => __( 'Prioritize visible images and process the media library.', 'arvaseo-connector' ),
+		'fonts'      => __( 'Font delivery and fallback text.', 'arvaseo-connector' ),
+		'sooner'     => __( 'The main content appears faster.', 'arvaseo-connector' ),
+		'still'      => __( 'Nothing jumps around while it loads.', 'arvaseo-connector' ),
+		'nothing'    => __( 'Widgets and videos load when someone needs them.', 'arvaseo-connector' ),
+		'smaller'    => __( 'Less to download on every visit.', 'arvaseo-connector' ),
 	);
 
 	// The fixes the latest test asks for, in the test's order.
@@ -79,8 +83,6 @@ defined( 'ABSPATH' ) || exit;
 
 	// What the CSS, WebP and image compression rows show, once for the page.
 	$arvaseo_css       = \ArvaSEO\Connector\Speed\CssOptimizer::counts();
-	$arvaseo_allowance = get_option( 'arvaseo_connector_css_allowance', array() );
-	$arvaseo_allowance = is_array( $arvaseo_allowance ) ? $arvaseo_allowance : array();
 	$arvaseo_webp      = \ArvaSEO\Connector\Speed\WebpLibrary::progress();
 	$arvaseo_cmp       = ImageCompression::state();
 	$arvaseo_cmp_stats = ImageCompression::stats();
@@ -170,6 +172,10 @@ defined( 'ABSPATH' ) || exit;
 	};
 	?>
 <div class="arvaseo-stack">
+	<?php require __DIR__ . '/speed-pagespeed.php'; ?>
+	<?php require __DIR__ . '/speed-css-quota.php'; ?>
+	<?php require __DIR__ . '/speed-assets.php'; ?>
+	<?php require __DIR__ . '/speed-asset-trials.php'; ?>
 	<?php if ( $arvaseo_killed ) : ?>
 		<div class="notice notice-warning inline arvaseo-own"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
 	<?php endif; ?>
@@ -936,9 +942,17 @@ defined( 'ABSPATH' ) || exit;
 							<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 							<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />
 							<?php wp_nonce_field( 'arvaseo_connector_speed_options' ); ?>
+							<?php if ( in_array( $arvaseo_id, array( 'minify_js', 'combine_js' ), true ) ) : ?>
+								<input type="hidden" name="optimization_policy_shown" value="1" />
+								<label><input type="checkbox" name="optimization_separate" value="1" <?php checked( $arvaseo_stored[ $arvaseo_id . '_separate' ] ); ?> /> <?php esc_html_e( 'Use a separate exclusion list for this fix', 'arvaseo-connector' ); ?></label>
+								<p class="arvaseo-hint"><?php esc_html_e( 'Unticked: keep using the Defer scripts exclusions. Ticked: use only the list below for this fix. jQuery, consent tools and integration vetoes stay protected. Saving a changed list or mode returns an active fix to Trying; check your pages before enabling it for visitors.', 'arvaseo-connector' ); ?></p>
+								<label for="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>"><?php esc_html_e( 'Leave these scripts alone, one handle or file address per line', 'arvaseo-connector' ); ?></label>
+								<textarea id="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>" name="optimization_exclude" rows="3" class="large-text code"><?php echo esc_textarea( implode( "\n", $arvaseo_stored[ $arvaseo_id . '_exclude' ] ) ); ?></textarea>
+							<?php else : ?>
 							<label for="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>"><strong><?php esc_html_e( 'Leave these files alone, one handle per line', 'arvaseo-connector' ); ?></strong></label>
 							<textarea id="<?php echo esc_attr( $arvaseo_id . '-exclude' ); ?>" name="<?php echo esc_attr( $arvaseo_minify_key ); ?>" rows="3" class="large-text code"><?php echo esc_textarea( implode( "\n", $arvaseo_stored[ $arvaseo_minify_key ] ) ); ?></textarea>
 							<p class="arvaseo-hint"><?php esc_html_e( 'CSS exclusions are shared with optimized CSS and CSS combining; script exclusions are shared with Defer scripts and JavaScript combining. Minification and combining are separate options. Unsupported files keep their original delivery.', 'arvaseo-connector' ); ?></p>
+							<?php endif; ?>
 							<button type="submit" class="arvaseo-btn arvaseo-btn--sm"><?php esc_html_e( 'Save exclusions', 'arvaseo-connector' ); ?></button>
 						</form>
 					<?php endif; ?>
@@ -973,15 +987,7 @@ defined( 'ABSPATH' ) || exit;
 								/* translators: %d: page types that couldn't be optimized. */
 								printf( esc_html( _n( '%d couldn’t be optimized.', '%d couldn’t be optimized.', (int) $arvaseo_css['failed'], 'arvaseo-connector' ) ), (int) $arvaseo_css['failed'] );
 							}
-							if ( isset( $arvaseo_allowance['used'], $arvaseo_allowance['limit'] ) ) {
-								echo ' ';
-								printf(
-									/* translators: 1: page optimizations used, 2: page optimizations included this month. */
-									esc_html__( 'Page optimizations this month: %1$d of %2$d.', 'arvaseo-connector' ),
-									(int) $arvaseo_allowance['used'],
-									(int) $arvaseo_allowance['limit']
-								);
-							}
+							echo ' <a href="#arvaseo-css-quota">' . esc_html__( 'View shared CSS quota', 'arvaseo-connector' ) . '</a>';
 							?>
 						</p>
 						<div class="arvaseo-fix-sub">
@@ -1022,7 +1028,7 @@ defined( 'ABSPATH' ) || exit;
 								<p class="arvaseo-hint" data-arvaseo-css-waiting="<?php echo esc_attr( (string) $arvaseo_css['waiting'] ); ?>" data-arvaseo-css-ready="<?php echo esc_attr( (string) $arvaseo_css['ready'] ); ?>">
 									<?php
 									/* translators: %d: page types being optimized. */
-									printf( esc_html( _n( 'Being optimized: %d page type. This page checks every 20 seconds and updates when it’s done.', 'Being optimized: %d page types. This page checks every 20 seconds and updates when they’re done.', (int) $arvaseo_css['waiting'], 'arvaseo-connector' ) ), (int) $arvaseo_css['waiting'] );
+									printf( esc_html( _n( 'Waiting for matching CSS: %d page type. Open Pages waiting for optimized CSS above for local status details.', 'Waiting for matching CSS: %d page types. Open Pages waiting for optimized CSS above for local status details.', (int) $arvaseo_css['waiting'], 'arvaseo-connector' ) ), (int) $arvaseo_css['waiting'] );
 									?>
 								</p>
 							<?php endif; ?>
@@ -1148,6 +1154,8 @@ defined( 'ABSPATH' ) || exit;
 
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
 							<h4><?php esc_html_e( 'Where images are compressed, and the originals', 'arvaseo-connector' ); ?></h4>
+							<p><?php /* translators: %s: images made smaller in the cloud, a subset of the total. */ printf( esc_html__( 'Images made smaller on Arva SEO’s servers: %s. The compression total above includes local and cloud processing.', 'arvaseo-connector' ), esc_html( number_format_i18n( $arvaseo_cmp_stats['cloud'] ) ) ); ?></p>
+							<p class="arvaseo-hint"><?php esc_html_e( 'JPEG and PNG files can use Arva SEO’s servers; WebP files are compressed locally. Checked images include files that could not safely get smaller. Compression does not resize oversized images. Cloud failures pause requests and preserve originals.', 'arvaseo-connector' ); ?></p>
 							<input type="hidden" name="action" value="arvaseo_connector_compress" />
 							<input type="hidden" name="do" value="options" />
 							<?php wp_nonce_field( 'arvaseo_connector_compress' ); ?>
@@ -1205,6 +1213,7 @@ defined( 'ABSPATH' ) || exit;
 					<?php if ( 'defer_scripts' === $arvaseo_id ) : ?>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
 							<h4><?php esc_html_e( 'JavaScript loading mode', 'arvaseo-connector' ); ?></h4>
+							<p class="arvaseo-hint"><?php esc_html_e( 'Deferred targets scripts registered for the head. WordPress can keep one blocking when inline code or other scripts depend on it. Footer scripts already load below the page content. An empty exclusion list does not remove jQuery or consent protection. Moving jQuery changes its position; it never adds defer to jQuery. The preview list reports emitted defer attributes, not just requested strategies.', 'arvaseo-connector' ); ?></p>
 							<p class="arvaseo-hint"><?php esc_html_e( 'Deferred runs supported scripts after HTML is parsed. Delayed waits for the first interaction. Dependencies, consent tools, measurement scripts and your exclusions load as before. Changing a public mode returns this fix to preview until you check your pages again.', 'arvaseo-connector' ); ?></p>
 							<fieldset class="arvaseo-checks">
 								<legend class="screen-reader-text"><?php esc_html_e( 'When JavaScript loads', 'arvaseo-connector' ); ?></legend>

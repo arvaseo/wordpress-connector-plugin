@@ -144,6 +144,12 @@ final class Changes {
 			'move_jquery' => false,
 			'late_icons'  => false,
 		),
+		'2.11.2' => array(
+			'minify_js_separate'  => false,
+			'combine_js_separate' => false,
+			'minify_js_exclude'   => array(),
+			'combine_js_exclude'  => array(),
+		),
 	);
 
 	/**
@@ -168,6 +174,15 @@ final class Changes {
 			return self::$cache;
 		}
 		$entries = array(
+			array(
+				'id'         => '2.11.2-js-exclusion-choices',
+				'version'    => '2.11.2',
+				'fixes'      => array( 'minify_js', 'combine_js' ),
+				'kind'       => self::OPTION,
+				'rev'        => null,
+				'with'       => array(),
+				'keep_until' => null,
+			),
 			array(
 				'id'         => '2.11.0-image-purge',
 				'version'    => '2.10.1',
@@ -308,6 +323,7 @@ final class Changes {
 	 */
 	public static function notes(): array {
 		return array(
+			'2.11.2-js-exclusion-choices' => __( 'Optional separate JavaScript exclusions and reviewed AMD, body CSS and jQuery Migrate trials. Existing settings stay in effect. Trials start off and require a matching signed-in preview plus interaction checks before visitors receive them. Changed exclusion policies return the affected fix to Trying.', 'arvaseo-connector' ),
 			'2.11.0-image-purge'          => __( 'Caches are cleared when compression changes an image.', 'arvaseo-connector' ),
 			'2.11.0-combine-first'        => __( 'With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free.', 'arvaseo-connector' ),
 			'2.11.0-css-every-stylesheet' => __( 'Optimized styles now also reach stylesheets whose names use capital letters (Elementor’s entrance animations, some Google Fonts) and stylesheets a theme prints more than once, so fewer of them hold the page up.', 'arvaseo-connector' ),

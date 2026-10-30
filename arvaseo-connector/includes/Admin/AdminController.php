@@ -90,10 +90,14 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_consent_security', array( self::class, 'consent_security' ) );
 		add_action( 'admin_post_arvaseo_connector_diagnostics', array( self::class, 'download_diagnostics' ) );
 		add_action( 'admin_post_arvaseo_connector_speed', array( self::class, 'speed' ) );
+		add_action( 'admin_post_arvaseo_connector_asset_trial', array( self::class, 'asset_trial' ) );
 		add_action( 'admin_post_arvaseo_connector_speed_options', array( self::class, 'speed_options' ) );
 		add_action( 'admin_post_arvaseo_connector_webp', array( self::class, 'webp' ) );
 		add_action( 'admin_post_arvaseo_connector_compress', array( self::class, 'compress' ) );
 		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
+		add_action( 'admin_post_arvaseo_connector_css_quota', array( self::class, 'css_quota' ) );
+		add_action( 'admin_post_arvaseo_connector_css_page', array( self::class, 'css_page' ) );
+		add_action( 'admin_post_arvaseo_connector_pagespeed', array( self::class, 'pagespeed' ) );
 		add_action( 'admin_post_arvaseo_connector_cloudflare', array( self::class, 'cloudflare' ) );
 		add_action( 'admin_post_arvaseo_connector_page_cache', array( self::class, 'page_cache' ) );
 		add_action( 'admin_post_arvaseo_connector_other_caches', array( self::class, 'other_caches' ) );
@@ -114,6 +118,7 @@ final class AdminController {
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'updates_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
+		add_action( 'admin_notices', array( \ArvaSEO\Connector\Speed\SafeAssetTrials::class, 'notice' ) );
 		add_action( 'in_admin_header', array( self::class, 'quiet_notices' ), PHP_INT_MAX );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
 		add_filter( 'submenu_file', array( self::class, 'submenu_file' ) );
@@ -135,6 +140,7 @@ final class AdminController {
 		add_action( 'admin_notices', array( self::class, 'defer_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'updates_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
+		add_action( 'admin_notices', array( \ArvaSEO\Connector\Speed\SafeAssetTrials::class, 'notice' ) );
 	}
 
 	/**
@@ -1005,6 +1011,20 @@ final class AdminController {
 		self::back_to_fix( $fix, null === $error ? 'speed_' . $to : 'speed_' . $error );
 	}
 
+	/** Save a reviewed asset trial; each request needs the plugin capability and a nonce. */
+	public static function asset_trial(): void {
+		self::guard( 'arvaseo_connector_asset_trial', Capabilities::MANAGE );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- guard checked capability and nonce.
+		$feature  = isset( $_POST['feature'] ) ? sanitize_key( wp_unslash( $_POST['feature'] ) ) : '';
+		$action   = isset( $_POST['trial_action'] ) ? sanitize_key( wp_unslash( $_POST['trial_action'] ) ) : '';
+		$selected = isset( $_POST['assets'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['assets'] ) ) : array();
+		$result   = \ArvaSEO\Connector\Speed\SafeAssetTrials::change( $feature, $action, $selected, ! empty( $_POST['checked'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		set_transient( 'arvaseo_connector_asset_trial_notice_' . get_current_user_id(), $result, MINUTE_IN_SECONDS );
+		wp_safe_redirect( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-asset-trials' ) );
+		exit;
+	}
+
 	/**
 	 * Save a card's choices: the extras to remove, what Defer scripts leaves alone, or the
 	 * pages, images and frames every fix leaves alone.
@@ -1049,7 +1069,15 @@ final class AdminController {
 		} elseif ( in_array( $fix, array( 'critical_css', 'unused_css', 'minify_css', 'combine_css' ), true ) ) {
 			$choices = array( 'css_exclude' => $text( 'css_exclude' ) );
 		} elseif ( in_array( $fix, array( 'minify_js', 'combine_js' ), true ) ) {
-			$choices = array( 'defer_exclude' => $text( 'defer_exclude' ) );
+			if ( isset( $_POST['optimization_policy_shown'] ) ) {
+				$choices = array(
+					$fix . '_separate' => ! empty( $_POST['optimization_separate'] ),
+					$fix . '_exclude'  => $text( 'optimization_exclude' ),
+				);
+			} else {
+				// Forms opened before this update retain their original shared-list behavior.
+				$choices = array( 'defer_exclude' => $text( 'defer_exclude' ) );
+			}
 		} elseif ( 'dns_prefetch' === $fix ) {
 			$choices = array( 'dns_prefetch_origins' => $text( 'dns_prefetch_origins' ) );
 		} elseif ( 'preconnect' === $fix ) {
@@ -1077,6 +1105,48 @@ final class AdminController {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		Fixes::save_choices( $choices );
 		self::back_to_fix( $fix, 'speed_options_saved' );
+	}
+
+	/** Run or refresh PageSpeed only after an explicit administrator form submission. */
+	public static function pagespeed(): void {
+		self::guard( 'arvaseo_connector_pagespeed', Capabilities::MANAGE );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- self::guard verifies this form nonce and capability above.
+		$result = \ArvaSEO\Connector\Speed\PageSpeed::request(
+			sanitize_key( wp_unslash( $_POST['test_action'] ?? '' ) ),
+			is_string( $_POST['test_url'] ?? null ) ? esc_url_raw( wp_unslash( $_POST['test_url'] ) ) : '',
+			array_map( 'sanitize_key', array_filter( (array) wp_unslash( $_POST['devices'] ?? array() ), 'is_string' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Every string is sanitized by sanitize_key; nested values are discarded.
+			absint( wp_unslash( $_POST['runs'] ?? 3 ) ),
+			sanitize_text_field( wp_unslash( $_POST['request_id'] ?? '' ) )
+		);
+		set_transient( 'arvaseo_pagespeed_notice_' . get_current_user_id(), $result, MINUTE_IN_SECONDS );
+		wp_safe_redirect( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-pagespeed-tests' ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		exit;
+	}
+
+	/** Recover a single known page; regeneration requires its own acknowledgement. */
+	public static function css_page(): void {
+		self::guard( 'arvaseo_connector_css_page', Capabilities::MANAGE );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- self::guard verifies this form nonce and capability.
+		$result = \ArvaSEO\Connector\Speed\CssOptimizer::page_action(
+			sanitize_text_field( wp_unslash( $_POST['signature'] ?? '' ) ),
+			'regenerate' === sanitize_key( wp_unslash( $_POST['page_action'] ?? '' ) ),
+			isset( $_POST['checked'] ) && '1' === $_POST['checked'],
+			sanitize_text_field( wp_unslash( $_POST['request_id'] ?? '' ) )
+		);
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		set_transient( 'arvaseo_css_page_notice_' . get_current_user_id(), $result, MINUTE_IN_SECONDS );
+		wp_safe_redirect( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-css-quota' ) );
+		exit;
+	}
+
+	/** Read the CSS balance without queuing, regenerating or changing any optimization. */
+	public static function css_quota(): void {
+		self::guard( 'arvaseo_connector_css_quota', Capabilities::MANAGE );
+		$result = \ArvaSEO\Connector\Speed\CssAllowance::refresh();
+		set_transient( 'arvaseo_connector_css_quota_notice_' . get_current_user_id(), $result, MINUTE_IN_SECONDS );
+		wp_safe_redirect( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-css-quota' ) );
+		exit;
 	}
 
 	/**

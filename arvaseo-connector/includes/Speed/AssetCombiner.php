@@ -33,7 +33,7 @@ final class AssetCombiner {
 
 	/** Inline changes, moving jQuery and late icon libraries use this same complete-response buffer, including when combining is off. */
 	private static function wanted(): bool {
-		if ( HeadScripts::wanted() || IconStyles::wanted() ) {
+		if ( HeadScripts::wanted() || IconStyles::wanted() || SafeAssetTrials::active( 'body_css' ) ) {
 			return true;
 		}
 		$fixes = CssOptimizer::is_render_request()
@@ -132,7 +132,7 @@ final class AssetCombiner {
 		foreach ( array_reverse( $edits ) as $edit ) {
 			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
 		}
-		return CssOptimizer::combined_html( $html );
+		return SafeAssetTrials::inline_body_css( CssOptimizer::combined_html( $html ) );
 	}
 
 
@@ -330,7 +330,7 @@ final class AssetCombiner {
 			$key = array( $kind, $type, $nonce, strtolower( (string) ( $tags->get_attribute( 'media' ) ?? 'all' ) ) );
 		} else {
 			$strategy = (string) $tags->get_attribute( 'data-wp-strategy' );
-			if ( ! in_array( $type, array( '', 'text/javascript', 'application/javascript' ), true ) || ! in_array( $strategy, array( '', 'defer' ), true ) || 'module' === $registry->get_data( $handle, 'type' ) || Exclusions::leaves_script( $handle, $source ) ) {
+			if ( ! in_array( $type, array( '', 'text/javascript', 'application/javascript' ), true ) || ! in_array( $strategy, array( '', 'defer' ), true ) || 'module' === $registry->get_data( $handle, 'type' ) || Exclusions::leaves_optimization( 'combine_js', $handle, $source ) ) {
 				return null;
 			}
 			$key = array( $kind, $type, $nonce, null !== $tags->get_attribute( 'defer' ), $strategy );
@@ -403,6 +403,7 @@ final class AssetCombiner {
 			}
 			return;
 		}
+		AssetDiagnostics::bundle( $url, array_column( $run, 'source' ) );
 		$open = 'css' === $run[0]['kind'] ? (string) preg_replace( '/\A<style\b/i', '<link rel="stylesheet"', $run[0]['open'] ) : $run[0]['open']; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- replaces the original approved styles in place.
 		$tags = new \WP_HTML_Tag_Processor( $open . ( 'js' === $run[0]['kind'] ? '</script>' : '' ) );
 		if ( ! $tags->next_tag() ) {
