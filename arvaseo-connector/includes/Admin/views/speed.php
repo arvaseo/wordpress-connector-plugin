@@ -64,6 +64,17 @@ defined( 'ABSPATH' ) || exit;
 		'smaller'    => __( 'Less to download on every visit.', 'arvaseo-connector' ),
 	);
 
+	$arvaseo_speed_group_tabs = array(
+		'css'        => 'css',
+		'javascript' => 'javascript',
+		'images'     => 'images',
+		'fonts'      => 'fonts',
+		'sooner'     => 'caching',
+		'still'      => 'css',
+		'nothing'    => 'images',
+		'smaller'    => 'caching',
+	);
+
 	// The fixes the latest test asks for, in the test's order.
 	$arvaseo_needed = array();
 	foreach ( (array) ( $arvaseo_test['audits'] ?? array() ) as $arvaseo_audit ) {
@@ -171,16 +182,25 @@ defined( 'ABSPATH' ) || exit;
 		echo '</form>';
 	};
 	?>
+<div data-arvaseo-speed>
 <div class="arvaseo-stack">
+<div data-arvaseo-speed-section="testing">
 	<?php require __DIR__ . '/speed-pagespeed.php'; ?>
+</div>
+<div data-arvaseo-speed-section="css">
 	<?php require __DIR__ . '/speed-css-quota.php'; ?>
+</div>
+<div data-arvaseo-speed-section="testing">
 	<?php require __DIR__ . '/speed-assets.php'; ?>
+</div>
+<div data-arvaseo-speed-section="testing">
 	<?php require __DIR__ . '/speed-asset-trials.php'; ?>
+</div>
 	<?php if ( $arvaseo_killed ) : ?>
 		<div class="notice notice-warning inline arvaseo-own"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
 	<?php endif; ?>
 
-	<section class="arvaseo-card" aria-labelledby="arvaseo-test-heading">
+	<section class="arvaseo-card" data-arvaseo-speed-section="testing" aria-labelledby="arvaseo-test-heading">
 		<div class="arvaseo-between" style="align-items: center">
 			<?php if ( null === $arvaseo_test ) : ?>
 				<div>
@@ -274,7 +294,7 @@ defined( 'ABSPATH' ) || exit;
 			<?php $arvaseo_keep( false, __( 'Review', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--ghost' ); ?>
 		</div>
 	<?php elseif ( array() !== $arvaseo_others ) : ?>
-		<section id="arvaseo-other-plugins" class="arvaseo-card" aria-labelledby="arvaseo-others-heading">
+		<section id="arvaseo-other-plugins" class="arvaseo-card" data-arvaseo-speed-section="testing" aria-labelledby="arvaseo-others-heading">
 			<p class="arvaseo-eyebrow"><?php esc_html_e( 'Other speed plugins', 'arvaseo-connector' ); ?></p>
 			<h2 class="arvaseo-h3" id="arvaseo-others-heading">
 				<?php
@@ -371,7 +391,7 @@ defined( 'ABSPATH' ) || exit;
 	<?php endif; ?>
 
 	<?php if ( array() !== $arvaseo_changed ) : ?>
-		<section class="arvaseo-card" aria-labelledby="arvaseo-changed-heading">
+		<section class="arvaseo-card" data-arvaseo-speed-section="testing" aria-labelledby="arvaseo-changed-heading">
 		<details class="arvaseo-more" id="arvaseo-what-changed" <?php echo array() !== $arvaseo_unchecked ? 'open' : ''; ?>>
 			<summary id="arvaseo-changed-heading"><?php esc_html_e( 'What changed when Arva SEO updated', 'arvaseo-connector' ); ?></summary>
 			<div class="arvaseo-more-in">
@@ -408,7 +428,7 @@ defined( 'ABSPATH' ) || exit;
 		$arvaseo_kept        = AssetCache::kept();
 		$arvaseo_waiting_ids = array_column( OtherCaches::waiting(), 'id' );
 		?>
-		<section id="arvaseo-other-caches" class="arvaseo-card" aria-labelledby="arvaseo-caches-heading">
+		<section id="arvaseo-other-caches" class="arvaseo-card" data-arvaseo-speed-section="caching" aria-labelledby="arvaseo-caches-heading">
 			<p class="arvaseo-eyebrow"><?php esc_html_e( 'Other caches', 'arvaseo-connector' ); ?></p>
 			<h2 class="arvaseo-h3" id="arvaseo-caches-heading"><?php esc_html_e( 'Other caches on this site', 'arvaseo-connector' ); ?></h2>
 			<p class="arvaseo-muted" style="margin: 8px 0 0; max-width: 760px"><?php esc_html_e( 'When a change alters what visitors see, Arva SEO clears the caches below that it can reach, at most every 15 minutes. The ones it can’t reach are yours to clear: do it after changing a fix, or PageSpeed and your visitors can still get the old page.', 'arvaseo-connector' ); ?></p>
@@ -505,9 +525,9 @@ defined( 'ABSPATH' ) || exit;
 		</section>
 	<?php endif; ?>
 
-	<p class="arvaseo-hint" id="arvaseo-background" style="margin: 0 0 20px; max-width: 760px"><?php esc_html_e( 'What runs in the background: once a day Arva SEO looks at your homepage’s cache headers. When a change alters what visitors see, it clears the caches it can reach, at most every 15 minutes. Old generated files are deleted a day after the caches were cleared, never one your homepage links to; while a cache Arva SEO can’t clear may keep pages, the folders may grow to twice their usual limit.', 'arvaseo-connector' ); ?></p>
+	<p class="arvaseo-hint" id="arvaseo-background" data-arvaseo-speed-section="caching" style="margin: 0 0 20px; max-width: 760px"><?php esc_html_e( 'What runs in the background: once a day Arva SEO looks at your homepage’s cache headers. When a change alters what visitors see, it clears the caches it can reach, at most every 15 minutes. Old generated files are deleted a day after the caches were cleared, never one your homepage links to; while a cache Arva SEO can’t clear may keep pages, the folders may grow to twice their usual limit.', 'arvaseo-connector' ); ?></p>
 
-	<div class="arvaseo-between" style="align-items: center">
+	<div class="arvaseo-between" data-arvaseo-speed-filter-bar style="align-items: center">
 		<div class="arvaseo-seg" role="group" aria-label="<?php esc_attr_e( 'Show fixes', 'arvaseo-connector' ); ?>" data-arvaseo-filter hidden>
 			<?php
 			$arvaseo_filters = array(
@@ -529,11 +549,13 @@ defined( 'ABSPATH' ) || exit;
 	</div>
 </div>
 
+	<?php require __DIR__ . '/speed-navigation.php'; ?>
 	<?php
 	$arvaseo_n = 0;
 	foreach ( Fixes::groups() as $arvaseo_group => $arvaseo_group_title ) :
 		++$arvaseo_n;
 		?>
+<div data-arvaseo-speed-section="<?php echo esc_attr( $arvaseo_speed_group_tabs[ $arvaseo_group ] ?? 'advanced' ); ?>">
 <div class="arvaseo-grp" data-arvaseo-group-head="<?php echo esc_attr( $arvaseo_group ); ?>">
 	<span class="arvaseo-grp-n" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', $arvaseo_n ) ); ?></span>
 	<div><h2><?php echo esc_html( $arvaseo_group_title ); ?></h2><p><?php echo esc_html( $arvaseo_subs[ $arvaseo_group ] ?? '' ); ?></p></div>
@@ -1270,8 +1292,10 @@ defined( 'ABSPATH' ) || exit;
 	</section>
 		<?php endforeach; ?>
 </div></div>
+</div>
 	<?php endforeach; ?>
 
+<div data-arvaseo-speed-section="caching">
 <div class="arvaseo-grp" id="arvaseo-cloudflare">
 	<span class="arvaseo-grp-n" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', $arvaseo_n + 1 ) ); ?></span>
 	<div><h2><?php esc_html_e( 'Cloudflare', 'arvaseo-connector' ); ?></h2><p><?php esc_html_e( 'Visitors get your changes straight away.', 'arvaseo-connector' ); ?></p></div>
@@ -1384,6 +1408,8 @@ defined( 'ABSPATH' ) || exit;
 	<?php endif; ?>
 </section>
 
+</div>
+<div data-arvaseo-speed-section="advanced">
 <div class="arvaseo-grp" id="arvaseo-speed-exclusions">
 	<span class="arvaseo-grp-n" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', $arvaseo_n + 2 ) ); ?></span>
 	<div><h2><?php esc_html_e( 'Leave things alone', 'arvaseo-connector' ); ?></h2><p><?php esc_html_e( 'If a fix stops something working on part of your site, leave that part alone instead of turning the fix off everywhere.', 'arvaseo-connector' ); ?></p></div>
@@ -1484,5 +1510,7 @@ defined( 'ABSPATH' ) || exit;
 </details>
 
 <p class="arvaseo-hint" style="margin-top: 20px; max-width: 820px"><?php esc_html_e( 'Arva SEO can cache pages and minify supported local CSS and JavaScript. Use one optimizer for each job; when another active plugin handles it, Arva SEO leaves that fix alone. Arva SEO clears the caches it can reach when a fix changes; a cache it can’t reach, such as a host’s CDN, needs you to clear it after each change. In an emergency, add define( \'ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES\', true ); to wp-config.php to switch every fix off.', 'arvaseo-connector' ); ?></p>
+</div>
+</div>
 	<?php
 } )();

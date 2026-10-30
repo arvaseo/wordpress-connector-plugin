@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.11.2
+Stable tag: 2.11.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -220,6 +220,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.11.3 =
+The Speed screen now has seven subtabs, with a compact section chooser on phones. Existing settings, optimizations and safety checks are unchanged.
+
 = 2.11.2 =
 Adds PageSpeed tests inside WordPress, grouped controls, accurate defer previews, CSS pause details and one-page recovery, plus reviewed asset trials. Existing optimization choices remain; new trials stay off. Check your pages before enabling visitor changes.
 
@@ -327,6 +330,12 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.11.3 =
+* Improved: Speed settings are organized into CSS and page styling, JavaScript and interactions, Images and media, Fonts, Caching and delivery, Testing and diagnostics, and Exclusions and advanced subtabs.
+* Improved: Keyboard navigation, remembered sections, browser history and direct links to existing fixes work across subtabs. Switching sections preserves unsaved form entries.
+* Improved: Phones use a compact section chooser. Filters count only the current section and explain when no fixes match. All original controls remain available when scripts or session storage are unavailable.
+* Existing optimization choices, quotas, safeguards and visitor output are unchanged.
 
 = 2.11.2 =
 * New: Run mobile and desktop PageSpeed tests inside WordPress, with one or three runs, visible allowance, saved results and score ranges. Refreshing results never starts a paid test.

@@ -137,9 +137,9 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app .arvaseo-radio input { margin: 3px 0 0; }
 
 /* Segmented control (filters). */
-.arvaseo-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--a-sunken); }
-.arvaseo-app .arvaseo-seg button, .arvaseo-app .arvaseo-seg a { height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: transparent; font: 500 13px/1 var(--a-sans); color: var(--a-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
-.arvaseo-app .arvaseo-seg [aria-pressed="true"], .arvaseo-app .arvaseo-seg [aria-current="page"] { background: var(--a-raised); color: var(--a-ink); box-shadow: 0 1px 2px rgb(40 36 24 / 0.12); }
+.arvaseo-seg, .arvaseo-speed-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--a-sunken); }
+.arvaseo-app .arvaseo-seg button, .arvaseo-app .arvaseo-seg a, .arvaseo-app .arvaseo-speed-tabs button { height: 32px; padding: 0 14px; border-radius: 999px; border: 0; background: transparent; font: 500 13px/1 var(--a-sans); color: var(--a-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.arvaseo-app .arvaseo-seg [aria-pressed="true"], .arvaseo-app .arvaseo-seg [aria-current="page"], .arvaseo-app .arvaseo-speed-tabs [aria-selected="true"] { background: var(--a-raised); color: var(--a-ink); box-shadow: 0 1px 2px rgb(40 36 24 / 0.12); }
 .arvaseo-seg-n { font-size: 12px; color: var(--a-subtle); }
 
 /* Counts, facts, score. */
@@ -350,4 +350,28 @@ body.arvaseo-admin #wpbody-content .update-nag { display: none !important; }
 	.arvaseo-fix { padding: 18px 16px; }
 	.arvaseo-side { max-width: none; flex-direction: row; flex-wrap: wrap; }
 	.arvaseo-prod { display: none; }
+}
+
+/* Speed subtabs: progressive enhancement keeps the original screen usable without scripts. */
+[data-arvaseo-speed] [hidden] { display: none !important; }
+.arvaseo-speed-nav { position: sticky; top: 32px; z-index: 10; padding: 8px 0; margin: 20px 0; background: var(--a-bg); scroll-margin-top: 32px; }
+.arvaseo-speed-tabs { border-radius: 20px; }
+.arvaseo-speed-tabs button { appearance: none; }
+.arvaseo-speed-tabs button:hover { color: var(--a-ink); }
+.arvaseo-app .arvaseo-speed-tabs button:focus-visible, .arvaseo-app .arvaseo-speed-select select:focus-visible { outline: 2px solid var(--a-accent-text); outline-offset: 2px; }
+.arvaseo-speed-select { display: none; }
+.arvaseo-speed-panel { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 20px; overflow-wrap: anywhere; }
+.arvaseo-speed-panel:focus-visible { outline: 2px solid var(--a-accent-text); outline-offset: 4px; }
+.arvaseo-speed-panel .arvaseo-grp { margin-top: 8px; }
+.arvaseo-speed-panel .arvaseo-grp-n { display: none; }
+[data-arvaseo-speed] [id] { scroll-margin-top: 160px; }
+@media (min-width: 601px) and (max-width: 900px) {
+	[data-arvaseo-speed] [id] { scroll-margin-top: 240px; }
+}
+@media (max-width: 600px) {
+	.arvaseo-speed-nav { top: 0; scroll-margin-top: 0; }
+	.arvaseo-speed-tabs { display: none; }
+	.arvaseo-speed-select { display: block; }
+	.arvaseo-speed-select select { width: 100%; max-width: 100%; min-height: 44px; border: 4px solid var(--a-sunken); border-radius: 999px; background-color: var(--a-raised); color: var(--a-ink); font-weight: 500; }
+	[data-arvaseo-speed] [id] { scroll-margin-top: 112px; }
 }

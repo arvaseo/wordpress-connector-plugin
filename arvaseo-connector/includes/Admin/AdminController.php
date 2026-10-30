@@ -1463,8 +1463,9 @@ final class AdminController {
 		if ( ! str_contains( $hook, 'arvaseo' ) ) {
 			return;
 		}
-		wp_enqueue_style( 'arvaseo-connector-admin', plugins_url( 'assets/admin.css', ARVASEO_CONNECTOR_FILE ), array(), ARVASEO_CONNECTOR_VERSION );
+		wp_enqueue_style( 'arvaseo-connector-admin', plugins_url( 'assets/admin.css', ARVASEO_CONNECTOR_FILE ), array(), ARVASEO_CONNECTOR_VERSION . '-1' );
 		wp_enqueue_script( 'arvaseo-connector-admin', plugins_url( 'assets/admin.js', ARVASEO_CONNECTOR_FILE ), array(), ARVASEO_CONNECTOR_VERSION, true );
+		wp_enqueue_script( 'arvaseo-connector-speed-navigation', plugins_url( 'assets/admin-speed-navigation.js', ARVASEO_CONNECTOR_FILE ), array( 'arvaseo-connector-admin' ), ARVASEO_CONNECTOR_VERSION, true );
 		wp_localize_script(
 			'arvaseo-connector-admin',
 			'arvaseoConnector',
