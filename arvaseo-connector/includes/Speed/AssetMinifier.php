@@ -39,6 +39,22 @@ final class AssetMinifier {
 	private static array $seen = array();
 
 	/**
+	 * Verified original URLs of copies delivered in this response.
+	 *
+	 * @var array<string,string>
+	 */
+	private static array $originals = array();
+
+	/**
+	 * A copy is trusted only after our own filter generated or verified it in this request.
+	 *
+	 * @param string $url Printed copy URL.
+	 */
+	public static function original_for( string $url ): ?string {
+		return self::$originals[ $url ] ?? null;
+	}
+
+	/**
 	 * Source bytes processed on this page.
 	 *
 	 * @var int
@@ -55,6 +71,7 @@ final class AssetMinifier {
 	/** Reset per-request safety budgets, also used by integration tests. */
 	public static function reset(): void {
 		self::$seen      = array();
+		self::$originals = array();
 		self::$bytes     = 0;
 		self::$generated = 0;
 	}
@@ -136,7 +153,7 @@ final class AssetMinifier {
 			return self::$seen[ $key ];
 		}
 		self::$seen[ $key ] = null;
-		$asset              = self::source( $source, $kind, $swap );
+		$asset              = $minify && Fixes::uses( 'minify_' . $kind, Changes::CHANGING_ADDRESSES ) ? Addresses::local_source( $source, $kind, $swap ) : self::source( $source, $kind, $swap );
 		if ( null === $asset || count( self::$seen ) > 80 ) {
 			return null;
 		}
@@ -181,7 +198,8 @@ final class AssetMinifier {
 			}
 			if ( is_file( $file ) && is_readable( $file ) && filesize( $file ) > 0 ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_filesize -- generated static cache entry.
 				AssetCache::used( $file );
-				self::$seen[ $key ] = self::url() . '/' . $existing;
+				self::$seen[ $key ]                     = self::url() . '/' . $existing;
+				self::$originals[ self::$seen[ $key ] ] = $asset['url'];
 				if ( 'js' === $kind && 'amd' === self::script_obstacle( $text ) ) {
 					SafeAssetTrials::applied( 'amd', hash( 'sha256', $text ), $asset['url'] );
 				}
@@ -221,7 +239,8 @@ final class AssetMinifier {
 			return null;
 		}
 		++self::$generated;
-		self::$seen[ $key ] = $url;
+		self::$seen[ $key ]      = $url;
+		self::$originals[ $url ] = $asset['url'];
 		if ( 'js' === $kind && 'amd' === self::script_obstacle( $text ) ) {
 			SafeAssetTrials::applied( 'amd', hash( 'sha256', $text ), $asset['url'] );
 		}

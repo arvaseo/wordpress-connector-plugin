@@ -277,6 +277,7 @@ final class AssetCache {
 				}
 			}
 		}
+		$out['go'] += Housekeeping::duplicate_count( $linked ?? array() );
 		return $out;
 	}
 
@@ -520,7 +521,8 @@ final class AssetCache {
 		$removed = AssetMinifier::remove_unused( min( self::unused_before( self::unused_after() ), $cap ), $linked )
 			+ AssetBundles::remove_unused( min( self::unused_before( self::unused_after() ), $cap ), $linked )
 			+ CssOptimizer::remove_unused_copies( min( self::unused_before( self::unused_after() ), $cap ), $linked )
-			+ LocalFonts::remove_unused( min( self::unused_before( LocalFonts::UNUSED_AFTER ), $cap ), $linked );
+			+ LocalFonts::remove_unused( min( self::unused_before( LocalFonts::UNUSED_AFTER ), $cap ), $linked )
+			+ Housekeeping::sweep_duplicates( $cap, $linked );
 		wp_clear_scheduled_hook( self::HOOK_SWEEP );
 		self::save_state(
 			array(

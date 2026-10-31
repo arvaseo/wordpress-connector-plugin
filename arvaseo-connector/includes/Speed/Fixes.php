@@ -202,6 +202,15 @@ final class Fixes {
 				'handled_by' => array(),
 				'states'     => self::STATES,
 			),
+			'minify_html'      => array(
+				'title'      => __( 'Minify HTML', 'arvaseo-connector' ),
+				'what'       => __( 'Makes pages a little smaller by removing spare tag formatting and ordinary comments. Text spacing, scripts, styles, templates and known plugin comments stay intact. Try it and check your pages before turning it on.', 'arvaseo-connector' ),
+				'group'      => 'smaller',
+				'risk'       => 'check',
+				'audits'     => array(),
+				'handled_by' => array( 'litespeed-cache', 'autoptimize', 'w3-total-cache', 'sg-cachepress', 'hummingbird-performance', 'breeze', 'wp-optimize', 'swift-performance-lite', 'wp-rocket', 'nitropack', 'flying-press' ),
+				'states'     => self::STATES,
+			),
 			'minify_css'       => array(
 				'title'      => __( 'Minify CSS', 'arvaseo-connector' ),
 				'what'       => __( 'Serves smaller cached copies of local stylesheets by removing unnecessary spacing and comments. Original files stay intact, relative image and font addresses keep working, and file order stays the same. Already-minified or unsupported files are left alone.', 'arvaseo-connector' ),
@@ -222,7 +231,7 @@ final class Fixes {
 			),
 			'combine_css'      => array(
 				'title'      => __( 'Combine CSS', 'arvaseo-connector' ),
-				'what'       => __( 'Combines adjacent compatible local stylesheets into one cached file, preserving their order and image or font addresses. When Critical CSS or Remove unused CSS is enabled, compatible files are combined first, then their optimized styles are generated. Unapproved inline styles and incompatible media rules stay separate. Try it and check your pages; fewer files do not always make a site faster.', 'arvaseo-connector' ),
+				'what'       => __( 'Combines adjacent compatible local stylesheets into one cached file, preserving their order and image or font addresses. When Critical CSS or Remove unused CSS is enabled, compatible bundles use optimized styles only when their complete source files are covered. Unapproved inline styles and incompatible media rules stay separate. Try it and check your pages; fewer files do not always make a site faster.', 'arvaseo-connector' ),
 				'group'      => 'smaller',
 				'risk'       => 'check',
 				'audits'     => array(),
@@ -448,7 +457,7 @@ final class Fixes {
 	/**
 	 * What's stored, over the defaults.
 	 *
-	 * @return array{fixes: array<string, array{state: string, since: string|null, rev: int, kept: int}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, minify_js_separate: bool, combine_js_separate: bool, minify_js_exclude: string[], combine_js_exclude: string[], move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[], changes: list<array{id: string, at: int, done?: string}>}
+	 * @return array{fixes: array<string, array{state: string, since: string|null, rev: int, kept: int}>, extras: array<string, bool>, defer_exclude: string[], defer_plugins: string[], exclude_pages: string[], exclude_elements: string[], shop_pages: bool, eager_images: int, defer_checked_at: string|null, defer_on_at: int|null, server_check: array{at: string, cache: bool, compression: string|null}|null, fonts_local: bool, delay_scripts: string[], css_exclude: string[], html_keep_comments: string[], dns_prefetch_origins: string[], preconnect_origins: string[], preconnect_anonymous: bool, remote: bool, ucss_inline: bool, ccss_per_url: bool, css_async_inline: bool, js_loading_mode: string, minify_js_separate: bool, combine_js_separate: bool, minify_js_exclude: string[], combine_js_exclude: string[], move_jquery: bool, late_icons: bool, combine_inline_css_ids: string[], combine_inline_js_ids: string[], external_asset_urls: string[], changes: list<array{id: string, at: int, done?: string}>}
 	 */
 	public static function stored(): array {
 		$saved = get_option( self::OPTION, array() );
@@ -498,6 +507,7 @@ final class Fixes {
 			'changes'                => Changes::clean( $saved['changes'] ?? array() ),
 			'delay_scripts'          => self::strings( $saved['delay_scripts'] ?? array() ),
 			'css_exclude'            => self::strings( $saved['css_exclude'] ?? array() ),
+			'html_keep_comments'     => HtmlMinifier::comments( $saved['html_keep_comments'] ?? array() ),
 			'dns_prefetch_origins'   => ResourceHints::normalize( $saved['dns_prefetch_origins'] ?? array(), 10 ),
 			'preconnect_origins'     => ResourceHints::normalize( $saved['preconnect_origins'] ?? array(), 4 ),
 			'preconnect_anonymous'   => (bool) ( $saved['preconnect_anonymous'] ?? false ),
@@ -804,6 +814,9 @@ final class Fixes {
 				$data = self::check_defer_again( $data );
 			}
 			$data['move_jquery'] = $move;
+		}
+		if ( array_key_exists( 'html_keep_comments', $choices ) ) {
+			$data['html_keep_comments'] = HtmlMinifier::comments( $choices['html_keep_comments'] );
 		}
 		if ( array_key_exists( 'late_icons', $choices ) ) {
 			$data['late_icons'] = (bool) $choices['late_icons'];

@@ -97,6 +97,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_css', array( self::class, 'css' ) );
 		add_action( 'admin_post_arvaseo_connector_css_quota', array( self::class, 'css_quota' ) );
 		add_action( 'admin_post_arvaseo_connector_css_page', array( self::class, 'css_page' ) );
+		add_action( 'admin_post_arvaseo_connector_database', array( self::class, 'database' ) );
 		add_action( 'admin_post_arvaseo_connector_pagespeed', array( self::class, 'pagespeed' ) );
 		add_action( 'admin_post_arvaseo_connector_cloudflare', array( self::class, 'cloudflare' ) );
 		add_action( 'admin_post_arvaseo_connector_page_cache', array( self::class, 'page_cache' ) );
@@ -519,8 +520,10 @@ final class AdminController {
 	public static function css_notice(): ?string {
 		$code    = isset( $_GET['arvaseo_notice'] ) ? sanitize_key( wp_unslash( $_GET['arvaseo_notice'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
 		$notices = array(
+			'database_saved'       => __( 'Database maintenance updated. Check its saved progress in the Database card.', 'arvaseo-connector' ),
+			'database_check'       => __( 'Database maintenance could not start. Check your counts, acknowledge the cleanup notice and try again.', 'arvaseo-connector' ),
 			'speed_css_queued'     => __( 'Sent to Arva SEO: your homepage, your main page types and any that failed before. Optimized CSS is usually ready within a few minutes; this page checks by itself while it’s open.', 'arvaseo-connector' ),
-			'speed_css_regenerate' => __( 'The optimized CSS will be worked out again, each page type using a page optimization. This page checks by itself while it’s open.', 'arvaseo-connector' ),
+			'speed_css_regenerate' => __( 'CSS refresh is queued and existing matching files stay available. Unchanged per-file results can be regenerated free once a week; other new renders may use a page optimization. Old-format bulk results are downloaded again without a new render.', 'arvaseo-connector' ),
 			'speed_css_ready'      => __( 'New optimized CSS is ready.', 'arvaseo-connector' ),
 			'speed_css_waiting'    => __( 'Nothing new yet. Arva SEO is still working on it; this page checks by itself while it’s open.', 'arvaseo-connector' ),
 		);
@@ -1089,12 +1092,17 @@ final class AdminController {
 			$choices = array( 'delay_scripts' => $text( 'delay_scripts' ) );
 		} elseif ( 'google_fonts' === $fix ) {
 			$choices = array( 'fonts_local' => ! empty( $_POST['fonts_local'] ) );
+		} elseif ( 'minify_html' === $fix ) {
+			$choices = array( 'html_keep_comments' => $text( 'html_keep_comments' ) );
 		} elseif ( 'exclusions' === $fix ) {
 			$choices = array(
 				'exclude_pages'    => $text( 'exclude_pages' ),
 				'exclude_elements' => $text( 'exclude_elements' ),
 				'eager_images'     => isset( $_POST['eager_images'] ) ? absint( $_POST['eager_images'] ) : Fixes::EAGER_IMAGES,
 			);
+			if ( isset( $_POST['html_keep_comments'] ) ) {
+				$choices['html_keep_comments'] = $text( 'html_keep_comments' );
+			}
 			if ( isset( $_POST['shop_pages_shown'] ) ) {
 				$choices['shop_pages'] = ! empty( $_POST['shop_pages'] );
 			}
@@ -1105,6 +1113,32 @@ final class AdminController {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		Fixes::save_choices( $choices );
 		self::back_to_fix( $fix, 'speed_options_saved' );
+	}
+
+	/** Database maintenance stays in WordPress, behind an administrator form and nonce. */
+	public static function database(): void {
+		self::guard( 'arvaseo_connector_database', Capabilities::MANAGE );
+		if ( ! current_user_can( 'delete_others_posts' ) ) {
+			wp_die( esc_html__( 'You do not have permission to clean up the database.', 'arvaseo-connector' ), '', array( 'response' => 403 ) );
+		}
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- guard verifies nonce and capability above.
+		$do  = sanitize_key( wp_unslash( $_POST['database_action'] ?? '' ) );
+		$ack = ! empty( $_POST['acknowledged'] );
+		$ok  = false;
+		if ( 'count' === $do ) {
+			$ok = ! \ArvaSEO\Connector\Maintenance\DatabaseCleanup::counts( true )['error'];
+		} elseif ( 'start' === $do ) {
+			$counts = \ArvaSEO\Connector\Maintenance\DatabaseCleanup::counts();
+			$ok     = $counts['at'] > 0 && ! $counts['error'] && \ArvaSEO\Connector\Maintenance\DatabaseCleanup::start( $ack );
+		} elseif ( 'cancel' === $do ) {
+			\ArvaSEO\Connector\Maintenance\DatabaseCleanup::cancel();
+			$ok = true;
+		} elseif ( 'weekly' === $do ) {
+			$enabled = ! empty( $_POST['weekly'] );
+			$ok      = ( ! $enabled || $ack ) && \ArvaSEO\Connector\Maintenance\DatabaseCleanup::set_weekly( $enabled );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		self::back( 'arvaseo-health', $ok ? 'database_saved' : 'database_check' );
 	}
 
 	/** Run or refresh PageSpeed only after an explicit administrator form submission. */
@@ -1481,7 +1515,7 @@ final class AdminController {
 				'confirmSeoUpdates'      => __( 'With this on, Arva SEO users can change the SEO title and meta description of published posts, pages and products on this site. Each change can be undone from Arva SEO. Continue?', 'arvaseo-connector' ),
 				'confirmDefer'           => __( 'Turn on Defer scripts for every visitor? It changes how scripts load, and some menus, sliders, forms, chat widgets or checkouts may stop working. If anything does, turn it off on this page or leave that script alone. Continue?', 'arvaseo-connector' ),
 				'confirmRisky'           => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
-				'confirmCssRegenerate'   => __( 'Work out the optimized CSS of every page type again? Each one uses a page optimization of this month’s allowance.', 'arvaseo-connector' ),
+				'confirmCssRegenerate'   => __( 'Refresh optimized CSS while keeping existing files? Unchanged per-file results can be regenerated free once a week; other new renders may use one page optimization each. Old-format bulk results are downloaded again without a new render.', 'arvaseo-connector' ),
 				'confirmWebpUndo'        => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
 				'confirmCloudflareOff'   => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
 				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),

@@ -792,6 +792,7 @@ final class PageCache {
 			'<IfModule mod_rewrite.c>',
 			'RewriteEngine On',
 		);
+		$lines    = array_merge( $lines, CssPass::apache_rules( $dir ) );
 		$variants = array();
 		foreach ( array( true, false ) as $https ) {
 			if ( $phones ) {
@@ -802,6 +803,7 @@ final class PageCache {
 		foreach ( $variants as list( $https, $mobile ) ) {
 			$name    = arvaseo_connector_page_cache_name( $https, $mobile );
 			$lines[] = 'RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$';
+			$lines[] = 'RewriteCond %{ENV:ARVA_CSS_PASS} !=1';
 			$lines[] = 'RewriteCond %{QUERY_STRING} ^$';
 			$lines[] = 'RewriteCond %{HTTP:Cookie} !(' . $cookies . ') [NC]';
 			$lines[] = 'RewriteCond %{HTTP:Authorization} ^$';
@@ -816,6 +818,48 @@ final class PageCache {
 		}
 		$lines[] = '</IfModule>';
 		return $lines;
+	}
+
+	/**
+	 * Upgrade only our existing block, and restore it if an uncached homepage check fails.
+	 * Other plugins' changes made while that request runs remain intact.
+	 */
+	public static function refresh_rules(): bool {
+		if ( ! self::active() || ! self::rules_present() ) {
+			return true;
+		}
+		$file     = ServerRules::file();
+		$contents = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- own existing rules.
+		$pattern  = '/# BEGIN ' . preg_quote( self::MARKER, '/' ) . '\R(.*?)\R# END ' . preg_quote( self::MARKER, '/' ) . '/s';
+		if ( ! preg_match( $pattern, $contents, $match ) ) {
+			return false;
+		}
+		$old  = str_replace( "\r\n", "\n", $match[1] );
+		$next = implode( "\n", self::rules() );
+		if ( trim( $old ) === trim( $next ) ) {
+			return true;
+		}
+		if ( ! self::write_rules( self::rules() ) ) {
+			return false;
+		}
+		$probe = self::fetch( add_query_arg( 'arvaseo_cache_probe', wp_generate_password( 16, false, false ), home_url( '/' ) ) );
+		$ok    = null === $probe['error'] && 200 === $probe['code'] && ! $probe['host_hit'] && false !== stripos( $probe['body'], '</html>' );
+		if ( ! $ok ) {
+			$current = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- compare our block before restoring it.
+			if ( preg_match( $pattern, $current, $current_match ) && trim( $current_match[1] ) === trim( $next ) ) {
+				self::write_rules( explode( "\n", $old ) );
+			}
+			AuditLogger::warning( 'speed.css_cache_rules', __( 'The new CSS delivery rules could not be verified. The earlier page-cache rules were kept; optimized CSS can still be fetched by scheduled tasks.', 'arvaseo-connector' ) );
+		}
+		update_option(
+			CssPass::RULES,
+			array(
+				'ok' => $ok,
+				'at' => time(),
+			),
+			false
+		);
+		return $ok;
 	}
 
 	/**

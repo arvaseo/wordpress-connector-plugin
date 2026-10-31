@@ -1448,6 +1448,9 @@ defined( 'ABSPATH' ) || exit;
 			<label class="arvaseo-label" for="arvaseo-exclude-pages"><?php esc_html_e( 'Pages', 'arvaseo-connector' ); ?></label>
 			<p class="arvaseo-hint"><?php esc_html_e( 'No fix runs on these. One address per line, the part after your domain, such as /contact/. A * matches anything: /shop/* is every page under /shop/. You can also tick “Leave this page alone” when you edit a post or page, or use Arva SEO in the toolbar while you view any page.', 'arvaseo-connector' ); ?></p>
 			<textarea id="arvaseo-exclude-pages" name="exclude_pages" rows="4" placeholder="/checkout/&#10;/book-now/*"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['exclude_pages'] ) ); ?></textarea>
+			<label class="arvaseo-label" for="arvaseo-html-keep-comments"><?php esc_html_e( 'Keep these HTML comments', 'arvaseo-connector' ); ?></label>
+			<p class="arvaseo-hint"><?php esc_html_e( 'One fragment per line. Minify HTML preserves any comment containing it, as well as known cache, builder and conditional comments.', 'arvaseo-connector' ); ?></p>
+			<textarea id="arvaseo-html-keep-comments" name="html_keep_comments" rows="3"><?php echo esc_textarea( implode( "\n", $arvaseo_stored['html_keep_comments'] ) ); ?></textarea>
 			<?php if ( $arvaseo_skipped > 0 ) : ?>
 				<p class="arvaseo-hint" style="margin-top: 8px">
 					<?php

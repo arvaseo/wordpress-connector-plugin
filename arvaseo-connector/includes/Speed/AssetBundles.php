@@ -252,7 +252,7 @@ final class AssetBundles {
 		if ( count( self::$sources ) > 80 || str_contains( $source, '/' . self::FOLDER . '/' ) ) {
 			return null;
 		}
-		$asset = AssetMinifier::source( $source, $kind, true );
+		$asset = Fixes::uses( 'combine_' . $kind, Changes::CHANGING_ADDRESSES ) ? Addresses::local_source( $source, $kind ) : AssetMinifier::source( $source, $kind, true );
 		if ( null === $asset ) {
 			return null;
 		}

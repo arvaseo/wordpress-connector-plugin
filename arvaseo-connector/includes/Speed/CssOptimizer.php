@@ -93,9 +93,23 @@ final class CssOptimizer {
 	/**
 	 * This page's signature and results, once worked out.
 	 *
-	 * @var array{signature: string, template: string, sheets: array<string, array{used: string, critical: string, href: string}>}|null
+	 * @var array{signature:string,template:string,sheets:array<string,array<string,mixed>>,format?:int,sources?:list<array<string,mixed>>,stored?:array<int,array<string,mixed>>,combined_pending?:bool,pinned_fallback?:bool,earlier?:bool}|null
 	 */
 	private static ?array $page = null;
+
+	/**
+	 * Ready sources offered only through legacy-compatible single links.
+	 *
+	 * @var array<string,mixed>|null
+	 */
+	private static ?array $upgrade_page = null;
+
+	/**
+	 * Background collection suppresses a second, settings-dependent legacy render request.
+	 *
+	 * @var bool
+	 */
+	private static bool $collecting_sources = false;
 
 	/**
 	 * Print one loader even if the theme invokes its footer more than once.
@@ -122,9 +136,11 @@ final class CssOptimizer {
 	 * A new page.
 	 */
 	public static function reset(): void {
-		self::$page           = null;
-		self::$rendering      = null;
-		self::$loader_printed = false;
+		self::$page               = null;
+		self::$upgrade_page       = null;
+		self::$collecting_sources = false;
+		self::$rendering          = null;
+		self::$loader_printed     = false;
 	}
 
 	// ----- Arva SEO's renderer -----------------------------------------------------------------
@@ -139,6 +155,11 @@ final class CssOptimizer {
 		$token           = isset( $_GET['arvaseo_render'] ) ? sanitize_text_field( wp_unslash( $_GET['arvaseo_render'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a signed token, checked below.
 		self::$rendering = '' !== $token && self::valid_token( $token );
 		return self::$rendering;
+	}
+
+	/** A valid renderer request can explicitly ask for original source files, even on a pinned site. */
+	public static function original_sources_render(): bool {
+		return self::is_render_request() && isset( $_GET['arvaseo_sources'] ) && '2' === $_GET['arvaseo_sources']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- is_render_request verifies the HMAC and expiry.
 	}
 
 	/**
@@ -190,6 +211,13 @@ final class CssOptimizer {
 	 * use its results if there are any, note the page for Arva SEO if not, and print the critical CSS.
 	 */
 	public static function prepare(): void {
+		if ( self::per_file() ) {
+			self::prepare_sources();
+			return;
+		}
+		if ( self::upgrade_pending() ) {
+			self::prepare_upgrade_sources();
+		}
 		if ( self::combined_mode() ) {
 			return; // Final printed bundles, not the original enqueue handles, define this result.
 		}
@@ -245,6 +273,87 @@ final class CssOptimizer {
 		}
 	}
 
+	/** Whether every active CSS fix uses the source-file revision. */
+	public static function per_file(): bool {
+		return Changes::latest_rev( 'critical_css' ) >= Changes::CSS_PER_FILE && Changes::pipeline_uses( array( 'critical_css', 'unused_css' ), Changes::CSS_PER_FILE );
+	}
+
+	/** Pending visitor delivery still collects the settings-independent original sources. */
+	public static function upgrade_pending(): bool {
+		return Changes::latest_rev( 'critical_css' ) >= Changes::CSS_PER_FILE && ! self::per_file() && self::wanted() && ! self::is_render_request();
+	}
+
+	/** Keep legacy results first; any fallback waits for the complete-response safety checks. */
+	private static function prepare_upgrade_sources(): void {
+		self::$collecting_sources = true;
+		$template                 = self::template();
+		$snapshot                 = CssSources::snapshot( $template, ( Fixes::stored()['ccss_per_url'] ?? false ) ? self::current_url() : '' );
+		if ( ! $snapshot['sources'] ) {
+			return; // Unsupported sources keep original CSS without another legacy render charge.
+		}
+		$stored = self::load( $snapshot['signature'], $template, true );
+		if ( null === $stored ) {
+			self::note( $snapshot['signature'], $template, $snapshot );
+			$prev   = self::index()[ $snapshot['signature'] ]['prev'] ?? null;
+			$stored = is_string( $prev ) ? self::load( $prev, '', true ) : null;
+		}
+		self::$upgrade_page = array(
+			'signature'        => $snapshot['signature'],
+			'template'         => $template,
+			'sheets'           => array(),
+			'format'           => 2,
+			'sources'          => $snapshot['sources'],
+			'stored'           => $stored ?? array(),
+			'combined_pending' => true,
+			'pinned_fallback'  => true,
+		);
+	}
+
+	/**
+	 * New results cannot expand an old approval to uppercase IDs or bundles.
+	 *
+	 * @param string $html Complete, policy-checked document.
+	 */
+	private static function upgrade_fallback_html( string $html ): string {
+		if ( null === self::$upgrade_page || ! self::wanted() ) {
+			return $html;
+		}
+		self::$page = self::$upgrade_page;
+		return self::combined_sources_html( $html );
+	}
+
+	/** Prepare original sources before any minify or combine filter changes their printed tags. */
+	private static function prepare_sources(): void {
+		$template = self::template();
+		$snapshot = CssSources::snapshot( $template, ( Fixes::stored()['ccss_per_url'] ?? false ) ? self::current_url() : '' );
+		if ( array() === $snapshot['sources'] ) {
+			return;
+		}
+		$signature = $snapshot['signature'];
+		$stored    = self::load( $signature, $template );
+		$earlier   = false;
+		if ( null === $stored ) {
+			self::note( $signature, $template, $snapshot );
+			$prev    = self::index()[ $signature ]['prev'] ?? null;
+			$stored  = is_string( $prev ) ? self::load( $prev ) : null;
+			$earlier = null !== $stored;
+		}
+		if ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) {
+			return;
+		}
+
+		self::$page = array(
+			'signature'        => $signature,
+			'template'         => $template,
+			'sheets'           => array(),
+			'format'           => 2,
+			'sources'          => $snapshot['sources'],
+			'stored'           => $stored ?? array(),
+			'combined_pending' => true,
+			'earlier'          => $earlier,
+		);
+	}
+
 	/**
 	 * Whether CSS must be combined before its generated CSS can be selected: with Combine CSS on,
 	 * from revision 2 of the CSS fixes (2.10.2). An administrator who approved an earlier revision
@@ -252,7 +361,7 @@ final class CssOptimizer {
 	 * generation from the styles WordPress enqueued, whatever Combine CSS does to them afterwards.
 	 */
 	public static function combined_mode(): bool {
-		return Fixes::applies( 'combine_css' ) && Changes::pipeline_uses( array( 'critical_css', 'unused_css' ), Changes::CSS_COMBINE_FIRST );
+		return ! self::per_file() && Fixes::applies( 'combine_css' ) && Changes::pipeline_uses( array( 'critical_css', 'unused_css' ), Changes::CSS_COMBINE_FIRST );
 	}
 
 	/**
@@ -262,6 +371,12 @@ final class CssOptimizer {
 	 * @param string $html Complete, already combined page HTML.
 	 */
 	public static function combined_html( string $html ): string {
+		if ( self::per_file() ) {
+			return self::combined_sources_html( $html );
+		}
+		if ( ! self::combined_mode() && null === self::$page && null !== self::$upgrade_page ) {
+			return self::upgrade_fallback_html( $html );
+		}
 		if ( ! self::combined_mode() || ! self::wanted() || self::is_render_request() || self::$loader_printed
 			|| null !== Exclusions::page_reason( 'critical_css' ) || strlen( $html ) > 4194304
 			|| ! preg_match( '~\A(?:\xEF\xBB\xBF)?\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b~i', $html ) || false === stripos( $html, '</html>' ) ) {
@@ -291,7 +406,7 @@ final class CssOptimizer {
 			if ( ! is_user_logged_in() ) {
 				self::note( $signature, $template );
 			}
-			return $html;
+			return self::upgrade_fallback_html( $html );
 		}
 		if ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) {
 			return $html;
@@ -331,6 +446,75 @@ final class CssOptimizer {
 				'html'   => $replacement,
 			);
 		}
+		if ( array() === $edits ) {
+			return $html;
+		}
+		$edits[] = array(
+			'start'  => $page['body_end'],
+			'length' => 0,
+			'html'   => self::loader_markup(),
+		);
+		usort( $edits, static fn ( array $a, array $b ): int => $a['start'] <=> $b['start'] );
+		foreach ( array_reverse( $edits ) as $edit ) {
+			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
+		}
+		return $html;
+	}
+
+	/**
+	 * Replace a combined link only when every original member has matching optimized CSS.
+	 *
+	 * @param string $html Final combined HTML.
+	 */
+	private static function combined_sources_html( string $html ): string {
+		if ( empty( self::$page['combined_pending'] ) || self::is_render_request() || strlen( $html ) > 4194304 ) {
+			return $html;
+		}
+		$page = self::combined_sheets( $html );
+		if ( null === $page ) {
+			return $html;
+		}
+		$stored                         = self::$page['stored'] ?? array();
+		self::$page['combined_pending'] = false;
+		self::$page['sheets']           = array();
+		$edits                          = array();
+		$kept                           = array();
+		foreach ( $page['sheets'] as $sheet ) {
+			$handle  = substr( $sheet['id'], 0, -4 );
+			$members = AssetCombiner::css_members( $sheet['href'] );
+			if ( ! empty( self::$page['pinned_fallback'] ) && ( null !== $members || strtolower( $sheet['id'] ) !== $sheet['id'] ) ) {
+				$kept[] = array(
+					'id'  => $sheet['id'],
+					'why' => 'awaiting_approval',
+				);
+				continue;
+			}
+			if ( null !== $members ) {
+				$result = CssSources::assemble( $members, $stored, $sheet['media'] );
+			} else {
+				$source = CssSources::for_handle( $handle );
+				// Rewritten single links are eligible only when the printed bytes still identify the source.
+				$result = null !== $source && $source['media'] === $sheet['media'] && CssSources::printed_matches( $source, $sheet['href'] ) ? CssSources::match( $source, $stored ) : null;
+			}
+			if ( null === $result ) {
+				$kept[] = array(
+					'id'  => $sheet['id'],
+					'why' => null !== $members ? 'incomplete_bundle' : 'result_pending_or_changed',
+				);
+				continue;
+			}
+			self::$page['sheets'][ $handle ] = $result;
+			$replacement                     = self::style_tag( $sheet['tag'], $handle, $sheet['href'], $sheet['media'] );
+			if ( ! Fixes::applies( 'unused_css' ) && '' !== $result['critical'] ) {
+				$replacement = '<style id="arvaseo-critical-' . esc_attr( $handle ) . '"' . ( 'all' === $sheet['media'] ? '' : ' media="' . esc_attr( $sheet['media'] ) . '"' ) . '>' . self::safe_css( self::font_css( $result['critical'] ) ) . '</style>' . $replacement;
+			}
+			$edits[] = array(
+				'start'  => $sheet['start'],
+				'length' => $sheet['length'],
+				'html'   => $replacement,
+			);
+		}
+		CssCoverage::record( self::$page['signature'], count( $edits ), $kept, ! empty( self::$page['earlier'] ) );
 		if ( array() === $edits ) {
 			return $html;
 		}
@@ -531,6 +715,9 @@ final class CssOptimizer {
 	 * @return mixed
 	 */
 	public static function style_tag( $tag, $handle, $href = '', $media = 'all' ) {
+		if ( ! empty( self::$page['combined_pending'] ) ) {
+			return $tag;
+		}
 		$sheet = self::$page['sheets'][ (string) $handle ] ?? null;
 		if ( ! is_string( $tag ) || null === $sheet || ! str_contains( $tag, 'stylesheet' ) ) {
 			return $tag;
@@ -571,7 +758,7 @@ final class CssOptimizer {
 
 	/** A string is also safe to append from the final output-buffer callback. */
 	private static function loader_markup(): string {
-		if ( self::$loader_printed || null === self::$page || array() === self::$page['sheets'] || ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) ) {
+		if ( ! empty( self::$page['combined_pending'] ) || self::$loader_printed || null === self::$page || array() === self::$page['sheets'] || ( ! Fixes::applies( 'unused_css' ) && ! Fixes::applies( 'critical_css' ) ) ) {
 			return '';
 		}
 		$file = ARVASEO_CONNECTOR_DIR . '/assets/js/css-loader.js';
@@ -790,15 +977,16 @@ final class CssOptimizer {
 	 * @param array<string, mixed> $entry An index entry.
 	 */
 	private static function known( array $entry ): bool {
-		return (int) ( $entry['format'] ?? 1 ) <= 1;
+		return (int) ( $entry['format'] ?? 1 ) <= 1 || ( 2 === (int) ( $entry['format'] ?? 1 ) && is_array( $entry['sources'] ?? null ) && isset( $entry['shape'] ) && preg_match( '/^[a-f0-9]{64}$/D', (string) $entry['shape'] ) );
 	}
 
 	/**
-	 * Save the index.
+	 * Retain the most recently used metadata. Files have a separate grace period.
 	 *
 	 * @param array<string, array<string, mixed>> $index Index.
+	 * @return array<string, array<string, mixed>>
 	 */
-	private static function save_index( array $index ): void {
+	private static function bounded_index( array $index ): array {
 		if ( count( $index ) > self::MAX_ENTRIES ) {
 			// The page types seen longest ago go first: by when a page last used them (seen), not by
 			// when they were first noted, so the homepage that is opened all day isn't the first to
@@ -812,7 +1000,29 @@ final class CssOptimizer {
 			uasort( $order, static fn ( array $a, array $b ): int => $b <=> $a );
 			$index = array_intersect_key( $index, array_slice( $order, 0, self::MAX_ENTRIES, true ) );
 		}
-		update_option( self::INDEX, $index, false );
+		return $index;
+	}
+
+	/**
+	 * Merge only changed fields, under the same lock used by page notes.
+	 *
+	 * @param array<string, array<string, mixed>>      $changes Changes.
+	 * @param array<string, array<string, mixed>>|null $expected Rows before the HTTP call; a newer refresh wins.
+	 */
+	private static function patch_index( array $changes, ?array $expected = null ): bool {
+		return CssIndex::patch(
+			static function ( array $fresh ) use ( $changes, $expected ): array {
+				foreach ( $changes as $signature => $fields ) {
+					if ( null !== $expected && ( $expected[ $signature ]['refresh_id'] ?? null ) !== ( $fresh[ $signature ]['refresh_id'] ?? null ) ) {
+						continue; // Do not erase work queued while this request waited for the API.
+					}
+					if ( isset( $fresh[ $signature ] ) ) {
+						$fresh[ $signature ] = array_merge( $fresh[ $signature ], $fields );
+					}
+				}
+				return self::bounded_index( $fresh );
+			}
+		);
 	}
 
 	/**
@@ -843,8 +1053,7 @@ final class CssOptimizer {
 		if ( max( (int) ( $index[ $signature ]['seen'] ?? 0 ), (int) ( $index[ $signature ]['at'] ?? 0 ) ) > time() - HOUR_IN_SECONDS ) {
 			return;
 		}
-		$index[ $signature ]['seen'] = time();
-		self::save_index( $index );
+		self::patch_index( array( $signature => array( 'seen' => time() ) ) );
 	}
 
 	/**
@@ -890,7 +1099,7 @@ final class CssOptimizer {
 	 */
 	private static function delete_result( string $signature ): bool {
 		$file = self::dir() . '/' . $signature . '.json';
-		if ( ! preg_match( '/^[a-f0-9]{40}$/', $signature ) || is_link( self::dir() ) || is_link( $file ) || ! is_file( $file ) ) {
+		if ( ! preg_match( '/^[a-f0-9]{40,64}$/D', $signature ) || is_link( self::dir() ) || is_link( $file ) || ! is_file( $file ) ) {
 			return false;
 		}
 		wp_delete_file( $file );
@@ -901,39 +1110,68 @@ final class CssOptimizer {
 	/**
 	 * A page type without results, noted for the next sync (from a page anyone can see).
 	 *
-	 * @param string $signature Signature.
-	 * @param string $template  Page type.
+	 * @param string              $signature Signature.
+	 * @param string              $template  Page type.
+	 * @param array<string,mixed> $source_data Original source metadata for the new format.
 	 */
-	private static function note( string $signature, string $template ): void {
+	private static function note( string $signature, string $template, array $source_data = array() ): void {
+		if ( self::$collecting_sources && ! isset( $source_data['sources'] ) ) {
+			return; // One source snapshot, never a second request for the minified/combined variant.
+		}
 		if ( is_user_logged_in() && ! current_user_can( Capabilities::MANAGE ) ) {
 			return; // Signed-in visitors' pages differ (account menus).
 		}
 		if ( '404' === $template && self::is_file_address( self::current_url() ) ) {
 			return; // A missing stylesheet, script or manifest reaches the 404 template too: only pages count.
 		}
-		$index = self::index();
-		if ( isset( $index[ $signature ] ) && ! self::known( $index[ $signature ] ) ) {
-			return; // A newer version's entry (a rollback from 2.12.0): kept as it is, not used here.
-		}
-		if ( isset( $index[ $signature ] ) && 'ready' !== $index[ $signature ]['status'] ) {
-			// Still waiting: a sync that was lost (a failed or cancelled run) must not leave it waiting for good.
-			if ( in_array( $index[ $signature ]['status'], array( 'needed', 'requested', 'redownload' ), true ) && ! wp_next_scheduled( self::HOOK ) ) {
-				wp_schedule_single_event( time() + 30, self::HOOK );
+		$url   = self::current_url();
+		$guard = null;
+		if ( isset( $source_data['sources'] ) && ! isset( self::index()[ $signature ] ) ) {
+			$guard = CssChurn::check( $url, $template, $signature, $source_data['sources'] );
+			if ( null === $guard ) {
+				return; // A busy guard is retried on another visit; never spend unchecked allowance.
 			}
-			return;
 		}
-		// New, or "ready" although its results can't be read (their file was deleted, by a host's
-		// clean-up or a migration that left uploads behind): without this the page type would
-		// wait for good, since nothing else asks for it again.
-		$index[ $signature ] = array(
-			'template' => $template,
-			'url'      => self::current_url(),
-			'status'   => 'needed',
-			'at'       => time(),
+		CssIndex::patch(
+			static function ( array $index ) use ( $signature, $template, $url, $source_data, $guard ): array {
+				if ( isset( $index[ $signature ] ) && ( ! self::known( $index[ $signature ] ) || 'ready' !== $index[ $signature ]['status'] ) ) {
+					if ( self::known( $index[ $signature ] ) && max( (int) ( $index[ $signature ]['seen'] ?? 0 ), (int) ( $index[ $signature ]['at'] ?? 0 ) ) <= time() - HOUR_IN_SECONDS ) {
+						$index[ $signature ]['seen'] = time();
+					}
+					return $index;
+				}
+				$extra = array();
+				if ( isset( $source_data['sources'], $source_data['shape'] ) ) {
+					$previous = array_filter( $index, static fn ( array $row ): bool => 2 === ( $row['format'] ?? 1 ) && in_array( $row['status'] ?? '', array( 'ready', 'refreshing', 'redownload' ), true ) && ( $row['template'] ?? '' ) === $template && ( $row['url'] ?? '' ) === $url && ( $row['shape'] ?? '' ) === $source_data['shape'] && max( (int) ( $row['at'] ?? 0 ), (int) ( $row['seen'] ?? 0 ) ) >= time() - 30 * DAY_IN_SECONDS );
+					uasort( $previous, static fn ( array $a, array $b ): int => max( (int) ( $b['at'] ?? 0 ), (int) ( $b['seen'] ?? 0 ) ) <=> max( (int) ( $a['at'] ?? 0 ), (int) ( $a['seen'] ?? 0 ) ) );
+					$extra = array(
+						'format'  => 2,
+						'shape'   => $source_data['shape'],
+						'sources' => $source_data['sources'],
+						'prev'    => array_key_first( $previous ),
+					);
+				}
+				if ( null !== $guard && ! $guard['allowed'] ) {
+					$extra += array(
+						'retry_at'   => $guard['retry_at'],
+						'error_file' => $guard['file'],
+					);
+				}
+				$index[ $signature ] = array(
+					'template' => $template,
+					'url'      => $url,
+					'status'   => null !== $guard && ! $guard['allowed'] ? 'too_many_changes' : 'needed',
+					'at'       => time(),
+				) + $extra;
+				return self::bounded_index( $index );
+			}
 		);
-		self::save_index( $index );
-		if ( ! wp_next_scheduled( self::HOOK ) ) {
-			wp_schedule_single_event( time() + 30, self::HOOK );
+		if ( count( self::index() ) > 280 ) {
+			CssIndex::compact();
+		}
+		self::schedule_sync( self::index(), self::wanted() );
+		if ( isset( $source_data['sources'] ) ) {
+			CssDelivery::send_soon();
 		}
 	}
 
@@ -953,7 +1191,7 @@ final class CssOptimizer {
 	public static function current_url(): string {
 		$uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
 		$url = home_url( (string) $uri );
-		return (string) remove_query_arg( array_merge( PageCache::tracking_parameters(), array( 'arvaseo_render', 'arvaseo_note', AssetDiagnostics::QUERY ) ), $url );
+		return (string) remove_query_arg( array_merge( PageCache::tracking_parameters(), array( 'arvaseo_render', 'arvaseo_sources', 'arvaseo_note', 'arvaseo_cache_probe', AssetDiagnostics::QUERY ) ), $url );
 	}
 
 	/**
@@ -961,18 +1199,19 @@ final class CssOptimizer {
 	 *
 	 * @param string $signature Signature.
 	 * @param string $template  The page type, when a page is using them (see redownload()).
+	 * @param bool   $upgrade_read Read source results for a restricted, pending-upgrade fallback.
 	 * @return array<int, array{id: string|null, href: string, used: string, critical: string}>|null
 	 */
-	public static function load( string $signature, string $template = '' ): ?array {
+	public static function load( string $signature, string $template = '', bool $upgrade_read = false ): ?array {
 		$file = self::dir() . '/' . $signature . '.json';
-		if ( ! preg_match( '/^[a-f0-9]{40}$/', $signature ) || ! is_readable( $file ) ) {
+		if ( ! preg_match( '/^[a-f0-9]{40,64}$/D', $signature ) || ! is_readable( $file ) ) {
 			return null;
 		}
 		$data = json_decode( (string) file_get_contents( $file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
 		if ( ! is_array( $data['sheets'] ?? null ) ) {
 			return null;
 		}
-		if ( (int) ( $data['v'] ?? 1 ) > 1 ) {
+		if ( (int) ( $data['v'] ?? 1 ) > 2 || ( 2 === (int) ( $data['v'] ?? 1 ) && ! self::per_file() && ! ( $upgrade_read && Changes::latest_rev( 'critical_css' ) >= Changes::CSS_PER_FILE ) ) ) {
 			// Results a newer version saved (a rollback from 2.12.0): kept, not used.
 			return null;
 		}
@@ -998,20 +1237,21 @@ final class CssOptimizer {
 		if ( is_user_logged_in() ) {
 			return; // Visitors' pages ask for it.
 		}
-		$index = self::index();
-		if ( isset( $index[ $signature ] ) ) {
-			return; // Tracked: downloaded again after the update, or Arva SEO had no other copy.
-		}
-		$index[ $signature ] = array(
-			'template' => $template,
-			'url'      => self::current_url(),
-			'status'   => 'redownload',
-			'at'       => time(),
+		$url = self::current_url();
+		CssIndex::patch(
+			static function ( array $index ) use ( $signature, $template, $url ): array {
+				if ( ! isset( $index[ $signature ] ) ) {
+					$index[ $signature ] = array(
+						'template' => $template,
+						'url'      => $url,
+						'status'   => 'redownload',
+						'at'       => time(),
+					);
+				}
+				return self::bounded_index( $index );
+			}
 		);
-		self::save_index( $index );
-		if ( ! wp_next_scheduled( self::HOOK ) ) {
-			wp_schedule_single_event( time() + 30, self::HOOK );
-		}
+		self::schedule_sync( self::index(), self::wanted() );
 	}
 
 	/**
@@ -1020,6 +1260,20 @@ final class CssOptimizer {
 	 * @return array{sent: int, ready: int, allowance: array<string, mixed>|null}
 	 */
 	public static function sync(): array {
+		$empty = array(
+			'sent'      => 0,
+			'ready'     => 0,
+			'allowance' => null,
+		);
+		return \ArvaSEO\Connector\Support\Lock::with( 'css-sync', 60, static fn (): array => self::sync_locked() ) ?? $empty;
+	}
+
+	/**
+	 * Run one bounded sync; index writes take their own short lock.
+	 *
+	 * @return array{sent: int, ready: int, allowance: array<string, mixed>|null}
+	 */
+	private static function sync_locked(): array {
 		$out = array(
 			'sent'      => 0,
 			'ready'     => 0,
@@ -1029,6 +1283,7 @@ final class CssOptimizer {
 			return $out;
 		}
 		$index  = self::index();
+		$before = $index;
 		$wanted = self::wanted();
 		// Results saved before 2.10.8 may have lost rules (see store()): they're fetched again
 		// first, at no cost, also while both fixes are off, so they're whole when one is turned on.
@@ -1043,31 +1298,82 @@ final class CssOptimizer {
 		$scheduled = self::schedule_sync( $index, $wanted );
 		// What this run changes, applied at the end to the index as it is then: pages note new
 		// page types while the requests below run, and saving this run's copy would lose them.
+		$checked = null;
 		$changes = array();
 		$change  = static function ( string $signature, array $fields ) use ( &$index, &$changes ): void {
+			if ( 'refreshing' === ( $index[ $signature ]['status'] ?? '' ) && isset( $fields['status'] ) ) {
+				$status = $fields['status'];
+				if ( 'failed' === $status ) {
+					$fields = array_merge(
+						$fields,
+						array(
+							'status'               => 'ready',
+							'refresh_state'        => '',
+							'refresh_error'        => $fields['error'] ?? 'refresh_failed',
+							'refresh_error_status' => $fields['error_status'] ?? 0,
+						)
+					);
+				} elseif ( 'ready' !== $status ) {
+					$fields['refresh_state'] = $status;
+					$fields['status']        = 'refreshing';
+				} else {
+					$fields += array(
+						'refresh_state'        => '',
+						'refresh_error'        => '',
+						'refresh_error_status' => 0,
+					);
+				}
+			}
 			$index[ $signature ]   = array_merge( $index[ $signature ], $fields );
 			$changes[ $signature ] = array_merge( $changes[ $signature ] ?? array(), $fields );
 		};
 
+		$feed = null;
+		if ( $wanted && array_filter( $index, static fn ( array $entry ): bool => 2 === ( $entry['format'] ?? 1 ) && self::known( $entry ) ) ) {
+			$feed = CssDelivery::updates();
+			foreach ( $feed['data'] ?? array() as $update ) {
+				$signature = $update['signature'];
+				if ( isset( $index[ $signature ] ) && 2 === ( $index[ $signature ]['format'] ?? 1 ) && 'ready' === $index[ $signature ]['status'] ) {
+					$change( $signature, array( 'status' => 'redownload' ) );
+				}
+			}
+			$again = array_keys( array_filter( $index, static fn ( array $entry ): bool => 'redownload' === ( $entry['status'] ?? '' ) && self::known( $entry ) ) );
+		}
+
 		$send = array();
 		foreach ( $index as $signature => $entry ) {
-			if ( ! self::known( $entry ) ) {
+			$last_seen = (int) ( $entry['seen'] ?? $entry['at'] ?? time() );
+			if ( ! self::known( $entry ) || $last_seen < time() - 7 * DAY_IN_SECONDS ) {
 				continue;
 			}
-			if ( 'needed' === $entry['status'] || ( in_array( $entry['status'], array( 'no_allowance', 'daily_cap', 'too_many_changes' ), true ) && ( $entry['retry_at'] ?? 0 ) <= time() ) ) {
+			if ( 'needed' === self::pending_state( $entry ) || ( in_array( self::pending_state( $entry ), array( 'no_allowance', 'daily_cap', 'too_many_changes' ), true ) && ( $entry['retry_at'] ?? 0 ) <= time() ) ) {
 				$send[] = array(
 					'signature' => (string) $signature,
 					'url'       => $entry['url'],
 					'template'  => $entry['template'],
 				);
+				if ( 2 === ( $entry['format'] ?? 1 ) ) {
+					$send[ array_key_last( $send ) ] += array_intersect_key( $entry, array_flip( array( 'format', 'shape', 'sources' ) ) );
+				}
+				// Only checksummed sources can safely be rendered again under the same signature.
+				// Old-format bulk refresh keeps its historical, free redownload behavior.
+				if ( 'refreshing' === $entry['status'] && 2 === ( $entry['format'] ?? 1 ) ) {
+					$send[ array_key_last( $send ) ]['regenerate'] = true;
+					$send[ array_key_last( $send ) ]['request_id'] = $entry['refresh_id'];
+				}
+			}
+			if ( strlen( (string) wp_json_encode( array( 'items' => $send ) ) ) > 250000 ) {
+				array_pop( $send );
+				break;
 			}
 			if ( count( $send ) >= self::BATCH ) {
 				break;
 			}
 		}
 		if ( $wanted && array() !== $send ) {
-			$response = $client->site( 'POST', '/css-optimizations', array( 'items' => $send ) );
+			$response = $client->site( 'POST', '/css-optimizations', array( 'items' => $send ), 10 );
 			if ( $response->ok() ) {
+				$checked = $response->body;
 				foreach ( (array) ( $response->body['data'] ?? array() ) as $row ) {
 					$signature = (string) ( $row['signature'] ?? '' );
 					if ( ! isset( $index[ $signature ] ) ) {
@@ -1088,7 +1394,7 @@ final class CssOptimizer {
 			}
 		}
 
-		$waiting = array_reverse( array_filter( $index, static fn ( $entry ) => 'requested' === $entry['status'] && self::known( $entry ) ), true );
+		$waiting = array_reverse( array_filter( $index, static fn ( $entry ) => 'requested' === self::pending_state( $entry ) && self::known( $entry ) ), true );
 		uasort( $waiting, static fn ( $a, $b ) => ( $b['at'] ?? 0 ) <=> ( $a['at'] ?? 0 ) );
 		$waiting = $wanted ? array_keys( $waiting ) : array();
 		$started = microtime( true );
@@ -1107,15 +1413,25 @@ final class CssOptimizer {
 			if ( ! $response->ok() ) {
 				break;
 			}
+			$checked          = $response->body;
 			$out['allowance'] = is_array( $response->body['allowance'] ?? null ) ? $response->body['allowance'] : $out['allowance'];
 			foreach ( (array) ( $response->body['data'] ?? array() ) as $row ) {
 				$signature = (string) ( $row['signature'] ?? '' );
 				if ( ! isset( $index[ $signature ] ) ) {
 					continue;
 				}
-				$again_of = 'redownload' === $index[ $signature ]['status'] ? self::load( $signature ) : null;
-				if ( 'ready' === ( $row['status'] ?? '' ) && self::store( $signature, (array) ( $row['sheets'] ?? array() ) ) ) {
-					$change( $signature, array( 'status' => 'ready' ) );
+				$again_of = in_array( $index[ $signature ]['status'], array( 'redownload', 'refreshing' ), true ) ? self::load( $signature ) : null;
+				if ( 'ready' === ( $row['status'] ?? '' ) && (int) ( $row['format'] ?? 1 ) === (int) ( $index[ $signature ]['format'] ?? 1 ) && self::store( $signature, (array) ( $row['sheets'] ?? array() ), (int) ( $row['format'] ?? 1 ) ) ) {
+					$change(
+						$signature,
+						array(
+							'status'               => 'ready',
+							'animations'           => 2 === ( $row['format'] ?? 1 ) ? CssAnimations::clean( $row['animations'] ?? null ) : null,
+							'animation_at'         => time(),
+							'refresh_error'        => substr( (string) ( $row['refresh_error'] ?? '' ), 0, 40 ),
+							'refresh_error_status' => (int) ( $row['refresh_error_status'] ?? 0 ),
+						)
+					);
 					++$out['ready'];
 					// A re-download that brings the same CSS changes nothing on the pages.
 					$new_css += null === $again_of || self::load( $signature ) !== $again_of ? 1 : 0;
@@ -1139,13 +1455,20 @@ final class CssOptimizer {
 		if ( null !== $out['allowance'] ) {
 			CssAllowance::save( $out['allowance'] );
 		}
-		$fresh = self::index();
-		foreach ( $changes as $signature => $fields ) {
-			if ( isset( $fresh[ $signature ] ) ) {
-				$fresh[ $signature ] = array_merge( $fresh[ $signature ], $fields );
+		if ( null !== $checked ) {
+			CssDelivery::checked( $checked );
+		}
+		$saved = self::patch_index( $changes, $before );
+		if ( $saved && null !== $feed ) {
+			CssDelivery::advance( $feed['next'] );
+			if ( $feed['has_more'] && ! wp_next_scheduled( self::HOOK ) ) {
+				wp_schedule_single_event( time() + 120, self::HOOK );
 			}
 		}
-		self::save_index( $fresh );
+		if ( $saved && $out['ready'] > 0 && Changes::latest_rev( 'critical_css' ) >= Changes::CSS_PER_FILE ) {
+			CssIndex::compact();
+		}
+		$fresh = self::index();
 		if ( self::waiting( $fresh, $wanted ) ) {
 			self::schedule_sync( $fresh, $wanted );
 		} elseif ( null !== $scheduled && wp_next_scheduled( self::HOOK ) === $scheduled ) {
@@ -1163,7 +1486,22 @@ final class CssOptimizer {
 				sprintf( _n( 'PageSpeed fixes: optimized CSS is ready for %d page type.', 'PageSpeed fixes: optimized CSS is ready for %d page types.', $new_css, 'arvaseo-connector' ), $new_css )
 			);
 		}
+		CssPass::refresh();
 		return $out;
+	}
+
+	/**
+	 * A refresh serves its previous result while moving through the ordinary queue.
+	 *
+	 * @param array<string, mixed> $entry Entry.
+	 */
+	private static function pending_state( array $entry ): string {
+		return 'refreshing' === ( $entry['status'] ?? '' ) ? (string) ( $entry['refresh_state'] ?? 'needed' ) : (string) ( $entry['status'] ?? '' );
+	}
+
+	/** Whether there is actual work to deliver, rather than a paused or failed render. */
+	public static function awaiting_delivery(): bool {
+		return self::waiting( self::index(), self::wanted() );
 	}
 
 	/**
@@ -1175,7 +1513,7 @@ final class CssOptimizer {
 	 */
 	private static function waiting( array $index, bool $wanted ): bool {
 		$statuses = $wanted ? array( 'needed', 'requested', 'redownload' ) : array( 'redownload' );
-		return array() !== array_filter( $index, static fn ( $entry ) => in_array( $entry['status'] ?? '', $statuses, true ) && self::known( $entry ) );
+		return array() !== array_filter( $index, static fn ( $entry ) => in_array( self::pending_state( $entry ), $statuses, true ) && self::known( $entry ) );
 	}
 
 	/**
@@ -1202,19 +1540,23 @@ final class CssOptimizer {
 	 * @return int Page types to download again.
 	 */
 	public static function redownload_all(): int {
-		$index = self::index();
 		$count = 0;
-		foreach ( $index as $signature => $entry ) {
-			if ( 'ready' === ( $entry['status'] ?? '' ) && self::known( $entry ) ) {
-				$index[ $signature ]['status'] = 'redownload';
-				++$count;
+		$saved = CssIndex::patch(
+			static function ( array $index ) use ( &$count ): array {
+				foreach ( $index as $signature => $entry ) {
+					if ( 'ready' === ( $entry['status'] ?? '' ) && self::known( $entry ) ) {
+						$index[ $signature ]['status'] = 'redownload';
+						++$count;
+					}
+				}
+				return $index;
 			}
+		);
+		if ( ! $saved ) {
+			return 0;
 		}
-		if ( $count > 0 ) {
-			self::save_index( $index );
-			if ( ! wp_next_scheduled( self::HOOK ) ) {
-				wp_schedule_single_event( time() + 30, self::HOOK );
-			}
+		if ( $count > 0 && ! wp_next_scheduled( self::HOOK ) ) {
+			wp_schedule_single_event( time() + 30, self::HOOK );
 		}
 		return $count;
 	}
@@ -1230,12 +1572,27 @@ final class CssOptimizer {
 	 *
 	 * @param string                           $signature Signature.
 	 * @param array<int, array<string, mixed>> $sheets    Sheets.
+	 * @param int                              $format Result format.
 	 */
-	private static function store( string $signature, array $sheets ): bool {
+	private static function store( string $signature, array $sheets, int $format = 1 ): bool {
+		if ( ! in_array( $format, array( 1, 2 ), true ) || ! preg_match( '/^[a-f0-9]{40,64}$/D', $signature ) ) {
+			return false;
+		}
 		$clean = array();
 		foreach ( $sheets as $sheet ) {
 			if ( ! is_array( $sheet ) || ! is_string( $sheet['used'] ?? null ) || ! is_string( $sheet['critical'] ?? null ) || ! self::storable( $sheet['used'] ) || ! self::storable( $sheet['critical'] ) ) {
 				continue;
+			}
+			$extra = array();
+			if ( 2 === $format ) {
+				if ( ! is_string( $sheet['key'] ?? null ) || ! preg_match( '/^(?:local|url):[a-f0-9]{64}$/D', $sheet['key'] ) || ! is_string( $sheet['sha'] ?? null ) || ! preg_match( '/^[a-f0-9]{64}$/D', $sheet['sha'] ) ) {
+					continue;
+				}
+				$extra = array(
+					'key' => $sheet['key'],
+					'sha' => $sheet['sha'],
+					'md5' => $sheet['md5'] ?? null,
+				);
 			}
 			$clean[] = array(
 				// Case is kept: handles such as Elementor's e-animation-fadeInUp are printed as they are.
@@ -1243,7 +1600,10 @@ final class CssOptimizer {
 				'href'     => esc_url_raw( (string) ( $sheet['href'] ?? '' ) ),
 				'used'     => $sheet['used'],
 				'critical' => $sheet['critical'],
-			);
+			) + $extra;
+		}
+		if ( array() !== $sheets && array() === $clean ) {
+			return false;
 		}
 		$fs = self::filesystem();
 		if ( null === $fs || ! wp_mkdir_p( self::dir() ) || is_link( self::dir() ) ) {
@@ -1254,6 +1614,7 @@ final class CssOptimizer {
 		$temp = self::dir() . '/.' . $signature . '.' . wp_generate_password( 12, false, false ) . '.tmp';
 		$json = (string) wp_json_encode(
 			array(
+				'v'      => $format,
 				'at'     => time(),
 				'whole'  => true,
 				'sheets' => $clean,
@@ -1264,7 +1625,7 @@ final class CssOptimizer {
 			return false;
 		}
 		// rename() replaces the file in one step; WP_Filesystem::move() deletes it first.
-		if ( @rename( $temp, $file ) || $fs->move( $temp, $file, true ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.rename_rename -- our own file, replaced in one step.
+		if ( @rename( $temp, $file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.rename_rename -- our own file, replaced in one step.
 			return true;
 		}
 		$fs->delete( $temp );
@@ -1281,24 +1642,30 @@ final class CssOptimizer {
 	}
 
 	/**
-	 * Forget every result (Regenerate), so each page type is sent again as it's next visited.
+	 * Queue regeneration, retaining the current results and files used by cached pages.
 	 */
 	public static function forget_all(): void {
-		$fs = self::filesystem();
-		if ( null !== $fs && $fs->is_dir( self::dir() ) ) {
-			$fs->rmdir( self::dir(), true );
-		}
-		$index = self::index();
-		foreach ( $index as $signature => $entry ) {
-			if ( ! self::known( $entry ) ) {
-				continue; // A newer version's entry stays as it is; its results are gone with the folder.
+		CssIndex::patch(
+			static function ( array $index ): array {
+				foreach ( $index as $signature => $entry ) {
+					if ( ! self::known( $entry ) || 'refreshing' === ( $entry['status'] ?? '' ) ) {
+						continue;
+					}
+					// Inspect the file without load(): load records use and would take the index lock again.
+					$file                                 = self::dir() . '/' . $signature . '.json';
+					$data                                 = preg_match( '/^[a-f0-9]{40,64}$/D', (string) $signature ) && is_readable( $file )
+					? json_decode( (string) file_get_contents( $file ), true ) : null; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local result.
+					$ready                                = is_array( $data['sheets'] ?? null ) && (int) ( $data['v'] ?? 1 ) <= 2;
+					$index[ $signature ]['status']        = $ready ? 'refreshing' : 'needed';
+					$index[ $signature ]['refresh_state'] = $ready ? 'needed' : '';
+					$index[ $signature ]['refresh_id']    = wp_generate_uuid4();
+					$index[ $signature ]['refresh_at']    = time();
+					unset( $index[ $signature ]['error'], $index[ $signature ]['retry_at'], $index[ $signature ]['refresh_error'] );
+				}
+				return $index;
 			}
-			$index[ $signature ]['status'] = 'needed';
-			unset( $index[ $signature ]['error'], $index[ $signature ]['retry_at'] );
-		}
-		self::save_index( $index );
-		// Someone asked for it, and the used-CSS copies saved pages may load are gone: caches clear now.
-		Fixes::pages_changed( 'regenerate' );
+		);
+		self::schedule_sync( self::index(), self::wanted() );
 		AuditLogger::info( 'speed.css_regenerate', __( 'PageSpeed fixes: optimized CSS will be worked out again.', 'arvaseo-connector' ) );
 	}
 
@@ -1355,6 +1722,8 @@ final class CssOptimizer {
 		delete_option( 'arvaseo_connector_css_hashes' );
 		delete_option( 'arvaseo_connector_css_allowance' );
 		delete_option( 'arvaseo_connector_css_pauses' );
+		delete_option( CssChurn::OPTION );
+		CssDelivery::clear();
 	}
 
 	/**
@@ -1374,8 +1743,11 @@ final class CssOptimizer {
 			if ( 'not_a_page' === $status || ! self::known( $entry ) ) {
 				continue; // Not a page; or a newer version's entry, kept and not used here.
 			}
-			if ( in_array( $status, array( 'ready', 'redownload' ), true ) ) {
+			if ( in_array( $status, array( 'ready', 'redownload', 'refreshing' ), true ) ) {
 				++$counts['ready'];
+				if ( 'refreshing' === $status ) {
+					++$counts['waiting'];
+				}
 			} elseif ( in_array( $status, array( 'needed', 'requested', 'daily_cap', 'too_many_changes' ), true ) ) {
 				++$counts['waiting'];
 			} elseif ( 'no_allowance' === $status ) {
@@ -1395,11 +1767,11 @@ final class CssOptimizer {
 	public static function failures(): array {
 		$out = array();
 		foreach ( self::index() as $entry ) {
-			if ( in_array( $entry['status'], array( 'failed', 'not_this_site' ), true ) && self::known( $entry ) ) {
+			if ( ( in_array( $entry['status'], array( 'failed', 'not_this_site' ), true ) || ! empty( $entry['refresh_error'] ) ) && self::known( $entry ) ) {
 				$out[] = array(
 					'label'  => self::template_label( (string) $entry['template'] ),
 					'url'    => (string) $entry['url'],
-					'reason' => 'not_this_site' === $entry['status'] ? __( 'This address isn’t on the website connected to Arva SEO.', 'arvaseo-connector' ) : self::reason( (string) ( $entry['error'] ?? '' ), (int) ( $entry['error_status'] ?? 0 ) ),
+					'reason' => 'not_this_site' === $entry['status'] ? __( 'This address isn’t on the website connected to Arva SEO.', 'arvaseo-connector' ) : ( ! empty( $entry['refresh_error'] ) ? __( 'Couldn’t refresh; earlier matching CSS stays in use. ', 'arvaseo-connector' ) : '' ) . self::reason( (string) ( $entry['refresh_error'] ?? $entry['error'] ?? '' ), (int) ( $entry['refresh_error_status'] ?? $entry['error_status'] ?? 0 ) ),
 				);
 			}
 		}
@@ -1417,6 +1789,7 @@ final class CssOptimizer {
 			'too_many_changes' => __( 'Paused because the styles changed repeatedly. Original CSS stays available. Check the changing stylesheet before retrying; no render is running for this entry.', 'arvaseo-connector' ),
 			'needed'           => __( 'Waiting to send this stylesheet signature to Arva SEO.', 'arvaseo-connector' ),
 			'requested'        => __( 'Requested; waiting to download and save a matching result. This does not mean the server is still rendering it.', 'arvaseo-connector' ),
+			'refreshing'       => __( 'Refreshing optimized styles; the previous matching styles remain available.', 'arvaseo-connector' ),
 			'redownload'       => __( 'Checking for a complete saved result; the existing styles remain available.', 'arvaseo-connector' ),
 			'daily_cap'        => __( 'Waiting for the daily rendering limit to reset.', 'arvaseo-connector' ),
 			'no_allowance'     => __( 'Waiting for page optimization allowance.', 'arvaseo-connector' ),
@@ -1461,19 +1834,18 @@ final class CssOptimizer {
 		if ( $regenerate && ! \ArvaSEO\Connector\Support\Lock::acquire( 'css-page-' . sha1( (string) TokenStore::site_id() . $signature ), 300 ) ) {
 			return 'wait';
 		}
+		$item     = array(
+			'signature' => $signature,
+			'url'       => $entry['url'],
+			'template'  => $entry['template'],
+		) + array_intersect_key( $entry, array_flip( array( 'format', 'shape', 'sources' ) ) );
 		$client   = ApiClient::instance();
 		$response = $regenerate
 			? $client->site(
 				'POST',
 				'/css-optimizations',
 				array(
-					'items'      => array(
-						array(
-							'signature' => $signature,
-							'url'       => $entry['url'],
-							'template'  => $entry['template'],
-						),
-					),
+					'items'      => array( $item ),
 					'regenerate' => true,
 					'request_id' => $request_id,
 				)
@@ -1491,9 +1863,19 @@ final class CssOptimizer {
 			}
 			$status = (string) ( $row['status'] ?? '' );
 			if ( $regenerate && in_array( $status, array( 'queued', 'rendering', 'ready' ), true ) ) {
-				$fields = array( 'status' => 'requested' );
+				$kept   = null !== self::load( $signature );
+				$fields = $kept ? array(
+					'status'        => 'refreshing',
+					'refresh_state' => 'requested',
+					'refresh_id'    => $request_id,
+					'refresh_at'    => time(),
+				) : array( 'status' => 'requested' );
 			} elseif ( ! $regenerate && 'ready' === $status ) {
-				$fields = self::store( $signature, (array) ( $row['sheets'] ?? array() ) ) ? array( 'status' => 'ready' ) : array(
+				$fields = self::store( $signature, (array) ( $row['sheets'] ?? array() ), (int) ( $row['format'] ?? 1 ) ) ? array(
+					'status'               => 'ready',
+					'refresh_error'        => substr( (string) ( $row['refresh_error'] ?? '' ), 0, 40 ),
+					'refresh_error_status' => (int) ( $row['refresh_error_status'] ?? 0 ),
+				) : array(
 					'status' => 'failed',
 					'error'  => 'result_not_saved',
 				);
@@ -1506,19 +1888,28 @@ final class CssOptimizer {
 			} else {
 				continue;
 			}
+			if ( 'failed' === $fields['status'] && null !== self::load( $signature ) ) {
+				$fields = array(
+					'status'               => 'ready',
+					'refresh_error'        => $fields['error'] ?? 'refresh_failed',
+					'refresh_error_status' => (int) ( $row['error_status'] ?? 0 ),
+				);
+			}
 			$fresh = self::index();
 			if ( ! isset( $fresh[ $signature ] ) ) {
 				return 'invalid';
 			}
-			$fresh[ $signature ] = array_merge( $fresh[ $signature ], $fields );
-			self::save_index( $fresh );
+			if ( ! self::patch_index( array( $signature => $fields ), array( $signature => $entry ) ) ) {
+				return 'wait';
+			}
+			$fresh = self::index();
 			if ( 'ready' === $fields['status'] && self::wanted() ) {
 				Fixes::pages_changed( 'css' );
 			}
-			if ( 'requested' === $fields['status'] ) {
+			if ( in_array( $fields['status'], array( 'requested', 'refreshing' ), true ) ) {
 				self::schedule_sync( $fresh, self::wanted() );
 			}
-			return 'ready' === $fields['status'] ? 'updated' : ( 'requested' === $fields['status'] ? 'started' : 'waiting' );
+			return ! empty( $fields['refresh_error'] ) ? 'waiting' : ( 'ready' === $fields['status'] ? 'updated' : ( in_array( $fields['status'], array( 'requested', 'refreshing' ), true ) ? 'started' : 'waiting' ) );
 		}
 		return 'not_ready';
 	}
@@ -1527,19 +1918,24 @@ final class CssOptimizer {
 	 * Ask again for the page types that failed (Optimize now).
 	 */
 	public static function retry_failed(): int {
-		$index = self::index();
 		$count = 0;
-		foreach ( $index as $signature => $entry ) {
-			if ( 'failed' === $entry['status'] && self::known( $entry ) ) {
-				$index[ $signature ]['status'] = 'needed';
-				unset( $index[ $signature ]['error'], $index[ $signature ]['error_status'] );
-				++$count;
+		$saved = CssIndex::patch(
+			static function ( array $index ) use ( &$count ): array {
+				foreach ( $index as $signature => $entry ) {
+					if ( self::known( $entry ) && ( 'failed' === $entry['status'] || ! empty( $entry['refresh_error'] ) ) ) {
+						$refresh                              = ! empty( $entry['refresh_error'] );
+						$index[ $signature ]['status']        = $refresh ? 'refreshing' : 'needed';
+						$index[ $signature ]['refresh_state'] = $refresh ? 'needed' : '';
+						$index[ $signature ]['refresh_id']    = wp_generate_uuid4();
+						$index[ $signature ]['refresh_at']    = time();
+						unset( $index[ $signature ]['error'], $index[ $signature ]['error_status'], $index[ $signature ]['refresh_error'] );
+						++$count;
+					}
+				}
+				return $index;
 			}
-		}
-		if ( $count > 0 ) {
-			self::save_index( $index );
-		}
-		return $count;
+		);
+		return $saved ? $count : 0;
 	}
 
 	/**

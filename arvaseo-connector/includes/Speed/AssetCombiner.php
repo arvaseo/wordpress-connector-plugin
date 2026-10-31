@@ -22,6 +22,23 @@ final class AssetCombiner {
 	 */
 	private static bool $buffer_started = false;
 
+	/**
+	 * Original members of CSS bundles in this response.
+	 *
+	 * @var array<string,array<int,array<string,mixed>>>
+	 */
+	private static array $css_members = array();
+
+	/**
+	 * Original members are request-local, never inferred from a generated filename.
+	 *
+	 * @param string $url Bundle URL.
+	 * @return array<int,array<string,mixed>>|null
+	 */
+	public static function css_members( string $url ): ?array {
+		return self::$css_members[ $url ] ?? null;
+	}
+
 	/** Start inside the page-cache buffer so it receives the final combined HTML. */
 	public static function on_page(): void {
 		if ( self::$buffer_started || ! self::wanted() ) {
@@ -33,6 +50,10 @@ final class AssetCombiner {
 
 	/** Inline changes, moving jQuery and late icon libraries use this same complete-response buffer, including when combining is off. */
 	private static function wanted(): bool {
+		if ( HtmlMinifier::wanted() || CssOptimizer::upgrade_pending() || ( CssOptimizer::per_file() && CssOptimizer::wanted() ) ) {
+			return true;
+		}
+
 		if ( HeadScripts::wanted() || IconStyles::wanted() || SafeAssetTrials::active( 'body_css' ) ) {
 			return true;
 		}
@@ -74,6 +95,10 @@ final class AssetCombiner {
 	 * @param string $html Final page HTML, after other asset filters.
 	 */
 	public static function filter( string $html ): string {
+		self::$css_members = array();
+		if ( CssOptimizer::original_sources_render() ) {
+			return $html;
+		}
 		$rendering = CssOptimizer::is_render_request();
 		$css       = Fixes::applies( 'combine_css' );
 		$js        = ! $rendering && Fixes::applies( 'combine_js' );
@@ -132,7 +157,8 @@ final class AssetCombiner {
 		foreach ( array_reverse( $edits ) as $edit ) {
 			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
 		}
-		return SafeAssetTrials::inline_body_css( CssOptimizer::combined_html( $html ) );
+		$html = SafeAssetTrials::inline_body_css( CssOptimizer::combined_html( $html ) );
+		return HtmlMinifier::wanted() ? HtmlMinifier::filter( $html, Fixes::stored()['html_keep_comments'] ) : $html;
 	}
 
 
@@ -362,7 +388,11 @@ final class AssetCombiner {
 	 */
 	private static function source_key( string $source, string $base, bool $external = false ): string {
 		$source = \WP_Http::make_absolute_url( $source, trailingslashit( $base ) );
-		$parts  = wp_parse_url( $source );
+		$kind   = strtolower( pathinfo( (string) wp_parse_url( $source, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+		if ( $external && Fixes::uses( 'combine_' . $kind, Changes::CHANGING_ADDRESSES ) ) {
+			$source = Addresses::external_key( $source );
+		}
+		$parts = wp_parse_url( $source );
 		return is_array( $parts ) ? strtolower( (string) ( $parts['scheme'] ?? '' ) . '://' . (string) ( $parts['host'] ?? '' ) ) . ':' . ( $parts['port'] ?? '' ) . ( $parts['path'] ?? '' ) . ( $external && isset( $parts['query'] ) ? '?' . $parts['query'] : '' ) : '';
 	}
 
@@ -402,6 +432,23 @@ final class AssetCombiner {
 				self::finish( $part, $edits );
 			}
 			return;
+		}
+		if ( 'css' === $run[0]['kind'] ) {
+			self::$css_members[ $url ] = array_map(
+				static function ( array $asset ): array {
+					if ( 'inline' === $asset['part']['source'] ) {
+						return $asset['part'];
+					}
+					$tags = new \WP_HTML_Tag_Processor( $asset['open'] );
+					$tags->next_tag();
+					$id = (string) $tags->get_attribute( 'id' );
+					return array(
+						'source' => 'file',
+						'file'   => CssSources::for_handle( substr( $id, 0, -4 ) ),
+					);
+				},
+				$run
+			);
 		}
 		AssetDiagnostics::bundle( $url, array_column( $run, 'source' ) );
 		$open = 'css' === $run[0]['kind'] ? (string) preg_replace( '/\A<style\b/i', '<link rel="stylesheet"', $run[0]['open'] ) : $run[0]['open']; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- replaces the original approved styles in place.

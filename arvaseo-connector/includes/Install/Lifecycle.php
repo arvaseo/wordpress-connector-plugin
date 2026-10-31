@@ -68,11 +68,13 @@ final class Lifecycle {
 			) as $site_id ) {
 				switch_to_blog( (int) $site_id );
 				CronManager::clear_all();
+				\ArvaSEO\Connector\Maintenance\DatabaseCleanup::cancel();
 				restore_current_blog();
 			}
 			return;
 		}
 		CronManager::clear_all();
+		\ArvaSEO\Connector\Maintenance\DatabaseCleanup::cancel();
 		\ArvaSEO\Connector\Speed\PageCache::remove_on_exit();
 		\ArvaSEO\Connector\Speed\ServerRules::remove_on_exit();
 	}

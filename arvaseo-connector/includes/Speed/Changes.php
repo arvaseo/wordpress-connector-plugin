@@ -72,6 +72,11 @@ final class Changes {
 
 	public const CSS_EVERY_STYLESHEET = 3;
 
+	/** Source-matched CSS and stable verified addresses, approved separately for visitors. */
+	public const CSS_PER_FILE = 4;
+
+	public const CHANGING_ADDRESSES = 4;
+
 	/** Combine CSS and Combine JavaScript from 2.10.5 combine around a file that can't be combined. */
 	public const COMBINE_AROUND = 2;
 
@@ -150,6 +155,7 @@ final class Changes {
 			'minify_js_exclude'   => array(),
 			'combine_js_exclude'  => array(),
 		),
+		'2.12.0' => array( 'html_keep_comments' => array() ),
 	);
 
 	/**
@@ -283,6 +289,60 @@ final class Changes {
 				'with'       => array(),
 				'keep_until' => null,
 			),
+			array(
+				'id'         => '2.12.0-css-per-file',
+				'version'    => '2.12.0',
+				'fixes'      => array( 'critical_css', 'unused_css' ),
+				'kind'       => self::UPDATE,
+				'rev'        => self::CSS_PER_FILE,
+				'with'       => array(),
+				'keep_until' => '2027-03-08',
+			),
+			array(
+				'id'         => '2.12.0-changing-addresses',
+				'version'    => '2.12.0',
+				'fixes'      => array( 'minify_css', 'minify_js', 'combine_css', 'combine_js', 'google_fonts', 'critical_css', 'unused_css' ),
+				'kind'       => self::UPDATE,
+				'rev'        => self::CHANGING_ADDRESSES,
+				'with'       => array(),
+				'keep_until' => '2027-03-08',
+			),
+			array(
+				'id'         => '2.12.0-keep-css',
+				'version'    => '2.12.0',
+				'fixes'      => array( 'critical_css', 'unused_css' ),
+				'kind'       => self::NOTICE,
+				'rev'        => null,
+				'with'       => array(),
+				'keep_until' => null,
+			),
+			array(
+				'id'         => '2.12.0-renderer-v2',
+				'version'    => '2.12.0',
+				'fixes'      => array( 'critical_css', 'unused_css' ),
+				'kind'       => self::NOTICE,
+				'rev'        => null,
+				'with'       => array(),
+				'keep_until' => null,
+			),
+			array(
+				'id'         => '2.12.0-html-choice',
+				'version'    => '2.12.0',
+				'fixes'      => array( 'minify_html' ),
+				'kind'       => self::OPTION,
+				'rev'        => null,
+				'with'       => array(),
+				'keep_until' => null,
+			),
+			array(
+				'id'         => '2.12.0-optional-maintenance',
+				'version'    => '2.12.0',
+				'fixes'      => array( '*' ),
+				'kind'       => self::NOTICE,
+				'rev'        => null,
+				'with'       => array(),
+				'keep_until' => null,
+			),
 		);
 		/**
 		 * The change entries (tests add their own to try each kind).
@@ -323,6 +383,12 @@ final class Changes {
 	 */
 	public static function notes(): array {
 		return array(
+			'2.12.0-css-per-file'         => __( 'Optimized styles are now worked out for each original stylesheet and assembled for combined files. Until you choose, changed stylesheets keep their original styles. One upgrade render per page is free.', 'arvaseo-connector' ),
+			'2.12.0-changing-addresses'   => __( 'Speed fixes now recognize verified files whose addresses change on every visit. The one-time CSS conversion is free; later content changes follow the normal page optimization allowance.', 'arvaseo-connector' ),
+			'2.12.0-keep-css'             => __( 'While new optimized styles are worked out, pages keep earlier results for stylesheets that did not change. Regenerate keeps the files cached pages use.', 'arvaseo-connector' ),
+			'2.12.0-renderer-v2'          => __( 'The updated renderer keeps entrance animations across stylesheets and reports first-screen animation waits. Eligible existing results can be refreshed for free.', 'arvaseo-connector' ),
+			'2.12.0-html-choice'          => __( 'New optional HTML minification starts off. It preserves text spacing and protected blocks. Additional HTML comments can be kept in Exclusions.', 'arvaseo-connector' ),
+			'2.12.0-optional-maintenance' => __( 'The Health page now shows database cleanup counts and WordPress-only maintenance controls. Cleanup requires your choice; weekly cleanup starts off. Existing speed settings stay in effect.', 'arvaseo-connector' ),
 			'2.11.2-js-exclusion-choices' => __( 'Optional separate JavaScript exclusions and reviewed AMD, body CSS and jQuery Migrate trials. Existing settings stay in effect. Trials start off and require a matching signed-in preview plus interaction checks before visitors receive them. Changed exclusion policies return the affected fix to Trying.', 'arvaseo-connector' ),
 			'2.11.0-image-purge'          => __( 'Caches are cleared when compression changes an image.', 'arvaseo-connector' ),
 			'2.11.0-combine-first'        => __( 'With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free.', 'arvaseo-connector' ),

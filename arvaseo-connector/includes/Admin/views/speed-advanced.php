@@ -42,6 +42,10 @@ return static function ( string $arvaseo_id, array $arvaseo_stored ): void {
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="arvaseo-fix-sub">
 			<h4><?php esc_html_e( 'Approve public static snippets', 'arvaseo-connector' ); ?></h4>
+			<?php $arvaseo_changing_ids = \ArvaSEO\Connector\Speed\InlineChanges::warnings( $arvaseo_kind ); ?>
+			<?php if ( $arvaseo_changing_ids ) : ?>
+				<p class="arvaseo-fix-note" role="status"><?php /* translators: %s: printed snippet identifiers. */ printf( esc_html__( 'These snippets had three different bodies on the same page within a day and stay inline there: %s. A saved approval does not override this protection; it resets as the observations expire.', 'arvaseo-connector' ), esc_html( implode( ', ', $arvaseo_changing_ids ) ) ); ?></p>
+			<?php endif; ?>
 			<p class="arvaseo-hint"><?php esc_html_e( 'Try this option and its parent Combine option, open your homepage, then return here. Choose only snippets you have checked contain public static code: approved content is copied into a public bundle. A content change automatically makes that approval stop applying.', 'arvaseo-connector' ); ?></p>
 			<input type="hidden" name="action" value="arvaseo_connector_speed_options" />
 			<input type="hidden" name="fix" value="<?php echo esc_attr( $arvaseo_id ); ?>" />

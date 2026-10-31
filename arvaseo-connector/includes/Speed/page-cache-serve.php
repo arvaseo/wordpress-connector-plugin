@@ -145,6 +145,47 @@ if ( ! function_exists( 'arvaseo_connector_page_cache_request' ) ) {
 	}
 
 	/**
+	 * Atomically allow one cached request through per five-minute slot, without loading WordPress.
+	 * Apache passes its own clock slot, so PHP's timezone does not have to match Apache's.
+	 *
+	 * @param array<string,mixed> $server Server variables, never request header names.
+	 * @param string              $root Our cache folder.
+	 * @param int|null            $now Optional clock for isolated tests.
+	 */
+	function arvaseo_connector_css_pass_claim( array $server, string $root, ?int $now = null ): bool {
+		$flag = $root . '/arvaseo-pass';
+		if ( is_link( $root ) || is_link( $flag ) || ! is_file( $flag ) ) {
+			return false;
+		}
+		$slot = null;
+		foreach ( array( 'ARVA_CSS_SLOT', 'REDIRECT_ARVA_CSS_SLOT', 'REDIRECT_REDIRECT_ARVA_CSS_SLOT' ) as $key ) {
+			if ( isset( $server[ $key ] ) ) {
+				$slot = $server[ $key ];
+				if ( ! is_string( $slot ) || ! preg_match( '/^[0-9]{10}-[0-5]-[05]$/D', $slot ) ) {
+					return false;
+				}
+				break;
+			}
+		}
+		$slot = $slot ?? 'php-' . intdiv( $now ?? time(), 300 );
+		$file = $root . '/arvaseo-pass-' . $slot;
+		if ( is_link( $file ) || is_file( $file ) ) {
+			return false;
+		}
+		$handle = @fopen( $file, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.PHP.NoSilencedErrors.Discouraged -- atomic claim before WordPress loads.
+		if ( false === $handle ) {
+			clearstatcache( true, $file );
+			// Avoid forcing every request into PHP when a full disk cannot accept a claim.
+			if ( ! is_file( $file ) ) {
+				@unlink( $flag ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink, WordPress.PHP.NoSilencedErrors.Discouraged -- only our marker, before WordPress loads.
+			}
+			return false;
+		}
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- same atomic claim.
+		return true;
+	}
+
+	/**
 	 * Serve the saved page and stop, or start saving this one. Called by the drop-in.
 	 *
 	 * @param array{root: string, ttl: int, phones: bool, charset: string, slash?: bool, ignored?: string[]} $config Written into the drop-in by PageCache.
@@ -160,6 +201,10 @@ if ( ! function_exists( 'arvaseo_connector_page_cache_request' ) ) {
 		}
 		$request = arvaseo_connector_page_cache_request( $_SERVER, $_COOKIE, $config['root'], $config['phones'], $config['slash'] ?? true, array_map( 'strval', (array) ( $config['ignored'] ?? array() ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- read, checked and never output.
 		if ( null === $request ) {
+			return;
+		}
+		if ( arvaseo_connector_css_pass_claim( $_SERVER, $config['root'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- validated server variables and a private atomic claim.
+			$GLOBALS['arvaseo_connector_css_pass'] = true;
 			return;
 		}
 		$file  = $request['file'];

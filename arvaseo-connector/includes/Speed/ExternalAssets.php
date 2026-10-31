@@ -70,10 +70,27 @@ final class ExternalAssets {
 		if ( strlen( $host ) > 253 || ! preg_match( '/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/D', $host ) || preg_match( '/\.(?:localhost|local|localdomain|internal|intranet|lan|home|corp|test|invalid|example|onion|arpa)$/D', $host ) || ! preg_match( '~^/[^?#]*\.(?:css|js)$~iD', $path ) || preg_match( '/%(?![a-f0-9]{2})|%(?:00|0[ad]|2f|5c)/i', $path ) ) {
 			return null;
 		}
+		$kind   = strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
+		$modern = Fixes::uses( 'combine_' . $kind, Changes::CHANGING_ADDRESSES );
+		if ( $modern ) {
+			$url   = Addresses::external_key( $url );
+			$parts = wp_parse_url( $url );
+			if ( ! is_array( $parts ) ) {
+				return null;
+			}
+		}
 		if ( isset( $parts['query'] ) ) {
 			$seen = array();
 			foreach ( explode( '&', $parts['query'] ) as $pair ) {
-				if ( ! preg_match( '/^(ver|v)=([0-9]+(?:[._-][0-9]+){0,6})$/D', $pair, $match ) || strlen( $match[2] ) > 40 || isset( $seen[ $match[1] ] ) ) {
+				$valid = preg_match( '/^(ver|v)=([0-9]+(?:[._-][0-9]+){0,6})$/D', $pair, $match ) && strlen( $match[2] ) <= 40;
+				if ( ! $valid && $modern ) {
+					$pieces = explode( '=', $pair, 2 );
+					if ( count( $pieces ) === 2 && in_array( $pieces[0], Addresses::BUSTERS, true ) && Addresses::clock_value( rawurldecode( $pieces[1] ) ) ) {
+						$match = array( $pair, $pieces[0], $pieces[1] );
+						$valid = true;
+					}
+				}
+				if ( ! $valid || isset( $seen[ $match[1] ] ) ) {
 					return null;
 				}
 				$seen[ $match[1] ] = true;

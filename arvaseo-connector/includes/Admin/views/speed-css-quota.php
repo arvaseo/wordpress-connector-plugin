@@ -17,6 +17,7 @@ $arvaseo_css_quota_notice = get_transient( 'arvaseo_connector_css_quota_notice_'
 ?>
 <section class="arvaseo-card" id="arvaseo-css-quota" aria-labelledby="arvaseo-css-quota-title">
 	<h2 id="arvaseo-css-quota-title"><?php esc_html_e( 'Critical CSS and Unused CSS quota', 'arvaseo-connector' ); ?></h2>
+	<?php require __DIR__ . '/speed-css-status.php'; ?>
 	<?php
 	$arvaseo_css_page_notice   = get_transient( 'arvaseo_css_page_notice_' . get_current_user_id() );
 	$arvaseo_css_page_messages = array(

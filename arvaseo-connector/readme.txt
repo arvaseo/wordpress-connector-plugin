@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.11.3
+Stable tag: 2.12.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -181,7 +181,7 @@ Connecting to Arva SEO (https://arvaseo.com) is optional and starts only when an
 
 * **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, which of the plugin's update notes applied to this site (their ids and dates) and, for an update to a fix you use, whether it waits for your check, you kept the previous version or visitors get it, which page caches and CDNs the plugin found in front of the site (their names, whether the plugin clears them or you do, how you clear the ones that are yours, when each was last cleared, and how many old generated files are kept because of them), and your data-sharing choice.
 * **Cache check (once a day, no account needed; the request goes only to your own site):** the plugin requests your own homepage from your own server, as a visitor would, without cookies or a login, reads a fixed list of its response headers (for example cf-cache-status, x-litespeed-cache, age and cache-control) and the comments cache plugins leave in the page, and keeps only the names of the caches it found. When the site is connected, those names are sent with the site's details (see above). Also, when it clears a LiteSpeed server cache from a command line or scheduled task, it asks your site for a page that answers with LiteSpeed's purge header.
-* **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only). Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
+* **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only), including saved database maintenance counts from 2.12.0. Cleanup is started only in WordPress; the app and AI connector read counts but cannot start it. Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
 * **Security scan results (off by default, a separate choice):** after each scan, when an administrator agreed to share them, each open problem's kind, severity, a key, the file's path inside the site and its SHA-256 fingerprint, and for suspicious code the pattern's name, line and the start of that line, with how many files were checked. Never the files themselves.
 * **Security feed (only when connected):** once a day the plugin downloads Arva SEO's security feed from api.arvaseo.com (fingerprints of known malware and of files found safe, PHP's latest versions, new patterns), sending only the version it has.
 * **Deep scans (off by default, a separate choice, and each one started by an administrator):** the code files the security scan couldn't match to an official copy (the theme, premium and custom plugins, and anything unexpected), with their paths inside the site, SHA-256 fingerprints and sizes, 2 MB each and 50 MB in all at most, sent to api.arvaseo.com to be checked for known malware and deleted as soon as the scan finishes. Never wp-config.php, .env files, logs, database exports, backups or media. The plugin then fetches what was found.
@@ -191,7 +191,7 @@ Connecting to Arva SEO (https://arvaseo.com) is optional and starts only when an
 * **Featured images (off by default):** only from image hosts you approve.
 * **Combine external CSS/JavaScript (off by default):** only exact public HTTPS asset URLs the administrator approves. The site's server requests those public files in the background, without visitor cookies, account credentials or page content, and keeps bounded six-hour copies for combining. The selected asset host receives the requested address and the server's IP address. Personal, signed, redirected and unsupported responses are not cached. No new files are requested merely because a URL is approved; a page must already use that resource.
 * **PageSpeed tests (only when you request a test):** the plugin sends the public page URL, selected devices and run count to api.arvaseo.com. Arva SEO requests Google PageSpeed Insights, which loads the page; scores and metrics return to WordPress. Each selected device uses one workspace test. Refreshing saved results does not start a test. Google’s privacy policy: https://policies.google.com/privacy
-* **Load styles faster and Remove unused CSS (PageSpeed fixes, off by default, only when connected):** the plugin sends api.arvaseo.com the address of one public page of each type, and Arva SEO's renderer loads it like a visitor to work out its styles; the critical and used CSS come back to this site. Only page addresses are sent. While Arva SEO loads a page, the address carries a short-lived signed parameter so the page is served with its original styles.
+* **Load styles faster and Remove unused CSS (PageSpeed fixes, off by default, only when connected):** the plugin sends api.arvaseo.com the address of one public page of each type, and Arva SEO's renderer loads it like a visitor to work out its styles; the critical and used CSS come back to this site. From 2.12.0, the request also includes public stylesheet addresses, registered IDs, media queries and checksums of verified local files; never the files’ contents, private inline script/style text, filesystem paths, cookies or visitor data. The renderer returns critical and used CSS and a bounded report of public Elementor element IDs, animation names, screen sizes and measured delays. While Arva SEO loads a page, the address carries a short-lived signed parameter so it is served with original styles. A signed readiness hint asks the plugin to fetch results through its authenticated connection; a failed hint is reported as a delivery status.
 * **Faster Google Fonts, "Serve them from your site" (off by default):** the plugin downloads the Google Fonts stylesheets and font files your pages already use from fonts.googleapis.com and fonts.gstatic.com, once, into your uploads folder, so visitors' browsers no longer connect to Google for them. Google's privacy policy: https://policies.google.com/privacy
 * **Cloudflare (off until you connect it on the Speed page):** with the API token you enter, the plugin asks api.cloudflare.com which zone your site's domain is in, reads the Rocket Loader setting, and asks Cloudflare to clear its cached copy of your pages when they change. Only page addresses and the token are sent. Cloudflare's terms: https://www.cloudflare.com/website-terms/ · Privacy policy: https://www.cloudflare.com/privacypolicy/
 * **Click-to-play videos (a PageSpeed fix, off by default):** visitors' browsers load each video's preview picture from YouTube (i.ytimg.com), and the player from youtube-nocookie.com only when they press play. YouTube's terms: https://www.youtube.com/t/terms · Google's privacy policy: https://policies.google.com/privacy
@@ -219,6 +219,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.12.0 =
+Stylesheet results now match original files. Existing sites keep approved visitor behavior until the update is accepted. HTML minification and weekly database cleanup start off. Check your pages before enabling new options.
 
 = 2.11.3 =
 The Speed screen now has seven subtabs, with a compact section chooser on phones. Existing settings, optimizations and safety checks are unchanged.
@@ -330,6 +333,16 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.12.0 =
+
+* Optimized styles are now worked out for each original stylesheet and assembled for combined files. Until you choose, changed stylesheets keep their original styles. One upgrade render per page is free.
+* Speed fixes now recognize verified files whose addresses change on every visit. The one-time CSS conversion is free; later content changes follow the normal page optimization allowance.
+* While new optimized styles are worked out, pages keep earlier results for stylesheets that did not change. Regenerate keeps the files cached pages use.
+* The updated renderer keeps entrance animations across stylesheets and reports first-screen animation waits. Eligible existing results can be refreshed for free.
+* New optional HTML minification starts off. It preserves text spacing and protected blocks. Additional HTML comments can be kept in Exclusions.
+* The Health page now shows database cleanup counts and WordPress-only maintenance controls. Cleanup requires your choice; weekly cleanup starts off. Existing speed settings stay in effect.
+* CSS delivery now records the last check, reports failed readiness messages and pauses repeated source changes locally. Current CSS files are retained during refresh, and cache recovery checks are bounded.
 
 = 2.11.3 =
 * Improved: Speed settings are organized into CSS and page styling, JavaScript and interactions, Images and media, Fonts, Caching and delivery, Testing and diagnostics, and Exclusions and advanced subtabs.

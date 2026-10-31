@@ -120,9 +120,15 @@ final class CronManager {
 	 * @param int    $delay Seconds from now.
 	 */
 	public static function run_soon( string $hook, int $delay = 5 ): void {
+		$at   = time() + ( $delay <= 5 ? 0 : $delay );
 		$next = wp_next_scheduled( $hook );
-		if ( false === $next || $next > time() + $delay + 60 ) {
-			wp_schedule_single_event( time() + $delay, $hook );
+		if ( false === $next || $next > $at + 60 ) {
+			$event = wp_get_scheduled_event( $hook );
+			$moved = false !== $event && false === $event->schedule && true === wp_unschedule_event( $event->timestamp, $hook, $event->args );
+			if ( ! wp_schedule_single_event( $at, $hook ) && $moved ) {
+				// A rejected replacement must not lose the fallback we already had.
+				wp_schedule_single_event( $event->timestamp, $hook, $event->args );
+			}
 		}
 		if ( function_exists( 'spawn_cron' ) && ! wp_doing_cron() ) {
 			spawn_cron();
@@ -153,12 +159,15 @@ final class CronManager {
 				'arvaseo_connector_maintenance',
 				\ArvaSEO\Connector\Speed\Cloudflare::HOOK,
 				\ArvaSEO\Connector\Speed\AssetCache::HOOK,
+				\ArvaSEO\Connector\Speed\Housekeeping::HOOK,
 				\ArvaSEO\Connector\Speed\AssetCache::HOOK_SWEEP,
 				\ArvaSEO\Connector\Speed\OtherCaches::HOOK_CLEAR,
 				\ArvaSEO\Connector\Speed\OtherCaches::HOOK_CHECK,
 				\ArvaSEO\Connector\Speed\PageCache::HOOK_PRELOAD,
 				\ArvaSEO\Connector\Speed\PageCache::HOOK_GC,
 				\ArvaSEO\Connector\Speed\CssOptimizer::HOOK,
+				\ArvaSEO\Connector\Maintenance\DatabaseCleanup::HOOK,
+				\ArvaSEO\Connector\Maintenance\DatabaseCleanup::WEEKLY,
 				\ArvaSEO\Connector\Speed\ImageCompression::HOOK,
 				\ArvaSEO\Connector\Speed\WebpLibrary::HOOK,
 				\ArvaSEO\Connector\Speed\LocalFonts::HOOK,
@@ -275,6 +284,7 @@ final class CronManager {
 		// Repairs can be undone for 30 days; after that their kept copies are deleted.
 		\ArvaSEO\Connector\Security\Repairs::purge();
 		// Optimized CSS of page types that are no longer tracked.
+		\ArvaSEO\Connector\Speed\CssIndex::compact();
 		\ArvaSEO\Connector\Speed\CssOptimizer::prune_results();
 		// Generated files no page used for a week (Google Fonts copies, 30 days): the caches are
 		// cleared first and the files deleted a day later (AssetCache), also while no folder is full,

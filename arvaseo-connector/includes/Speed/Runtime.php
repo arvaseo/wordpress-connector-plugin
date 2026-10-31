@@ -96,10 +96,12 @@ final class Runtime {
 		MediaLibraryCompression::init();
 		ExternalAssets::init();
 		AssetCache::init();
+		Housekeeping::init();
 		CssOptimizer::init();
 		Cloudflare::init();
 		OtherCaches::init();
 		PageCache::init();
+		CssPass::init();
 	}
 
 	/**
@@ -143,6 +145,10 @@ final class Runtime {
 		// drop-in learns the developer's list of ignored query parameters (2.11.0).
 		OtherCaches::check_soon();
 		PageCache::refresh_dropin();
+		PageCache::refresh_rules();
+		if ( is_string( $previous ) && version_compare( $previous, '2.12.0', '<' ) ) {
+			Housekeeping::schedule();
+		}
 		foreach ( Fixes::stored()['fixes'] as $fix ) {
 			if ( 'on' === $fix['state'] ) {
 				Fixes::pages_changed( 'upgrade' );
@@ -266,6 +272,9 @@ final class Runtime {
 		if ( ! self::is_page_request() ) {
 			return;
 		}
+		if ( ! empty( $GLOBALS['arvaseo_connector_css_pass'] ) ) {
+			CssDelivery::send_soon();
+		}
 		SafeAssetTrials::reset();
 		AssetDiagnostics::start();
 		SafeAssetTrials::private_preview();
@@ -277,7 +286,7 @@ final class Runtime {
 		if ( CssOptimizer::is_render_request() ) {
 			CssOptimizer::serve_original();
 			// Combined first from revision 2 (2.10.2); an approved earlier revision gets the original page.
-			if ( CssOptimizer::combined_mode() ) {
+			if ( ! CssOptimizer::original_sources_render() && CssOptimizer::combined_mode() ) {
 				self::prepare_css();
 				AssetCombiner::on_page();
 				// The extras visitors don't get change the head too (WordPress's emoji styles sit
@@ -824,7 +833,7 @@ final class Runtime {
 					wp_dequeue_script( 'wp-embed' );
 				}
 				if ( $extras['dashicons'] && ! is_user_logged_in() ) {
-					wp_dequeue_style( 'dashicons' );
+					CssSources::dequeue_extra( 'dashicons' );
 				}
 				if ( $extras['jquery_migrate'] ) {
 					$jquery = wp_scripts()->registered['jquery'] ?? null;
@@ -834,7 +843,7 @@ final class Runtime {
 				}
 				if ( $extras['block_css'] && ! wp_is_block_theme() && is_singular() && ! has_blocks( get_queried_object_id() ) ) {
 					foreach ( array( 'wp-block-library', 'wp-block-library-theme', 'classic-theme-styles', 'global-styles' ) as $handle ) {
-						wp_dequeue_style( $handle );
+						CssSources::dequeue_extra( $handle );
 					}
 				}
 			},

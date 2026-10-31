@@ -74,6 +74,8 @@ final class HealthCheckRegistry {
 			'performance.page_cache'                => array( 'performance', 'page_cache', true ),
 			'performance.object_cache'              => array( 'performance', 'object_cache', false ),
 			'performance.autoloaded_options'        => array( 'performance', 'autoloaded_options', false ),
+			'performance.database_cleanup'          => array( 'performance', 'database_cleanup', true ),
+			'performance.optimized_css'             => array( 'performance', 'optimized_css', false ),
 			'seo.search_visibility'                 => array( 'seo', 'search_visibility', false ),
 			'seo.permalinks'                        => array( 'seo', 'permalinks', false ),
 			'seo.core_sitemaps'                     => array( 'seo', 'core_sitemaps', false ),
@@ -116,6 +118,37 @@ final class HealthCheckRegistry {
 			);
 		}
 		return $rows;
+	}
+
+	/**
+	 * Maintenance counts are informational and never start a deletion from a health check.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function database_cleanup(): array {
+		return \ArvaSEO\Connector\Maintenance\DatabaseCleanup::snapshot();
+	}
+
+	/**
+	 * Saved CSS states and completed-response coverage; never source bodies or printed HTML.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function optimized_css(): array {
+		$delivery = \ArvaSEO\Connector\Speed\CssDelivery::status();
+		$coverage = \ArvaSEO\Connector\Speed\CssCoverage::summary();
+		return array(
+			'status' => 'good',
+			'source' => 'local_check',
+			'value'  => \ArvaSEO\Connector\Speed\CssOptimizer::counts() + array(
+				'kept_as_is'          => $coverage['kept_as_is'],
+				'using_earlier_css'   => $coverage['using_earlier_css'],
+				'page_types_checked'  => $coverage['page_types_checked'],
+				'coverage_checked_at' => null !== $coverage['coverage_checked_at'] ? Ids::iso( $coverage['coverage_checked_at'] ) : null,
+				'last_checked'        => $delivery['checked_at'] > 0 ? Ids::iso( $delivery['checked_at'] ) : null,
+				'notify_ok'           => $delivery['notify_ok'],
+			),
+		);
 	}
 
 	// ----- WordPress core -----------------------------------------------------------------

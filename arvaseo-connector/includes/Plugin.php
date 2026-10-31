@@ -46,6 +46,7 @@ final class Plugin {
 		add_filter( 'wp_privacy_personal_data_exporters', array( PrivacyService::class, 'register_exporter' ) );
 		add_filter( 'wp_privacy_personal_data_erasers', array( PrivacyService::class, 'register_eraser' ) );
 		CronManager::init();
+		\ArvaSEO\Connector\Maintenance\DatabaseCleanup::init();
 		\ArvaSEO\Connector\Speed\Runtime::init();
 		\ArvaSEO\Connector\Security\Scanner::init();
 		\ArvaSEO\Connector\Security\Report::init();

@@ -49,6 +49,7 @@ final class UninstallService {
 	 */
 	private static function site(): void {
 		CronManager::clear_all();
+		\ArvaSEO\Connector\Maintenance\DatabaseCleanup::cancel();
 		// Saved pages in other caches may link to the generated files: clear them while the Cloudflare token is still here.
 		$delete_files = Settings::get( 'delete_data_on_uninstall' ) && \ArvaSEO\Connector\Speed\OtherCaches::clear_before_uninstall();
 		$credentials  = TokenStore::credentials();

@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class WebhookController {
 
-	public const EVENT_TYPES = array( 'content.available', 'seo.updates_available', 'speed.fixes_requested', 'health.refresh_requested', 'inventory.refresh_requested', 'connection.challenge', 'connection.revoked' );
+	public const EVENT_TYPES = array( 'content.available', 'seo.updates_available', 'speed.fixes_requested', 'speed.css_ready', 'health.refresh_requested', 'inventory.refresh_requested', 'connection.challenge', 'connection.revoked' );
 
 	/**
 	 * The secret that signed the current request.
@@ -130,6 +130,13 @@ final class WebhookController {
 				// job still runs in two minutes, for anything this request doesn't finish.
 				CronManager::run_soon( 'arvaseo_connector_poll', 2 * MINUTE_IN_SECONDS );
 				self::poll_when_done();
+				return self::accepted( $event );
+
+			case 'speed.css_ready':
+				if ( array_diff( array_keys( $event['data'] ), array( 'count' ) ) || ( isset( $event['data']['count'] ) && ( ! is_int( $event['data']['count'] ) || $event['data']['count'] < 0 || $event['data']['count'] > 300 ) ) ) {
+					return new \WP_Error( 'arvaseo_invalid_event', __( 'Invalid event.', 'arvaseo-connector' ), array( 'status' => 422 ) );
+				}
+				\ArvaSEO\Connector\Speed\CssDelivery::send_soon();
 				return self::accepted( $event );
 
 			case 'inventory.refresh_requested':

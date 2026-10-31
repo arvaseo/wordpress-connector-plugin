@@ -130,6 +130,9 @@ final class InlineAssets {
 		if ( ! in_array( $kind, array( 'css', 'js' ), true ) || ! Fixes::applies( 'combine_inline_' . $kind ) || ! preg_match( '/\A[A-Za-z][A-Za-z0-9_:.-]{0,127}\z/', $id ) || strlen( $text ) > self::MAX_BYTES || preg_match( self::SENSITIVE, $text ) ) {
 			return false;
 		}
+		if ( Fixes::uses( 'combine_' . $kind, Changes::CHANGING_ADDRESSES ) && InlineChanges::changing( $id, $kind ) ) {
+			return false;
+		}
 		return in_array( $id . '|' . hash( 'sha256', $text ), Fixes::stored()[ 'combine_inline_' . $kind . '_ids' ] ?? array(), true );
 	}
 
@@ -182,6 +185,9 @@ final class InlineAssets {
 		}
 		$items = self::candidates( $kind );
 		$hash  = hash( 'sha256', $inline['text'] );
+		if ( Fixes::uses( 'combine_' . $kind, Changes::CHANGING_ADDRESSES ) ) {
+			InlineChanges::observe( $inline['id'], $kind, $hash );
+		}
 		foreach ( $items as $item ) {
 			if ( $item['id'] === $inline['id'] && $item['hash'] === $hash ) {
 				return;

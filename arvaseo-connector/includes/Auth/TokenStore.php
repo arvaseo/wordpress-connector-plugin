@@ -92,6 +92,9 @@ final class TokenStore {
 	 * @param array<string, mixed> $changes Changes.
 	 */
 	public static function update_connection( array $changes ): void {
+		if ( isset( $changes['site_registration_id'] ) && null !== self::site_id() && self::site_id() !== $changes['site_registration_id'] ) {
+			\ArvaSEO\Connector\Speed\CssDelivery::clear();
+		}
 		update_option( self::CONNECTION, array_merge( self::connection(), $changes ), false );
 	}
 
@@ -100,6 +103,7 @@ final class TokenStore {
 	 */
 	public static function clear_connection(): void {
 		delete_option( self::CONNECTION );
+		\ArvaSEO\Connector\Speed\CssDelivery::clear();
 	}
 
 	/**

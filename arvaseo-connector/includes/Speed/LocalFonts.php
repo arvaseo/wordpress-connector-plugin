@@ -132,6 +132,15 @@ final class LocalFonts {
 	}
 
 	/**
+	 * Identity shared by queued copy jobs; only Google Fonts stylesheet URLs qualify.
+	 *
+	 * @param string $src Stylesheet address.
+	 */
+	public static function copy_key( string $src ): ?string {
+		return self::is_google_css( $src ) ? self::key( $src ) : null;
+	}
+
+	/**
 	 * How many stylesheets have been copied.
 	 */
 	public static function copied(): int {
@@ -225,7 +234,7 @@ final class LocalFonts {
 	 * @param string $src Address.
 	 */
 	private static function key( string $src ): string {
-		$url   = self::absolute( $src );
+		$url   = Fixes::uses( 'google_fonts', Changes::CHANGING_ADDRESSES ) ? Addresses::external_key( self::absolute( $src ) ) : self::absolute( $src );
 		$query = (string) wp_parse_url( $url, PHP_URL_QUERY );
 		$pairs = '' === $query ? array() : explode( '&', $query );
 		$names = array_map( static fn ( string $pair ): string => strtolower( rawurldecode( explode( '=', $pair, 2 )[0] ) ), $pairs );
@@ -249,7 +258,8 @@ final class LocalFonts {
 	 * @param string $src Address.
 	 */
 	private static function canonical( string $src ): string {
-		$parts = explode( '?', self::absolute( $src ), 2 );
+		$url   = Fixes::uses( 'google_fonts', Changes::CHANGING_ADDRESSES ) ? Addresses::external_key( self::absolute( $src ) ) : self::absolute( $src );
+		$parts = explode( '?', $url, 2 );
 		if ( ! isset( $parts[1] ) ) {
 			return $parts[0];
 		}

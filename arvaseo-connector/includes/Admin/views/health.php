@@ -1,6 +1,6 @@
 <?php
 /**
- * Health (read-only).
+ * Health checks and administrator-only maintenance.
  *
  * @package ArvaSEO\Connector
  */
@@ -72,6 +72,7 @@ defined( 'ABSPATH' ) || exit;
 	?>
 <div class="arvaseo-stack">
 	<?php require __DIR__ . '/security.php'; ?>
+	<?php require __DIR__ . '/database.php'; ?>
 
 	<section class="arvaseo-card" aria-labelledby="arvaseo-hs-heading">
 		<div>
