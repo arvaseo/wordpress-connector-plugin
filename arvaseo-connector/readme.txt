@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.12.0
+Stable tag: 2.12.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,8 +19,9 @@ Improve how your WordPress site loads, scan for known security problems, and opt
 Arva SEO → Speed explains each fix and the PageSpeed (Lighthouse) problems it addresses. Every fix starts off. Try mode shows supported changes only to signed-in administrators before you enable them for visitors. Server-level caching and compression instead check the site when enabled.
 
 * **Page caching:** serve saved HTML without running WordPress, through .htaccess or PHP. Signed-in users, personal pages, carts and checkouts are excluded. Cached pages are cleared when relevant content or settings change.
+* **Background images:** the Speed screen detects Elementor’s native background lazy-loading setting and explains its separate exclusions and JavaScript requirement. Arva SEO does not enable it silently or install a second background loader. Keep hero backgrounds eager and test scrolling and interactive widgets.
 * **Images and layout:** prioritize featured images and the homepage image identified by a connected PageSpeed test; lazy-load images, videos and maps below the first few images; add missing media-library image dimensions and the mobile viewport tag when needed.
-* **Critical and used CSS:** Load styles faster supplies first-screen styles; Remove unused CSS supplies the styles a page uses, with full stylesheets available on interaction. When Combine CSS is on, compatible styles are combined first; both results are generated from those same combined files. Arva SEO generates these on its servers using your plan's page optimizations. Choose generation by page type or URL, inline or cached-file used CSS, and an inline or external asynchronous loader. Original styles load until suitable results are ready.
+* **Critical and used CSS:** Load styles faster supplies first-screen styles; Remove unused CSS supplies the styles a page uses, with full stylesheets available on interaction. Original stylesheets are measured at phone and computer sizes; matching results are assembled in source order for compatible combined files. With the updated combining behavior approved, unmatched files stay separate so ready neighboring results remain usable. Arva SEO generates these on its servers using your plan's page optimizations. Choose generation by page type or URL, inline or cached-file used CSS, and an inline or external asynchronous loader. Original styles load until suitable results are ready.
 * **CSS and JavaScript minification:** smaller cached copies of supported local files, plus separate controls for minifying inline style blocks and classic scripts in their existing tags. Unsupported files and code stay unchanged.
 * **CSS and JavaScript combining:** bundle compatible neighboring files in order. Optional inline combining requires approval of an exact public static snippet; a changed snippet stops matching its approval. External combining requires exact approved public HTTPS URLs and background caching. Incompatible scripts, integrity-protected resources and managed critical/used CSS stay separate. Fewer requests do not always improve performance.
 * **Script loading:** defer supported scripts until HTML is parsed, or delay supported independent classic scripts until interaction. Dependencies, consent tools, protected measurement scripts and your exclusions are retained. Changing a public loading mode returns it to preview; enabling it requires checking your important pages.
@@ -220,6 +221,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.12.1 =
+Safer CSS combining keeps unmatched files separate after your approval. Adds native background-loading status and guidance. Existing speed and builder settings are preserved.
+
 = 2.12.0 =
 Stylesheet results now match original files. Existing sites keep approved visitor behavior until the update is accepted. HTML minification and weekly database cleanup start off. Check your pages before enabling new options.
 
@@ -333,6 +337,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.12.1 =
+* Combining leaves stylesheets without a safe matching CSS result in place, so neighboring styles can still use their ready Critical or Unused CSS. Preview the homepage, navigation, gallery and testimonials before using this update for visitors.
+* Show Elementor background lazy-loading status and safety guidance without changing builder settings or adding a second loader.
+* Clarify original-source CSS generation and source-order bundle assembly.
 
 = 2.12.0 =
 

@@ -80,6 +80,9 @@ final class Changes {
 	/** Combine CSS and Combine JavaScript from 2.10.5 combine around a file that can't be combined. */
 	public const COMBINE_AROUND = 2;
 
+	/** Unmatched CSS stays outside bundles without withholding ready neighboring results. */
+	public const COMBINE_CSS_COVERAGE = 5;
+
 	/**
 	 * Fixes that share one set of worked-out CSS: an update moves them together, since a page can't
 	 * be shown with the approved revision for one and the newest for the other.
@@ -343,6 +346,15 @@ final class Changes {
 				'with'       => array(),
 				'keep_until' => null,
 			),
+			array(
+				'id'         => '2.12.1-css-coverage-boundaries',
+				'version'    => '2.12.1',
+				'fixes'      => array( 'combine_css' ),
+				'kind'       => self::UPDATE,
+				'rev'        => self::COMBINE_CSS_COVERAGE,
+				'with'       => array(),
+				'keep_until' => '2027-03-08',
+			),
 		);
 		/**
 		 * The change entries (tests add their own to try each kind).
@@ -383,24 +395,25 @@ final class Changes {
 	 */
 	public static function notes(): array {
 		return array(
-			'2.12.0-css-per-file'         => __( 'Optimized styles are now worked out for each original stylesheet and assembled for combined files. Until you choose, changed stylesheets keep their original styles. One upgrade render per page is free.', 'arvaseo-connector' ),
-			'2.12.0-changing-addresses'   => __( 'Speed fixes now recognize verified files whose addresses change on every visit. The one-time CSS conversion is free; later content changes follow the normal page optimization allowance.', 'arvaseo-connector' ),
-			'2.12.0-keep-css'             => __( 'While new optimized styles are worked out, pages keep earlier results for stylesheets that did not change. Regenerate keeps the files cached pages use.', 'arvaseo-connector' ),
-			'2.12.0-renderer-v2'          => __( 'The updated renderer keeps entrance animations across stylesheets and reports first-screen animation waits. Eligible existing results can be refreshed for free.', 'arvaseo-connector' ),
-			'2.12.0-html-choice'          => __( 'New optional HTML minification starts off. It preserves text spacing and protected blocks. Additional HTML comments can be kept in Exclusions.', 'arvaseo-connector' ),
-			'2.12.0-optional-maintenance' => __( 'The Health page now shows database cleanup counts and WordPress-only maintenance controls. Cleanup requires your choice; weekly cleanup starts off. Existing speed settings stay in effect.', 'arvaseo-connector' ),
-			'2.11.2-js-exclusion-choices' => __( 'Optional separate JavaScript exclusions and reviewed AMD, body CSS and jQuery Migrate trials. Existing settings stay in effect. Trials start off and require a matching signed-in preview plus interaction checks before visitors receive them. Changed exclusion policies return the affected fix to Trying.', 'arvaseo-connector' ),
-			'2.11.0-image-purge'          => __( 'Caches are cleared when compression changes an image.', 'arvaseo-connector' ),
-			'2.11.0-combine-first'        => __( 'With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free.', 'arvaseo-connector' ),
-			'2.11.0-css-every-stylesheet' => __( 'Optimized styles now also reach stylesheets whose names use capital letters (Elementor’s entrance animations, some Google Fonts) and stylesheets a theme prints more than once, so fewer of them hold the page up.', 'arvaseo-connector' ),
-			'2.11.0-cleanups'             => __( 'Old generated files (unused for a week, Google Fonts copies for 30 days) are cleaned up once enough have piled up or a folder is nearly full: the caches are cleared first and the files deleted a day later, never while another cache may still use them. While a cache Arva SEO can’t clear may keep pages, the folders may grow to twice their usual limit.', 'arvaseo-connector' ),
-			'2.11.0-combine-around'       => __( 'Files next to one that can’t be combined are now combined around it, in the same order. This applies to stylesheets and scripts.', 'arvaseo-connector' ),
-			'2.11.0-renderer-extras'      => __( 'Arva SEO’s renderer now gets your pages without the WordPress extras you removed, as visitors do.', 'arvaseo-connector' ),
-			'2.11.0-jquery-choice'        => __( 'New option under Defer scripts: Move jQuery down the page. It’s off until you turn it on.', 'arvaseo-connector' ),
-			'2.11.0-late-icons-choice'    => __( 'New option under Load styles faster: Load icon fonts after the page. It’s off until you turn it on.', 'arvaseo-connector' ),
-			'2.11.0-animations'           => __( 'Entrance animations no longer play a second time when the rest of the styles arrive.', 'arvaseo-connector' ),
-			'2.11.0-tracking'             => __( 'Visitors arriving from Google Ads, Facebook, Mailchimp and similar links get the saved page too.', 'arvaseo-connector' ),
-			'2.11.0-more-caches'          => __( 'Arva SEO now clears more caches when your pages change, at most every 15 minutes: WP Rocket, W3 Total Cache, WP Super Cache, WP Fastest Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper, WP-Optimize, NitroPack, Proxy Cache Purge, Cloudflare’s official plugin and LiteSpeed’s server cache.', 'arvaseo-connector' ),
+			'2.12.1-css-coverage-boundaries' => __( 'Combining leaves stylesheets without a safe matching CSS result in place, so neighboring styles can still use their ready Critical or Unused CSS. Preview the homepage, navigation, gallery and testimonials before using this update for visitors.', 'arvaseo-connector' ),
+			'2.12.0-css-per-file'            => __( 'Optimized styles are now worked out for each original stylesheet and assembled for combined files. Until you choose, changed stylesheets keep their original styles. One upgrade render per page is free.', 'arvaseo-connector' ),
+			'2.12.0-changing-addresses'      => __( 'Speed fixes now recognize verified files whose addresses change on every visit. The one-time CSS conversion is free; later content changes follow the normal page optimization allowance.', 'arvaseo-connector' ),
+			'2.12.0-keep-css'                => __( 'While new optimized styles are worked out, pages keep earlier results for stylesheets that did not change. Regenerate keeps the files cached pages use.', 'arvaseo-connector' ),
+			'2.12.0-renderer-v2'             => __( 'The updated renderer keeps entrance animations across stylesheets and reports first-screen animation waits. Eligible existing results can be refreshed for free.', 'arvaseo-connector' ),
+			'2.12.0-html-choice'             => __( 'New optional HTML minification starts off. It preserves text spacing and protected blocks. Additional HTML comments can be kept in Exclusions.', 'arvaseo-connector' ),
+			'2.12.0-optional-maintenance'    => __( 'The Health page now shows database cleanup counts and WordPress-only maintenance controls. Cleanup requires your choice; weekly cleanup starts off. Existing speed settings stay in effect.', 'arvaseo-connector' ),
+			'2.11.2-js-exclusion-choices'    => __( 'Optional separate JavaScript exclusions and reviewed AMD, body CSS and jQuery Migrate trials. Existing settings stay in effect. Trials start off and require a matching signed-in preview plus interaction checks before visitors receive them. Changed exclusion policies return the affected fix to Trying.', 'arvaseo-connector' ),
+			'2.11.0-image-purge'             => __( 'Caches are cleared when compression changes an image.', 'arvaseo-connector' ),
+			'2.11.0-combine-first'           => __( 'With Combine CSS on, optimized styles are now worked out from the combined files your visitors get. Each page type is worked out once again, free.', 'arvaseo-connector' ),
+			'2.11.0-css-every-stylesheet'    => __( 'Optimized styles now also reach stylesheets whose names use capital letters (Elementor’s entrance animations, some Google Fonts) and stylesheets a theme prints more than once, so fewer of them hold the page up.', 'arvaseo-connector' ),
+			'2.11.0-cleanups'                => __( 'Old generated files (unused for a week, Google Fonts copies for 30 days) are cleaned up once enough have piled up or a folder is nearly full: the caches are cleared first and the files deleted a day later, never while another cache may still use them. While a cache Arva SEO can’t clear may keep pages, the folders may grow to twice their usual limit.', 'arvaseo-connector' ),
+			'2.11.0-combine-around'          => __( 'Files next to one that can’t be combined are now combined around it, in the same order. This applies to stylesheets and scripts.', 'arvaseo-connector' ),
+			'2.11.0-renderer-extras'         => __( 'Arva SEO’s renderer now gets your pages without the WordPress extras you removed, as visitors do.', 'arvaseo-connector' ),
+			'2.11.0-jquery-choice'           => __( 'New option under Defer scripts: Move jQuery down the page. It’s off until you turn it on.', 'arvaseo-connector' ),
+			'2.11.0-late-icons-choice'       => __( 'New option under Load styles faster: Load icon fonts after the page. It’s off until you turn it on.', 'arvaseo-connector' ),
+			'2.11.0-animations'              => __( 'Entrance animations no longer play a second time when the rest of the styles arrive.', 'arvaseo-connector' ),
+			'2.11.0-tracking'                => __( 'Visitors arriving from Google Ads, Facebook, Mailchimp and similar links get the saved page too.', 'arvaseo-connector' ),
+			'2.11.0-more-caches'             => __( 'Arva SEO now clears more caches when your pages change, at most every 15 minutes: WP Rocket, W3 Total Cache, WP Super Cache, WP Fastest Cache, Cache Enabler, Hummingbird, Comet Cache, Nginx Helper, WP-Optimize, NitroPack, Proxy Cache Purge, Cloudflare’s official plugin and LiteSpeed’s server cache.', 'arvaseo-connector' ),
 		);
 	}
 

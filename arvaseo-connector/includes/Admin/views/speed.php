@@ -747,6 +747,9 @@ defined( 'ABSPATH' ) || exit;
 			}
 			$arvaseo_preload = 'page_cache' === $arvaseo_id ? PageCache::preload_state() : null;
 			?>
+			<?php if ( 'lazy_media' === $arvaseo_id ) : ?>
+				<?php require __DIR__ . '/speed-background-media.php'; ?>
+			<?php endif; ?>
 		<div class="arvaseo-fix-acts">
 			<?php
 			if ( 'handled' !== $arvaseo_state && 'unavailable' !== $arvaseo_state ) {

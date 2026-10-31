@@ -354,6 +354,9 @@ final class AssetCombiner {
 				return null;
 			}
 			$key = array( $kind, $type, $nonce, strtolower( (string) ( $tags->get_attribute( 'media' ) ?? 'all' ) ) );
+			if ( ! CssOptimizer::combinable_source( $handle, $source, (string) ( $tags->get_attribute( 'media' ) ?? 'all' ) ) ) {
+				return null; // Keep this link in place; ready neighbors can still use their optimized CSS.
+			}
 		} else {
 			$strategy = (string) $tags->get_attribute( 'data-wp-strategy' );
 			if ( ! in_array( $type, array( '', 'text/javascript', 'application/javascript' ), true ) || ! in_array( $strategy, array( '', 'defer' ), true ) || 'module' === $registry->get_data( $handle, 'type' ) || Exclusions::leaves_optimization( 'combine_js', $handle, $source ) ) {

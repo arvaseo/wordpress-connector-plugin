@@ -8,6 +8,11 @@
 defined( 'ABSPATH' ) || exit;
 $arvaseo_css_delivery = \ArvaSEO\Connector\Speed\CssDelivery::diagnostics();
 ?>
+<details>
+	<summary><?php esc_html_e( 'How Critical CSS, Unused CSS and combining work together', 'arvaseo-connector' ); ?></summary>
+	<p><?php esc_html_e( 'Arva SEO renders the original page at phone and computer sizes. Critical CSS contains first-screen styles; Unused CSS removal keeps styles needed across the page, plus protected interaction states. Ready results are matched to each original stylesheet’s content and media, then assembled in source order for compatible bundles. Minifying or combining alone does not require another render.', 'arvaseo-connector' ); ?></p>
+	<p><?php esc_html_e( 'With the updated combining behavior approved, files without a safe matching result stay separate so they cannot withhold ready neighboring CSS. Some files intentionally remain separate to preserve media, cascade, integrity and document policies. The saved checks below show observed coverage; fewer files alone do not prove a faster page.', 'arvaseo-connector' ); ?></p>
+</details>
 <?php $arvaseo_cleanup_notice = \ArvaSEO\Connector\Speed\Housekeeping::notice(); ?>
 <?php if ( null !== $arvaseo_cleanup_notice ) : ?>
 	<p role="status"><?php echo esc_html( $arvaseo_cleanup_notice ); ?></p>

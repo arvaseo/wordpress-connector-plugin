@@ -462,7 +462,31 @@ final class CssOptimizer {
 	}
 
 	/**
-	 * Replace a combined link only when every original member has matching optimized CSS.
+	 * Whether this printed source may join a bundle without losing ready CSS coverage.
+	 *
+	 * @param string $handle Original handle.
+	 * @param string $href Printed stylesheet address.
+	 * @param string $media Printed media scope.
+	 */
+	public static function combinable_source( string $handle, string $href, string $media ): bool {
+		if ( ! Fixes::uses( 'combine_css', Changes::COMBINE_CSS_COVERAGE ) || ! self::per_file() || empty( self::$page['combined_pending'] ) || ! empty( self::$page['pinned_fallback'] ) || self::is_render_request() ) {
+			return true; // Retained approvals and original renderer requests keep their preparation.
+		}
+		$source = CssSources::for_handle( $handle );
+		return null !== $source && CssSources::printed_matches( $source, $href ) && null !== CssSources::assemble(
+			array(
+				array(
+					'source' => 'file',
+					'file'   => $source,
+				),
+			),
+			self::$page['stored'] ?? array(),
+			$media
+		);
+	}
+
+	/**
+	 * Replace a combined link only when every member has matching optimized CSS.
 	 *
 	 * @param string $html Final combined HTML.
 	 */
