@@ -84,6 +84,18 @@ $arvaseo_css_quota_notice = get_transient( 'arvaseo_connector_css_quota_notice_'
 			<?php echo esc_html( $arvaseo_css_pause['file'] ); ?>
 		</p><p><?php esc_html_e( 'This is a change-protection pause, not an active render. Older plugin versions record it as a daily-cap wait. Check the changing stylesheet or cache-busting query strings before requesting more renders. The reported filename is a diagnostic clue; a changed address does not prove changed CSS content.', 'arvaseo-connector' ); ?></p></div>
 	<?php endforeach; ?>
+	<?php $arvaseo_css_excluded = \ArvaSEO\Connector\Speed\CssOptimizer::excluded_samples(); ?>
+	<?php if ( $arvaseo_css_excluded ) : ?>
+		<details>
+			<summary><?php esc_html_e( 'Excluded URLs — possible automated probes', 'arvaseo-connector' ); ?></summary>
+			<p><?php esc_html_e( 'These addresses contain traversal-like paths or control characters. They are retained for review, excluded from CSS requests and retries, and do not trigger new optimization charges here. A recorded request does not prove a successful attack or a published page. Check hosting and firewall logs if you are concerned.', 'arvaseo-connector' ); ?></p>
+			<ul>
+			<?php foreach ( array_slice( $arvaseo_css_excluded, 0, 50 ) as $arvaseo_css_excluded_row ) : ?>
+				<li style="overflow-wrap:anywhere"><code><?php echo esc_html( $arvaseo_css_excluded_row['url'] ); ?></code></li>
+			<?php endforeach; ?>
+			</ul>
+		</details>
+	<?php endif; ?>
 	<?php $arvaseo_css_pending = \ArvaSEO\Connector\Speed\CssOptimizer::pending_details(); ?>
 	<?php if ( $arvaseo_css_pending ) : ?>
 		<details>

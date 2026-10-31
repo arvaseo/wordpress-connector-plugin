@@ -184,23 +184,7 @@ defined( 'ABSPATH' ) || exit;
 	?>
 <div data-arvaseo-speed>
 <div class="arvaseo-stack">
-<div data-arvaseo-speed-section="testing">
-	<?php require __DIR__ . '/speed-pagespeed.php'; ?>
-</div>
-<div data-arvaseo-speed-section="css">
-	<?php require __DIR__ . '/speed-css-quota.php'; ?>
-</div>
-<div data-arvaseo-speed-section="testing">
-	<?php require __DIR__ . '/speed-assets.php'; ?>
-</div>
-<div data-arvaseo-speed-section="testing">
-	<?php require __DIR__ . '/speed-asset-trials.php'; ?>
-</div>
-	<?php if ( $arvaseo_killed ) : ?>
-		<div class="notice notice-warning inline arvaseo-own"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
-	<?php endif; ?>
-
-	<section class="arvaseo-card" data-arvaseo-speed-section="testing" aria-labelledby="arvaseo-test-heading">
+		<section class="arvaseo-card" aria-labelledby="arvaseo-test-heading">
 		<div class="arvaseo-between" style="align-items: center">
 			<?php if ( null === $arvaseo_test ) : ?>
 				<div>
@@ -237,7 +221,7 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 			<?php endif; ?>
 			<?php if ( TokenStore::is_connected() && '' !== AdminController::pagespeed_url() ) : ?>
-				<a class="arvaseo-btn arvaseo-btn--sm" href="<?php echo esc_url( AdminController::pagespeed_url() ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Run a new test in Arva SEO', 'arvaseo-connector' ); ?><span class="screen-reader-text"> <?php esc_html_e( '(opens in a new tab)', 'arvaseo-connector' ); ?></span></a>
+				<a class="arvaseo-btn arvaseo-btn--sm" href="#arvaseo-pagespeed-tests"><?php esc_html_e( 'Run a new test', 'arvaseo-connector' ); ?></a>
 			<?php endif; ?>
 		</div>
 		<?php if ( null !== $arvaseo_test ) : ?>
@@ -282,6 +266,23 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		<?php endif; ?>
 	</section>
+<div data-arvaseo-speed-section="testing">
+	<?php require __DIR__ . '/speed-pagespeed.php'; ?>
+</div>
+<div data-arvaseo-speed-section="css">
+	<?php require __DIR__ . '/speed-css-quota.php'; ?>
+</div>
+<div data-arvaseo-speed-section="testing">
+	<?php require __DIR__ . '/speed-assets.php'; ?>
+</div>
+<div data-arvaseo-speed-section="testing">
+	<?php require __DIR__ . '/speed-asset-trials.php'; ?>
+</div>
+	<?php if ( $arvaseo_killed ) : ?>
+		<div class="notice notice-warning inline arvaseo-own"><p><?php esc_html_e( 'Every PageSpeed fix is switched off in wp-config.php (ARVASEO_CONNECTOR_DISABLE_SPEED_FIXES). Remove that line to use them again.', 'arvaseo-connector' ); ?></p></div>
+	<?php endif; ?>
+
+
 
 	<?php if ( array() !== $arvaseo_others && OtherPlugins::kept() ) : ?>
 		<div id="arvaseo-other-plugins" class="arvaseo-row">

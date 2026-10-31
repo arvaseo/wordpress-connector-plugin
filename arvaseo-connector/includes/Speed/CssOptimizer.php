@@ -995,13 +995,13 @@ final class CssOptimizer {
 	}
 
 	/**
-	 * Whether this version knows an index entry's format. A newer version's entries (2.12.0's, after
+	 * Whether this version can process an entry's format and sample URL. A newer version's entries (2.12.0's, after
 	 * a rollback) are kept exactly as they are, and nothing here sends, fetches, counts or changes them.
 	 *
 	 * @param array<string, mixed> $entry An index entry.
 	 */
 	private static function known( array $entry ): bool {
-		return (int) ( $entry['format'] ?? 1 ) <= 1 || ( 2 === (int) ( $entry['format'] ?? 1 ) && is_array( $entry['sources'] ?? null ) && isset( $entry['shape'] ) && preg_match( '/^[a-f0-9]{64}$/D', (string) $entry['shape'] ) );
+		return ( ! isset( $entry['url'] ) || self::sample_url_allowed( (string) $entry['url'] ) ) && ( (int) ( $entry['format'] ?? 1 ) <= 1 || ( 2 === (int) ( $entry['format'] ?? 1 ) && is_array( $entry['sources'] ?? null ) && isset( $entry['shape'] ) && preg_match( '/^[a-f0-9]{64}$/D', (string) $entry['shape'] ) ) );
 	}
 
 	/**
@@ -1148,7 +1148,10 @@ final class CssOptimizer {
 		if ( '404' === $template && self::is_file_address( self::current_url() ) ) {
 			return; // A missing stylesheet, script or manifest reaches the 404 template too: only pages count.
 		}
-		$url   = self::current_url();
+		$url = self::current_url();
+		if ( ! self::sample_url_allowed( $url ) ) {
+			return; // Attack-like visits are never optimization samples or paid render requests.
+		}
 		$guard = null;
 		if ( isset( $source_data['sources'] ) && ! isset( self::index()[ $signature ] ) ) {
 			$guard = CssChurn::check( $url, $template, $signature, $source_data['sources'] );
@@ -1219,6 +1222,46 @@ final class CssOptimizer {
 	}
 
 	/**
+	 * Exclude traversal probes from CSS work, including encoded query values.
+	 * This is sample selection, not a web firewall or a compromise verdict.
+	 *
+	 * @param string $url Candidate page URL.
+	 */
+	public static function sample_url_allowed( string $url ): bool {
+		$decoded = $url;
+		for ( $i = 0; $i < 8; ++$i ) {
+			$next = rawurldecode( $decoded );
+			if ( $next === $decoded ) {
+				break;
+			}
+			$decoded = $next;
+		}
+		if ( rawurldecode( $decoded ) !== $decoded || preg_match( '/[\x00-\x1f\x7f]/', $decoded ) ) {
+			return false;
+		}
+		$decoded = str_replace( '\\', '/', $decoded );
+		return ! preg_match( '~(?:^|[=/])\.\.(?:/|$|[&#])~', $decoded );
+	}
+
+	/**
+	 * Retained probe metadata for review, never actionable rendering work.
+	 *
+	 * @return list<array{url:string,signature:string}>
+	 */
+	public static function excluded_samples(): array {
+		$out = array();
+		foreach ( self::index() as $signature => $entry ) {
+			if ( isset( $entry['url'] ) && ! self::sample_url_allowed( (string) $entry['url'] ) ) {
+				$out[] = array(
+					'url'       => (string) $entry['url'],
+					'signature' => (string) $signature,
+				);
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * Stored results for a signature.
 	 *
 	 * @param string $signature Signature.
@@ -1262,6 +1305,9 @@ final class CssOptimizer {
 			return; // Visitors' pages ask for it.
 		}
 		$url = self::current_url();
+		if ( ! self::sample_url_allowed( $url ) ) {
+			return;
+		}
 		CssIndex::patch(
 			static function ( array $index ) use ( $signature, $template, $url ): array {
 				if ( ! isset( $index[ $signature ] ) ) {
@@ -1357,7 +1403,7 @@ final class CssOptimizer {
 			$feed = CssDelivery::updates();
 			foreach ( $feed['data'] ?? array() as $update ) {
 				$signature = $update['signature'];
-				if ( isset( $index[ $signature ] ) && 2 === ( $index[ $signature ]['format'] ?? 1 ) && 'ready' === $index[ $signature ]['status'] ) {
+				if ( isset( $index[ $signature ] ) && self::known( $index[ $signature ] ) && 2 === ( $index[ $signature ]['format'] ?? 1 ) && 'ready' === $index[ $signature ]['status'] ) {
 					$change( $signature, array( 'status' => 'redownload' ) );
 				}
 			}

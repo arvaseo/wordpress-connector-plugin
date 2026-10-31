@@ -222,7 +222,7 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 == Upgrade Notice ==
 
 = 2.12.1 =
-Safer CSS combining keeps unmatched files separate after your approval. Adds native background-loading status and guidance. Existing speed and builder settings are preserved.
+Safer CSS combining and probe-URL exclusions. Clearer PageSpeed testing, top-level results and padded notices. Adds native background-loading guidance. Existing settings stay intact.
 
 = 2.12.0 =
 Stylesheet results now match original files. Existing sites keep approved visitor behavior until the update is accepted. HTML minification and weekly database cleanup start off. Check your pages before enabling new options.
@@ -339,6 +339,9 @@ New PageSpeed fixes, each off until you turn it on. Nothing changes on your site
 == Changelog ==
 
 = 2.12.1 =
+* CSS sample selection: traversal-like URLs, including encoded query values, are excluded from automatic and manual optimization requests. Existing entries remain as non-actionable diagnostics; ordinary query pages remain supported.
+* Keep the latest PageSpeed result visible above the Speed tabs, with better spacing around admin notifications.
+* Clearer PageSpeed device choices, comparison mode, allowance and saved result history, with a separate no-cost refresh action.
 * Combining leaves stylesheets without a safe matching CSS result in place, so neighboring styles can still use their ready Critical or Unused CSS. Preview the homepage, navigation, gallery and testimonials before using this update for visitors.
 * Show Elementor background lazy-loading status and safety guidance without changing builder settings or adding a second loader.
 * Clarify original-source CSS generation and source-order bundle assembly.
