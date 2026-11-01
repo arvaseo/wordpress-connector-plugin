@@ -16,6 +16,7 @@ $arvaseo_ps        = PageSpeed::snapshot();
 $arvaseo_ps_notice = get_transient( 'arvaseo_pagespeed_notice_' . get_current_user_id() );
 $arvaseo_ps_runs   = array_values( array_filter( (array) ( $arvaseo_ps['data'] ?? array() ), 'is_array' ) );
 ?>
+<p class="arvaseo-hint"><?php esc_html_e( 'For a homepage comparison, clear caches and confirm public delivery under Caching and delivery first. A queued purge can leave an older page in a CDN.', 'arvaseo-connector' ); ?></p>
 <section class="arvaseo-card arvaseo-ps" id="arvaseo-pagespeed-tests" aria-labelledby="arvaseo-pagespeed-title">
 	<header class="arvaseo-between arvaseo-ps-head">
 		<div>

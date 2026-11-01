@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /** Per-file approvals expire when bytes change; promotion requires a matching preview. */
 final class SafeAssetTrials {
 	public const OPTION    = 'arvaseo_connector_asset_trials';
-	public const FEATURES  = array( 'amd', 'body_css', 'jquery_migrate' );
+	public const FEATURES  = array( 'amd', 'body_css', 'jquery_migrate', 'embedded_js' );
 	public const CSS_LIMIT = 32768;
 
 	/**
@@ -43,6 +43,7 @@ final class SafeAssetTrials {
 		self::$applied = array();
 		self::$files   = array();
 		self::$bytes   = 0;
+		EmbeddedScripts::reset();
 	}
 
 	/**
@@ -84,7 +85,7 @@ final class SafeAssetTrials {
 		if ( ! current_user_can( Capabilities::MANAGE ) || ! array_filter( self::settings(), static fn ( array $row ): bool => 'off' !== $row['state'] ) ) {
 			return;
 		}
-		echo '<div class="notice notice-warning"><p>' . esc_html__( 'Arva SEO has reviewed asset trials configured. AMD minification, body CSS changes and removing jQuery Migrate can affect navigation, galleries, testimonials or older plugins. Review their status and warnings after theme or plugin updates.', 'arvaseo-connector' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-asset-trials' ) ) . '">' . esc_html__( 'Review asset trials', 'arvaseo-connector' ) . '</a></p></div>';
+		echo '<div class="notice notice-warning"><p>' . esc_html__( 'Arva SEO has reviewed asset trials configured. AMD minification, body CSS changes, delayed embedded widgets and removing jQuery Migrate can affect navigation, galleries, testimonials or older plugins. Review their status and warnings after theme or plugin updates.', 'arvaseo-connector' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-asset-trials' ) ) . '">' . esc_html__( 'Review asset trials', 'arvaseo-connector' ) . '</a></p></div>';
 	}
 
 	/**
@@ -96,7 +97,7 @@ final class SafeAssetTrials {
 		$state = self::settings()[ $feature ]['state'] ?? 'off';
 		return ! ( defined( Fixes::KILL_SWITCH ) && constant( Fixes::KILL_SWITCH ) )
 			&& ! is_admin() && ! ( defined( 'REST_REQUEST' ) && REST_REQUEST ) && ! CssOptimizer::is_render_request()
-			&& null === Exclusions::page_reason( 'amd' === $feature ? 'minify_js' : ( 'body_css' === $feature ? 'critical_css' : 'wp_extras' ) )
+			&& null === Exclusions::page_reason( 'embedded_js' === $feature ? 'delay_scripts' : ( 'amd' === $feature ? 'minify_js' : ( 'body_css' === $feature ? 'critical_css' : 'wp_extras' ) ) )
 			&& ( 'on' === $state || ( 'trying' === $state && current_user_can( Capabilities::MANAGE ) ) );
 	}
 

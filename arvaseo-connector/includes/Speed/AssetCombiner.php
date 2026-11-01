@@ -54,7 +54,7 @@ final class AssetCombiner {
 			return true;
 		}
 
-		if ( HeadScripts::wanted() || IconStyles::wanted() || SafeAssetTrials::active( 'body_css' ) ) {
+		if ( HeadScripts::wanted() || IconStyles::wanted() || SafeAssetTrials::active( 'body_css' ) || SafeAssetTrials::active( 'embedded_js' ) ) {
 			return true;
 		}
 		$fixes = CssOptimizer::is_render_request()
@@ -158,6 +158,7 @@ final class AssetCombiner {
 			$html = substr_replace( $html, $edit['html'], $edit['start'], $edit['length'] );
 		}
 		$html = SafeAssetTrials::inline_body_css( CssOptimizer::combined_html( $html ) );
+		$html = EmbeddedScripts::filter( $html );
 		return HtmlMinifier::wanted() ? HtmlMinifier::filter( $html, Fixes::stored()['html_keep_comments'] ) : $html;
 	}
 

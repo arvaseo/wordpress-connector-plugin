@@ -55,7 +55,7 @@ final class Cloudflare {
 	 * Hooks.
 	 */
 	public static function init(): void {
-		add_action( 'arvaseo_connector_pages_changed', array( self::class, 'pages_changed' ) );
+		add_action( 'arvaseo_connector_pages_changed', array( self::class, 'site_changed' ), 30 );
 		add_action( 'arvaseo_connector_seo_updated', array( self::class, 'seo_updated' ) );
 		add_action( 'transition_post_status', array( self::class, 'post_changed' ), 10, 3 );
 		add_action( self::HOOK, array( self::class, 'run_queue' ) );
@@ -249,6 +249,18 @@ final class Cloudflare {
 	}
 
 	/**
+	 * Managed output changes are purged by OtherCaches, origin first and edge last.
+	 *
+	 * @param mixed $why Change reason.
+	 */
+	public static function site_changed( $why = '' ): void {
+		if ( is_string( $why ) && OtherCaches::manages( $why ) && OtherCaches::coordinates() ) {
+			return;
+		}
+		self::pages_changed( $why );
+	}
+
+	/**
 	 * Visitors get something new on every page: clear everything, at most once every GAP seconds,
 	 * and for changes made in the background (BURSTS) at most every 15 minutes. A change that
 	 * comes meanwhile waits for one clear when the gap is up, the earliest of the gaps asked for.
@@ -371,6 +383,16 @@ final class Cloudflare {
 	 */
 	public static function run_queue(): void {
 		if ( ! self::connected() ) {
+			return;
+		}
+		// An acknowledged failed origin clear cannot be overtaken by older queued edge work.
+		$failed = OtherCaches::state()['cleared']['failed'] ?? array();
+		if ( OtherCaches::coordinates() && array_diff( $failed, array( 'cloudflare' ) ) ) {
+			return;
+		}
+		$origin_due = wp_next_scheduled( OtherCaches::HOOK_CLEAR );
+		if ( OtherCaches::coordinates() && false !== $origin_due ) {
+			wp_schedule_single_event( max( time() + 1, $origin_due + 1 ), self::HOOK );
 			return;
 		}
 		$details = self::details();

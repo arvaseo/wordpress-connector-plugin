@@ -100,6 +100,7 @@ final class Runtime {
 		CssOptimizer::init();
 		Cloudflare::init();
 		OtherCaches::init();
+		PublicDelivery::init();
 		PageCache::init();
 		CssPass::init();
 	}

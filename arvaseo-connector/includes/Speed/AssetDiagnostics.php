@@ -222,8 +222,20 @@ final class AssetDiagnostics {
 				'notes'     => $notes ?: array( __( 'No transformation marker. Order, registration, syntax or generation limits may keep this file separate.', 'arvaseo-connector' ) ),
 			);
 		}
-		$result['trial_proofs'] = SafeAssetTrials::proofs();
-		$result['complete']     = true;
+		foreach ( EmbeddedScripts::inspect( $html ) as $candidate ) {
+			$result['rows'][] = array(
+				'id'        => 'embedded-widget',
+				'kind'      => 'js',
+				'location'  => 'embedded',
+				'url'       => $candidate['url'],
+				'candidate' => $candidate,
+				'members'   => array(),
+				'notes'     => array( __( 'Directly embedded widget. An explicit reviewed-tag trial can delay it; the tag hash does not pin vendor JavaScript.', 'arvaseo-connector' ) ),
+			);
+		}
+		$result['embedded_guard'] = EmbeddedScripts::restricted( $html );
+		$result['trial_proofs']   = SafeAssetTrials::proofs();
+		$result['complete']       = true;
 		return $result;
 	}
 

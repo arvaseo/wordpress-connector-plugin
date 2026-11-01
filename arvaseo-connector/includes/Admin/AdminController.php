@@ -102,6 +102,7 @@ final class AdminController {
 		add_action( 'admin_post_arvaseo_connector_cloudflare', array( self::class, 'cloudflare' ) );
 		add_action( 'admin_post_arvaseo_connector_page_cache', array( self::class, 'page_cache' ) );
 		add_action( 'admin_post_arvaseo_connector_other_caches', array( self::class, 'other_caches' ) );
+		add_action( 'admin_post_arvaseo_connector_public_delivery', array( self::class, 'public_delivery' ) );
 		add_action( 'admin_post_arvaseo_connector_security_scan', array( self::class, 'security_scan' ) );
 		add_action( 'admin_post_arvaseo_connector_security_stop', array( self::class, 'security_stop' ) );
 		add_action( 'admin_post_arvaseo_connector_security_ignore', array( self::class, 'security_ignore' ) );
@@ -1322,6 +1323,14 @@ final class AdminController {
 		}
 		// phpcs:enable WordPress.Security.NonceVerification
 		self::back_to_fix( 'page_cache', 'speed_invalid' );
+	}
+
+	/** Verify only the anonymous homepage after an explicit protected administrator request. */
+	public static function public_delivery(): void {
+		self::guard( 'arvaseo_connector_public_delivery', Capabilities::MANAGE );
+		\ArvaSEO\Connector\Speed\PublicDelivery::verify();
+		wp_safe_redirect( admin_url( 'admin.php?page=arvaseo-speed#arvaseo-public-delivery' ) );
+		exit;
 	}
 
 	/**

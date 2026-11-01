@@ -18,6 +18,7 @@ $arvaseo_trial_notice       = get_transient( 'arvaseo_connector_asset_trial_noti
 $arvaseo_trial_descriptions = array(
 	'amd'            => array( __( 'Minify reviewed jQuery AMD files', 'arvaseo-connector' ), __( 'Requires Minify JavaScript to apply. Only the supported jQuery UMD wrapper is eligible. Each file stays separate; its wrapper and loading order stay intact. Module loaders and themes can still depend on its address. Test navigation, galleries and testimonials before enabling this for visitors. Changed source files lose approval automatically.', 'arvaseo-connector' ) ),
 	'body_css'       => array( __( 'Inline reviewed small body stylesheets', 'arvaseo-connector' ), __( 'Keeps every CSS rule at the same position, up to 32 KB per file and 64 KB per page. Relative resource addresses are preserved. This can remove a request but grows the HTML and reduces shared caching. Scripts that look for a link element may stop working. CSP pages, integrity-protected files, imports and unsupported CSS stay unchanged. Test styling, icons, menus and forms at phone and desktop widths.', 'arvaseo-connector' ) ),
+	'embedded_js'    => array( __( 'Delay reviewed embedded chat widgets', 'arvaseo-connector' ), __( 'Starts off. Supports reviewed LeadConnector chat loader tags printed directly in a page. Loads them on the first scroll, tap or key press. Analytics, consent scripts, modules, unknown widgets, inline initializers and protected tags stay unchanged. Known consent managers and CSP pages keep their original embeds. Approval matches the tag and its settings, not the vendor’s remote JavaScript. Test navigation, galleries, testimonials and the widget before enabling it for visitors.', 'arvaseo-connector' ) ),
 	'jquery_migrate' => array( __( 'Try without jQuery Migrate', 'arvaseo-connector' ), __( 'Older plugins may require deprecated jQuery APIs even when they do not declare a dependency. This removes Migrate only from the jQuery alias; an explicit queued dependency keeps it. jQuery itself keeps its current loading order. Check the browser console and every important interaction. No reported error is not proof that every page works. Turn this off to restore the original dependency. If another setting already removes Migrate, this trial has nothing to verify.', 'arvaseo-connector' ) ),
 );
 ?>
@@ -27,13 +28,16 @@ $arvaseo_trial_descriptions = array(
 	<?php if ( is_string( $arvaseo_trial_notice ) ) : ?>
 		<div class="notice notice-info inline" role="status"><p><?php echo esc_html( 'saved' === $arvaseo_trial_notice ? __( 'Trial setting saved. Clear any external cache before checking visitor output.', 'arvaseo-connector' ) : __( 'No change made. Select eligible files, acknowledge the warning, and inspect a matching trial before enabling it for visitors. Every selected file must transform in the same inspection before the trial can be enabled.', 'arvaseo-connector' ) ); ?></p></div>
 	<?php endif; ?>
+	<?php if ( ! empty( $arvaseo_trial_report['embedded_guard'] ) ) : ?>
+		<div class="notice notice-info inline"><p><?php esc_html_e( 'Embedded widgets were kept unchanged because a consent manager or a protected page was detected. This trial never bypasses consent blocking.', 'arvaseo-connector' ); ?></p></div>
+	<?php endif; ?>
 	<?php foreach ( $arvaseo_trial_descriptions as $arvaseo_trial_feature => $arvaseo_trial_copy ) : ?>
 		<div class="arvaseo-fix-sub">
 			<h3><?php echo esc_html( $arvaseo_trial_copy[0] ); ?></h3>
 			<p><strong><?php echo esc_html( \ArvaSEO\Connector\Speed\Fixes::state_label( $arvaseo_trial_settings[ $arvaseo_trial_feature ]['state'] ) ); ?></strong></p>
 			<p class="arvaseo-risk arvaseo-risk--check" role="note"><?php echo esc_html( $arvaseo_trial_copy[1] ); ?></p>
 			<?php if ( $arvaseo_trial_settings[ $arvaseo_trial_feature ]['assets'] ) : ?>
-				<p><?php esc_html_e( 'Reviewed source files (changed files revert to originals):', 'arvaseo-connector' ); ?></p>
+				<p><?php esc_html_e( 'Reviewed files or tags (changed matches keep their original behavior):', 'arvaseo-connector' ); ?></p>
 				<ul style="overflow-wrap:anywhere">
 					<?php foreach ( $arvaseo_trial_settings[ $arvaseo_trial_feature ]['assets'] as $arvaseo_trial_asset ) : ?>
 						<li><?php echo esc_html( $arvaseo_trial_asset['url'] ); ?></li>

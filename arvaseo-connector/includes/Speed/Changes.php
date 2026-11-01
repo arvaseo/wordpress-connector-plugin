@@ -355,6 +355,24 @@ final class Changes {
 				'with'       => array(),
 				'keep_until' => '2027-03-08',
 			),
+			array(
+				'id'         => '2.13.0-cache-coordination',
+				'version'    => '2.13.0',
+				'fixes'      => array( '*' ),
+				'kind'       => self::NOTICE,
+				'rev'        => null,
+				'with'       => array(),
+				'keep_until' => null,
+			),
+			array(
+				'id'         => '2.13.0-embedded-widget-trial',
+				'version'    => '2.13.0',
+				'fixes'      => array( 'delay_scripts' ),
+				'kind'       => self::OPTION,
+				'rev'        => null,
+				'with'       => array(),
+				'keep_until' => null,
+			),
 		);
 		/**
 		 * The change entries (tests add their own to try each kind).
@@ -395,6 +413,8 @@ final class Changes {
 	 */
 	public static function notes(): array {
 		return array(
+			'2.13.0-cache-coordination'      => __( 'Supported local caches clear before Cloudflare. A new public homepage check observes the current Arva SEO generation separately from purge requests; it does not guarantee every CDN location is current.', 'arvaseo-connector' ),
+			'2.13.0-embedded-widget-trial'   => __( 'A separate reviewed trial can delay directly embedded LeadConnector chat loaders until interaction. It starts off; consent-managed and unsupported scripts stay unchanged. Check navigation, gallery, testimonials, forms, consent and chat before enabling for visitors.', 'arvaseo-connector' ),
 			'2.12.1-css-coverage-boundaries' => __( 'Combining leaves stylesheets without a safe matching CSS result in place, so neighboring styles can still use their ready Critical or Unused CSS. Preview the homepage, navigation, gallery and testimonials before using this update for visitors.', 'arvaseo-connector' ),
 			'2.12.0-css-per-file'            => __( 'Optimized styles are now worked out for each original stylesheet and assembled for combined files. Until you choose, changed stylesheets keep their original styles. One upgrade render per page is free.', 'arvaseo-connector' ),
 			'2.12.0-changing-addresses'      => __( 'Speed fixes now recognize verified files whose addresses change on every visit. The one-time CSS conversion is free; later content changes follow the normal page optimization allowance.', 'arvaseo-connector' ),

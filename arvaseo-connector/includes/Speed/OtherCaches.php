@@ -141,7 +141,7 @@ final class OtherCaches {
 	 * Hooks.
 	 */
 	public static function init(): void {
-		add_action( 'arvaseo_connector_pages_changed', array( self::class, 'pages_changed' ) );
+		add_action( 'arvaseo_connector_pages_changed', array( self::class, 'pages_changed' ), 20 );
 		add_action( self::HOOK_CLEAR, array( self::class, 'clear_later' ) );
 		add_action( self::HOOK_CHECK, array( self::class, 'check' ) );
 		// Before WordPress resolves the request: the signed address LiteSpeed's purge header is sent from.
@@ -239,6 +239,7 @@ final class OtherCaches {
 				'at'      => (int) ( $cleared['at'] ?? 0 ),
 				'done'    => $strings( $cleared['done'] ?? null ),
 				'by_hand' => $strings( $cleared['by_hand'] ?? null ),
+				'failed'  => $strings( $cleared['failed'] ?? null ),
 			),
 			'reported'   => is_string( $saved['reported'] ?? null ) ? $saved['reported'] : '',
 		);
@@ -686,10 +687,12 @@ final class OtherCaches {
 			// Cloudflare: through the token (Cloudflare::pages_changed does it), else the official plugin.
 			'cloudflare'       => array(
 				'available' => static fn (): bool => Cloudflare::connected() || (bool) has_action( self::ACTION_CLOUDFLARE ),
-				'clear'     => static function (): void {
-					if ( ! Cloudflare::connected() ) {
-						do_action( self::ACTION_CLOUDFLARE ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- our own action, attached to the Cloudflare plugin's purge.
+				'clear'     => static function (): bool {
+					if ( Cloudflare::connected() ) {
+						return ! self::coordinates() || Cloudflare::purge_everything( 'coordinated' );
 					}
+					do_action( self::ACTION_CLOUDFLARE ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- our own action, attached to the Cloudflare plugin's purge.
+					return true;
 				},
 			),
 		);
@@ -771,14 +774,32 @@ final class OtherCaches {
 			if ( ! call_user_func( $adapter['available'] ) ) {
 				return false;
 			}
-			call_user_func( $adapter['clear'] );
-			return true;
+			return false !== call_user_func( $adapter['clear'] );
 		} catch ( \Throwable $error ) {
 			return false;
 		}
 	}
 
 	// ----- Clearing ----------------------------------------------------------------------------
+
+	/** Whether another automatic cache must finish before Cloudflare can be purged. */
+	public static function coordinates(): bool {
+		foreach ( self::found() as $entry ) {
+			if ( 'cloudflare' !== $entry['id'] && 'auto' === $entry['clearing'] ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether the origin/edge coordinator owns this change reason.
+	 *
+	 * @param string $why Change reason.
+	 */
+	public static function manages( string $why ): bool {
+		return in_array( $why, self::REASONS, true );
+	}
 
 	/**
 	 * What visitors see changed (the arvaseo_connector_pages_changed action). Other caches are
@@ -840,11 +861,21 @@ final class OtherCaches {
 		$names   = array();
 		$hand    = array();
 		$times   = self::state()['cleared_at'];
-		foreach ( self::found() as $entry ) {
+		$failed  = array();
+		$entries = self::found();
+		// The outer edge must never refill from an origin that still has the old page.
+		usort( $entries, static fn ( array $a, array $b ): int => (int) ( 'cloudflare' === $a['id'] ) <=> (int) ( 'cloudflare' === $b['id'] ) );
+		foreach ( $entries as $entry ) {
+			if ( 'auto' === $entry['clearing'] && ( ( 'cloudflare' === $entry['id'] && $failed ) || ! self::available( $entry['id'] ) ) ) {
+				$failed[] = $entry['id'];
+				continue;
+			}
 			if ( 'auto' === $entry['clearing'] && self::clear_one( $entry['id'] ) ) {
 				$done[]                = $entry['id'];
 				$names[]               = $entry['name'];
 				$times[ $entry['id'] ] = time();
+			} elseif ( 'auto' === $entry['clearing'] ) {
+				$failed[] = $entry['id'];
 			} elseif ( 'by_hand' === $entry['clearing'] ) {
 				$by_hand[] = $entry['id'];
 				$hand[]    = null === $entry['where'] ? $entry['name'] : sprintf( '%1$s (%2$s)', $entry['name'], $entry['where'] );
@@ -857,10 +888,11 @@ final class OtherCaches {
 					'at'      => time(),
 					'done'    => $done,
 					'by_hand' => $by_hand,
+					'failed'  => $failed,
 				),
 			)
 		);
-		if ( array() === $done && array() === $by_hand ) {
+		if ( array() === $done && array() === $by_hand && array() === $failed ) {
 			return array(
 				'done'    => $done,
 				'by_hand' => $by_hand,
@@ -878,6 +910,10 @@ final class OtherCaches {
 			/* translators: %s: names of caches, with where to clear them. */
 			$parts[] = sprintf( __( 'Clear yourself: %s.', 'arvaseo-connector' ), implode( ', ', $hand ) );
 		}
+		if ( $failed ) {
+			/* translators: %s: cache identifiers. */
+			$parts[] = sprintf( __( 'Failed or withheld: %s.', 'arvaseo-connector' ), implode( ', ', $failed ) );
+		}
 		AuditLogger::info(
 			'speed.other_caches_cleared',
 			implode( ' ', $parts ),
@@ -885,6 +921,7 @@ final class OtherCaches {
 				'why'     => $why,
 				'cleared' => $done,
 				'by_hand' => $by_hand,
+				'failed'  => $failed,
 			)
 		);
 		return array(
@@ -904,10 +941,12 @@ final class OtherCaches {
 	 */
 	public static function clear_before_uninstall(): bool {
 		try {
-			if ( Cloudflare::connected() ) {
-				Cloudflare::purge_everything( 'uninstall' );
+			$result = self::clear_all( 'uninstall' );
+			if ( $result['by_hand'] || ( self::state()['cleared']['failed'] ?? array() ) ) {
+				return false;
 			}
-			return array() === self::clear_all( 'uninstall' )['by_hand'];
+			// Without an origin adapter, Cloudflare keeps its own normal event handler.
+			return ! Cloudflare::connected() || self::coordinates() || Cloudflare::purge_everything( 'uninstall' );
 		} catch ( \Throwable $error ) {
 			return false;
 		}

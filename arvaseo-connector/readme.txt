@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.12.1
+Stable tag: 2.13.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -221,6 +221,10 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.13.0 =
+Coordinates local caches before Cloudflare and adds a public homepage check. A separate reviewed embedded-chat trial starts off; consent-managed scripts stay unchanged. Existing settings and approved visitor revisions are preserved.
+
+
 = 2.12.1 =
 Safer CSS combining and probe-URL exclusions. Clearer PageSpeed testing, top-level results and padded notices. Adds native background-loading guidance. Existing settings stay intact.
 
@@ -337,6 +341,10 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.13.0 =
+* Supported local caches clear before Cloudflare. A new public homepage check observes the current Arva SEO generation separately from purge requests; it does not guarantee every CDN location is current.
+* A separate reviewed trial can delay directly embedded LeadConnector chat loaders until interaction. It starts off; consent-managed and unsupported scripts stay unchanged. Check navigation, gallery, testimonials, forms, consent and chat before enabling for visitors.
 
 = 2.12.1 =
 * CSS sample selection: traversal-like URLs, including encoded query values, are excluded from automatic and manual optimization requests. Existing entries remain as non-actionable diagnostics; ordinary query pages remain supported.
