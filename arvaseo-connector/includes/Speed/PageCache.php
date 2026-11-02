@@ -360,6 +360,10 @@ final class PageCache {
 		if ( null !== self::unavailable() ) {
 			return 'unavailable';
 		}
+		$early = self::preflight();
+		if ( null !== $early ) {
+			return $early;
+		}
 		self::remove_tree( self::dir() );
 		if ( ! self::write_folder() || ! self::write_dropin() ) {
 			self::disable();
@@ -420,6 +424,7 @@ final class PageCache {
 		if ( ! file_exists( self::dropin() ) ) {
 			// Another cache plugin's drop-in in its place needs WP_CACHE too: the line stays then.
 			self::remove_config();
+			self::warn_if_config_left();
 		}
 		self::remove_tree( self::dir() );
 		wp_clear_scheduled_hook( self::HOOK_PRELOAD );
@@ -888,6 +893,73 @@ final class PageCache {
 	}
 
 	// ----- The check -----------------------------------------------------------------------------
+
+	/**
+	 * Before anything is written: whether a cache in front of WordPress (the host's, a plugin's
+	 * or a CDN's) already answers the homepage. The check after setting up would refuse it
+	 * anyway and take everything out again, so it is refused here with wp-config.php,
+	 * .htaccess and the drop-in untouched. Anything unclear goes on to the real check.
+	 *
+	 * @return string|null cache_host_first, or null when nothing else answers or it couldn't be told.
+	 */
+	private static function preflight(): ?string {
+		/**
+		 * Whether to look for another cache answering before Page caching is set up.
+		 *
+		 * @param bool $look True to look (the default).
+		 */
+		if ( ! apply_filters( 'arvaseo_connector_page_cache_preflight', true ) ) {
+			return null;
+		}
+		$url   = home_url( '/' );
+		$first = self::fetch( $url );
+		if ( null !== $first['error'] || 200 !== $first['code'] ) {
+			return null;
+		}
+		$second = self::fetch( $url );
+		if ( null === $second['error'] && 200 === $second['code'] && ! $second['hit'] && $second['host_hit'] ) {
+			return 'cache_host_first';
+		}
+		return null;
+	}
+
+	/**
+	 * After taking everything out: the WP_CACHE line Arva SEO added is still in wp-config.php
+	 * (the file couldn't be written, or something changed it). Said in the Activity log.
+	 */
+	private static function warn_if_config_left(): void {
+		$file = self::config_file();
+		if ( null === $file || ! is_readable( $file ) ) {
+			return;
+		}
+		if ( str_contains( (string) file_get_contents( $file ), self::CONFIG_LINE ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file.
+			AuditLogger::warning(
+				'speed.page_cache_config_left',
+				__( 'Page caching is off, but the WP_CACHE line Arva SEO added is still in wp-config.php (the file may not be writable). Remove that line by hand.', 'arvaseo-connector' )
+			);
+		}
+	}
+
+	/**
+	 * Why Page caching didn't go on, in plain words, for the Activity log and the people who
+	 * switched it from Arva SEO. The same wording as the notices on the Speed page.
+	 *
+	 * @param string $reason The reason code enable() gave.
+	 */
+	public static function reason_text( string $reason ): string {
+		$texts = array(
+			'cache_host_first'       => __( 'Another cache already serves your pages (your host’s, a caching plugin’s or Cloudflare’s), so Arva SEO’s page cache isn’t needed and wasn’t turned on. Nothing was changed. Keep using that cache.', 'arvaseo-connector' ),
+			'cache_unchecked'        => __( 'Your homepage couldn’t be checked from your server, so Page caching was taken out again. Your site is as before.', 'arvaseo-connector' ),
+			'cache_server_error'     => __( 'Your server answered with an error once Page caching was set up, so it was taken out straight away. Your site is as before.', 'arvaseo-connector' ),
+			'cache_not_saved_status' => __( 'Your homepage redirects or shows an error when checked from your server, so it can’t be cached. Page caching was taken out again.', 'arvaseo-connector' ),
+			'cache_not_saved_cookie' => __( 'Your homepage sets a cookie for every visitor, so it can’t be cached. Page caching was taken out again.', 'arvaseo-connector' ),
+			'cache_not_saved_header' => __( 'Your homepage asks not to be cached, so Page caching was taken out again.', 'arvaseo-connector' ),
+			'cache_not_loaded'       => __( 'WordPress didn’t load the page cache: another line in wp-config.php may turn WP_CACHE off, or your host loads its own. Page caching was taken out again.', 'arvaseo-connector' ),
+			'dropin_not_written'     => __( 'Arva SEO couldn’t write the files Page caching needs, so it was taken out again.', 'arvaseo-connector' ),
+			'unavailable'            => __( 'Page caching isn’t available on this site.', 'arvaseo-connector' ),
+		);
+		return $texts[ $reason ] ?? __( 'Your homepage wasn’t served from the cache when checked, so Page caching was taken out again. Your site is as before.', 'arvaseo-connector' );
+	}
 
 	/**
 	 * Ask for the homepage twice from the server, like a visitor: the first answer is made by

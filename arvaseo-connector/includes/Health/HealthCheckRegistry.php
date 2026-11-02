@@ -76,6 +76,8 @@ final class HealthCheckRegistry {
 			'performance.autoloaded_options'        => array( 'performance', 'autoloaded_options', false ),
 			'performance.database_cleanup'          => array( 'performance', 'database_cleanup', true ),
 			'performance.optimized_css'             => array( 'performance', 'optimized_css', false ),
+			'performance.homepage_css'              => array( 'performance', 'homepage_css', true ),
+			'performance.cdn_cache'                 => array( 'performance', 'cdn_cache', false ),
 			'seo.search_visibility'                 => array( 'seo', 'search_visibility', false ),
 			'seo.permalinks'                        => array( 'seo', 'permalinks', false ),
 			'seo.core_sitemaps'                     => array( 'seo', 'core_sitemaps', false ),
@@ -148,6 +150,72 @@ final class HealthCheckRegistry {
 				'last_checked'        => $delivery['checked_at'] > 0 ? Ids::iso( $delivery['checked_at'] ) : null,
 				'notify_ok'           => $delivery['notify_ok'],
 			),
+		);
+	}
+
+	/**
+	 * Whether the homepage visitors get right now carries the optimized CSS the styles fixes make,
+	 * read from the page itself (through any cache in front of the site, like a visitor). Unknown
+	 * when the page couldn't be read.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public static function homepage_css(): ?array {
+		$asked = 'on' === \ArvaSEO\Connector\Speed\Fixes::state( 'critical_css' ) || 'on' === \ArvaSEO\Connector\Speed\Fixes::state( 'unused_css' );
+		if ( ! $asked || self::homepage_left_alone() ) {
+			return array(
+				'status' => 'good',
+				'source' => 'local_check',
+				'value'  => array( 'state' => 'not_requested' ),
+			);
+		}
+		$response = wp_remote_get(
+			home_url( '/' ),
+			array(
+				'timeout'     => 15,
+				'redirection' => 2,
+				'sslverify'   => (bool) apply_filters( 'https_local_ssl_verify', false ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core's filter for requests to the site itself.
+				'user-agent'  => 'Mozilla/5.0 (compatible; ArvaSEO-Health/' . ARVASEO_CONNECTOR_VERSION . '; +https://arvaseo.com/)',
+				'headers'     => array( 'Accept' => 'text/html' ),
+			)
+		);
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return null;
+		}
+		$body    = (string) wp_remote_retrieve_body( $response );
+		$applied = str_contains( $body, 'id="arvaseo-ucss-loader"' ) || str_contains( $body, 'id="arvaseo-css-loader"' );
+		return array(
+			'status' => $applied ? 'good' : 'recommended',
+			'source' => 'local_check',
+			'value'  => array( 'state' => $applied ? 'applied' : 'missing' ),
+		);
+	}
+
+	/**
+	 * Whether the homepage is left alone by the styles fixes (its tick box or the list of pages).
+	 */
+	private static function homepage_left_alone(): bool {
+		foreach ( \ArvaSEO\Connector\Speed\Fixes::stored()['exclude_pages'] as $entry ) {
+			if ( \ArvaSEO\Connector\Speed\Exclusions::path_matches( '/', (string) $entry ) ) {
+				return true;
+			}
+		}
+		$front = (int) get_option( 'page_on_front' );
+		return 'page' === get_option( 'show_on_front' ) && $front > 0 && '1' === get_post_meta( $front, \ArvaSEO\Connector\Speed\Exclusions::META, true );
+	}
+
+	/**
+	 * Cloudflare in front of the site and whether Arva SEO is connected to clear it. Only a
+	 * Cloudflare that was seen and isn't connected is worth a recommendation.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function cdn_cache(): array {
+		$state = ! \ArvaSEO\Connector\Speed\Cloudflare::seen() ? 'not_seen' : ( \ArvaSEO\Connector\Speed\Cloudflare::connected() ? 'connected' : 'not_connected' );
+		return array(
+			'status' => 'not_connected' === $state ? 'recommended' : 'good',
+			'source' => 'local_check',
+			'value'  => array( 'cloudflare' => $state ),
 		);
 	}
 

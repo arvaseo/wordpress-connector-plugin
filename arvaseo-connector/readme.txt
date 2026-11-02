@@ -4,7 +4,7 @@ Tags: pagespeed, performance, security, malware scanner, core web vitals
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.13.0
+Stable tag: 2.14.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -221,6 +221,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.14.0 =
+Page caching now checks for another cache before changing any file and explains a refusal in plain words. Two new health checks flag a homepage running without its optimized CSS and Cloudflare that isn't connected. Existing settings are unchanged.
+
 = 2.13.0 =
 Coordinates local caches before Cloudflare and adds a public homepage check. A separate reviewed embedded-chat trial starts off; consent-managed scripts stay unchanged. Existing settings and approved visitor revisions are preserved.
 
@@ -341,6 +344,12 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.14.0 =
+* Page caching looks at the homepage twice before it writes anything. When your host, a caching plugin or Cloudflare already answers it, Page caching is refused with wp-config.php, .htaccess and the drop-in untouched.
+* After Page caching is taken out, the Activity log says so if the WP_CACHE line it added is still in wp-config.php. A refusal is now explained in a plain sentence instead of a generic line.
+* New Website Health check: the homepage is read as visitors get it, and a homepage running without its optimized CSS is reported when the styles fixes are on. A homepage you left alone is not flagged, and a page that can't be read is reported as unknown.
+* New Website Health check: Cloudflare in front of the site without Arva SEO connected to clear it is reported, with the steps to connect it.
 
 = 2.13.0 =
 * Supported local caches clear before Cloudflare. A new public homepage check observes the current Arva SEO generation separately from purge requests; it does not guarantee every CDN location is current.

@@ -704,7 +704,8 @@ final class Fixes {
 				if ( null !== $error ) {
 					AuditLogger::warning(
 						'speed.page_cache_refused',
-						__( 'PageSpeed fix “Page caching” wasn’t turned on: your homepage wasn’t served from the cache when checked, so everything was taken out again.', 'arvaseo-connector' ),
+						/* translators: %s: why, in a sentence. */
+						sprintf( __( 'PageSpeed fix “Page caching” wasn’t turned on. %s', 'arvaseo-connector' ), PageCache::reason_text( $error ) ),
 						array( 'reason' => $error )
 					);
 					return $error;
