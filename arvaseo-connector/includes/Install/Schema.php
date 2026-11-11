@@ -24,10 +24,13 @@ defined( 'ABSPATH' ) || exit;
  * - arvaseo_file_prints: the security scan's fingerprint (SHA-256, size, modified time) of each
  *   theme, must-use plugin, drop-in and non-WordPress.org plugin file, and the last copy of the
  *   riskiest ones (a theme's functions.php, header.php, footer.php; must-use plugins). Since 2.7.0.
+ * - arvaseo_not_found: the broken-address log (path, count, first and last seen; no visitor data),
+ *   only filled when an administrator turns it on. Since 2.15.0.
+ * - arvaseo_redirects: the redirect rules an administrator made (exact path to a target). Since 2.15.0.
  */
 final class Schema {
 
-	public const VERSION = '3';
+	public const VERSION = '4';
 
 	public const OPTION = 'arvaseo_connector_db_version';
 
@@ -57,6 +60,8 @@ final class Schema {
 		$log     = self::table( 'audit_log' );
 		$seo     = self::table( 'seo_updates' );
 		$prints  = self::table( 'file_prints' );
+		$missing = self::table( 'not_found' );
+		$rules   = self::table( 'redirects' );
 
 		dbDelta(
 			"CREATE TABLE {$map} (
@@ -160,6 +165,27 @@ CREATE TABLE {$prints} (
   PRIMARY KEY  (id),
   UNIQUE KEY path_hash (path_hash),
   KEY component (component(191))
+) {$charset};
+CREATE TABLE {$missing} (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  path_hash char(32) NOT NULL,
+  path varchar(500) NOT NULL,
+  hits bigint(20) unsigned NOT NULL DEFAULT 1,
+  first_seen datetime NOT NULL,
+  last_seen datetime NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY path_hash (path_hash),
+  KEY last_seen (last_seen)
+) {$charset};
+CREATE TABLE {$rules} (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  from_hash char(32) NOT NULL,
+  from_path varchar(500) NOT NULL,
+  target varchar(2000) NOT NULL,
+  code smallint(5) unsigned NOT NULL DEFAULT 301,
+  created_at datetime NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY from_hash (from_hash)
 ) {$charset};"
 		);
 		update_option( self::OPTION, self::VERSION, true ); // Autoloaded: read on every request.
@@ -170,7 +196,7 @@ CREATE TABLE {$prints} (
 	 */
 	public static function drop(): void {
 		global $wpdb;
-		foreach ( array( 'content_map', 'deliveries', 'events', 'audit_log', 'seo_updates', 'file_prints' ) as $name ) {
+		foreach ( array( 'content_map', 'deliveries', 'events', 'audit_log', 'seo_updates', 'file_prints', 'not_found', 'redirects' ) as $name ) {
 			$table = self::table( $name );
 			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- table name built from $wpdb->prefix and a fixed list.
 		}

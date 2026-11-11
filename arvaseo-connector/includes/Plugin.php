@@ -54,6 +54,9 @@ final class Plugin {
 		\ArvaSEO\Connector\Security\Feed::init();
 		\ArvaSEO\Connector\Security\FilePrints::init();
 		\ArvaSEO\Connector\Security\FileEdits::init();
+		\ArvaSEO\Connector\Seo\Redirects::init();
+		\ArvaSEO\Connector\Seo\NotFoundLog::init();
+		\ArvaSEO\Connector\Seo\Essentials::init();
 		if ( is_admin() ) {
 			AdminController::init();
 		}

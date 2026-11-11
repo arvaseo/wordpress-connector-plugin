@@ -1,18 +1,20 @@
 === Arva SEO – Speed Booster & Security Scanner ===
 Contributors: arvaseo, avdajay
-Tags: pagespeed, performance, security, malware scanner, core web vitals
+Tags: page cache, webp, malware scanner, core web vitals, seo
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.14.0
+Stable tag: 2.15.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-PageSpeed fixes you switch on one at a time, a free security scan of your files, and a connection to Arva SEO for health, content and SEO titles.
+Page caching, WebP and image compression, a malware and security scanner, Core Web Vitals fixes and a free SEO checklist. No account needed.
 
 == Description ==
 
-Improve how your WordPress site loads, scan for known security problems, and optionally connect it to your Arva SEO workspace. Local speed fixes and the security scan work without an Arva SEO account. Connected features use the service and allowances of your plan.
+Make your WordPress site faster, safer and easier to find. **Arva SEO – Speed Booster & Security Scanner** caches your pages, converts images to WebP and compresses them, scans your files for known malware and security problems, and fixes the PageSpeed and Core Web Vitals problems Google reports, one switch at a time. It also checks your basic SEO, shows which missing pages visitors ask for so you can redirect them, and, if you use no SEO plugin, lets you write SEO titles and descriptions.
+
+Page caching, WebP and local image compression, the security scan, the SEO checklist, the broken-address log, redirects and SEO titles all work without an Arva SEO account. Anything that changes what visitors get starts off, and turning it off puts your pages back. A few features (optimized CSS, cloud image compression and deep scans) need a connection to Arva SEO and use the allowances of your plan; connecting is optional.
 
 = PageSpeed fixes you control =
 
@@ -58,6 +60,18 @@ Connected sites can receive updated security patterns, known-malware fingerprint
 
 Optional deep scans need separate administrator consent and are started individually. Code files not matched to official copies are sent to Arva SEO for malware checks and deleted when the scan finishes. Configuration secrets, logs, database exports, backups and media are excluded. Deep scans use the service's applicable allowance.
 
+= SEO checklist (no account needed) =
+
+Arva SEO → SEO checks ten basics and tells you, in plain words, what passed, what needs attention, why it matters and how to fix it in WordPress: HTTPS, “Discourage search engines” off, readable permalinks, a site title, one home page title of a sensible length, a meta description, no accidental noindex on the home page, a sitemap, a robots.txt that doesn't block everything, and the share of home page images without alt text (a sample). It reads what WordPress knows and makes one request to your own home page from your own server. Nothing is sent anywhere, and the screen changes nothing on your site.
+
+= Broken addresses and redirects (off until you turn them on) =
+
+Arva SEO → Redirects can log the missing pages visitors ask for, with only the path (without anything after a question mark), how many times, and the first and last time. It never keeps IP addresses, browsers, referring pages, cookies or user IDs, and keeps at most 1,000 addresses; image, script and font requests and addresses that look like hackers probing are left out. Choose “Redirect this” to send an address to a path on your site or to a full https:// address you type. A redirect is an exact-path rule (301 or 302), up to 500 of them; the plugin refuses loops, a redirect to itself and chains of more than three, and only administrators can make them. Rules can be exported as CSV. Nothing is written to .htaccess. An emergency wp-config.php switch turns redirects and the log off; see the FAQ.
+
+= SEO titles and descriptions when you have no SEO plugin (off until you turn it on) =
+
+If none of Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework is active, Arva SEO → SEO can add an “SEO title” and “Meta description” box to posts, pages and products, and two fields for the home page. A page prints a description tag or changes its document title only when you filled one in. If you later install an SEO plugin, this stops at once so a page never gets two. The values are stored on your site only.
+
 = Optional Arva SEO connection =
 
 Approve the connection on app.arvaseo.com without entering an Arva SEO password in WordPress. Each site receives revocable encrypted credentials.
@@ -87,7 +101,7 @@ Yes. Arva SEO → Speed has separate Combine CSS and Combine JavaScript controls
 
 = Does the plugin change my site? =
 
-Only in the ways you switch on. PageSpeed fixes change how your pages load, only after you turn each one on, and turning it off undoes it. When a change alters what visitors see, the plugin also clears the page caches it can reach (cache plugins, your host's cache, Cloudflare) at most every 15 minutes, and once a day it asks your own site for its homepage, as a visitor would, to read its cache headers and find the caches in front of it. Website Health and the security scan are read-only: they report, and every finding is a recommendation. Arva SEO can only create or update posts it sent, within your publishing mode, and, if you allow it in Settings, change the SEO title and meta description of published content in Yoast SEO or Rank Math.
+Only in the ways you switch on. PageSpeed fixes change how your pages load, only after you turn each one on, and turning it off undoes it. When a change alters what visitors see, the plugin also clears the page caches it can reach (cache plugins, your host's cache, Cloudflare) at most every 15 minutes, and once a day it asks your own site for its homepage, as a visitor would, to read its cache headers and find the caches in front of it. Website Health, the security scan and the SEO checklist are read-only: they report, and every finding is a recommendation. Redirects and SEO titles and descriptions change what visitors get only after you turn them on. Arva SEO can only create or update posts it sent, within your publishing mode, and, if you allow it in Settings, change the SEO title and meta description of published content in Yoast SEO or Rank Math.
 
 = What happens to the fixes I use when the plugin updates? =
 
@@ -158,11 +172,23 @@ No. They work as soon as the plugin is active. Connecting adds which fixes your 
 
 = Which SEO plugins are supported? =
 
-Yoast SEO and Rank Math. The connector detects which one is active; if both are, choose one in Arva SEO → Settings. Without either, SEO titles and descriptions aren't written.
+Updates from Arva SEO are written to Yoast SEO and Rank Math. The connector detects which one is active; if both are, choose one in Arva SEO → Settings. Without either, those updates aren't written. If none of Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework is active, you can turn on this plugin's own SEO title and description boxes in Arva SEO → SEO; they are stored on your site and are not shared with Arva SEO.
 
 = Can a title or description change be undone? =
 
 Yes. The connector sends Arva SEO the previous values with every change, and Undo in Arva SEO writes them back (an empty previous value restores the SEO plugin's default).
+
+= Does the redirect manager use .htaccess? =
+
+No. Redirects run inside WordPress, early on the front end, and never in the dashboard, REST requests, AJAX, scheduled tasks or when an administrator previews. Turn “Use redirects” off, delete a rule, or add `define( 'ARVASEO_CONNECTOR_DISABLE_REDIRECTS', true );` to wp-config.php to stop them at once; that line also stops the broken-address log.
+
+= What does the broken-address log keep? =
+
+Only the path of a missing page (without the part after a question mark), how many times it was asked for, and the first and last time. No IP addresses, browsers, referring pages, cookies or user IDs, and nothing is sent anywhere. At most 1,000 addresses are kept; the one not asked for the longest goes first. “Clear the list” empties it.
+
+= Can a redirect send visitors to another website? =
+
+Only to a full http:// or https:// address that an administrator types in. The address is checked when it is saved and again when it is used; addresses with a user name, spaces, backslashes or other schemes are refused.
 
 = What if I disconnect? =
 
@@ -174,7 +200,7 @@ The connector works with every Arva SEO plan, including Free.
 
 = What happens when I delete the plugin? =
 
-Credentials are always revoked and removed. Settings, logs, delivery records and the files the PageSpeed fixes made are removed too if you ticked that option in Settings; the plugin clears the caches it can reach first, and the files stay if a cache it can't clear may still show pages that use them. Posts are never deleted.
+Credentials are always revoked and removed. Settings, logs, delivery records, the broken-address log, redirects, SEO titles and descriptions and the files the PageSpeed fixes made are removed too if you ticked that option in Settings; the plugin clears the caches it can reach first, and the files stay if a cache it can't clear may still show pages that use them. Posts are never deleted.
 
 == External services ==
 
@@ -182,6 +208,8 @@ Connecting to Arva SEO (https://arvaseo.com) is optional and starts only when an
 
 * **When connecting:** you are sent to app.arvaseo.com to sign in and approve; the plugin then exchanges a one-time code with api.arvaseo.com for this site's own credentials, and sends the site address, name, WordPress and plugin versions, time zone, environment type, your publishing settings, which of the plugin's PageSpeed fixes are on, which of the plugin's update notes applied to this site (their ids and dates) and, for an update to a fix you use, whether it waits for your check, you kept the previous version or visitors get it, which page caches and CDNs the plugin found in front of the site (their names, whether the plugin clears them or you do, how you clear the ones that are yours, when each was last cleared, and how many old generated files are kept because of them), and your data-sharing choice.
 * **Cache check (once a day, no account needed; the request goes only to your own site):** the plugin requests your own homepage from your own server, as a visitor would, without cookies or a login, reads a fixed list of its response headers (for example cf-cache-status, x-litespeed-cache, age and cache-control) and the comments cache plugins leave in the page, and keeps only the names of the caches it found. When the site is connected, those names are sent with the site's details (see above). Also, when it clears a LiteSpeed server cache from a command line or scheduled task, it asks your site for a page that answers with LiteSpeed's purge header.
+* **SEO checklist (no account needed; the request goes only to your own site):** when you open Arva SEO → SEO or press Check again, the plugin requests your own home page from your own server, as a visitor would, without cookies or a login, and reads its title, meta description, robots rules and images. Results are kept on your site for 15 minutes. Nothing is sent to Arva SEO or anyone else.
+* **Links you click:** “See every fix in Arva SEO” (arvaseo.com, with utm_source=wordpress-plugin and utm_medium=seo-checklist in the address) and “Write a review” (wordpress.org) are ordinary links. Nothing is requested or sent when they are shown; the review request appears only on this plugin's own screens, after a security scan has finished or a speed fix has been on for a week, and it keeps your answer on your site only.
 * **Plugin inventory and Website Health (only if you agree when connecting, or later in Settings → Diagnostics and data sharing):** installed plugins and themes with versions and update state, and the results of about 40 health checks (booleans, counts and versions only), including saved database maintenance counts from 2.12.0. Cleanup is started only in WordPress; the app and AI connector read counts but cannot start it. Sent after connecting, twice a day for the inventory and once or twice a day for health checks, after plugin changes, and when you or Arva SEO ask for a recheck.
 * **Security scan results (off by default, a separate choice):** after each scan, when an administrator agreed to share them, each open problem's kind, severity, a key, the file's path inside the site and its SHA-256 fingerprint, and for suspicious code the pattern's name, line and the start of that line, with how many files were checked. Never the files themselves.
 * **Security feed (only when connected):** once a day the plugin downloads Arva SEO's security feed from api.arvaseo.com (fingerprints of known malware and of files found safe, PHP's latest versions, new patterns), sending only the version it has.
@@ -220,6 +248,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 7. Health → Security: the latest security scan, what it found, why it matters and what to do.
 
 == Upgrade Notice ==
+
+= 2.15.0 =
+Adds an SEO checklist, an optional broken-address log and redirect manager, optional SEO title and description boxes for sites with no SEO plugin, and a one-time review request. New features start off; existing settings are unchanged.
 
 = 2.14.0 =
 Page caching now checks for another cache before changing any file and explains a refusal in plain words. Two new health checks flag a homepage running without its optimized CSS and Cloudflare that isn't connected. Existing settings are unchanged.
@@ -344,6 +375,14 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.15.0 =
+* New Arva SEO → SEO screen: ten plain-language checks (HTTPS, search engines allowed, permalinks, site title, home page title, meta description, noindex, sitemap, robots.txt, image alt text) made on your site with one request to your own home page. No account, nothing sent, nothing changed.
+* New Arva SEO → Redirects screen, off by default: an optional log of broken addresses (path, count, first and last seen; no IP addresses, browsers, referrers, cookies or users; at most 1,000) and exact-path 301/302 redirects (at most 500, loops and long chains refused, administrators only, CSV export). Not written to .htaccess; ARVASEO_CONNECTOR_DISABLE_REDIRECTS in wp-config.php turns it off.
+* New, off by default and only when no SEO plugin is active: SEO title and meta description boxes for posts, pages and products, and home page fields, stored on your site.
+* A request for a WordPress.org review appears once, only on this plugin's own screens and only after a finished security scan or a speed fix that has been on for a week. “Maybe later” hides it for 30 days; “No thanks / I already did” hides it for good. Nothing is tracked or sent.
+* New readme: a clearer description and tags for page caching, WebP and image compression, the security scanner, Core Web Vitals and SEO.
+* Two small database tables are added for the log and the redirects; they are removed with the plugin's other data if you chose that in Settings.
 
 = 2.14.0 =
 * Page caching looks at the homepage twice before it writes anything. When your host, a caching plugin or Cloudflare already answers it, Page caching is refused with wp-config.php, .htaccess and the drop-in untouched.

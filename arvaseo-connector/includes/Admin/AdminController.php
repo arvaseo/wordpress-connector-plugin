@@ -45,6 +45,8 @@ final class AdminController {
 		'arvaseo-speed'       => array( 'Speed', Capabilities::MANAGE, 'speed', 'arvaseo-speed' ),
 		'arvaseo-content'     => array( 'Content', Capabilities::PUBLISH_CONTENT, 'content', 'arvaseo-content' ),
 		'arvaseo-health'      => array( 'Health', Capabilities::VIEW_HEALTH, 'health', 'arvaseo-health' ),
+		'arvaseo-seo'         => array( 'SEO', Capabilities::MANAGE, 'seo', 'arvaseo-seo' ),
+		'arvaseo-redirects'   => array( 'Redirects', Capabilities::MANAGE, 'redirects', 'arvaseo-redirects' ),
 		'arvaseo-activity'    => array( 'Activity', Capabilities::MANAGE, 'activity', 'arvaseo-activity' ),
 		'arvaseo-settings'    => array( 'Settings', Capabilities::MANAGE, 'settings', 'arvaseo-settings' ),
 		'arvaseo-inventory'   => array( 'Plugin list', Capabilities::SYNC_INVENTORY, 'inventory', 'arvaseo-settings' ),
@@ -121,6 +123,8 @@ final class AdminController {
 		add_action( 'admin_notices', array( self::class, 'updates_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
 		add_action( 'admin_notices', array( \ArvaSEO\Connector\Speed\SafeAssetTrials::class, 'notice' ) );
+		\ArvaSEO\Connector\Seo\Actions::init();
+		ReviewPrompt::init();
 		add_action( 'in_admin_header', array( self::class, 'quiet_notices' ), PHP_INT_MAX );
 		add_filter( 'admin_body_class', array( self::class, 'body_class' ) );
 		add_filter( 'submenu_file', array( self::class, 'submenu_file' ) );
@@ -143,6 +147,7 @@ final class AdminController {
 		add_action( 'admin_notices', array( self::class, 'updates_notice' ) );
 		add_action( 'admin_notices', array( self::class, 'other_plugins_notice' ) );
 		add_action( 'admin_notices', array( \ArvaSEO\Connector\Speed\SafeAssetTrials::class, 'notice' ) );
+		add_action( 'admin_notices', array( ReviewPrompt::class, 'notice' ) );
 	}
 
 	/**
@@ -233,6 +238,8 @@ final class AdminController {
 			'arvaseo-speed'       => __( 'Speed', 'arvaseo-connector' ),
 			'arvaseo-content'     => __( 'Content', 'arvaseo-connector' ),
 			'arvaseo-health'      => __( 'Health', 'arvaseo-connector' ),
+			'arvaseo-seo'         => __( 'SEO', 'arvaseo-connector' ),
+			'arvaseo-redirects'   => __( 'Redirects', 'arvaseo-connector' ),
 			'arvaseo-activity'    => __( 'Activity', 'arvaseo-connector' ),
 			'arvaseo-settings'    => __( 'Settings', 'arvaseo-connector' ),
 			'arvaseo-inventory'   => __( 'Plugin list', 'arvaseo-connector' ),
@@ -331,6 +338,8 @@ final class AdminController {
 			'arvaseo-speed'       => array( 'gauge', __( 'Fix what Google’s PageSpeed test finds, one switch at a time. Every fix is off until you turn it on, most can be tried first where only you see them, and turning one off puts your pages back as they were. Your theme files and content are never changed; the few fixes that add files say so.', 'arvaseo-connector' ) ),
 			'arvaseo-content'     => array( 'file', __( 'Posts sent from Arva SEO arrive here, and the SEO titles your team approves are written to your SEO plugin, only as far as you allow.', 'arvaseo-connector' ) ),
 			'arvaseo-health'      => array( 'shield', __( 'What the security scan and the daily check found on this website, and how to fix it. Nothing changes on your site unless you choose a repair, which can be undone; snoozing, assigning or accepting a finding happens in Arva SEO.', 'arvaseo-connector' ) ),
+			'arvaseo-seo'         => array( 'search', __( 'Ten basic checks of how your site looks to search engines, made on this site, with no account. Nothing here changes your site unless you turn on SEO titles and descriptions.', 'arvaseo-connector' ) ),
+			'arvaseo-redirects'   => array( 'arrow', __( 'See which missing pages visitors ask for, and send them somewhere useful. Both are off until you turn them on, and the log keeps no visitor details.', 'arvaseo-connector' ) ),
 			'arvaseo-activity'    => array( 'list', __( 'Everything the plugin did, and who asked. No keys, codes, content or personal data are kept.', 'arvaseo-connector' ) ),
 			'arvaseo-settings'    => array( 'sliders', __( 'You decide how far Arva SEO may go on this website. Every setting starts at the safest choice.', 'arvaseo-connector' ) ),
 			'arvaseo-inventory'   => array( 'list', __( 'The plugins and themes on this site, and exactly what is shared about them with Arva SEO.', 'arvaseo-connector' ) ),
@@ -480,6 +489,7 @@ final class AdminController {
 			'check'    => '<path d="M20 6 9 17l-5-5"/>',
 			'arrow'    => '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
 			'cloud'    => '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
+			'search'   => '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
 			'pencil'   => '<path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.85.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.85z"/>',
 		);
 		return '<svg width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' . ( $size <= 16 ? '2.25' : '1.85' ) . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . ( $paths[ $name ] ?? '' ) . '</svg>';
@@ -617,8 +627,19 @@ final class AdminController {
 			'compress_off'                   => array( 'error', __( 'Turn on Compress images first.', 'arvaseo-connector' ) ),
 			'other_deactivated'              => array( 'success', __( 'The plugin was deactivated.', 'arvaseo-connector' ) ),
 			'other_not_deactivated'          => array( 'error', __( 'Nothing was changed.', 'arvaseo-connector' ) ),
+			'seo_checked'                    => array( 'success', __( 'Checked your home page again.', 'arvaseo-connector' ) ),
+			'seo_saved'                      => array( 'success', __( 'Saved. Clear your page cache if you use one, so visitors see the change.', 'arvaseo-connector' ) ),
+			'redirect_settings_saved'        => array( 'success', __( 'Saved.', 'arvaseo-connector' ) ),
+			'redirect_added'                 => array( 'success', __( 'Redirect added. It runs only while “Use redirects” is on.', 'arvaseo-connector' ) ),
+			'redirect_deleted'               => array( 'success', __( 'Redirect deleted.', 'arvaseo-connector' ) ),
+			'redirect_failed'                => array( 'error', __( 'The redirect wasn’t saved.', 'arvaseo-connector' ) ),
+			'missing_removed'                => array( 'success', __( 'Removed from the list.', 'arvaseo-connector' ) ),
+			'missing_cleared'                => array( 'success', __( 'The list is empty.', 'arvaseo-connector' ) ),
 			'others_kept'                    => array( 'success', __( 'Kept. Arva SEO leaves those fixes to them, and asks again if another speed plugin is activated.', 'arvaseo-connector' ) ),
 		);
+		foreach ( array( 'invalid_from', 'protected_from', 'invalid_target', 'bad_code', 'self', 'duplicate', 'too_many', 'loop', 'chain' ) as $arvaseo_redirect_error ) {
+			$map[ 'redirect_' . $arvaseo_redirect_error ] = array( 'error', \ArvaSEO\Connector\Seo\Redirects::error_text( $arvaseo_redirect_error ) );
+		}
 		if ( in_array( $code, array( 'repair_done', 'repair_failed', 'other_deactivated', 'other_not_deactivated' ), true ) ) {
 			// What the repair did, kept a minute for this administrator (the address has only the code).
 			$said = get_transient( 'arvaseo_connector_repair_notice_' . get_current_user_id() );
@@ -1526,6 +1547,8 @@ final class AdminController {
 				'confirmRisky'           => __( 'This changes how parts of your pages load for every visitor. Check your important pages afterwards, and turn it off here if anything looks wrong. Continue?', 'arvaseo-connector' ),
 				'confirmCssRegenerate'   => __( 'Refresh optimized CSS while keeping existing files? Unchanged per-file results can be regenerated free once a week; other new renders may use one page optimization each. Old-format bulk results are downloaded again without a new render.', 'arvaseo-connector' ),
 				'confirmWebpUndo'        => __( 'Remove the WebP copies of your existing images? Pages show the originals again; you can convert them again later.', 'arvaseo-connector' ),
+				'confirmRedirectDelete'  => __( 'Delete this redirect? Visitors who use the old address will see the missing page again.', 'arvaseo-connector' ),
+				'confirmClearMissing'    => __( 'Empty the list of broken addresses? Redirects you made stay.', 'arvaseo-connector' ),
 				'confirmCloudflareOff'   => __( 'Disconnect Cloudflare? Its token is removed from this site, and its copy of your pages is no longer cleared when something changes here.', 'arvaseo-connector' ),
 				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
 				'securityNonce'          => wp_create_nonce( 'arvaseo_connector_security_progress' ),

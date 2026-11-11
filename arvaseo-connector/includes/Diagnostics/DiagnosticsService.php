@@ -142,6 +142,15 @@ final class DiagnosticsService {
 				'health_frequency'      => $settings['health_frequency'],
 				'log_retention_days'    => $settings['log_retention_days'],
 			),
+			// The SEO tools (2.15.0): whether each is on and how many rows there are; no addresses or text.
+			'seo_tools'       => array(
+				'log_404_on'                          => (bool) \ArvaSEO\Connector\Seo\Options::get( 'log_404' ),
+				'redirects_on'                        => (bool) \ArvaSEO\Connector\Seo\Options::get( 'redirects' ),
+				'redirects_switched_off_in_wp_config' => \ArvaSEO\Connector\Seo\Redirects::disabled(),
+				'redirect_rules'                      => (int) \ArvaSEO\Connector\Seo\Options::get( 'rules' ),
+				'seo_fields_on'                       => \ArvaSEO\Connector\Seo\Essentials::enabled(),
+				'seo_plugins_active'                  => count( \ArvaSEO\Connector\Seo\Detector::active() ),
+			),
 			'sync'            => $sync,
 			'schedules'       => $cron,
 			'deliveries'      => array(
