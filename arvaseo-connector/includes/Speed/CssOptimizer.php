@@ -1145,8 +1145,8 @@ final class CssOptimizer {
 		if ( is_user_logged_in() && ! current_user_can( Capabilities::MANAGE ) ) {
 			return; // Signed-in visitors' pages differ (account menus).
 		}
-		if ( '404' === $template && self::is_file_address( self::current_url() ) ) {
-			return; // A missing stylesheet, script or manifest reaches the 404 template too: only pages count.
+		if ( '404' === $template ) {
+			return; // A page that doesn't exist is never rendered or charged: scanners probe sites with made-up addresses all day.
 		}
 		$url = self::current_url();
 		if ( ! self::sample_url_allowed( $url ) ) {

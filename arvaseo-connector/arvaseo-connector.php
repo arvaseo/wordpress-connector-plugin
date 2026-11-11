@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Arva SEO – Speed Booster & Security Scanner
  * Description:       Page caching, WebP and image compression, and PageSpeed and Core Web Vitals fixes you switch on one at a time. A security scan of your files that only reports what it finds, a free SEO checklist, and optional redirects. Optionally connects this site to Arva SEO: shares a privacy-minimised plugin inventory and Website Health checks with your consent, and receives content you send from Arva SEO within the publishing limits you set here.
- * Version:           2.15.0
+ * Version:           2.16.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Arva SEO
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ARVASEO_CONNECTOR_VERSION', '2.15.0' );
+define( 'ARVASEO_CONNECTOR_VERSION', '2.16.0' );
 define( 'ARVASEO_CONNECTOR_FILE', __FILE__ );
 define( 'ARVASEO_CONNECTOR_DIR', __DIR__ );
 

@@ -548,6 +548,8 @@ defined( 'ABSPATH' ) || exit;
 				<button type="button" data-filter="<?php echo esc_attr( $arvaseo_key ); ?>" aria-pressed="<?php echo 'all' === $arvaseo_key ? 'true' : 'false'; ?>"><?php echo esc_html( $arvaseo_label ); ?> <span class="arvaseo-seg-n"><?php echo (int) $arvaseo_n; ?></span></button>
 			<?php endforeach; ?>
 		</div>
+		<label class="screen-reader-text" for="arvaseo-speed-search"><?php esc_html_e( 'Find a fix', 'arvaseo-connector' ); ?></label>
+		<input type="search" id="arvaseo-speed-search" class="arvaseo-speed-search" data-arvaseo-speed-search placeholder="<?php esc_attr_e( 'Find a fix, for example “fonts”', 'arvaseo-connector' ); ?>" autocomplete="off" hidden />
 		<span class="arvaseo-hint" style="max-width: 520px"><?php esc_html_e( 'Safe fixes only change how things load. Fixes marked “Check your pages” can affect how your site works, so try them first.', 'arvaseo-connector' ); ?></span>
 	</div>
 </div>

@@ -37,17 +37,18 @@ defined( 'ABSPATH' ) || exit;
 final class AdminController {
 
 	/**
-	 * Slug => [name, capability, view, tab]. The tab is the one shown as current: the plugin list
-	 * and diagnostics are pages of Settings (1.8.0), reached from its Data and privacy section.
+	 * Slug => [name, capability, view, tab]. The tab is the one shown as current. Five tabs (2.16.0):
+	 * Home (Overview and Content), Speed, SEO (Checklist and Redirects), Health, and Settings (Settings,
+	 * Activity, the plugin list and diagnostics). Every page keeps its own address.
 	 */
 	public const PAGES = array(
 		'arvaseo-connector'   => array( 'Overview', Capabilities::VIEW_HEALTH, 'connection', 'arvaseo-connector' ),
 		'arvaseo-speed'       => array( 'Speed', Capabilities::MANAGE, 'speed', 'arvaseo-speed' ),
-		'arvaseo-content'     => array( 'Content', Capabilities::PUBLISH_CONTENT, 'content', 'arvaseo-content' ),
+		'arvaseo-content'     => array( 'Content', Capabilities::PUBLISH_CONTENT, 'content', 'arvaseo-connector' ),
 		'arvaseo-health'      => array( 'Health', Capabilities::VIEW_HEALTH, 'health', 'arvaseo-health' ),
 		'arvaseo-seo'         => array( 'SEO', Capabilities::MANAGE, 'seo', 'arvaseo-seo' ),
-		'arvaseo-redirects'   => array( 'Redirects', Capabilities::MANAGE, 'redirects', 'arvaseo-redirects' ),
-		'arvaseo-activity'    => array( 'Activity', Capabilities::MANAGE, 'activity', 'arvaseo-activity' ),
+		'arvaseo-redirects'   => array( 'Redirects', Capabilities::MANAGE, 'redirects', 'arvaseo-seo' ),
+		'arvaseo-activity'    => array( 'Activity', Capabilities::MANAGE, 'activity', 'arvaseo-settings' ),
 		'arvaseo-settings'    => array( 'Settings', Capabilities::MANAGE, 'settings', 'arvaseo-settings' ),
 		'arvaseo-inventory'   => array( 'Plugin list', Capabilities::SYNC_INVENTORY, 'inventory', 'arvaseo-settings' ),
 		'arvaseo-diagnostics' => array( 'Diagnostics and data sharing', Capabilities::MANAGE, 'diagnostics', 'arvaseo-settings' ),
@@ -306,19 +307,62 @@ final class AdminController {
 		$needs = count( self::needs() );
 		echo '<nav class="arvaseo-tabs" aria-label="' . esc_attr__( 'Arva SEO sections', 'arvaseo-connector' ) . '">';
 		foreach ( self::PAGES as $slug => $page ) {
-			// The tabs: each section once; Content only once content can arrive.
-			if ( $page[3] !== $slug || ! current_user_can( $page[1] ) || ( 'arvaseo-content' === $slug && ! $connected ) ) {
+			// The tabs: each section once. Pages inside a tab are in the second row.
+			if ( $page[3] !== $slug || ! current_user_can( $page[1] ) ) {
 				continue;
 			}
 			printf(
 				'<a href="%1$s"%2$s>%3$s%4$s</a>',
 				esc_url( admin_url( 'admin.php?page=' . $slug ) ),
 				$slug === $tab ? ' aria-current="page"' : '',
-				esc_html( self::title( $slug ) ),
+				esc_html( 'arvaseo-connector' === $slug && $connected ? __( 'Home', 'arvaseo-connector' ) : self::title( $slug ) ),
 				'arvaseo-connector' === $slug && $connected && $needs > 0
 					/* translators: %d: number of things that need the administrator. */
 					? ' <span class="arvaseo-badge-count" aria-label="' . esc_attr( sprintf( _n( '%d thing needs you', '%d things need you', $needs, 'arvaseo-connector' ), $needs ) ) . '">' . (int) $needs . '</span>'
 					: ''
+			);
+		}
+		echo '</nav>';
+		self::subnav( $current, $tab, $connected );
+	}
+
+	/**
+	 * The pages inside a tab, as a second row of links: Overview and Content under Home, Checklist and
+	 * Redirects under SEO, Settings and Activity under Settings. Nothing is drawn for a tab with one page.
+	 *
+	 * @param string $current   Current page.
+	 * @param string $tab       The current page's tab.
+	 * @param bool   $connected Whether the site is connected.
+	 */
+	private static function subnav( string $current, string $tab, bool $connected ): void {
+		$labels = array(
+			'arvaseo-connector' => $connected ? __( 'Overview', 'arvaseo-connector' ) : __( 'Get started', 'arvaseo-connector' ),
+			'arvaseo-content'   => __( 'Content from Arva SEO', 'arvaseo-connector' ),
+			'arvaseo-seo'       => __( 'Checklist', 'arvaseo-connector' ),
+			'arvaseo-redirects' => __( 'Redirects', 'arvaseo-connector' ),
+			'arvaseo-settings'  => __( 'Settings', 'arvaseo-connector' ),
+			'arvaseo-activity'  => __( 'Activity', 'arvaseo-connector' ),
+		);
+		$items  = array();
+		foreach ( $labels as $slug => $label ) {
+			$page = self::PAGES[ $slug ];
+			if ( $page[3] !== $tab || ! current_user_can( $page[1] ) || ( 'arvaseo-content' === $slug && ! $connected ) ) {
+				continue;
+			}
+			$items[ $slug ] = $label;
+		}
+		if ( count( $items ) < 2 ) {
+			return;
+		}
+		// The plugin list and diagnostics belong to Settings: keep its link current there.
+		$active = isset( $items[ $current ] ) ? $current : $tab;
+		echo '<nav class="arvaseo-subtabs" aria-label="' . esc_attr__( 'In this section', 'arvaseo-connector' ) . '">';
+		foreach ( $items as $slug => $label ) {
+			printf(
+				'<a href="%1$s"%2$s>%3$s</a>',
+				esc_url( admin_url( 'admin.php?page=' . $slug ) ),
+				$slug === $active ? ' aria-current="page"' : '',
+				esc_html( $label )
 			);
 		}
 		echo '</nav>';
@@ -345,8 +389,8 @@ final class AdminController {
 			'arvaseo-inventory'   => array( 'list', __( 'The plugins and themes on this site, and exactly what is shared about them with Arva SEO.', 'arvaseo-connector' ) ),
 			'arvaseo-diagnostics' => array( 'shield', __( 'What to share with support if something isn’t working, and what this site shares with Arva SEO.', 'arvaseo-connector' ) ),
 		);
-		if ( self::PAGES[ $slug ][3] !== $slug ) {
-			// A page of Settings: the way back.
+		if ( self::PAGES[ $slug ][3] !== $slug && ! in_array( $slug, array( 'arvaseo-content', 'arvaseo-redirects', 'arvaseo-activity' ), true ) ) {
+			// The plugin list and diagnostics, pages of Settings with no link in the second row: the way back.
 			printf( '<a class="arvaseo-back" href="%1$s">← %2$s</a>', esc_url( admin_url( 'admin.php?page=arvaseo-settings#arvaseo-settings-privacy' ) ), esc_html__( 'Settings', 'arvaseo-connector' ) );
 		}
 		printf(
@@ -1422,8 +1466,8 @@ final class AdminController {
 	}
 
 	/**
-	 * One notice per release, on the Plugins screen and Arva SEO's screens other than Speed (where
-	 * the fixes show their own): fixes whose update waits for the administrator's check. Dismissing
+	 * One notice per release, on the Plugins screen and on Arva SEO's Home (the other screens stay
+	 * clear; Speed shows its own): fixes whose update waits for the administrator's check. Dismissing
 	 * it hides it until a different set of fixes waits.
 	 */
 	public static function updates_notice(): void {
@@ -1436,7 +1480,7 @@ final class AdminController {
 		}
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		$page   = self::current_page();
-		if ( 'arvaseo-speed' === $page || ( '' === $page && ( null === $screen || 'plugins' !== $screen->id ) ) ) {
+		if ( ( '' !== $page && 'arvaseo-connector' !== $page ) || ( '' === $page && ( null === $screen || 'plugins' !== $screen->id ) ) ) {
 			return;
 		}
 		$count   = count( $waiting );

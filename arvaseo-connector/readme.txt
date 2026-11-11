@@ -4,7 +4,7 @@ Tags: page cache, webp, malware scanner, core web vitals, seo
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.15.0
+Stable tag: 2.16.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -249,6 +249,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.16.0 =
+Easier to move around: five tabs instead of eight, a find box on the Speed screen, wider screens used better, and fewer notices. No settings change.
+
 = 2.15.0 =
 Adds an SEO checklist, an optional broken-address log and redirect manager, optional SEO title and description boxes for sites with no SEO plugin, and a one-time review request. New features start off; existing settings are unchanged.
 
@@ -375,6 +378,14 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.16.0 =
+* Easier to move around: the eight tabs are now five (Home, Speed, SEO, Health, Settings). Content from Arva SEO sits under Home, Redirects under SEO, and Activity under Settings, each reached from a small second row. Every page keeps its address, so existing links and bookmarks still work.
+* New “Find a fix” box on the Speed screen: type a word to see the matching fixes from every section at once.
+* Screens use wide displays better (up to 1,480 px instead of 1,180 px).
+* The review request and the “fixes changed” notice now appear only on Home instead of on every screen.
+* Pages that don't exist (the made-up addresses scanners and bots try all day) are no longer sent to Arva SEO for optimized CSS, which saved renders and page optimizations.
+* Nothing is switched on, off or changed on your website by this update.
 
 = 2.15.0 =
 * New Arva SEO → SEO screen: ten plain-language checks (HTTPS, search engines allowed, permalinks, site title, home page title, meta description, noindex, sitemap, robots.txt, image alt text) made on your site with one request to your own home page. No account, nothing sent, nothing changed.

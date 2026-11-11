@@ -99,7 +99,7 @@ final class ReviewPrompt {
 	 */
 	public static function notice(): void {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page routing only.
-		if ( ! isset( AdminController::PAGES[ $page ] ) || ! self::due( $page ) ) {
+		if ( 'arvaseo-connector' !== $page || ! self::due( $page ) ) { // Only on Home: one place, not on every screen.
 			return;
 		}
 		$link = static function ( string $choice ): string {

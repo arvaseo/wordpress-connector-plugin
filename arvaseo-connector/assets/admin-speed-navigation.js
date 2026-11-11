@@ -98,6 +98,37 @@
 	root.addEventListener( 'click', function ( event ) {
 		if ( filter && filter.contains( event.target ) ) { syncFilter(); }
 	} );
+	// Find a fix: while something is typed, every section is shown and only matching fixes stay.
+	var search = root.querySelector( '[data-arvaseo-speed-search]' );
+	if ( search ) {
+		search.hidden = false;
+		var miss = 'arvaseo-search-miss';
+		var find = function () {
+			var query = search.value.trim().toLowerCase();
+			var allRows = Array.from( root.querySelectorAll( '.arvaseo-fix[data-state]' ) );
+			var sections = Array.from( root.querySelectorAll( '[data-arvaseo-speed-section]' ) );
+			allRows.forEach( function ( row ) { row.classList.remove( miss ); } );
+			sections.forEach( function ( section ) { section.classList.remove( miss ); } );
+			if ( ! query ) { show( current ); return; }
+			var found = 0;
+			allRows.forEach( function ( row ) {
+				var hit = ( row.textContent || '' ).toLowerCase().indexOf( query ) !== -1;
+				row.classList.toggle( miss, ! hit );
+				if ( hit ) { found++; }
+			} );
+			sections.forEach( function ( section ) {
+				var rows = section.querySelectorAll( '.arvaseo-fix[data-state]' );
+				var matches = Array.from( rows ).some( function ( row ) { return ! row.classList.contains( miss ); } );
+				section.classList.toggle( miss, ! matches );
+			} );
+			Object.keys( panels ).forEach( function ( name ) { panels[ name ].hidden = false; } );
+			empty.hidden = found > 0;
+		};
+		search.addEventListener( 'input', find );
+		search.addEventListener( 'keydown', function ( event ) {
+			if ( event.key === 'Escape' && search.value ) { search.value = ''; find(); }
+		} );
+	}
 	// Reveal the destination before the browser follows an existing local link.
 	root.querySelectorAll( 'a[href^="#"]' ).forEach( function ( link ) {
 		link.addEventListener( 'click', function () { fromHash( link.getAttribute( 'href' ), current ); } );
