@@ -211,6 +211,9 @@ body.arvaseo-admin #wpfooter { padding-left: 32px; padding-right: 32px; }
 .arvaseo-app .arvaseo-grp p { margin: 2px 0 0; color: var(--a-muted); }
 .arvaseo-rows { background: var(--a-raised); border: 1px solid var(--a-border); border-radius: 16px; box-shadow: 0 1px 2px rgb(40 36 24 / 0.04); overflow: hidden; }
 .arvaseo-rows[hidden] { display: none; }
+/* The SEO checklist: each check sits inside the bordered list with room on every side. */
+.arvaseo-seo-checks > li { margin: 0; padding: 14px 20px; border-top: 1px solid var(--a-border); }
+.arvaseo-seo-checks > li:first-child { border-top: 0; }
 .arvaseo-rows-in { margin-top: -1px; }
 .arvaseo-fix { display: block; padding: 20px 24px; border-top: 1px solid var(--a-border); scroll-margin-top: 48px; }
 .arvaseo-fix[hidden] { display: none; }

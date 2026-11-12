@@ -45,10 +45,10 @@ defined( 'ABSPATH' ) || exit;
 			<?php AdminController::button( 'arvaseo_connector_seo_check', __( 'Check again', 'arvaseo-connector' ) ); ?>
 		</div>
 		<p class="arvaseo-hint"><?php esc_html_e( 'These checks use what WordPress knows about your site and one visit to your own home page, made from your server. No account is needed and nothing is sent anywhere.', 'arvaseo-connector' ); ?></p>
-		<ul class="arvaseo-rows" style="list-style: none; margin: 16px 0 0; padding: 0">
+		<ul class="arvaseo-rows arvaseo-seo-checks" style="list-style: none; margin: 16px 0 0; padding: 0">
 			<?php foreach ( $arvaseo_result['rows'] as $arvaseo_row ) : ?>
 				<?php list( $arvaseo_tone, $arvaseo_label ) = $arvaseo_tones[ $arvaseo_row['status'] ] ?? $arvaseo_tones['unknown']; ?>
-				<li id="arvaseo-check-<?php echo esc_attr( $arvaseo_row['id'] ); ?>" style="padding: 14px 0; border-top: 1px solid var(--a-line, #e5e1d6)">
+				<li id="arvaseo-check-<?php echo esc_attr( $arvaseo_row['id'] ); ?>">
 					<div class="arvaseo-between" style="align-items: center">
 						<strong><?php echo esc_html( $arvaseo_row['title'] ); ?></strong>
 						<?php echo AdminController::badge( $arvaseo_tone, $arvaseo_label ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes. ?>

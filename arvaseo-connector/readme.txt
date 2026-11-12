@@ -4,7 +4,7 @@ Tags: page cache, webp, malware scanner, core web vitals, seo
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.16.0
+Stable tag: 2.16.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -249,6 +249,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.16.1 =
+Two look-and-feel fixes: the SEO checklist has room around each check, and the buttons on the Content screen look like buttons. No settings change.
+
 = 2.16.0 =
 Easier to move around: five tabs instead of eight, a find box on the Speed screen, wider screens used better, and fewer notices. No settings change.
 
@@ -378,6 +381,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.16.1 =
+* The SEO checklist now has room on every side of each check, instead of text touching the border.
+* On the Content from Arva SEO screen, “Check for content now”, “Change in Settings” and “Allow in Settings” now look like buttons, so they are easy to see.
+* Nothing is switched on, off or changed on your website by this update.
 
 = 2.16.0 =
 * Easier to move around: the eight tabs are now five (Home, Speed, SEO, Health, Settings). Content from Arva SEO sits under Home, Redirects under SEO, and Activity under Settings, each reached from a small second row. Every page keeps its address, so existing links and bookmarks still work.

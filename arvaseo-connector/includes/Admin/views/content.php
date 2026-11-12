@@ -52,10 +52,10 @@ defined( 'ABSPATH' ) || exit;
 			<div class="arvaseo-row">
 				<?php
 				if ( TokenStore::is_connected() ) {
-					AdminController::button( 'arvaseo_connector_poll_now', __( 'Check for content now', 'arvaseo-connector' ) );
+					AdminController::button( 'arvaseo_connector_poll_now', __( 'Check for content now', 'arvaseo-connector' ), 'arvaseo-btn arvaseo-btn--sm arvaseo-btn--dark' );
 				}
 				if ( $arvaseo_manage ) {
-					printf( '<a class="arvaseo-btn arvaseo-btn--sm arvaseo-btn--ghost" href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=arvaseo-settings#arvaseo-settings-publishing' ) ), esc_html__( 'Change in Settings', 'arvaseo-connector' ) );
+					printf( '<a class="arvaseo-btn arvaseo-btn--sm" href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=arvaseo-settings#arvaseo-settings-publishing' ) ), esc_html__( 'Change in Settings', 'arvaseo-connector' ) );
 				}
 				?>
 			</div>
@@ -88,7 +88,7 @@ defined( 'ABSPATH' ) || exit;
 				if ( ! $arvaseo_settings['seo_updates'] ) {
 					echo AdminController::badge( 'neutral', __( 'Not allowed', 'arvaseo-connector' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- badge() escapes.
 					if ( $arvaseo_manage ) {
-						printf( ' <a href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=arvaseo-settings#arvaseo-settings-seo' ) ), esc_html__( 'Allow in Settings', 'arvaseo-connector' ) );
+						printf( ' <a class="arvaseo-btn arvaseo-btn--sm" href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=arvaseo-settings#arvaseo-settings-seo' ) ), esc_html__( 'Allow in Settings', 'arvaseo-connector' ) );
 					}
 				} elseif ( isset( SeoPlugins::NAMES[ $arvaseo_seo ] ) ) {
 					/* translators: %s: the SEO plugin's name. */
