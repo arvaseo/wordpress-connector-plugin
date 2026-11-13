@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class CronManager {
 
-	public const SYNC_HOOKS = array( 'arvaseo_connector_poll', 'arvaseo_connector_inventory', 'arvaseo_connector_health', 'arvaseo_connector_assessment', 'arvaseo_connector_register' );
+	public const SYNC_HOOKS = array( 'arvaseo_connector_poll', 'arvaseo_connector_inventory', 'arvaseo_connector_health', 'arvaseo_connector_assessment', 'arvaseo_connector_register', 'arvaseo_connector_dashboard' );
 
 	/**
 	 * Hook the jobs.

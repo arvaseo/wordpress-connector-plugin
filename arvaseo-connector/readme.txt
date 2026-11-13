@@ -4,7 +4,7 @@ Tags: page cache, webp, malware scanner, core web vitals, seo
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.16.1
+Stable tag: 2.18.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -249,6 +249,12 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.18.0 =
+New and off by default for sites that update: one-click login from Arva SEO and an Arva SEO box on the WordPress Dashboard. Turn each on in Settings if you want it. Nothing changes on your site until you do.
+
+= 2.17.0 =
+New and off by default: one-click login from Arva SEO. Turn it on in Settings if you want a “Log in to WordPress” button in Arva SEO. Nothing changes on your site until you do.
+
 = 2.16.1 =
 Two look-and-feel fixes: the SEO checklist has room around each check, and the buttons on the Content screen look like buttons. No settings change.
 
@@ -381,6 +387,16 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.18.0 =
+* New: an Arva SEO box on the WordPress Dashboard for administrators. It lists up to three things that need you (security problems, speed updates waiting for your check, content that couldn’t be added) and messages from Arva SEO when this site is connected. It reads from Arva SEO once in a while in the background, never while the Dashboard loads. New installs have it on; sites that update keep it off until you turn it on in Settings → Dashboard box. Anyone can hide it with Screen Options, and product news can be hidden one message at a time.
+* New: one-click login from Arva SEO, off until you switch it on in Settings → Log in from Arva SEO. It logs in as the administrator who connected the site, only for owners and admins of the Arva SEO workspace. Each login link works once and expires after a minute, and Arva SEO never sees a WordPress password. Every login is listed in Activity.
+* Nothing is switched on, off or changed on your website by this update.
+
+= 2.17.0 =
+* New: one-click login from Arva SEO, off until you switch it on in Settings → Log in from Arva SEO. It logs in as the administrator who connected the site, only for owners and admins of the Arva SEO workspace. Each login link works once and expires after a minute, and Arva SEO never sees a WordPress password. Every login is listed in Activity.
+* If that administrator is removed or is no longer an administrator, the button stops working.
+* Nothing is switched on, off or changed on your website by this update.
 
 = 2.16.1 =
 * The SEO checklist now has room on every side of each check, instead of text touching the border.

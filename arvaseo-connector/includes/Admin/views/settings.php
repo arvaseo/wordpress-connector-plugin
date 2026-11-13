@@ -53,6 +53,8 @@ defined( 'ABSPATH' ) || exit;
 	<nav class="arvaseo-side" aria-label="<?php esc_attr_e( 'Settings sections', 'arvaseo-connector' ); ?>">
 		<a href="#arvaseo-settings-publishing"><?php esc_html_e( 'Publishing', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-seo"><?php esc_html_e( 'SEO titles', 'arvaseo-connector' ); ?></a>
+		<a href="#arvaseo-settings-login"><?php esc_html_e( 'Log in from Arva SEO', 'arvaseo-connector' ); ?></a>
+		<a href="#arvaseo-settings-dashboard"><?php esc_html_e( 'Dashboard box', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-images"><?php esc_html_e( 'Featured images', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-records"><?php esc_html_e( 'Checks and records', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-privacy"><?php esc_html_e( 'Data and privacy', 'arvaseo-connector' ); ?></a>
@@ -137,6 +139,18 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 				<div class="arvaseo-field"><?php $arvaseo_toggle( 'seo_drafts', __( 'New drafts', 'arvaseo-connector' ), __( 'Add the SEO title and meta description to content sent from Arva SEO.', 'arvaseo-connector' ) ); ?></div>
 				<div class="arvaseo-field"><?php $arvaseo_toggle( 'seo_updates', __( 'Existing content', 'arvaseo-connector' ), __( 'Let Arva SEO update the SEO titles and meta descriptions of published posts, pages and products, and the homepage (not category, tag or other archive pages). Nothing else in the post changes. The previous title and description of each changed page are sent to Arva SEO, so every change can be undone from there.', 'arvaseo-connector' ), 'confirmSeoUpdates' ); ?></div>
+				<?php $arvaseo_save( __( 'Save settings', 'arvaseo-connector' ) ); ?>
+			</section>
+
+			<section class="arvaseo-card" id="arvaseo-settings-login" aria-labelledby="arvaseo-h-login">
+				<h2 class="arvaseo-card-title" id="arvaseo-h-login"><?php esc_html_e( 'Log in from Arva SEO', 'arvaseo-connector' ); ?></h2>
+				<div class="arvaseo-field" style="margin-top: 8px"><?php $arvaseo_toggle( 'one_click_login', __( 'Allow one-click login', 'arvaseo-connector' ), __( 'Adds a “Log in to WordPress” button in Arva SEO. It logs in as the administrator who connected this site, and only for owners and admins of the Arva SEO workspace. Each login link works once and expires after a minute, Arva SEO never sees a WordPress password, and every login is listed in Activity. If that administrator is removed or stops being an administrator, the button stops working. Off until you switch it on.', 'arvaseo-connector' ) ); ?></div>
+				<?php $arvaseo_save( __( 'Save settings', 'arvaseo-connector' ) ); ?>
+			</section>
+
+			<section class="arvaseo-card" id="arvaseo-settings-dashboard" aria-labelledby="arvaseo-h-dash">
+				<h2 class="arvaseo-card-title" id="arvaseo-h-dash"><?php esc_html_e( 'Dashboard box', 'arvaseo-connector' ); ?></h2>
+				<div class="arvaseo-field" style="margin-top: 8px"><?php $arvaseo_toggle( 'dashboard_widget', __( 'Show the Arva SEO box on the WordPress Dashboard', 'arvaseo-connector' ), __( 'A short box for administrators with up to three things that need you, and messages from Arva SEO when this site is connected. It reads from Arva SEO once in a while in the background and sends nothing new. Each person can also hide it with Screen Options. New installs have it on; sites that update keep it off until you turn it on.', 'arvaseo-connector' ) ); ?></div>
 				<?php $arvaseo_save( __( 'Save settings', 'arvaseo-connector' ) ); ?>
 			</section>
 

@@ -45,6 +45,8 @@ final class Settings {
 			'seo_updates'              => false,
 			'health_frequency'         => 'daily',
 			'security_weekly'          => true,
+			'one_click_login'          => false,
+			'dashboard_widget'         => false,
 			'log_retention_days'       => 90,
 			'delete_data_on_uninstall' => false,
 		);
@@ -99,6 +101,8 @@ final class Settings {
 		$clean['seo_drafts']               = ! empty( $input['seo_drafts'] );
 		$clean['seo_updates']              = ! empty( $input['seo_updates'] );
 		$clean['security_weekly']          = ! empty( $input['security_weekly'] );
+		$clean['one_click_login']          = ! empty( $input['one_click_login'] );
+		$clean['dashboard_widget']         = ! empty( $input['dashboard_widget'] );
 		$clean['health_frequency']         = in_array( $input['health_frequency'] ?? '', array( 'daily', 'twicedaily' ), true ) ? $input['health_frequency'] : 'daily';
 		$clean['log_retention_days']       = in_array( (int) ( $input['log_retention_days'] ?? 90 ), array( 30, 90, 180, 365 ), true ) ? (int) $input['log_retention_days'] : 90;
 
@@ -139,6 +143,13 @@ final class Settings {
 					'allowed'    => $clean['seo_updates'],
 					'seo_plugin' => $clean['seo_plugin'],
 				)
+			);
+		}
+		if ( $clean['one_click_login'] !== $old['one_click_login'] ) {
+			Logging\AuditLogger::info(
+				'settings.login_changed',
+				$clean['one_click_login'] ? __( 'One-click login from Arva SEO was switched on.', 'arvaseo-connector' ) : __( 'One-click login from Arva SEO was switched off.', 'arvaseo-connector' ),
+				array( 'allowed' => $clean['one_click_login'] )
 			);
 		}
 		if ( $clean['health_frequency'] !== $old['health_frequency'] ) {

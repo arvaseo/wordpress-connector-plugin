@@ -209,6 +209,7 @@ final class AuthService {
 			)
 		);
 		CronManager::clear_sync();
+		delete_option( \ArvaSEO\Connector\Admin\DashboardWidget::CACHE );
 		AssessmentService::mark_stale();
 		AuditLogger::info( 'connection.disconnected', __( 'Disconnected from Arva SEO. Nothing more is sent or received.', 'arvaseo-connector' ), array( 'reason' => $reason ) );
 	}

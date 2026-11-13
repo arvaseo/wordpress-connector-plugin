@@ -19,7 +19,7 @@ use ArvaSEO\Connector\Sync\SyncState;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * POST /wp-json/arvaseo/v1/events          signed events from Arva SEO (triggers only)
+ * POST /wp-json/arvaseo/v1/events          signed events from Arva SEO (triggers only; login.requested answers with a one-time login address, only when switched on)
  * GET  /wp-json/arvaseo/v1/connection-health  signed; connection state for Arva SEO's diagnostics
  * GET  /wp-json/arvaseo/v1/auth-header-probe  the health check's own loopback, with a one-time token
  *
@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class WebhookController {
 
-	public const EVENT_TYPES = array( 'content.available', 'seo.updates_available', 'speed.fixes_requested', 'speed.css_ready', 'health.refresh_requested', 'inventory.refresh_requested', 'connection.challenge', 'connection.revoked' );
+	public const EVENT_TYPES = array( 'content.available', 'seo.updates_available', 'speed.fixes_requested', 'speed.css_ready', 'health.refresh_requested', 'inventory.refresh_requested', 'connection.challenge', 'connection.revoked', 'login.requested' );
 
 	/**
 	 * The secret that signed the current request.
@@ -111,6 +111,14 @@ final class WebhookController {
 		}
 
 		switch ( $event['event_type'] ) {
+			case 'login.requested':
+				$by = $event['data']['requested_by'] ?? '';
+				if ( array_diff( array_keys( $event['data'] ), array( 'requested_by' ) ) || ! is_string( $by ) || strlen( $by ) > 80 ) {
+					return new \WP_Error( 'arvaseo_invalid_event', __( 'Invalid event.', 'arvaseo-connector' ), array( 'status' => 422 ) );
+				}
+				$url = \ArvaSEO\Connector\Auth\OneClickLogin::issue( sanitize_text_field( $by ) );
+				return is_wp_error( $url ) ? $url : new \WP_REST_Response( array( 'login_url' => $url ), 200 );
+
 			case 'connection.challenge':
 				$challenge = $event['data']['challenge'] ?? '';
 				if ( ! is_string( $challenge ) || ! preg_match( '/^[A-Za-z0-9]{16,128}$/', $challenge ) ) {

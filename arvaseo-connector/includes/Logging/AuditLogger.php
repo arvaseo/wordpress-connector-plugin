@@ -52,6 +52,9 @@ final class AuditLogger {
 		'project',
 		'workspace',
 		'request_id',
+		'requested_by',
+		'user_id',
+		'allowed',
 	);
 
 	/**

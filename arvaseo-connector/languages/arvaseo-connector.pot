@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.16.1\n"
+"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.18.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T14:28:15+00:00\n"
+"POT-Creation-Date: 2026-11-13T05:03:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: arvaseo-connector\n"
@@ -29,6 +29,7 @@ msgstr ""
 #: includes/Admin/AdminController.php:203
 #: includes/Admin/AdminController.php:204
 #: includes/Admin/AdminController.php:283
+#: includes/Admin/DashboardWidget.php:56
 msgid "Arva SEO"
 msgstr ""
 
@@ -95,7 +96,7 @@ msgid "Plugin list"
 msgstr ""
 
 #: includes/Admin/AdminController.php:247
-#: includes/Admin/views/settings.php:216
+#: includes/Admin/views/settings.php:230
 msgid "Diagnostics and data sharing"
 msgstr ""
 
@@ -136,9 +137,10 @@ msgid "(opens in a new tab)"
 msgstr ""
 
 #: includes/Admin/AdminController.php:302
+#: includes/Admin/DashboardWidget.php:207
 #: includes/Admin/views/connection.php:76
 #: includes/Admin/views/connection.php:94
-#: includes/Admin/views/settings.php:254
+#: includes/Admin/views/settings.php:268
 msgid "Connect to Arva SEO"
 msgstr ""
 
@@ -929,6 +931,58 @@ msgstr ""
 msgid "You don’t have permission to do that."
 msgstr ""
 
+#: includes/Admin/DashboardWidget.php:78
+msgid "The Dashboard box could not be refreshed."
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:188
+#: includes/Admin/views/connection.php:188
+msgid "Needs you"
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:190
+msgid "Nothing needs you right now."
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:196
+msgid "Look"
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:208
+msgid "to see messages from Arva SEO here."
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:214
+msgid "Loading from Arva SEO…"
+msgstr ""
+
+#. translators: %s: how long ago, for example "2 hours".
+#: includes/Admin/DashboardWidget.php:216
+#, php-format
+msgid "Updated %s ago."
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:221
+msgid "Refresh"
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:239
+msgid "From Arva SEO"
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:247
+msgid "Read more"
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:253
+msgid "Hide"
+msgstr ""
+
+#: includes/Admin/DashboardWidget.php:266
+#: includes/Admin/DashboardWidget.php:279
+msgid "You are not allowed to do this."
+msgstr ""
+
 #: includes/Admin/ReviewPrompt.php:117
 msgid "Is Arva SEO helping?"
 msgstr ""
@@ -1153,7 +1207,7 @@ msgid "Every field, and what’s never sent"
 msgstr ""
 
 #: includes/Admin/views/connection.php:121
-#: includes/Admin/views/settings.php:188
+#: includes/Admin/views/settings.php:202
 msgid "Plugin and theme list"
 msgstr ""
 
@@ -1223,10 +1277,6 @@ msgstr ""
 
 #: includes/Admin/views/connection.php:184
 msgid "Arva SEO checks this website every day. Anything worth your attention shows up here."
-msgstr ""
-
-#: includes/Admin/views/connection.php:188
-msgid "Needs you"
 msgstr ""
 
 #. translators: %d: number of things to look at.
@@ -1350,7 +1400,7 @@ msgstr[1] ""
 #: includes/Admin/views/connection.php:281
 #: includes/Admin/views/content.php:86
 #: includes/Admin/views/seo.php:73
-#: includes/Admin/views/settings.php:115
+#: includes/Admin/views/settings.php:117
 msgid "SEO titles and descriptions"
 msgstr ""
 
@@ -1365,7 +1415,7 @@ msgstr ""
 
 #: includes/Admin/views/connection.php:284
 #: includes/Admin/views/content.php:83
-#: includes/Admin/views/settings.php:81
+#: includes/Admin/views/settings.php:83
 msgid "Default author"
 msgstr ""
 
@@ -1379,8 +1429,8 @@ msgid "Open Content"
 msgstr ""
 
 #: includes/Admin/views/connection.php:299
-#: includes/Admin/views/settings.php:59
-#: includes/Admin/views/settings.php:225
+#: includes/Admin/views/settings.php:61
+#: includes/Admin/views/settings.php:239
 msgid "Connection"
 msgstr ""
 
@@ -1397,12 +1447,12 @@ msgid "client: %s"
 msgstr ""
 
 #: includes/Admin/views/connection.php:315
-#: includes/Admin/views/settings.php:246
+#: includes/Admin/views/settings.php:260
 msgid "Test connection"
 msgstr ""
 
 #: includes/Admin/views/connection.php:316
-#: includes/Admin/views/settings.php:247
+#: includes/Admin/views/settings.php:261
 msgid "Disconnect"
 msgstr ""
 
@@ -1521,7 +1571,7 @@ msgid "Requests above this mode are saved as drafts instead (and reported as dow
 msgstr ""
 
 #: includes/Admin/views/content.php:84
-#: includes/Admin/views/settings.php:101
+#: includes/Admin/views/settings.php:103
 msgid "Content types"
 msgstr ""
 
@@ -1657,7 +1707,7 @@ msgid "Page"
 msgstr ""
 
 #: includes/Admin/views/content.php:186
-#: includes/Admin/views/settings.php:118
+#: includes/Admin/views/settings.php:120
 msgid "SEO plugin"
 msgstr ""
 
@@ -1928,7 +1978,7 @@ msgid "No assessment yet"
 msgstr ""
 
 #: includes/Admin/views/health.php:42
-#: includes/Admin/views/settings.php:219
+#: includes/Admin/views/settings.php:233
 msgid "Open"
 msgstr ""
 
@@ -2267,7 +2317,7 @@ msgid "Not allowed: nothing is sent"
 msgstr ""
 
 #: includes/Admin/views/inventory.php:53
-#: includes/Admin/views/settings.php:204
+#: includes/Admin/views/settings.php:218
 msgid "Send it now"
 msgstr ""
 
@@ -2932,7 +2982,7 @@ msgid "Settings sections"
 msgstr ""
 
 #: includes/Admin/views/settings.php:54
-#: includes/Admin/views/settings.php:66
+#: includes/Admin/views/settings.php:68
 msgid "Publishing"
 msgstr ""
 
@@ -2941,210 +2991,238 @@ msgid "SEO titles"
 msgstr ""
 
 #: includes/Admin/views/settings.php:56
-#: includes/Admin/views/settings.php:144
-msgid "Featured images"
+#: includes/Admin/views/settings.php:146
+msgid "Log in from Arva SEO"
 msgstr ""
 
 #: includes/Admin/views/settings.php:57
-#: includes/Admin/views/settings.php:155
-msgid "Checks and records"
+#: includes/Admin/views/settings.php:152
+msgid "Dashboard box"
 msgstr ""
 
 #: includes/Admin/views/settings.php:58
-#: includes/Admin/views/settings.php:183
+#: includes/Admin/views/settings.php:158
+msgid "Featured images"
+msgstr ""
+
+#: includes/Admin/views/settings.php:59
+#: includes/Admin/views/settings.php:169
+msgid "Checks and records"
+msgstr ""
+
+#: includes/Admin/views/settings.php:60
+#: includes/Admin/views/settings.php:197
 msgid "Data and privacy"
 msgstr ""
 
-#: includes/Admin/views/settings.php:67
+#: includes/Admin/views/settings.php:69
 msgid "What happens to content sent from Arva SEO."
 msgstr ""
 
-#: includes/Admin/views/settings.php:70
+#: includes/Admin/views/settings.php:72
 msgid "Publishing mode"
 msgstr ""
 
-#: includes/Admin/views/settings.php:77
+#: includes/Admin/views/settings.php:79
 msgid "Arva SEO can never go beyond this. Requests above it are refused (arvaseo_status_not_allowed)."
 msgstr ""
 
-#: includes/Admin/views/settings.php:78
+#: includes/Admin/views/settings.php:80
 msgid "Save a draft instead of refusing"
 msgstr ""
 
-#: includes/Admin/views/settings.php:78
+#: includes/Admin/views/settings.php:80
 msgid "Off by default. When on, a request above this mode is saved as a draft, and Arva SEO is told what was asked for and what was done."
 msgstr ""
 
-#: includes/Admin/views/settings.php:82
+#: includes/Admin/views/settings.php:84
 msgid "Posts from Arva SEO are created as this user. They must be able to publish for Scheduling or Full publishing. Arva SEO never chooses a user ID."
 msgstr ""
 
-#: includes/Admin/views/settings.php:90
+#: includes/Admin/views/settings.php:92
 msgid "— Choose an author —"
 msgstr ""
 
-#: includes/Admin/views/settings.php:96
+#: includes/Admin/views/settings.php:98
 msgid "Needed before drafts from Arva SEO can be saved"
 msgstr ""
 
-#: includes/Admin/views/settings.php:109
+#: includes/Admin/views/settings.php:111
 msgid "Let newer content from Arva SEO replace posts edited here"
 msgstr ""
 
-#: includes/Admin/views/settings.php:109
+#: includes/Admin/views/settings.php:111
 msgid "Off by default: an edited post is kept and Arva SEO is told there’s a conflict. When on, a revision is saved first. Only posts that came from Arva SEO are ever updated; nothing is deleted."
 msgstr ""
 
-#: includes/Admin/views/settings.php:110
+#: includes/Admin/views/settings.php:112
 msgid "Create categories and tags that don’t exist yet"
 msgstr ""
 
-#: includes/Admin/views/settings.php:110
+#: includes/Admin/views/settings.php:112
 msgid "Off: only existing ones are used; others are skipped and reported."
 msgstr ""
 
-#: includes/Admin/views/settings.php:111
-#: includes/Admin/views/settings.php:140
-#: includes/Admin/views/settings.php:151
-#: includes/Admin/views/settings.php:178
+#: includes/Admin/views/settings.php:113
+#: includes/Admin/views/settings.php:142
+#: includes/Admin/views/settings.php:148
+#: includes/Admin/views/settings.php:154
+#: includes/Admin/views/settings.php:165
+#: includes/Admin/views/settings.php:192
 msgid "Save settings"
 msgstr ""
 
-#: includes/Admin/views/settings.php:116
+#: includes/Admin/views/settings.php:118
 msgid "Written to your SEO plugin. Only its SEO title and meta description fields change."
 msgstr ""
 
-#: includes/Admin/views/settings.php:120
+#: includes/Admin/views/settings.php:122
 msgid "Detect automatically"
 msgstr ""
 
-#: includes/Admin/views/settings.php:121
+#: includes/Admin/views/settings.php:123
 msgid "Yoast SEO"
 msgstr ""
 
-#: includes/Admin/views/settings.php:122
+#: includes/Admin/views/settings.php:124
 msgid "Rank Math"
 msgstr ""
 
 #. translators: %s: the SEO plugin's name, for example Yoast SEO.
-#: includes/Admin/views/settings.php:129
+#: includes/Admin/views/settings.php:131
 #, php-format
 msgid "Writing to %s."
 msgstr ""
 
-#: includes/Admin/views/settings.php:131
+#: includes/Admin/views/settings.php:133
 msgid "Both Yoast SEO and Rank Math are active: choose the one your site uses."
 msgstr ""
 
-#: includes/Admin/views/settings.php:133
+#: includes/Admin/views/settings.php:135
 msgid "Neither Yoast SEO nor Rank Math is active (or the one chosen isn’t), so nothing is written."
 msgstr ""
 
-#: includes/Admin/views/settings.php:138
+#: includes/Admin/views/settings.php:140
 msgid "New drafts"
 msgstr ""
 
-#: includes/Admin/views/settings.php:138
+#: includes/Admin/views/settings.php:140
 msgid "Add the SEO title and meta description to content sent from Arva SEO."
 msgstr ""
 
-#: includes/Admin/views/settings.php:139
+#: includes/Admin/views/settings.php:141
 msgid "Existing content"
 msgstr ""
 
-#: includes/Admin/views/settings.php:139
+#: includes/Admin/views/settings.php:141
 msgid "Let Arva SEO update the SEO titles and meta descriptions of published posts, pages and products, and the homepage (not category, tag or other archive pages). Nothing else in the post changes. The previous title and description of each changed page are sent to Arva SEO, so every change can be undone from there."
 msgstr ""
 
-#: includes/Admin/views/settings.php:146
-msgid "Download featured images sent with content"
-msgstr ""
-
-#: includes/Admin/views/settings.php:146
-msgid "HTTPS only; JPEG, PNG, GIF and WebP only, up to 8 MB."
+#: includes/Admin/views/settings.php:147
+msgid "Allow one-click login"
 msgstr ""
 
 #: includes/Admin/views/settings.php:147
-msgid "Approved image hosts"
+msgid "Adds a “Log in to WordPress” button in Arva SEO. It logs in as the administrator who connected this site, and only for owners and admins of the Arva SEO workspace. Each login link works once and expires after a minute, Arva SEO never sees a WordPress password, and every login is listed in Activity. If that administrator is removed or stops being an administrator, the button stops working. Off until you switch it on."
 msgstr ""
 
-#: includes/Admin/views/settings.php:148
-msgid "One exact host per line, such as images.example.com. Images from any other host are skipped."
+#: includes/Admin/views/settings.php:153
+msgid "Show the Arva SEO box on the WordPress Dashboard"
 msgstr ""
 
-#: includes/Admin/views/settings.php:157
-msgid "Website Health checks"
-msgstr ""
-
-#: includes/Admin/views/settings.php:159
-msgid "Once a day"
+#: includes/Admin/views/settings.php:153
+msgid "A short box for administrators with up to three things that need you, and messages from Arva SEO when this site is connected. It reads from Arva SEO once in a while in the background and sends nothing new. Each person can also hide it with Screen Options. New installs have it on; sites that update keep it off until you turn it on."
 msgstr ""
 
 #: includes/Admin/views/settings.php:160
+msgid "Download featured images sent with content"
+msgstr ""
+
+#: includes/Admin/views/settings.php:160
+msgid "HTTPS only; JPEG, PNG, GIF and WebP only, up to 8 MB."
+msgstr ""
+
+#: includes/Admin/views/settings.php:161
+msgid "Approved image hosts"
+msgstr ""
+
+#: includes/Admin/views/settings.php:162
+msgid "One exact host per line, such as images.example.com. Images from any other host are skipped."
+msgstr ""
+
+#: includes/Admin/views/settings.php:171
+msgid "Website Health checks"
+msgstr ""
+
+#: includes/Admin/views/settings.php:173
+msgid "Once a day"
+msgstr ""
+
+#: includes/Admin/views/settings.php:174
 msgid "Twice a day"
 msgstr ""
 
-#: includes/Admin/views/settings.php:163
+#: includes/Admin/views/settings.php:177
 msgid "Scan for security problems every week"
 msgstr ""
 
-#: includes/Admin/views/settings.php:163
+#: includes/Admin/views/settings.php:177
 msgid "The scan runs on this server in small batches and only reports what it finds. You can always run one from Health."
 msgstr ""
 
-#: includes/Admin/views/settings.php:165
+#: includes/Admin/views/settings.php:179
 msgid "Keep the activity log for"
 msgstr ""
 
 #. translators: %d: number of days.
-#: includes/Admin/views/settings.php:171
+#: includes/Admin/views/settings.php:185
 #, php-format
 msgid "%d days"
 msgstr ""
 
-#: includes/Admin/views/settings.php:177
+#: includes/Admin/views/settings.php:191
 msgid "When the plugin is deleted, also delete its settings, logs and delivery records"
 msgstr ""
 
-#: includes/Admin/views/settings.php:177
+#: includes/Admin/views/settings.php:191
 msgid "The connection is always removed and revoked on delete. Posts created from Arva SEO are never deleted. The files made by the PageSpeed fixes are deleted too, after Arva SEO clears the caches it can reach; if you use a cache it can’t clear, clear it yourself first, or those files stay."
 msgstr ""
 
-#: includes/Admin/views/settings.php:184
+#: includes/Admin/views/settings.php:198
 msgid "What leaves this website, and what support can see."
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/settings.php:194
+#: includes/Admin/views/settings.php:208
 #, php-format
 msgid "Shared with Arva SEO. Last sent %s."
 msgstr ""
 
-#: includes/Admin/views/settings.php:196
+#: includes/Admin/views/settings.php:210
 msgid "Not shared: nothing is sent."
 msgstr ""
 
-#: includes/Admin/views/settings.php:207
+#: includes/Admin/views/settings.php:221
 msgid "See the list"
 msgstr ""
 
-#: includes/Admin/views/settings.php:217
+#: includes/Admin/views/settings.php:231
 msgid "Diagnostics to copy for support (versions, connection state and settings only: no keys, file paths, usernames, emails or content), every field that’s shared, and your choice to share it."
 msgstr ""
 
 #. translators: 1: website name in Arva SEO, 2: workspace name.
-#: includes/Admin/views/settings.php:234
+#: includes/Admin/views/settings.php:248
 #, php-format
 msgid "%1$s, in %2$s"
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/settings.php:240
+#: includes/Admin/views/settings.php:254
 #, php-format
 msgid "Connected %s. Access renews by itself."
 msgstr ""
 
-#: includes/Admin/views/settings.php:253
+#: includes/Admin/views/settings.php:267
 msgid "Not connected to Arva SEO. The speed fixes work either way."
 msgstr ""
 
@@ -5306,8 +5384,44 @@ msgstr ""
 msgid "Connected to Arva SEO."
 msgstr ""
 
-#: includes/Auth/AuthService.php:213
+#: includes/Auth/AuthService.php:214
 msgid "Disconnected from Arva SEO. Nothing more is sent or received."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:53
+msgid "Arva SEO asked to log in, but one-click login is off."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:54
+msgid "One-click login is off."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:58
+msgid "Arva SEO asked to log in, but the administrator who connected this site is gone or is no longer an administrator."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:59
+msgid "The connecting administrator is gone."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:72
+msgid "A one-time login address was made for Arva SEO."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:91
+msgid "A one-click login address was refused."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:92
+msgid "This login link has expired or was already used. Go back to Arva SEO and press “Log in to WordPress” again."
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:92
+msgid "Login link expired"
+msgstr ""
+
+#: includes/Auth/OneClickLogin.php:115
+msgid "Someone logged in from Arva SEO with one click."
 msgstr ""
 
 #: includes/Content/ContentDeliveryService.php:65
@@ -5582,7 +5696,8 @@ msgstr ""
 
 #: includes/Rest/WebhookController.php:107
 #: includes/Rest/WebhookController.php:117
-#: includes/Rest/WebhookController.php:137
+#: includes/Rest/WebhookController.php:125
+#: includes/Rest/WebhookController.php:145
 msgid "Invalid event."
 msgstr ""
 
@@ -5590,7 +5705,7 @@ msgstr ""
 msgid "This event was already received."
 msgstr ""
 
-#: includes/Rest/WebhookController.php:233
+#: includes/Rest/WebhookController.php:241
 msgid "Received a request from Arva SEO."
 msgstr ""
 
@@ -6631,16 +6746,24 @@ msgstr ""
 msgid "That would make visitors go through more than %d redirects in a row. Point the older redirects straight at the final address instead."
 msgstr ""
 
-#: includes/Settings.php:125
+#: includes/Settings.php:129
 msgid "Publishing settings changed."
 msgstr ""
 
-#: includes/Settings.php:137
+#: includes/Settings.php:141
 msgid "Arva SEO may now update SEO titles and meta descriptions."
 msgstr ""
 
-#: includes/Settings.php:137
+#: includes/Settings.php:141
 msgid "Arva SEO may no longer update SEO titles and meta descriptions."
+msgstr ""
+
+#: includes/Settings.php:151
+msgid "One-click login from Arva SEO was switched on."
+msgstr ""
+
+#: includes/Settings.php:151
+msgid "One-click login from Arva SEO was switched off."
 msgstr ""
 
 #: includes/Site/SiteRegistrationService.php:38

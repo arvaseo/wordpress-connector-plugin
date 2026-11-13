@@ -46,7 +46,8 @@ final class Lifecycle {
 		Schema::migrate();
 		Capabilities::grant();
 		if ( false === get_option( 'arvaseo_connector_settings' ) ) {
-			add_option( 'arvaseo_connector_settings', \ArvaSEO\Connector\Settings::defaults(), '', false );
+			// A new install shows the Dashboard box; a site that updates keeps it off until its administrator turns it on.
+			add_option( 'arvaseo_connector_settings', array_merge( \ArvaSEO\Connector\Settings::defaults(), array( 'dashboard_widget' => true ) ), '', false );
 		}
 		CronManager::schedule_maintenance();
 		// The next dashboard page names any other speed plugins doing some of the fixes, once.
