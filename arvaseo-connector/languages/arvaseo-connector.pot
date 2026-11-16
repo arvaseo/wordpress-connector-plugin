@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.18.0\n"
+"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.19.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-13T05:03:09+00:00\n"
+"POT-Creation-Date: 2026-11-16T07:51:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: arvaseo-connector\n"
@@ -96,7 +96,7 @@ msgid "Plugin list"
 msgstr ""
 
 #: includes/Admin/AdminController.php:247
-#: includes/Admin/views/settings.php:230
+#: includes/Admin/views/settings.php:240
 msgid "Diagnostics and data sharing"
 msgstr ""
 
@@ -140,7 +140,7 @@ msgstr ""
 #: includes/Admin/DashboardWidget.php:207
 #: includes/Admin/views/connection.php:76
 #: includes/Admin/views/connection.php:94
-#: includes/Admin/views/settings.php:268
+#: includes/Admin/views/settings.php:278
 msgid "Connect to Arva SEO"
 msgstr ""
 
@@ -980,6 +980,7 @@ msgstr ""
 
 #: includes/Admin/DashboardWidget.php:266
 #: includes/Admin/DashboardWidget.php:279
+#: includes/Backup/Panel.php:198
 msgid "You are not allowed to do this."
 msgstr ""
 
@@ -1207,7 +1208,7 @@ msgid "Every field, and what’s never sent"
 msgstr ""
 
 #: includes/Admin/views/connection.php:121
-#: includes/Admin/views/settings.php:202
+#: includes/Admin/views/settings.php:212
 msgid "Plugin and theme list"
 msgstr ""
 
@@ -1400,7 +1401,7 @@ msgstr[1] ""
 #: includes/Admin/views/connection.php:281
 #: includes/Admin/views/content.php:86
 #: includes/Admin/views/seo.php:73
-#: includes/Admin/views/settings.php:117
+#: includes/Admin/views/settings.php:118
 msgid "SEO titles and descriptions"
 msgstr ""
 
@@ -1415,7 +1416,7 @@ msgstr ""
 
 #: includes/Admin/views/connection.php:284
 #: includes/Admin/views/content.php:83
-#: includes/Admin/views/settings.php:83
+#: includes/Admin/views/settings.php:84
 msgid "Default author"
 msgstr ""
 
@@ -1429,8 +1430,8 @@ msgid "Open Content"
 msgstr ""
 
 #: includes/Admin/views/connection.php:299
-#: includes/Admin/views/settings.php:61
-#: includes/Admin/views/settings.php:239
+#: includes/Admin/views/settings.php:62
+#: includes/Admin/views/settings.php:249
 msgid "Connection"
 msgstr ""
 
@@ -1447,12 +1448,12 @@ msgid "client: %s"
 msgstr ""
 
 #: includes/Admin/views/connection.php:315
-#: includes/Admin/views/settings.php:260
+#: includes/Admin/views/settings.php:270
 msgid "Test connection"
 msgstr ""
 
 #: includes/Admin/views/connection.php:316
-#: includes/Admin/views/settings.php:261
+#: includes/Admin/views/settings.php:271
 msgid "Disconnect"
 msgstr ""
 
@@ -1571,7 +1572,7 @@ msgid "Requests above this mode are saved as drafts instead (and reported as dow
 msgstr ""
 
 #: includes/Admin/views/content.php:84
-#: includes/Admin/views/settings.php:103
+#: includes/Admin/views/settings.php:104
 msgid "Content types"
 msgstr ""
 
@@ -1707,7 +1708,7 @@ msgid "Page"
 msgstr ""
 
 #: includes/Admin/views/content.php:186
-#: includes/Admin/views/settings.php:120
+#: includes/Admin/views/settings.php:121
 msgid "SEO plugin"
 msgstr ""
 
@@ -1978,7 +1979,7 @@ msgid "No assessment yet"
 msgstr ""
 
 #: includes/Admin/views/health.php:42
-#: includes/Admin/views/settings.php:233
+#: includes/Admin/views/settings.php:243
 msgid "Open"
 msgstr ""
 
@@ -2317,7 +2318,7 @@ msgid "Not allowed: nothing is sent"
 msgstr ""
 
 #: includes/Admin/views/inventory.php:53
-#: includes/Admin/views/settings.php:218
+#: includes/Admin/views/settings.php:228
 msgid "Send it now"
 msgstr ""
 
@@ -2982,7 +2983,7 @@ msgid "Settings sections"
 msgstr ""
 
 #: includes/Admin/views/settings.php:54
-#: includes/Admin/views/settings.php:68
+#: includes/Admin/views/settings.php:69
 msgid "Publishing"
 msgstr ""
 
@@ -2991,238 +2992,260 @@ msgid "SEO titles"
 msgstr ""
 
 #: includes/Admin/views/settings.php:56
-#: includes/Admin/views/settings.php:146
+#: includes/Admin/views/settings.php:147
 msgid "Log in from Arva SEO"
 msgstr ""
 
 #: includes/Admin/views/settings.php:57
-#: includes/Admin/views/settings.php:152
+#: includes/Admin/views/settings.php:153
 msgid "Dashboard box"
 msgstr ""
 
 #: includes/Admin/views/settings.php:58
-#: includes/Admin/views/settings.php:158
-msgid "Featured images"
+#: includes/Admin/views/settings.php:159
+msgid "Backups"
 msgstr ""
 
 #: includes/Admin/views/settings.php:59
-#: includes/Admin/views/settings.php:169
-msgid "Checks and records"
+#: includes/Admin/views/settings.php:166
+msgid "Featured images"
 msgstr ""
 
 #: includes/Admin/views/settings.php:60
-#: includes/Admin/views/settings.php:197
+#: includes/Admin/views/settings.php:177
+msgid "Checks and records"
+msgstr ""
+
+#: includes/Admin/views/settings.php:61
+#: includes/Admin/views/settings.php:207
 msgid "Data and privacy"
 msgstr ""
 
-#: includes/Admin/views/settings.php:69
+#: includes/Admin/views/settings.php:70
 msgid "What happens to content sent from Arva SEO."
 msgstr ""
 
-#: includes/Admin/views/settings.php:72
+#: includes/Admin/views/settings.php:73
 msgid "Publishing mode"
 msgstr ""
 
-#: includes/Admin/views/settings.php:79
+#: includes/Admin/views/settings.php:80
 msgid "Arva SEO can never go beyond this. Requests above it are refused (arvaseo_status_not_allowed)."
 msgstr ""
 
-#: includes/Admin/views/settings.php:80
+#: includes/Admin/views/settings.php:81
 msgid "Save a draft instead of refusing"
 msgstr ""
 
-#: includes/Admin/views/settings.php:80
+#: includes/Admin/views/settings.php:81
 msgid "Off by default. When on, a request above this mode is saved as a draft, and Arva SEO is told what was asked for and what was done."
 msgstr ""
 
-#: includes/Admin/views/settings.php:84
+#: includes/Admin/views/settings.php:85
 msgid "Posts from Arva SEO are created as this user. They must be able to publish for Scheduling or Full publishing. Arva SEO never chooses a user ID."
 msgstr ""
 
-#: includes/Admin/views/settings.php:92
+#: includes/Admin/views/settings.php:93
 msgid "— Choose an author —"
 msgstr ""
 
-#: includes/Admin/views/settings.php:98
+#: includes/Admin/views/settings.php:99
 msgid "Needed before drafts from Arva SEO can be saved"
 msgstr ""
 
-#: includes/Admin/views/settings.php:111
+#: includes/Admin/views/settings.php:112
 msgid "Let newer content from Arva SEO replace posts edited here"
 msgstr ""
 
-#: includes/Admin/views/settings.php:111
+#: includes/Admin/views/settings.php:112
 msgid "Off by default: an edited post is kept and Arva SEO is told there’s a conflict. When on, a revision is saved first. Only posts that came from Arva SEO are ever updated; nothing is deleted."
 msgstr ""
 
-#: includes/Admin/views/settings.php:112
+#: includes/Admin/views/settings.php:113
 msgid "Create categories and tags that don’t exist yet"
 msgstr ""
 
-#: includes/Admin/views/settings.php:112
+#: includes/Admin/views/settings.php:113
 msgid "Off: only existing ones are used; others are skipped and reported."
 msgstr ""
 
-#: includes/Admin/views/settings.php:113
-#: includes/Admin/views/settings.php:142
-#: includes/Admin/views/settings.php:148
-#: includes/Admin/views/settings.php:154
-#: includes/Admin/views/settings.php:165
-#: includes/Admin/views/settings.php:192
+#: includes/Admin/views/settings.php:114
+#: includes/Admin/views/settings.php:143
+#: includes/Admin/views/settings.php:149
+#: includes/Admin/views/settings.php:155
+#: includes/Admin/views/settings.php:162
+#: includes/Admin/views/settings.php:173
+#: includes/Admin/views/settings.php:200
 msgid "Save settings"
 msgstr ""
 
-#: includes/Admin/views/settings.php:118
+#: includes/Admin/views/settings.php:119
 msgid "Written to your SEO plugin. Only its SEO title and meta description fields change."
 msgstr ""
 
-#: includes/Admin/views/settings.php:122
+#: includes/Admin/views/settings.php:123
 msgid "Detect automatically"
 msgstr ""
 
-#: includes/Admin/views/settings.php:123
+#: includes/Admin/views/settings.php:124
 msgid "Yoast SEO"
 msgstr ""
 
-#: includes/Admin/views/settings.php:124
+#: includes/Admin/views/settings.php:125
 msgid "Rank Math"
 msgstr ""
 
 #. translators: %s: the SEO plugin's name, for example Yoast SEO.
-#: includes/Admin/views/settings.php:131
+#: includes/Admin/views/settings.php:132
 #, php-format
 msgid "Writing to %s."
 msgstr ""
 
-#: includes/Admin/views/settings.php:133
+#: includes/Admin/views/settings.php:134
 msgid "Both Yoast SEO and Rank Math are active: choose the one your site uses."
 msgstr ""
 
-#: includes/Admin/views/settings.php:135
+#: includes/Admin/views/settings.php:136
 msgid "Neither Yoast SEO nor Rank Math is active (or the one chosen isn’t), so nothing is written."
 msgstr ""
 
-#: includes/Admin/views/settings.php:140
+#: includes/Admin/views/settings.php:141
 msgid "New drafts"
 msgstr ""
 
-#: includes/Admin/views/settings.php:140
+#: includes/Admin/views/settings.php:141
 msgid "Add the SEO title and meta description to content sent from Arva SEO."
 msgstr ""
 
-#: includes/Admin/views/settings.php:141
+#: includes/Admin/views/settings.php:142
 msgid "Existing content"
 msgstr ""
 
-#: includes/Admin/views/settings.php:141
+#: includes/Admin/views/settings.php:142
 msgid "Let Arva SEO update the SEO titles and meta descriptions of published posts, pages and products, and the homepage (not category, tag or other archive pages). Nothing else in the post changes. The previous title and description of each changed page are sent to Arva SEO, so every change can be undone from there."
 msgstr ""
 
-#: includes/Admin/views/settings.php:147
+#: includes/Admin/views/settings.php:148
 msgid "Allow one-click login"
 msgstr ""
 
-#: includes/Admin/views/settings.php:147
+#: includes/Admin/views/settings.php:148
 msgid "Adds a “Log in to WordPress” button in Arva SEO. It logs in as the administrator who connected this site, and only for owners and admins of the Arva SEO workspace. Each login link works once and expires after a minute, Arva SEO never sees a WordPress password, and every login is listed in Activity. If that administrator is removed or stops being an administrator, the button stops working. Off until you switch it on."
 msgstr ""
 
-#: includes/Admin/views/settings.php:153
+#: includes/Admin/views/settings.php:154
 msgid "Show the Arva SEO box on the WordPress Dashboard"
 msgstr ""
 
-#: includes/Admin/views/settings.php:153
+#: includes/Admin/views/settings.php:154
 msgid "A short box for administrators with up to three things that need you, and messages from Arva SEO when this site is connected. It reads from Arva SEO once in a while in the background and sends nothing new. Each person can also hide it with Screen Options. New installs have it on; sites that update keep it off until you turn it on."
 msgstr ""
 
 #: includes/Admin/views/settings.php:160
-msgid "Download featured images sent with content"
+msgid "Back up this site to Arva SEO"
 msgstr ""
 
 #: includes/Admin/views/settings.php:160
-msgid "HTTPS only; JPEG, PNG, GIF and WebP only, up to 8 MB."
+msgid "Once a week, this plugin copies the database and the wp-content folder (uploads, themes, plugins) to Arva SEO’s servers, up to 2 GB. Only the latest weekly copy is kept. Needs this site to be connected to Arva SEO. Off until you turn it on."
 msgstr ""
 
 #: includes/Admin/views/settings.php:161
+msgid "Also back up every day"
+msgstr ""
+
+#: includes/Admin/views/settings.php:161
+msgid "Keeps the last 7 daily copies. Included with Professional and Business, or from a top-up. Days are only used when a backup is made."
+msgstr ""
+
+#: includes/Admin/views/settings.php:168
+msgid "Download featured images sent with content"
+msgstr ""
+
+#: includes/Admin/views/settings.php:168
+msgid "HTTPS only; JPEG, PNG, GIF and WebP only, up to 8 MB."
+msgstr ""
+
+#: includes/Admin/views/settings.php:169
 msgid "Approved image hosts"
 msgstr ""
 
-#: includes/Admin/views/settings.php:162
+#: includes/Admin/views/settings.php:170
 msgid "One exact host per line, such as images.example.com. Images from any other host are skipped."
 msgstr ""
 
-#: includes/Admin/views/settings.php:171
+#: includes/Admin/views/settings.php:179
 msgid "Website Health checks"
 msgstr ""
 
-#: includes/Admin/views/settings.php:173
+#: includes/Admin/views/settings.php:181
 msgid "Once a day"
 msgstr ""
 
-#: includes/Admin/views/settings.php:174
+#: includes/Admin/views/settings.php:182
 msgid "Twice a day"
 msgstr ""
 
-#: includes/Admin/views/settings.php:177
+#: includes/Admin/views/settings.php:185
 msgid "Scan for security problems every week"
 msgstr ""
 
-#: includes/Admin/views/settings.php:177
+#: includes/Admin/views/settings.php:185
 msgid "The scan runs on this server in small batches and only reports what it finds. You can always run one from Health."
 msgstr ""
 
-#: includes/Admin/views/settings.php:179
+#: includes/Admin/views/settings.php:187
 msgid "Keep the activity log for"
 msgstr ""
 
 #. translators: %d: number of days.
-#: includes/Admin/views/settings.php:185
+#: includes/Admin/views/settings.php:193
 #, php-format
 msgid "%d days"
 msgstr ""
 
-#: includes/Admin/views/settings.php:191
+#: includes/Admin/views/settings.php:199
 msgid "When the plugin is deleted, also delete its settings, logs and delivery records"
 msgstr ""
 
-#: includes/Admin/views/settings.php:191
+#: includes/Admin/views/settings.php:199
 msgid "The connection is always removed and revoked on delete. Posts created from Arva SEO are never deleted. The files made by the PageSpeed fixes are deleted too, after Arva SEO clears the caches it can reach; if you use a cache it can’t clear, clear it yourself first, or those files stay."
 msgstr ""
 
-#: includes/Admin/views/settings.php:198
+#: includes/Admin/views/settings.php:208
 msgid "What leaves this website, and what support can see."
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/settings.php:208
+#: includes/Admin/views/settings.php:218
 #, php-format
 msgid "Shared with Arva SEO. Last sent %s."
 msgstr ""
 
-#: includes/Admin/views/settings.php:210
+#: includes/Admin/views/settings.php:220
 msgid "Not shared: nothing is sent."
 msgstr ""
 
-#: includes/Admin/views/settings.php:221
+#: includes/Admin/views/settings.php:231
 msgid "See the list"
 msgstr ""
 
-#: includes/Admin/views/settings.php:231
+#: includes/Admin/views/settings.php:241
 msgid "Diagnostics to copy for support (versions, connection state and settings only: no keys, file paths, usernames, emails or content), every field that’s shared, and your choice to share it."
 msgstr ""
 
 #. translators: 1: website name in Arva SEO, 2: workspace name.
-#: includes/Admin/views/settings.php:248
+#: includes/Admin/views/settings.php:258
 #, php-format
 msgid "%1$s, in %2$s"
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/Admin/views/settings.php:254
+#: includes/Admin/views/settings.php:264
 #, php-format
 msgid "Connected %s. Access renews by itself."
 msgstr ""
 
-#: includes/Admin/views/settings.php:267
+#: includes/Admin/views/settings.php:277
 msgid "Not connected to Arva SEO. The speed fixes work either way."
 msgstr ""
 
@@ -5325,42 +5348,44 @@ msgid "Arva SEO can cache pages and minify supported local CSS and JavaScript. U
 msgstr ""
 
 #: includes/Api/ApiClient.php:73
+#: includes/Api/ApiClient.php:107
 msgid "This site isn’t connected to Arva SEO."
 msgstr ""
 
 #: includes/Api/ApiClient.php:79
+#: includes/Api/ApiClient.php:112
 msgid "Reconnect this site to Arva SEO."
 msgstr ""
 
-#: includes/Api/ApiClient.php:118
+#: includes/Api/ApiClient.php:152
 msgid "This server couldn’t look up Arva SEO’s address (a DNS problem on your host). After an address change, a host can keep old records for up to a day or two: try again later, or ask your host to refresh its DNS cache for api.arvaseo.com."
 msgstr ""
 
-#: includes/Api/ApiClient.php:119
+#: includes/Api/ApiClient.php:153
 msgid "Arva SEO didn’t answer in time. Try again in a few minutes; if it keeps happening, ask your host whether it blocks outgoing connections to api.arvaseo.com."
 msgstr ""
 
-#: includes/Api/ApiClient.php:120
+#: includes/Api/ApiClient.php:154
 msgid "This server couldn’t make a secure connection to Arva SEO. Ask your host to update its list of trusted certificates (CA bundle) and OpenSSL."
 msgstr ""
 
-#: includes/Api/ApiClient.php:121
+#: includes/Api/ApiClient.php:155
 msgid "Couldn’t reach Arva SEO. Check the server’s internet connection and try again."
 msgstr ""
 
-#: includes/Api/ApiClient.php:184
+#: includes/Api/ApiClient.php:218
 msgid "Couldn’t renew the connection’s access; will retry."
 msgstr ""
 
-#: includes/Api/ApiClient.php:272
+#: includes/Api/ApiClient.php:306
 msgid "Arva SEO no longer accepts this connection. Reconnect to resume."
 msgstr ""
 
-#: includes/Api/ApiClient.php:335
+#: includes/Api/ApiClient.php:379
 msgid "Couldn’t reach Arva SEO."
 msgstr ""
 
-#: includes/Api/ApiClient.php:354
+#: includes/Api/ApiClient.php:407
 msgid "Arva SEO couldn’t complete the request."
 msgstr ""
 
@@ -5422,6 +5447,290 @@ msgstr ""
 
 #: includes/Auth/OneClickLogin.php:115
 msgid "Someone logged in from Arva SEO with one click."
+msgstr ""
+
+#: includes/Backup/Job.php:127
+msgid "Unknown kind of backup."
+msgstr ""
+
+#: includes/Backup/Job.php:130
+msgid "Backups are off. Turn them on in Settings first."
+msgstr ""
+
+#: includes/Backup/Job.php:133
+msgid "Connect this site to Arva SEO first: backups are kept on Arva SEO’s servers."
+msgstr ""
+
+#: includes/Backup/Job.php:136
+msgid "This server needs the PHP zip and zlib extensions to make backups. Ask your host to turn them on."
+msgstr ""
+
+#: includes/Backup/Job.php:139
+msgid "A backup is already running."
+msgstr ""
+
+#: includes/Backup/Job.php:144
+msgid "Could not make a private folder for the backup inside wp-content. Check that the folder is writable."
+msgstr ""
+
+#: includes/Backup/Job.php:160
+msgid "A backup started."
+msgstr ""
+
+#: includes/Backup/Job.php:180
+msgid "The backup stopped because of an error on this site."
+msgstr ""
+
+#: includes/Backup/Job.php:234
+msgid "Arva SEO could not be reached."
+msgstr ""
+
+#: includes/Backup/Job.php:238
+msgid "Backups on Arva SEO are not available yet."
+msgstr ""
+
+#: includes/Backup/Job.php:241
+msgid "No daily backups are left for this website this month. A top-up adds more."
+msgstr ""
+
+#: includes/Backup/Job.php:266
+msgid "Could not write the backup’s database file."
+msgstr ""
+
+#: includes/Backup/Job.php:274
+msgid "A part of the database was too large to send. Tell Arva SEO support."
+msgstr ""
+
+#: includes/Backup/Job.php:315
+msgid "Could not write the backup’s files."
+msgstr ""
+
+#: includes/Backup/Job.php:321
+msgid "A part of the files was too large to send. Tell Arva SEO support."
+msgstr ""
+
+#: includes/Backup/Job.php:367
+msgid "This site’s database is over the 2 GB backup limit, so it could not be backed up."
+msgstr ""
+
+#: includes/Backup/Job.php:404
+msgid "Arva SEO did not accept the backup."
+msgstr ""
+
+#: includes/Backup/Job.php:458
+msgid "Arva SEO could not take the backup."
+msgstr ""
+
+#: includes/Backup/Job.php:493
+msgid "A backup was sent to Arva SEO."
+msgstr ""
+
+#: includes/Backup/Job.php:494
+msgid "A backup was not made."
+msgstr ""
+
+#: includes/Backup/Job.php:495
+msgid "A backup failed."
+msgstr ""
+
+#: includes/Backup/Panel.php:78
+msgid "Your backups"
+msgstr ""
+
+#: includes/Backup/Panel.php:83
+msgid "Backups are off. Turn on “Back up this site to Arva SEO” above and save."
+msgstr ""
+
+#: includes/Backup/Panel.php:83
+msgid "Connect this site to Arva SEO to keep backups on its servers."
+msgstr ""
+
+#: includes/Backup/Panel.php:91
+msgid "A restore is running. This can take a few minutes; the site may look unchanged until the database step is done. Do not close this page’s site or change content meanwhile."
+msgstr ""
+
+#: includes/Backup/Panel.php:95
+msgid "A backup is running in the background. It carries on by itself."
+msgstr ""
+
+#. translators: 1: how long ago, 2: size, for example "3 days", "48 MB".
+#: includes/Backup/Panel.php:100
+#, php-format
+msgid "The last backup finished %1$s ago (%2$s)."
+msgstr ""
+
+#. translators: 1: how long ago, 2: size, for example "3 days", "48 MB".
+#: includes/Backup/Panel.php:100
+msgid "It holds the database only, because the site’s files are over the 2 GB limit."
+msgstr ""
+
+#. translators: 1: how long ago, 2: why.
+#: includes/Backup/Panel.php:103
+#, php-format
+msgid "The last backup, %1$s ago, was not made. %2$s"
+msgstr ""
+
+#. translators: 1: how long ago, 2: result sentence.
+#: includes/Backup/Panel.php:109
+#, php-format
+msgid "The last restore, %1$s ago: %2$s"
+msgstr ""
+
+#. translators: 1: how long ago, 2: result sentence.
+#: includes/Backup/Panel.php:109
+msgid "finished."
+msgstr ""
+
+#: includes/Backup/Panel.php:116
+msgid "A backup of the database and of wp-content is made every week and kept on Arva SEO’s servers. Each new one replaces the one before, but only after it has arrived complete."
+msgstr ""
+
+#: includes/Backup/Panel.php:119
+msgid "Daily backups come with Professional and Business, or from a top-up."
+msgstr ""
+
+#: includes/Backup/Panel.php:119
+msgid "Add daily backups"
+msgstr ""
+
+#. translators: %d: backups left.
+#: includes/Backup/Panel.php:122
+#, php-format
+msgid "%d daily backup left this month."
+msgid_plural "%d daily backups left this month."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Backup/Panel.php:129
+msgid "Back up now"
+msgstr ""
+
+#: includes/Backup/Panel.php:131
+msgid "Refresh the list"
+msgstr ""
+
+#: includes/Backup/Panel.php:136
+msgid "No backup is stored yet."
+msgstr ""
+
+#: includes/Backup/Panel.php:139
+msgid "Backup"
+msgstr ""
+
+#: includes/Backup/Panel.php:139
+msgid "Size"
+msgstr ""
+
+#: includes/Backup/Panel.php:142
+msgid "Daily"
+msgstr ""
+
+#: includes/Backup/Panel.php:142
+msgid "Weekly"
+msgstr ""
+
+#: includes/Backup/Panel.php:143
+msgid "database only"
+msgstr ""
+
+#: includes/Backup/Panel.php:147
+msgid "I understand: this replaces the site’s database and files with this backup, and anything changed since is lost. A copy of the current database is saved first."
+msgstr ""
+
+#: includes/Backup/Panel.php:148
+msgid "Restore"
+msgstr ""
+
+#: includes/Backup/Panel.php:163
+msgid "The backup started. It runs in the background and can take a few minutes."
+msgstr ""
+
+#: includes/Backup/Panel.php:175
+msgid "Tick the box to confirm before restoring."
+msgstr ""
+
+#: includes/Backup/Panel.php:179
+msgid "The restore started. It runs in the background."
+msgstr ""
+
+#: includes/Backup/Restorer.php:76
+msgid "Turn backups on and connect this site to Arva SEO first."
+msgstr ""
+
+#: includes/Backup/Restorer.php:79
+msgid "A backup or restore is already running."
+msgstr ""
+
+#: includes/Backup/Restorer.php:82
+msgid "This server needs the PHP zip and zlib extensions to restore a backup."
+msgstr ""
+
+#: includes/Backup/Restorer.php:86
+msgid "Arva SEO could not start the restore."
+msgstr ""
+
+#: includes/Backup/Restorer.php:90
+msgid "That backup has no parts to restore."
+msgstr ""
+
+#: includes/Backup/Restorer.php:106
+msgid "Could not make a private folder for the restore inside wp-content."
+msgstr ""
+
+#: includes/Backup/Restorer.php:109
+msgid "A restore started."
+msgstr ""
+
+#: includes/Backup/Restorer.php:128
+msgid "The restore stopped because of an error on this site."
+msgstr ""
+
+#: includes/Backup/Restorer.php:185
+msgid "Arva SEO could not give a part of the backup."
+msgstr ""
+
+#: includes/Backup/Restorer.php:189
+msgid "A part of the backup arrived damaged. Nothing on this site was changed."
+msgstr ""
+
+#: includes/Backup/Restorer.php:218
+msgid "The backup could not be downloaded from storage."
+msgstr ""
+
+#: includes/Backup/Restorer.php:242
+msgid "This backup is not in a format this version can restore."
+msgstr ""
+
+#: includes/Backup/Restorer.php:245
+msgid "This backup was made for a different website address, so it was not restored. Nothing was changed."
+msgstr ""
+
+#: includes/Backup/Restorer.php:248
+msgid "This backup uses a different database table prefix, so it was not restored. Nothing was changed."
+msgstr ""
+
+#: includes/Backup/Restorer.php:305
+msgid "Could not save a safety copy of the database, so nothing was changed."
+msgstr ""
+
+#: includes/Backup/Restorer.php:391
+msgid "The restore failed part-way, so the database was put back as it was before. Your files were not changed."
+msgstr ""
+
+#: includes/Backup/Restorer.php:409
+msgid "The restore failed and the safety copy could not be put back completely. The safety copy is in wp-content/arvaseo-backups: ask your host or Arva SEO support for help before doing anything else."
+msgstr ""
+
+#: includes/Backup/Restorer.php:446
+msgid "A files part of the backup could not be opened. The database was restored; some files were not."
+msgstr ""
+
+#: includes/Backup/Restorer.php:532
+msgid "A restore failed."
+msgstr ""
+
+#: includes/Backup/Restorer.php:534
+msgid "A restore finished."
 msgstr ""
 
 #: includes/Content/ContentDeliveryService.php:65
@@ -6746,23 +7055,23 @@ msgstr ""
 msgid "That would make visitors go through more than %d redirects in a row. Point the older redirects straight at the final address instead."
 msgstr ""
 
-#: includes/Settings.php:129
+#: includes/Settings.php:133
 msgid "Publishing settings changed."
 msgstr ""
 
-#: includes/Settings.php:141
+#: includes/Settings.php:145
 msgid "Arva SEO may now update SEO titles and meta descriptions."
 msgstr ""
 
-#: includes/Settings.php:141
+#: includes/Settings.php:145
 msgid "Arva SEO may no longer update SEO titles and meta descriptions."
 msgstr ""
 
-#: includes/Settings.php:151
+#: includes/Settings.php:155
 msgid "One-click login from Arva SEO was switched on."
 msgstr ""
 
-#: includes/Settings.php:151
+#: includes/Settings.php:155
 msgid "One-click login from Arva SEO was switched off."
 msgstr ""
 

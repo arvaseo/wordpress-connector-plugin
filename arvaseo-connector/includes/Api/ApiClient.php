@@ -93,6 +93,40 @@ final class ApiClient {
 	}
 
 	/**
+	 * A call with the site's access token whose body (or answer) is raw bytes: one backup part up or down.
+	 *
+	 * @param string               $method  PUT (send a part) or GET (fetch one).
+	 * @param string               $path    Path under the site.
+	 * @param string|null          $bytes   The part to send, or null to fetch one.
+	 * @param array<string,string> $headers Extra headers.
+	 * @param int                  $timeout Seconds.
+	 */
+	public function site_raw( string $method, string $path, ?string $bytes, array $headers = array(), int $timeout = 90 ): ApiResponse {
+		$site_id = TokenStore::site_id();
+		if ( null === $site_id || ! TokenStore::is_connected() ) {
+			return new ApiResponse( 0, array(), 'not_connected', __( 'This site isn’t connected to Arva SEO.', 'arvaseo-connector' ) );
+		}
+		$url   = '/api/v1/wordpress/sites/' . rawurlencode( $site_id ) . $path;
+		$token = $this->access_token();
+		if ( null === $token ) {
+			return new ApiResponse( 401, array(), 'reauth_required', __( 'Reconnect this site to Arva SEO.', 'arvaseo-connector' ) );
+		}
+		$fetch    = null === $bytes;
+		$response = $this->send( $method, $url, null, $token, $timeout, self::MAX_RESPONSE_LIMIT, $bytes, $headers, $fetch );
+		if ( 401 === $response->status && 'invalid_token' === $response->error_code ) {
+			$token = $this->access_token( true );
+			if ( null !== $token ) {
+				$response = $this->send( $method, $url, null, $token, $timeout, self::MAX_RESPONSE_LIMIT, $bytes, $headers, $fetch );
+			}
+		}
+		if ( 401 === $response->status ) {
+			$this->require_reconnect( $response->error_code ?? 'invalid_token' );
+		}
+		$this->record( $response );
+		return $response;
+	}
+
+	/**
 	 * Why a request didn't get an answer: dns (this server couldn't look up Arva SEO's address),
 	 * timeout, tls (no secure connection) or other.
 	 *
@@ -302,8 +336,11 @@ final class ApiClient {
 	 * @param string|null               $token   Bearer token.
 	 * @param int                       $timeout Seconds.
 	 * @param int                       $response_limit Maximum response bytes.
+	 * @param string|null               $raw            Raw request body (a backup part), instead of JSON.
+	 * @param array<string, string>     $extra_headers  Extra headers.
+	 * @param bool                      $raw_response   Return the answer's bytes (a backup part) instead of decoded JSON.
 	 */
-	private function send( string $method, string $path, ?array $body, ?string $token, int $timeout = 15, int $response_limit = self::RESPONSE_LIMIT ): ApiResponse {
+	private function send( string $method, string $path, ?array $body, ?string $token, int $timeout = 15, int $response_limit = self::RESPONSE_LIMIT, ?string $raw = null, array $extra_headers = array(), bool $raw_response = false ): ApiResponse {
 		$headers = array(
 			'Accept'       => 'application/json',
 			'User-Agent'   => 'ArvaSEO-Connector/' . ARVASEO_CONNECTOR_VERSION . '; WordPress/' . get_bloginfo( 'version' ),
@@ -326,6 +363,13 @@ final class ApiClient {
 			$args['body']                    = wp_json_encode( $body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		}
 
+		if ( null !== $raw ) {
+			// Backup parts: the bytes themselves, with their SHA-256 in a header.
+			$args['headers']['Content-Type'] = 'application/octet-stream';
+			$args['body']                    = $raw;
+		}
+		$args['headers'] = array_merge( $args['headers'], $extra_headers );
+
 		$started = microtime( true );
 		$result  = $this->http->request( Config::api_url() . $path, $args );
 		if ( is_wp_error( $result ) ) {
@@ -343,7 +387,16 @@ final class ApiClient {
 			);
 			return new ApiResponse( 0, array( 'reason' => $reason ), 'network_error', self::network_message( $reason ) );
 		}
-		$status  = (int) wp_remote_retrieve_response_code( $result );
+		$status = (int) wp_remote_retrieve_response_code( $result );
+		if ( $raw_response && $status >= 200 && $status < 300 ) {
+			return new ApiResponse(
+				$status,
+				array(
+					'bytes'  => (string) wp_remote_retrieve_body( $result ),
+					'sha256' => (string) wp_remote_retrieve_header( $result, 'x-arvaseo-part-sha256' ),
+				)
+			);
+		}
 		$decoded = json_decode( (string) wp_remote_retrieve_body( $result ), true );
 		$decoded = is_array( $decoded ) ? $decoded : array();
 		$retry   = wp_remote_retrieve_header( $result, 'retry-after' );

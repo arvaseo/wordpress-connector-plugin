@@ -4,7 +4,7 @@ Tags: page cache, webp, malware scanner, core web vitals, seo
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.18.0
+Stable tag: 2.19.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -249,6 +249,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.19.0 =
+New and off by default: backups of your database and wp-content to Arva SEO’s servers, with a restore. Turn it on in Settings → Backups if you want it. Nothing changes on your site until you do.
+
 = 2.18.0 =
 New and off by default for sites that update: one-click login from Arva SEO and an Arva SEO box on the WordPress Dashboard. Turn each on in Settings if you want it. Nothing changes on your site until you do.
 
@@ -387,6 +390,12 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.19.0 =
+* New: backups, off until you switch them on in Settings → Backups. Once a week the plugin copies the database and the wp-content folder (uploads, themes and plugins) to Arva SEO’s servers, up to 2 GB. Only the latest weekly copy is kept, and it is replaced only after the new one has arrived complete. Daily backups (the last 7 are kept) come with Arva SEO’s Professional and Business plans, or from a top-up. It needs this site to be connected to Arva SEO.
+* New: restore. In Settings → Backups, an administrator picks a backup and confirms. The plugin saves a copy of the current database first, then restores the database and the files. It keeps this plugin and its connection to Arva SEO as they were, never changes files that are not in the backup, refuses a backup made for another website address, and puts the database back if the restore fails part-way. The safety copy is removed after 7 days.
+* Backups are made in small steps in the background, so they work on shared hosting. The parts are kept in a private folder under wp-content until they are sent, then deleted. Uninstalling the plugin removes every backup folder.
+* Nothing is switched on, off or changed on your website by this update.
 
 = 2.18.0 =
 * New: an Arva SEO box on the WordPress Dashboard for administrators. It lists up to three things that need you (security problems, speed updates waiting for your check, content that couldn’t be added) and messages from Arva SEO when this site is connected. It reads from Arva SEO once in a while in the background, never while the Dashboard loads. New installs have it on; sites that update keep it off until you turn it on in Settings → Dashboard box. Anyone can hide it with Screen Options, and product news can be hidden one message at a time.

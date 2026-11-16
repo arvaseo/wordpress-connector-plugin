@@ -53,6 +53,10 @@ final class AuditLogger {
 		'workspace',
 		'request_id',
 		'requested_by',
+		'kind',
+		'bytes',
+		'parts',
+		'contents',
 		'user_id',
 		'allowed',
 	);

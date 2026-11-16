@@ -55,6 +55,7 @@ defined( 'ABSPATH' ) || exit;
 		<a href="#arvaseo-settings-seo"><?php esc_html_e( 'SEO titles', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-login"><?php esc_html_e( 'Log in from Arva SEO', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-dashboard"><?php esc_html_e( 'Dashboard box', 'arvaseo-connector' ); ?></a>
+		<a href="#arvaseo-settings-backups"><?php esc_html_e( 'Backups', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-images"><?php esc_html_e( 'Featured images', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-records"><?php esc_html_e( 'Checks and records', 'arvaseo-connector' ); ?></a>
 		<a href="#arvaseo-settings-privacy"><?php esc_html_e( 'Data and privacy', 'arvaseo-connector' ); ?></a>
@@ -154,6 +155,13 @@ defined( 'ABSPATH' ) || exit;
 				<?php $arvaseo_save( __( 'Save settings', 'arvaseo-connector' ) ); ?>
 			</section>
 
+			<section class="arvaseo-card" id="arvaseo-settings-backup-switch" aria-labelledby="arvaseo-h-bk">
+				<h2 class="arvaseo-card-title" id="arvaseo-h-bk"><?php esc_html_e( 'Backups', 'arvaseo-connector' ); ?></h2>
+				<div class="arvaseo-field" style="margin-top: 8px"><?php $arvaseo_toggle( 'backups', __( 'Back up this site to Arva SEO', 'arvaseo-connector' ), __( 'Once a week, this plugin copies the database and the wp-content folder (uploads, themes, plugins) to Arva SEO’s servers, up to 2 GB. Only the latest weekly copy is kept. Needs this site to be connected to Arva SEO. Off until you turn it on.', 'arvaseo-connector' ) ); ?></div>
+				<div class="arvaseo-field"><?php $arvaseo_toggle( 'backup_daily', __( 'Also back up every day', 'arvaseo-connector' ), __( 'Keeps the last 7 daily copies. Included with Professional and Business, or from a top-up. Days are only used when a backup is made.', 'arvaseo-connector' ) ); ?></div>
+				<?php $arvaseo_save( __( 'Save settings', 'arvaseo-connector' ) ); ?>
+			</section>
+
 			<section class="arvaseo-card" id="arvaseo-settings-images" aria-labelledby="arvaseo-h-img">
 				<h2 class="arvaseo-card-title" id="arvaseo-h-img"><?php esc_html_e( 'Featured images', 'arvaseo-connector' ); ?></h2>
 				<div class="arvaseo-field" style="margin-top: 8px">
@@ -192,6 +200,8 @@ defined( 'ABSPATH' ) || exit;
 				<?php $arvaseo_save( __( 'Save settings', 'arvaseo-connector' ) ); ?>
 			</section>
 		</form>
+
+		<?php \ArvaSEO\Connector\Backup\Panel::render(); ?>
 
 		<section class="arvaseo-card" id="arvaseo-settings-privacy" aria-labelledby="arvaseo-h-priv">
 			<h2 class="arvaseo-card-title" id="arvaseo-h-priv"><?php esc_html_e( 'Data and privacy', 'arvaseo-connector' ); ?></h2>

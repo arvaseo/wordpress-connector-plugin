@@ -47,6 +47,8 @@ final class Settings {
 			'security_weekly'          => true,
 			'one_click_login'          => false,
 			'dashboard_widget'         => false,
+			'backups'                  => false,
+			'backup_daily'             => false,
 			'log_retention_days'       => 90,
 			'delete_data_on_uninstall' => false,
 		);
@@ -103,6 +105,8 @@ final class Settings {
 		$clean['security_weekly']          = ! empty( $input['security_weekly'] );
 		$clean['one_click_login']          = ! empty( $input['one_click_login'] );
 		$clean['dashboard_widget']         = ! empty( $input['dashboard_widget'] );
+		$clean['backups']                  = ! empty( $input['backups'] );
+		$clean['backup_daily']             = $clean['backups'] && ! empty( $input['backup_daily'] );
 		$clean['health_frequency']         = in_array( $input['health_frequency'] ?? '', array( 'daily', 'twicedaily' ), true ) ? $input['health_frequency'] : 'daily';
 		$clean['log_retention_days']       = in_array( (int) ( $input['log_retention_days'] ?? 90 ), array( 30, 90, 180, 365 ), true ) ? (int) $input['log_retention_days'] : 90;
 

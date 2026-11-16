@@ -48,6 +48,11 @@ final class Plugin {
 		CronManager::init();
 		\ArvaSEO\Connector\Auth\OneClickLogin::init();
 		\ArvaSEO\Connector\Admin\DashboardWidget::init();
+		\ArvaSEO\Connector\Backup\Job::init();
+		\ArvaSEO\Connector\Backup\Restorer::init();
+		if ( is_admin() ) {
+			\ArvaSEO\Connector\Backup\Panel::init();
+		}
 		\ArvaSEO\Connector\Maintenance\DatabaseCleanup::init();
 		\ArvaSEO\Connector\Speed\Runtime::init();
 		\ArvaSEO\Connector\Security\Scanner::init();

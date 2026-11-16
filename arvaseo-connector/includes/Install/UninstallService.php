@@ -66,6 +66,9 @@ final class UninstallService {
 		\ArvaSEO\Connector\Speed\Cloudflare::remove_on_exit();
 		\ArvaSEO\Connector\Speed\ExternalAssets::delete_all();
 
+		// Copies of the site's data never outlive the plugin, whatever else is kept.
+		\ArvaSEO\Connector\Backup\Job::delete_all_folders();
+
 		if ( ! Settings::get( 'delete_data_on_uninstall' ) ) {
 			return;
 		}
