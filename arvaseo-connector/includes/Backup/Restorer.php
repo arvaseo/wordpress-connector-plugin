@@ -43,6 +43,32 @@ final class Restorer {
 	}
 
 	/**
+	 * Where a running restore is, in plain words: the step, how many steps there are, and what it is doing.
+	 *
+	 * @param array<string, mixed> $state The running restore.
+	 * @return array{step:int, of:int, label:string}
+	 */
+	public static function progress( array $state ): array {
+		$steps = array(
+			'manifest' => __( 'Reading the backup', 'arvaseo-connector' ),
+			'download' => __( 'Downloading the backup', 'arvaseo-connector' ),
+			'safety'   => __( 'Saving a copy of the current database', 'arvaseo-connector' ),
+			'db'       => __( 'Restoring the database', 'arvaseo-connector' ),
+			'rollback' => __( 'Setting the current files aside', 'arvaseo-connector' ),
+			'files'    => __( 'Restoring the files', 'arvaseo-connector' ),
+		);
+		$phase = (string) ( $state['phase'] ?? 'manifest' );
+		$keys  = array_keys( $steps );
+		$index = array_search( $phase, $keys, true );
+		$index = false === $index ? count( $keys ) - 1 : (int) $index;
+		return array(
+			'step'  => $index + 1,
+			'of'    => count( $keys ),
+			'label' => $steps[ $keys[ $index ] ],
+		);
+	}
+
+	/**
 	 * The running restore's state, or null.
 	 *
 	 * @return array<string, mixed>|null
@@ -521,6 +547,7 @@ final class Restorer {
 			}
 		}
 		delete_option( self::POINTER );
+		Panel::forget(); // The stored list and the restores left have changed.
 		update_option(
 			self::LAST,
 			array(

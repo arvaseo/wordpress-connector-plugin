@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.19.0\n"
+"Project-Id-Version: Arva SEO – Speed Booster & Security Scanner 2.19.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/arvaseo-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T07:51:55+00:00\n"
+"POT-Creation-Date: 2026-11-19T15:59:30+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: arvaseo-connector\n"
@@ -980,7 +980,7 @@ msgstr ""
 
 #: includes/Admin/DashboardWidget.php:266
 #: includes/Admin/DashboardWidget.php:279
-#: includes/Backup/Panel.php:198
+#: includes/Backup/Panel.php:231
 msgid "You are not allowed to do this."
 msgstr ""
 
@@ -5449,287 +5449,341 @@ msgstr ""
 msgid "Someone logged in from Arva SEO with one click."
 msgstr ""
 
-#: includes/Backup/Job.php:127
+#: includes/Backup/Job.php:117
+msgid "Checking what to back up"
+msgstr ""
+
+#: includes/Backup/Job.php:118
+msgid "Copying the database"
+msgstr ""
+
+#: includes/Backup/Job.php:119
+msgid "Packing your files"
+msgstr ""
+
+#: includes/Backup/Job.php:120
+msgid "Preparing the upload"
+msgstr ""
+
+#: includes/Backup/Job.php:121
+msgid "Sending it to Arva SEO"
+msgstr ""
+
+#: includes/Backup/Job.php:152
 msgid "Unknown kind of backup."
 msgstr ""
 
-#: includes/Backup/Job.php:130
+#: includes/Backup/Job.php:155
 msgid "Backups are off. Turn them on in Settings first."
 msgstr ""
 
-#: includes/Backup/Job.php:133
+#: includes/Backup/Job.php:158
 msgid "Connect this site to Arva SEO first: backups are kept on Arva SEO’s servers."
 msgstr ""
 
-#: includes/Backup/Job.php:136
+#: includes/Backup/Job.php:161
 msgid "This server needs the PHP zip and zlib extensions to make backups. Ask your host to turn them on."
 msgstr ""
 
-#: includes/Backup/Job.php:139
+#: includes/Backup/Job.php:164
 msgid "A backup is already running."
 msgstr ""
 
-#: includes/Backup/Job.php:144
+#: includes/Backup/Job.php:169
 msgid "Could not make a private folder for the backup inside wp-content. Check that the folder is writable."
 msgstr ""
 
-#: includes/Backup/Job.php:160
+#: includes/Backup/Job.php:185
 msgid "A backup started."
 msgstr ""
 
-#: includes/Backup/Job.php:180
+#: includes/Backup/Job.php:205
 msgid "The backup stopped because of an error on this site."
 msgstr ""
 
-#: includes/Backup/Job.php:234
+#: includes/Backup/Job.php:259
 msgid "Arva SEO could not be reached."
 msgstr ""
 
-#: includes/Backup/Job.php:238
+#: includes/Backup/Job.php:263
 msgid "Backups on Arva SEO are not available yet."
 msgstr ""
 
-#: includes/Backup/Job.php:241
+#: includes/Backup/Job.php:266
 msgid "No daily backups are left for this website this month. A top-up adds more."
 msgstr ""
 
-#: includes/Backup/Job.php:266
+#: includes/Backup/Job.php:291
 msgid "Could not write the backup’s database file."
 msgstr ""
 
-#: includes/Backup/Job.php:274
+#: includes/Backup/Job.php:299
 msgid "A part of the database was too large to send. Tell Arva SEO support."
 msgstr ""
 
-#: includes/Backup/Job.php:315
+#: includes/Backup/Job.php:340
 msgid "Could not write the backup’s files."
 msgstr ""
 
-#: includes/Backup/Job.php:321
+#: includes/Backup/Job.php:346
 msgid "A part of the files was too large to send. Tell Arva SEO support."
 msgstr ""
 
-#: includes/Backup/Job.php:367
+#: includes/Backup/Job.php:392
 msgid "This site’s database is over the 2 GB backup limit, so it could not be backed up."
 msgstr ""
 
-#: includes/Backup/Job.php:404
+#: includes/Backup/Job.php:429
 msgid "Arva SEO did not accept the backup."
 msgstr ""
 
-#: includes/Backup/Job.php:458
+#: includes/Backup/Job.php:483
 msgid "Arva SEO could not take the backup."
 msgstr ""
 
-#: includes/Backup/Job.php:493
+#: includes/Backup/Job.php:520
 msgid "A backup was sent to Arva SEO."
 msgstr ""
 
-#: includes/Backup/Job.php:494
+#: includes/Backup/Job.php:521
 msgid "A backup was not made."
 msgstr ""
 
-#: includes/Backup/Job.php:495
+#: includes/Backup/Job.php:522
 msgid "A backup failed."
 msgstr ""
 
-#: includes/Backup/Panel.php:78
+#. translators: 1: backup or restore, 2: step number, 3: number of steps, 4: what it is doing, 5: how long ago it started.
+#: includes/Backup/Panel.php:83
+#, php-format
+msgid "A %1$s is running. Step %2$d of %3$d: %4$s. Started %5$s ago. This page updates by itself."
+msgstr ""
+
+#: includes/Backup/Panel.php:108
 msgid "Your backups"
 msgstr ""
 
-#: includes/Backup/Panel.php:83
+#: includes/Backup/Panel.php:113
 msgid "Backups are off. Turn on “Back up this site to Arva SEO” above and save."
 msgstr ""
 
-#: includes/Backup/Panel.php:83
+#: includes/Backup/Panel.php:113
 msgid "Connect this site to Arva SEO to keep backups on its servers."
 msgstr ""
 
-#: includes/Backup/Panel.php:91
-msgid "A restore is running. This can take a few minutes; the site may look unchanged until the database step is done. Do not close this page’s site or change content meanwhile."
+#: includes/Backup/Panel.php:121
+msgid "restore"
 msgstr ""
 
-#: includes/Backup/Panel.php:95
-msgid "A backup is running in the background. It carries on by itself."
+#: includes/Backup/Panel.php:122
+msgid "This can take a few minutes; the site may look unchanged until the database step is done. Do not change content meanwhile."
+msgstr ""
+
+#: includes/Backup/Panel.php:127
+msgid "backup"
 msgstr ""
 
 #. translators: 1: how long ago, 2: size, for example "3 days", "48 MB".
-#: includes/Backup/Panel.php:100
+#: includes/Backup/Panel.php:133
 #, php-format
 msgid "The last backup finished %1$s ago (%2$s)."
 msgstr ""
 
 #. translators: 1: how long ago, 2: size, for example "3 days", "48 MB".
-#: includes/Backup/Panel.php:100
+#: includes/Backup/Panel.php:133
 msgid "It holds the database only, because the site’s files are over the 2 GB limit."
 msgstr ""
 
 #. translators: 1: how long ago, 2: why.
-#: includes/Backup/Panel.php:103
+#: includes/Backup/Panel.php:136
 #, php-format
 msgid "The last backup, %1$s ago, was not made. %2$s"
 msgstr ""
 
 #. translators: 1: how long ago, 2: result sentence.
-#: includes/Backup/Panel.php:109
+#: includes/Backup/Panel.php:142
 #, php-format
 msgid "The last restore, %1$s ago: %2$s"
 msgstr ""
 
 #. translators: 1: how long ago, 2: result sentence.
-#: includes/Backup/Panel.php:109
+#: includes/Backup/Panel.php:142
 msgid "finished."
 msgstr ""
 
-#: includes/Backup/Panel.php:116
+#: includes/Backup/Panel.php:149
 msgid "A backup of the database and of wp-content is made every week and kept on Arva SEO’s servers. Each new one replaces the one before, but only after it has arrived complete."
 msgstr ""
 
-#: includes/Backup/Panel.php:119
+#: includes/Backup/Panel.php:152
 msgid "Daily backups come with Professional and Business, or from a top-up."
 msgstr ""
 
-#: includes/Backup/Panel.php:119
+#: includes/Backup/Panel.php:152
 msgid "Add daily backups"
 msgstr ""
 
 #. translators: %d: backups left.
-#: includes/Backup/Panel.php:122
+#: includes/Backup/Panel.php:155
 #, php-format
 msgid "%d daily backup left this month."
 msgid_plural "%d daily backups left this month."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Backup/Panel.php:129
+#: includes/Backup/Panel.php:162
 msgid "Back up now"
 msgstr ""
 
-#: includes/Backup/Panel.php:131
+#: includes/Backup/Panel.php:164
 msgid "Refresh the list"
 msgstr ""
 
-#: includes/Backup/Panel.php:136
+#: includes/Backup/Panel.php:169
 msgid "No backup is stored yet."
 msgstr ""
 
-#: includes/Backup/Panel.php:139
+#: includes/Backup/Panel.php:172
 msgid "Backup"
 msgstr ""
 
-#: includes/Backup/Panel.php:139
+#: includes/Backup/Panel.php:172
 msgid "Size"
 msgstr ""
 
-#: includes/Backup/Panel.php:142
+#: includes/Backup/Panel.php:175
 msgid "Daily"
 msgstr ""
 
-#: includes/Backup/Panel.php:142
+#: includes/Backup/Panel.php:175
 msgid "Weekly"
 msgstr ""
 
-#: includes/Backup/Panel.php:143
+#: includes/Backup/Panel.php:176
 msgid "database only"
 msgstr ""
 
-#: includes/Backup/Panel.php:147
+#: includes/Backup/Panel.php:180
 msgid "I understand: this replaces the site’s database and files with this backup, and anything changed since is lost. A copy of the current database is saved first."
 msgstr ""
 
-#: includes/Backup/Panel.php:148
+#: includes/Backup/Panel.php:181
 msgid "Restore"
 msgstr ""
 
-#: includes/Backup/Panel.php:163
+#: includes/Backup/Panel.php:196
 msgid "The backup started. It runs in the background and can take a few minutes."
 msgstr ""
 
-#: includes/Backup/Panel.php:175
+#: includes/Backup/Panel.php:208
 msgid "Tick the box to confirm before restoring."
 msgstr ""
 
-#: includes/Backup/Panel.php:179
+#: includes/Backup/Panel.php:212
 msgid "The restore started. It runs in the background."
 msgstr ""
 
-#: includes/Backup/Restorer.php:76
+#: includes/Backup/Restorer.php:53
+msgid "Reading the backup"
+msgstr ""
+
+#: includes/Backup/Restorer.php:54
+msgid "Downloading the backup"
+msgstr ""
+
+#: includes/Backup/Restorer.php:55
+msgid "Saving a copy of the current database"
+msgstr ""
+
+#: includes/Backup/Restorer.php:56
+msgid "Restoring the database"
+msgstr ""
+
+#: includes/Backup/Restorer.php:57
+msgid "Setting the current files aside"
+msgstr ""
+
+#: includes/Backup/Restorer.php:58
+msgid "Restoring the files"
+msgstr ""
+
+#: includes/Backup/Restorer.php:102
 msgid "Turn backups on and connect this site to Arva SEO first."
 msgstr ""
 
-#: includes/Backup/Restorer.php:79
+#: includes/Backup/Restorer.php:105
 msgid "A backup or restore is already running."
 msgstr ""
 
-#: includes/Backup/Restorer.php:82
+#: includes/Backup/Restorer.php:108
 msgid "This server needs the PHP zip and zlib extensions to restore a backup."
 msgstr ""
 
-#: includes/Backup/Restorer.php:86
+#: includes/Backup/Restorer.php:112
 msgid "Arva SEO could not start the restore."
 msgstr ""
 
-#: includes/Backup/Restorer.php:90
+#: includes/Backup/Restorer.php:116
 msgid "That backup has no parts to restore."
 msgstr ""
 
-#: includes/Backup/Restorer.php:106
+#: includes/Backup/Restorer.php:132
 msgid "Could not make a private folder for the restore inside wp-content."
 msgstr ""
 
-#: includes/Backup/Restorer.php:109
+#: includes/Backup/Restorer.php:135
 msgid "A restore started."
 msgstr ""
 
-#: includes/Backup/Restorer.php:128
+#: includes/Backup/Restorer.php:154
 msgid "The restore stopped because of an error on this site."
 msgstr ""
 
-#: includes/Backup/Restorer.php:185
+#: includes/Backup/Restorer.php:211
 msgid "Arva SEO could not give a part of the backup."
 msgstr ""
 
-#: includes/Backup/Restorer.php:189
+#: includes/Backup/Restorer.php:215
 msgid "A part of the backup arrived damaged. Nothing on this site was changed."
 msgstr ""
 
-#: includes/Backup/Restorer.php:218
+#: includes/Backup/Restorer.php:244
 msgid "The backup could not be downloaded from storage."
 msgstr ""
 
-#: includes/Backup/Restorer.php:242
+#: includes/Backup/Restorer.php:268
 msgid "This backup is not in a format this version can restore."
 msgstr ""
 
-#: includes/Backup/Restorer.php:245
+#: includes/Backup/Restorer.php:271
 msgid "This backup was made for a different website address, so it was not restored. Nothing was changed."
 msgstr ""
 
-#: includes/Backup/Restorer.php:248
+#: includes/Backup/Restorer.php:274
 msgid "This backup uses a different database table prefix, so it was not restored. Nothing was changed."
 msgstr ""
 
-#: includes/Backup/Restorer.php:305
+#: includes/Backup/Restorer.php:331
 msgid "Could not save a safety copy of the database, so nothing was changed."
 msgstr ""
 
-#: includes/Backup/Restorer.php:391
+#: includes/Backup/Restorer.php:417
 msgid "The restore failed part-way, so the database was put back as it was before. Your files were not changed."
 msgstr ""
 
-#: includes/Backup/Restorer.php:409
+#: includes/Backup/Restorer.php:435
 msgid "The restore failed and the safety copy could not be put back completely. The safety copy is in wp-content/arvaseo-backups: ask your host or Arva SEO support for help before doing anything else."
 msgstr ""
 
-#: includes/Backup/Restorer.php:446
+#: includes/Backup/Restorer.php:475
 msgid "A files part of the backup could not be opened. The database was restored; some files were not."
 msgstr ""
 
-#: includes/Backup/Restorer.php:532
+#: includes/Backup/Restorer.php:562
 msgid "A restore failed."
 msgstr ""
 
-#: includes/Backup/Restorer.php:534
+#: includes/Backup/Restorer.php:564
 msgid "A restore finished."
 msgstr ""
 

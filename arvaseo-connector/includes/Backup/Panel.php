@@ -56,6 +56,35 @@ final class Panel {
 	}
 
 	/**
+	 * Drop the stored list so the next view asks Arva SEO again (a backup or restore just finished).
+	 */
+	public static function forget(): void {
+		delete_transient( self::SUMMARY );
+	}
+
+	/**
+	 * Refresh only this section while a backup or restore runs, so other unsaved settings on the page are left alone.
+	 */
+	private static function keep_fresh(): void {
+		wp_print_inline_script_tag(
+			"(function(){var id='arvaseo-settings-backups';function tick(){var c=document.getElementById(id);if(!c||c.getAttribute('data-running')!=='1'){return;}fetch(window.location.href,{credentials:'same-origin'}).then(function(r){return r.text();}).then(function(h){var d=new DOMParser().parseFromString(h,'text/html');var n=d.getElementById(id);var o=document.getElementById(id);if(n&&o){o.replaceWith(n);}setTimeout(tick,10000);}).catch(function(){setTimeout(tick,20000);});}setTimeout(tick,10000);})();"
+		);
+	}
+
+	/**
+	 * One line saying where a running backup or restore is.
+	 *
+	 * @param string               $what     backup or restore.
+	 * @param array<string, mixed> $progress Step, number of steps and label.
+	 * @param int                  $started  When it started.
+	 */
+	private static function running_line( string $what, array $progress, int $started ): string {
+		/* translators: 1: backup or restore, 2: step number, 3: number of steps, 4: what it is doing, 5: how long ago it started. */
+		$text = sprintf( __( 'A %1$s is running. Step %2$d of %3$d: %4$s. Started %5$s ago. This page updates by itself.', 'arvaseo-connector' ), $what, (int) $progress['step'], (int) $progress['of'], (string) $progress['label'], human_time_diff( $started ) );
+		return '<p role="status">' . esc_html( $text ) . '</p>';
+	}
+
+	/**
 	 * A one-time message for the person who pressed a button.
 	 *
 	 * @param string $text Message.
@@ -74,7 +103,8 @@ final class Panel {
 		if ( is_string( $notice ) ) {
 			delete_transient( 'arvaseo_connector_backup_notice_' . get_current_user_id() );
 		}
-		echo '<section class="arvaseo-card" id="arvaseo-settings-backups" aria-labelledby="arvaseo-h-backups">';
+		$running = $on && $connected && ( null !== Job::current() || null !== Restorer::current() );
+		echo '<section class="arvaseo-card" id="arvaseo-settings-backups" aria-labelledby="arvaseo-h-backups"' . ( $running ? ' data-running="1"' : '' ) . '>';
 		echo '<h2 class="arvaseo-card-title" id="arvaseo-h-backups">' . esc_html__( 'Your backups', 'arvaseo-connector' ) . '</h2>';
 		if ( is_string( $notice ) ) {
 			echo '<p role="status"><strong>' . esc_html( $notice ) . '</strong></p>';
@@ -88,11 +118,14 @@ final class Panel {
 		$restore = Restorer::current();
 		$last    = Job::last();
 		if ( null !== $restore ) {
-			echo '<p role="status">' . esc_html__( 'A restore is running. This can take a few minutes; the site may look unchanged until the database step is done. Do not close this page’s site or change content meanwhile.', 'arvaseo-connector' ) . '</p></section>';
+			echo self::running_line( __( 'restore', 'arvaseo-connector' ), Restorer::progress( $restore ), (int) ( $restore['started'] ?? time() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in running_line().
+			echo '<p class="arvaseo-hint">' . esc_html__( 'This can take a few minutes; the site may look unchanged until the database step is done. Do not change content meanwhile.', 'arvaseo-connector' ) . '</p></section>';
+			self::keep_fresh();
 			return;
 		}
 		if ( null !== $job ) {
-			echo '<p role="status">' . esc_html__( 'A backup is running in the background. It carries on by itself.', 'arvaseo-connector' ) . '</p>';
+			echo self::running_line( __( 'backup', 'arvaseo-connector' ), Job::progress( $job ), (int) ( $job['started'] ?? time() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in running_line().
+			self::keep_fresh();
 		} elseif ( null !== $last ) {
 			$when = human_time_diff( (int) $last['at'] );
 			if ( 'complete' === $last['status'] ) {

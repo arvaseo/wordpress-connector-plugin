@@ -4,7 +4,7 @@ Tags: page cache, webp, malware scanner, core web vitals, seo
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 2.19.0
+Stable tag: 2.19.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -249,6 +249,9 @@ The plugin's admin pages use the Fraunces and Inter fonts, which come with the p
 
 == Upgrade Notice ==
 
+= 2.19.1 =
+The Backups section now updates itself while a backup or restore runs, and shows a finished backup at once. Nothing is switched on, off or changed on your site by this update.
+
 = 2.19.0 =
 New and off by default: backups of your database and wp-content to Arva SEO’s servers, with a restore. Turn it on in Settings → Backups if you want it. Nothing changes on your site until you do.
 
@@ -390,6 +393,11 @@ The plugin is now called Arva SEO – Speed Booster & SEO Connector, and Defer s
 New PageSpeed fixes, each off until you turn it on. Nothing changes on your site by updating.
 
 == Changelog ==
+
+= 2.19.1 =
+* In Settings → Backups, a finished backup or restore now shows in the list straight away. Before, the list could stay out of date for up to 10 minutes and disagree with the line above it (“The last backup finished…”).
+* While a backup or restore runs, the section says which step it is on (for example “Step 2 of 5: Copying the database”) and how long ago it started, and it refreshes by itself every 10 seconds. Only that section refreshes, so other settings you are editing on the page are left alone.
+* Nothing is switched on, off or changed on your website by this update.
 
 = 2.19.0 =
 * New: backups, off until you switch them on in Settings → Backups. Once a week the plugin copies the database and the wp-content folder (uploads, themes and plugins) to Arva SEO’s servers, up to 2 GB. Only the latest weekly copy is kept, and it is replaced only after the new one has arrived complete. Daily backups (the last 7 are kept) come with Arva SEO’s Professional and Business plans, or from a top-up. It needs this site to be connected to Arva SEO.

@@ -107,6 +107,31 @@ final class Job {
 	}
 
 	/**
+	 * Where a running backup is, in plain words: the step, how many steps there are, and what it is doing.
+	 *
+	 * @param array<string, mixed> $job The running job.
+	 * @return array{step:int, of:int, label:string}
+	 */
+	public static function progress( array $job ): array {
+		$steps = array(
+			'prepare'  => __( 'Checking what to back up', 'arvaseo-connector' ),
+			'db'       => __( 'Copying the database', 'arvaseo-connector' ),
+			'files'    => __( 'Packing your files', 'arvaseo-connector' ),
+			'manifest' => __( 'Preparing the upload', 'arvaseo-connector' ),
+			'upload'   => __( 'Sending it to Arva SEO', 'arvaseo-connector' ),
+		);
+		$phase = (string) ( $job['phase'] ?? 'prepare' );
+		$keys  = array_keys( $steps );
+		$index = array_search( $phase, $keys, true );
+		$index = false === $index ? count( $keys ) - 1 : (int) $index;
+		return array(
+			'step'  => $index + 1,
+			'of'    => count( $keys ),
+			'label' => $steps[ $keys[ $index ] ],
+		);
+	}
+
+	/**
 	 * How the last backup ended: array{at:int, kind:string, status:string, bytes:int, message:string}.
 	 *
 	 * @return array<string, mixed>|null
@@ -489,6 +514,8 @@ final class Job {
 			),
 			false
 		);
+		// The list under the status comes from Arva SEO and is kept 10 minutes: drop it so a finished backup shows at once.
+		Panel::forget();
 		$text = match ( $status ) {
 			'complete' => __( 'A backup was sent to Arva SEO.', 'arvaseo-connector' ),
 			'skipped'  => __( 'A backup was not made.', 'arvaseo-connector' ),
